@@ -1,2 +1,3 @@
-import { AuthCard } from "../../components/auth-card";
-export default function Page() { return <AuthCard mode="forgot-password" />; }
+import { redirect } from "next/navigation";
+
+export default function Page() { redirect("/sign-in"); }

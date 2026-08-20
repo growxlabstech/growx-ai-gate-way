@@ -36,10 +36,10 @@ describe("Secret Provider Infrastructure", () => {
     const provider = new EnvelopeEncryptionSecretProvider(key);
     const ref = "vault/anthropic/pacc_2/pcred_2/v1";
 
-    await provider.putSecret(ref, "sk-ant-secret-payload", { account: "anthropic-enterprise" });
+    await provider.putSecret(ref, "mock-ant-secret-payload", { account: "anthropic-enterprise" });
 
     const decrypted = await provider.getSecret(ref);
-    expect(decrypted).toBe("sk-ant-secret-payload");
+    expect(decrypted).toBe("mock-ant-secret-payload");
 
     const health = await provider.health();
     expect(health.status).toBe("healthy");

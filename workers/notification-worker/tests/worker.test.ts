@@ -46,7 +46,7 @@ describe("Phase 23 — Notification Worker Runner", () => {
     const deliveries = await repository.listDeliveries({
       recipientSnapshot: "worker@example.com",
     });
-    expect(deliveries[0].status).toBe("delivered");
+    expect(deliveries[0]!.status).toBe("delivered");
   });
 
   it("starts and stops worker timer cleanly", async () => {

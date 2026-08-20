@@ -4,3 +4,5 @@
 .ops-content{padding:36px 40px 48px}
 .ops-frame:has(.ops-sidebar.is-collapsed){grid-template-columns:56px minmax(0,1fr)}
 @media(max-width:768px){.ops-frame{display:block;height:100dvh;min-height:100dvh;overflow:hidden}.ops-main{height:100dvh;overflow:auto}.ops-content{padding:28px 16px 40px}.ops-sidebar{height:100dvh}}
+.ops-sidebar__plane{display:block;color:var(--text-disabled);font:10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.ops-sidebar.is-collapsed .ops-sidebar__plane{display:none}

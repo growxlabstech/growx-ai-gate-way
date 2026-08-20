@@ -68,7 +68,7 @@ export function createInvoiceHttpServer(
         const orgId = req.headers["x-organization-id"] as string;
         if (!orgId) return sendJson(401, { error: "Missing organization context" });
 
-        const invoiceId = invoiceMatch[1];
+        const invoiceId = invoiceMatch[1]!;
         const invoice = await invoiceService.getInvoice(orgId, invoiceId);
         if (!invoice) return sendJson(404, { error: "Invoice not found" });
         return sendJson(200, { invoice });
@@ -79,7 +79,7 @@ export function createInvoiceHttpServer(
         const orgId = req.headers["x-organization-id"] as string;
         if (!orgId) return sendJson(401, { error: "Missing organization context" });
 
-        const invoiceId = docMatch[1];
+        const invoiceId = docMatch[1]!;
         const result = await invoiceService.getInvoiceDocument(orgId, invoiceId);
         if (!result) return sendJson(404, { error: "Invoice document not found" });
         return sendJson(200, result);
@@ -99,7 +99,7 @@ export function createInvoiceHttpServer(
         const orgId = req.headers["x-organization-id"] as string;
         if (!orgId) return sendJson(401, { error: "Missing organization context" });
 
-        const cnId = cnMatch[1];
+        const cnId = cnMatch[1]!;
         const creditNote = await invoiceService.getCreditNote(orgId, cnId);
         if (!creditNote) return sendJson(404, { error: "Credit note not found" });
         return sendJson(200, { creditNote });
@@ -122,7 +122,7 @@ export function createInvoiceHttpServer(
       const voidMatch = pathname.match(/^\/internal\/invoices\/([^/]+)\/void$/);
       if (voidMatch && method === "POST") {
         const body = await parseBody();
-        const invoiceId = voidMatch[1];
+        const invoiceId = voidMatch[1]!;
         const invoice = await invoiceService.voidInvoice(
           body.organizationId,
           invoiceId,
@@ -134,7 +134,7 @@ export function createInvoiceHttpServer(
       const internalCnMatch = pathname.match(/^\/internal\/invoices\/([^/]+)\/credit-note$/);
       if (internalCnMatch && method === "POST") {
         const body = await parseBody();
-        const invoiceId = internalCnMatch[1];
+        const invoiceId = internalCnMatch[1]!;
         const result = await invoiceService.issueCreditNote({
           organizationId: body.organizationId,
           originalInvoiceId: invoiceId,

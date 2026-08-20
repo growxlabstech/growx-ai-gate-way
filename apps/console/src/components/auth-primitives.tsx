@@ -18,9 +18,9 @@ export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(function A
   return <label className="auth-field" htmlFor={id}><span>{label}</span><span className="auth-field-control"><input ref={ref} id={id} {...props} /></span></label>;
 });
 
-export const OtpInput = forwardRef<HTMLInputElement, { value: string; onChange(value: string): void; disabled?: boolean; invalid?: boolean }>(function OtpInput({ value, onChange, disabled, invalid }, ref) {
+export const OtpInput = forwardRef<HTMLInputElement, { value: string; onChange(value: string): void; disabled?: boolean; invalid?: boolean; describedBy?: string }>(function OtpInput({ value, onChange, disabled, invalid, describedBy }, ref) {
   function change(event: ChangeEvent<HTMLInputElement>) { onChange(event.target.value.replace(/\D/g, "").slice(0, 6)); }
-  return <label className="otp-field"><span>VERIFICATION CODE</span><span className="otp-control"><input ref={ref} value={value} onChange={change} disabled={disabled} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} aria-invalid={invalid} aria-label="Six digit verification code" /><span className="otp-cells" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <span className={index === value.length ? "current" : ""} key={index}>{value[index] ?? ""}</span>)}</span></span></label>;
+  return <label className="otp-field"><span>VERIFICATION CODE</span><span className="otp-control"><input ref={ref} value={value} onChange={change} disabled={disabled} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} aria-invalid={invalid} aria-describedby={describedBy} aria-label="Six digit verification code" /><span className="otp-cells" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <span className={index === value.length ? "current" : ""} key={index}>{value[index] ?? ""}</span>)}</span></span></label>;
 });
 
 export function AuthPrimaryAction({ busy, busyLabel, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { busy: boolean; busyLabel: string }) {
@@ -37,7 +37,7 @@ export function OAuthButton({ provider, ...props }: ButtonHTMLAttributes<HTMLBut
   return <button className="oauth-button" type="button" aria-label={`Continue with ${label}`} {...props}>{provider === "google" ? <GoogleIcon /> : <GitHubIcon />}<span>{label}</span></button>;
 }
 
-export function AuthStatus({ id, error, message }: { id: string; error: string; message: string }) {
-  if (error) return <p id={id} className="auth-error" role="alert">{error}</p>;
+export function AuthStatus({ id, error, message, requestId }: { id: string; error: string; message: string; requestId?: string | null }) {
+  if (error) return <p id={id} className="auth-error" role="alert">{error}{requestId ? <small> Request ID: {requestId}</small> : null}</p>;
   return <p id={id} className="auth-success" role="status" aria-live="polite">{message}</p>;
 }

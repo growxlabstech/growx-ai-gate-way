@@ -61,7 +61,7 @@ describe("Provider Execution Integration Tests", () => {
       {
         name: "test-account",
         environment: "production",
-        rawSecret: "sk-proj-decrypted-secret-key",
+        rawSecret: "mock-proj-decrypted-secret-key",
       },
       "usr_operator_1"
     );
@@ -91,7 +91,7 @@ describe("Provider Execution Integration Tests", () => {
       expect(response.providerId).toBe(provider.id);
       expect(response.output[0]?.content).toBe("Executed successfully via ProviderService!");
       expect(response.usage.totalTokens).toBe(27);
-      expect(capturedAuth).toBe("Bearer sk-proj-decrypted-secret-key");
+      expect(capturedAuth).toBe("Bearer mock-proj-decrypted-secret-key");
     } finally {
       mockServer.close();
     }
@@ -148,7 +148,7 @@ describe("Provider Execution Integration Tests", () => {
       {
         name: "test-anthropic",
         environment: "production",
-        rawSecret: "sk-ant-anthropic-secret-key",
+        rawSecret: "mock-ant-anthropic-secret-key",
       },
       "usr_operator_1"
     );
@@ -174,7 +174,7 @@ describe("Provider Execution Integration Tests", () => {
         eventsList.push(evt);
       }
 
-      expect(capturedApiKey).toBe("sk-ant-anthropic-secret-key");
+      expect(capturedApiKey).toBe("mock-ant-anthropic-secret-key");
 
       const deltas = eventsList.filter((e) => e.type === "output_text.delta").map((e) => e.delta).join("");
       expect(deltas).toBe("Streaming success!");

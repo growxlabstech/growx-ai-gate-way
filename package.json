@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.10.0",
-  "engines": { "node": ">=20.9.0", "pnpm": ">=10.0.0" },
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": ">=10.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "docker compose up -d postgres redis && turbo run dev --filter='./apps/*' --filter='./workers/*' --parallel",
@@ -34,5 +37,7 @@
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
-  "lint-staged": { "*.{ts,tsx,mjs,json,md,yml,yaml}": "prettier --check" }
+  "lint-staged": {
+    "*.{ts,tsx,mjs,json,md,yml,yaml}": "prettier --check"
+  }
 }

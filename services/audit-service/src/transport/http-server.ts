@@ -73,7 +73,7 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
       const auditEventMatch = pathname.match(/^\/v1\/audit\/events\/([^/]+)$/);
       if (auditEventMatch && method === "GET") {
         if (!orgId) return sendJson(401, { error: "Missing organization context" });
-        const eventId = auditEventMatch[1];
+        const eventId = auditEventMatch[1]!;
         const event = await auditService.getCustomerAuditEvent(orgId, eventId);
         if (!event) return sendJson(404, { error: "Audit event not found" });
         return sendJson(200, { event });
@@ -128,7 +128,7 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
 
       const signalStatusMatch = pathname.match(/^\/internal\/security\/signals\/([^/]+)\/status$/);
       if (signalStatusMatch && method === "POST") {
-        const signalId = signalStatusMatch[1];
+        const signalId = signalStatusMatch[1]!;
         const body = await parseBody();
         const updated = await securityService.updateSignalStatus(signalId, body.status);
         return sendJson(200, { signal: updated });

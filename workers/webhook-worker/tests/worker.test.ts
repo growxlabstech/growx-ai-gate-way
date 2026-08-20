@@ -53,7 +53,7 @@ describe("Phase 21 — Webhook Background Worker", () => {
 
     // Verify delivery status updated in DB
     const deliveries = await repository.listDeliveries("org_worker_test");
-    expect(deliveries[0].status).toBe("succeeded");
+    expect(deliveries[0]!.status).toBe("succeeded");
 
     // Test start and stop
     worker.start();

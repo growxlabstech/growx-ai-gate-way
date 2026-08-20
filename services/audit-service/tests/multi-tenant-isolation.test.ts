@@ -39,7 +39,7 @@ describe("Phase 22 — Multi-Tenant Chain Isolation", () => {
     // Org A cannot list Org B's events
     const orgAList = await auditService.listCustomerAuditEvents("org_a", {});
     expect(orgAList.length).toBe(1);
-    expect(orgAList[0].id).toBe(orgAEvent1.id);
+    expect(orgAList[0]!.id).toBe(orgAEvent1.id);
 
     const orgBReadFromA = await auditService.getCustomerAuditEvent("org_a", orgBEvent1.id);
     expect(orgBReadFromA).toBeUndefined();

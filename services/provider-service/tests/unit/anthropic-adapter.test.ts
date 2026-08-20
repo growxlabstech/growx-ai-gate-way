@@ -79,7 +79,7 @@ describe("AnthropicAdapter Unit Tests", () => {
       canonicalModelId: request.canonicalModelId,
       providerModelId: request.providerModelId,
       timeoutMs: 5000,
-      decryptedCredential: "sk-ant-test-mock-key-123",
+      decryptedCredential: "mock-ant-test-mock-key-123",
     };
     (context as any).baseUrl = baseUrl;
 
@@ -95,7 +95,7 @@ describe("AnthropicAdapter Unit Tests", () => {
       expect(response.usage.outputTokens).toBe(10);
       expect(response.providerRequestId).toBe("msg_01AnthropicTest");
 
-      expect(capturedApiKey).toBe("sk-ant-test-mock-key-123");
+      expect(capturedApiKey).toBe("mock-ant-test-mock-key-123");
       expect(capturedVersion).toBe("2023-06-01");
       expect(capturedBody.system).toBe("You are Claude, created by Anthropic.");
       expect(capturedBody.max_tokens).toBe(250);
@@ -148,7 +148,7 @@ describe("AnthropicAdapter Unit Tests", () => {
       canonicalModelId: request.canonicalModelId,
       providerModelId: request.providerModelId,
       timeoutMs: 5000,
-      decryptedCredential: "sk-ant-test-key",
+      decryptedCredential: "mock-ant-test-key",
     };
     (context as any).baseUrl = baseUrl;
 
@@ -231,7 +231,7 @@ describe("AnthropicAdapter Unit Tests", () => {
       canonicalModelId: request.canonicalModelId,
       providerModelId: request.providerModelId,
       timeoutMs: 5000,
-      decryptedCredential: "sk-ant-key",
+      decryptedCredential: "mock-ant-key",
     };
     (context as any).baseUrl = baseUrl;
 

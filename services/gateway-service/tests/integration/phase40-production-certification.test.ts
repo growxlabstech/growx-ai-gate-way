@@ -95,7 +95,7 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       // Exclude open circuits
       const healthyRoutes = routes.filter((r) => r.status === "closed");
       expect(healthyRoutes.length).toBe(1);
-      expect(healthyRoutes[0].id).toBe("route_anthropic_fallback");
+      expect(healthyRoutes[0]!.id).toBe("route_anthropic_fallback");
     });
   });
 
@@ -173,9 +173,9 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       expect(policy.stage).toBe("0_disabled");
 
       // Advance canary to 10%
-      canary.updatePolicy({ stage: "1_canary_10", canaryPercentage: 10 });
+      canary.updatePolicy({ stage: "4_canary_10pct", canaryPercentage: 10 });
       const updated = canary.getPolicy();
-      expect(updated.stage).toBe("1_canary_10");
+      expect(updated.stage).toBe("4_canary_10pct");
       expect(updated.canaryPercentage).toBe(10);
 
       // Automated rollback on error spike
@@ -191,7 +191,7 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
     it("executes restore drills and measures RPO/RTO within budget", async () => {
       const drillRunner = new RestoreDrillRunner();
       const result = await drillRunner.executeDrill({
-        type: "restore_drill",
+        type: "db_restore_drill",
         scope: "staging_dr_isolated",
         operatorId: "usr_operator_123",
         simulatedDurationMs: 2500,
@@ -237,7 +237,7 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       });
 
       expect(res.id).toBe("chatcmpl_cert123");
-      expect(res.choices[0].message.content).toContain("Certified production ready");
+      expect(res.choices[0]!.message.content).toContain("Certified production ready");
       expect(res.usage.total_tokens).toBe(30);
     });
 
@@ -262,7 +262,7 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       });
 
       expect(release.status).toBe("deployed");
-      expect(release.smokeResults.length).toBeGreaterThanOrEqual(5);
+      expect(release.smokeResults!.length).toBeGreaterThanOrEqual(5);
 
       const rollback = orchestrator.rollbackRelease(release.id, "Staging validation trigger");
       expect(rollback.status).toBe("rolled_back");

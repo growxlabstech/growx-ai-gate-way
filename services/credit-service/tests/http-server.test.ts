@@ -27,13 +27,11 @@ describe("CreditHttpServer", () => {
           workspaceId: "ws_http",
           environmentId: "env_1",
           environment: "production",
-          role: "admin",
-          permissions: ["chat.completions.create", "billing.read"],
+          permissions: ["chat.completions.create"],
           rateLimits: [],
           modelRules: [],
           ipAllowlist: [],
-          status: "active",
-        };
+        } as any;
       }
       return null;
     };

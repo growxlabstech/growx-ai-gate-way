@@ -47,7 +47,7 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
       {
         name: "Anthropic Main Secret",
         credentialType: "api_key",
-        rawSecret: "sk-ant-api03-initial-secret-key-12345678",
+        rawSecret: "mock-ant-api03-initial-secret-key-12345678",
         environment: "production",
         metadata: {},
         autoActivate: true,
@@ -62,13 +62,13 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
     expect(v1.keyFingerprint).toContain("5678#");
     // Verify secret is stored in vault, not in DB record
     const vaultSecret = await secretProvider.getSecret(v1.secretReference);
-    expect(vaultSecret).toBe("sk-ant-api03-initial-secret-key-12345678");
+    expect(vaultSecret).toBe("mock-ant-api03-initial-secret-key-12345678");
 
     // 2. Rotate Credential to V2
     const { newVersion: v2 } = await vaultService.rotateCredential(
       credential.id,
       {
-        newRawSecret: "sk-ant-api03-rotated-secret-key-87654321",
+        newRawSecret: "mock-ant-api03-rotated-secret-key-87654321",
         reason: "Scheduled 90-day rotation",
         validateBeforeActivation: false,
       },

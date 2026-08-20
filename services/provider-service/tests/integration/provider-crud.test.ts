@@ -52,7 +52,7 @@ describe("Provider & Credential CRUD Integration Tests", () => {
   });
 
   it("creates encrypted provider credential and stores without plaintext", async () => {
-    const rawSecret = "sk-proj-super-sensitive-openai-secret-key-12345";
+    const rawSecret = "mock-proj-super-sensitive-openai-secret-key-12345";
     const credential = await service.createCredential(
       "openai",
       {

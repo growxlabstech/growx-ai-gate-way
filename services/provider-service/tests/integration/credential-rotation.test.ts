@@ -29,7 +29,7 @@ describe("Credential Rotation Integration Tests", () => {
       {
         name: "primary",
         environment: "production",
-        rawSecret: "sk-ant-initial-secret-key",
+        rawSecret: "mock-ant-initial-secret-key",
       },
       "usr_operator_1"
     );
@@ -37,7 +37,7 @@ describe("Credential Rotation Integration Tests", () => {
     const rotated = await service.rotateCredential(
       initial.id,
       {
-        newRawSecret: "sk-ant-newly-rotated-secret-key-999",
+        newRawSecret: "mock-ant-newly-rotated-secret-key-999",
         reason: "Quarterly key rotation",
       },
       "usr_operator_1"
@@ -49,7 +49,7 @@ describe("Credential Rotation Integration Tests", () => {
 
     // Decrypting rotated payload returns the new key
     const decrypted = crypto.decrypt(rotated.encryptedPayload, rotated.encryptionKeyVersion);
-    expect(decrypted).toBe("sk-ant-newly-rotated-secret-key-999");
+    expect(decrypted).toBe("mock-ant-newly-rotated-secret-key-999");
   });
 
   it("disables credential and rejects execution with disabled credential", async () => {
@@ -58,7 +58,7 @@ describe("Credential Rotation Integration Tests", () => {
       {
         name: "backup-account",
         environment: "production",
-        rawSecret: "sk-ant-backup-secret",
+        rawSecret: "mock-ant-backup-secret",
       },
       "usr_operator_1"
     );

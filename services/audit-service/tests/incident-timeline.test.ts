@@ -60,12 +60,12 @@ describe("Phase 22 — Incident Timeline Investigation", () => {
     });
 
     expect(timeline.length).toBe(3);
-    expect(timeline[0].kind).toBe("audit");
-    expect(timeline[0].actionOrType).toBe("auth.sign_in");
-    expect(timeline[1].kind).toBe("audit");
-    expect(timeline[1].actionOrType).toBe("api_key.created");
-    expect(timeline[2].kind).toBe("security");
-    expect(timeline[2].actionOrType).toBe("webhook.ssrf_attempt");
-    expect(timeline[2].severity).toBe("high");
+    expect(timeline[0]!.kind).toBe("audit");
+    expect(timeline[0]!.actionOrType).toBe("auth.sign_in");
+    expect(timeline[1]!.kind).toBe("audit");
+    expect(timeline[1]!.actionOrType).toBe("api_key.created");
+    expect(timeline[2]!.kind).toBe("security");
+    expect(timeline[2]!.actionOrType).toBe("webhook.ssrf_attempt");
+    expect(timeline[2]!.severity).toBe("high");
   });
 });

@@ -40,7 +40,7 @@ describe("Developer Platform & Production Deployment Architecture Lifecycle (Pha
     });
 
     expect(res.id).toBe("chatcmpl_test123");
-    expect(res.choices[0].message.content).toContain("Paris");
+    expect(res.choices[0]!.message.content).toContain("Paris");
     expect(res.usage.total_tokens).toBe(25);
   });
 
@@ -61,10 +61,10 @@ describe("Developer Platform & Production Deployment Architecture Lifecycle (Pha
 
     expect(release.id).toBeDefined();
     expect(release.status).toBe("deployed");
-    expect(release.smokeResults.length).toBeGreaterThanOrEqual(5);
+    expect(release.smokeResults!.length).toBeGreaterThanOrEqual(5);
 
     // Verify all smoke validation runs are flagged as synthetic
-    for (const test of release.smokeResults) {
+    for (const test of release.smokeResults!) {
       expect(test.status).toBe("passed");
       expect(test.isSynthetic).toBe(true);
     }

@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -14,7 +13,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ["@growx/ui"],
   async rewrites() {
-    return [{ source: "/api/auth/:path*", destination: `${identityServiceUrl}/v1/auth/:path*` }];
+    return [
+      { source: "/api/auth/:path*", destination: `${identityServiceUrl}/v1/auth/:path*` },
+      ...(process.env.D2_FIXTURE_IDENTITY === "1" ? [{ source: "/d2-session", destination: `${identityServiceUrl}/v1/auth/d2-session` }] : []),
+    ];
   },
   async headers() { return [{ source: "/:path*", headers: securityHeaders }]; },
 };

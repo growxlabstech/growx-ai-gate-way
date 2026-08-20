@@ -1,0 +1,2 @@
+import { describe, expect, it } from "vitest"; import { calculateRoutingHealth } from "../src/index.js";
+describe("routing health rollup", () => { it("classifies normalized scores", async () => { let result = ""; await calculateRoutingHealth([{ providerId: "p", successRate: 1, timeoutRate: 0, serverErrorRate: 0, rateLimitRate: 0, streamFailureRate: 0, latencyScore: 1, capacityScore: 1 }], { async save(_id, _score, status) { result = status; } }); expect(result).toBe("healthy"); }); });

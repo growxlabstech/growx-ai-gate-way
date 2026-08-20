@@ -2,25 +2,37 @@
   "name": "growx-ai",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.10.0",
+  "engines": { "node": ">=20.9.0", "pnpm": ">=10.0.0" },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "next": "16.2.12",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "build": "turbo run build",
+    "dev": "docker compose up -d postgres redis && turbo run dev --filter='./apps/*' --filter='./workers/*' --parallel",
+    "dev:apps": "turbo run dev --filter='./apps/*' --parallel",
+    "infra:up": "docker compose up -d postgres redis",
+    "infra:down": "docker compose down",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "security:policy": "node scripts/security-policy-check.mjs",
+    "security:audit": "pnpm audit --audit-level high",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^20.19.9",
+    "eslint": "^9.32.0",
     "eslint-config-next": "16.2.12",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.5",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "lint-staged": { "*.{ts,tsx,mjs,json,md,yml,yaml}": "prettier --check" }
 }

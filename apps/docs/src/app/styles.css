@@ -1,0 +1,7 @@
+:root { color-scheme: dark; font-family: Arial, sans-serif; background: var(--gx-bg-canvas); color: var(--gx-text-primary); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--gx-bg-canvas); }
+main { min-height: 100vh; display: grid; place-content: center; padding: 2rem; }
+h1 { margin: 0; font-size: clamp(3rem, 10vw, 7rem); letter-spacing: -0.07em; }
+p { color: var(--gx-text-supporting); max-width: 42rem; font-size: 1.1rem; }
+.eyebrow { color: var(--gx-accent); font-size: .75rem; letter-spacing: .2em; }

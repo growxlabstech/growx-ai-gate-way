@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Provider capacity"><p>Concurrency, RPM, TPM, safety margins, near-limit warnings, and exhaustion events.</p><AdminTable subject="Provider capacity pools" /></AdminShell>; }

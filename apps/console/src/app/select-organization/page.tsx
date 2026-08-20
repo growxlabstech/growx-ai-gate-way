@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Page() { return <main className="picker"><p className="eyebrow">YOUR ORGANIZATIONS</p><h1>Choose where to work</h1><input type="search" placeholder="Search organizations" aria-label="Search organizations" /><Link className="resource-row" href="/growx-labs/overview"><span><strong>GrowX Labs</strong><small>Organization Owner · 2 workspaces</small></span><span>→</span></Link><button type="button">Create organization</button></main>; }

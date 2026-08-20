@@ -1,0 +1,1 @@
+export default function Page() { return <main><p className="eyebrow">GROWX AI GATEWAY</p><h1>Docs</h1><p>Engineering foundation is operational. Product workflows arrive in the next phase.</p></main>; }

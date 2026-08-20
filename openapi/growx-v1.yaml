@@ -1,0 +1,104 @@
+openapi: 3.1.0
+info:
+  title: GrowX AI API
+  version: 0.1.0
+servers:
+  - url: https://api.growxlabs.tech
+security:
+  - bearerAuth: []
+paths:
+  /v1/models:
+    get:
+      operationId: listModels
+      responses:
+        "200":
+          description: Available models
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data]
+                properties:
+                  object: { const: list }
+                  data: { type: array, items: { $ref: "#/components/schemas/Model" } }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/responses:
+    post:
+      operationId: createResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResponseRequest" }
+      responses:
+        "200":
+          description: Model response or SSE stream
+          headers:
+            X-Request-Id: { schema: { type: string } }
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Response" } }
+            text/event-stream: { schema: { type: string } }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/embeddings:
+    post:
+      operationId: createEmbedding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, input]
+              properties:
+                model: { type: string }
+                input: { oneOf: [{ type: string }, { type: array, items: { type: string } }] }
+      responses:
+        "200": { description: Embeddings created }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  schemas:
+    Model:
+      type: object
+      required: [id, object, created, owned_by, capabilities]
+      properties:
+        id: { type: string }
+        object: { const: model }
+        created: { type: integer }
+        owned_by: { type: string }
+        capabilities: { type: array, items: { type: string } }
+    ResponseRequest:
+      type: object
+      required: [model, input]
+      properties:
+        model: { type: string, example: growx/smart }
+        input: { type: string }
+        instructions: { type: string }
+        stream: { type: boolean, default: false }
+        temperature: { type: number, minimum: 0, maximum: 2 }
+        max_output_tokens: { type: integer, minimum: 1 }
+    Response:
+      type: object
+      required: [id, model, output, usage]
+      properties:
+        id: { type: string }
+        model: { type: string }
+        output: { type: array, items: { type: object } }
+        usage: { type: object }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json: { schema: { $ref: "#/components/schemas/Error" } }

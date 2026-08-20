@@ -1,0 +1,35 @@
+{
+  "name": "@growx/model-registry-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint src tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@growx/authorization-service": "workspace:*",
+    "@growx/configuration": "workspace:*",
+    "@growx/contracts": "workspace:*",
+    "@growx/database": "workspace:*",
+    "@growx/event-bus": "workspace:*",
+    "@growx/ids": "workspace:*",
+    "@growx/observability": "workspace:*",
+    "@growx/shared": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@growx/testing": "workspace:*",
+    "@types/node": "^20.19.9",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
+

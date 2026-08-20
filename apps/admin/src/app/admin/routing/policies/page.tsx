@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Routing policies"><p>Create, clone, activate, roll back, or archive immutable policy versions.</p><AdminTable subject="Routing policies" /></AdminShell>; }

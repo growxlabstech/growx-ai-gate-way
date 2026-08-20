@@ -1,0 +1,2 @@
+import { AppShell, StatePanel } from "../../../../components/app-shell";
+export default async function Page({ params }: { params: Promise<{ organizationSlug: string; workspaceSlug: string }> }) { const { organizationSlug, workspaceSlug } = await params; return <AppShell organizationSlug={organizationSlug} workspaceSlug={workspaceSlug} title="Billing"><StatePanel title="Commercial setup pending" detail="Credit balance, subscription, payment methods, invoices, and spend will appear here after Phase 6 provider integration." /></AppShell>; }

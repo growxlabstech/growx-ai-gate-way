@@ -1,0 +1,27 @@
+{
+  "name": "@growx/analytics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@growx/contracts": "workspace:*",
+    "@growx/database": "workspace:*",
+    "@growx/ids": "workspace:*",
+    "@growx/metering": "workspace:*",
+    "@growx/observability": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

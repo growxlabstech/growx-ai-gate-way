@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../components/admin-shell"; export default function Page() { return <AdminShell title="Cache control"><p>Tenant-isolated cache records, hit ratio, saved latency/cost, expiry, and controlled invalidation.</p><AdminTable subject="Cache records" /></AdminShell>; }

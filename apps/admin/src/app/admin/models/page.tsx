@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../components/admin-shell"; export default function Page() { return <AdminShell title="Model registry"><p>Manage model metadata, capabilities, aliases, pricing versions, and deprecations.</p><AdminTable subject="Models" /></AdminShell>; }

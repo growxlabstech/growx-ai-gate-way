@@ -1,0 +1,2 @@
+import { describe, expect, it } from "vitest"; import { RetryBudget } from "./retry.js";
+describe("retry budget", () => { it("bounds attempts and delay", () => { const budget = new RetryBudget({ maximumAttempts: 2, maximumDurationMs: 5000, initialDelayMs: 100, maximumDelayMs: 1000, jitterRatio: 0, retryableCodes: new Set(["timeout"]) }); expect(budget.mayRetry("timeout")).toBe(true); expect(budget.nextDelay()).toBe(100); expect(budget.nextDelay()).toBe(200); expect(budget.mayRetry("timeout")).toBe(false); expect(budget.mayRetry("invalid")).toBe(false); }); });

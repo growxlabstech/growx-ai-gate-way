@@ -1,0 +1,3 @@
+# Provider outage
+
+Symptoms: rising provider errors/timeouts, circuit opening, fallback growth. Impact: degraded or unavailable models and possible cost increase. Detection: provider health, gateway errors and SLO burn. Immediate actions: confirm scope, disable unsafe provider/model, preserve retry budgets and declare incident. Diagnose credentials, quota, region and provider status. Mitigate with eligible fallback or customer-safe rejection. Recover through bounded probes and gradual traffic restoration. Verify errors, latency, routing and billing. Escalate to Gateway/Provider owner. Follow up with timeline and policy changes.

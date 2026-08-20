@@ -1,0 +1,22 @@
+packages:
+  - apps/*
+  - services/*
+  - workers/*
+  - packages/*
+  - sdk/*
+
+confirmModulesPurge: false
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
+
+overrides:
+  sharp: ">=0.35.0"
+  postcss: ">=8.5.18"

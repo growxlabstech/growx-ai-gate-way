@@ -1,0 +1,1 @@
+import { describe, expect, it } from "vitest"; import { maintainCache } from "../src/index.js"; describe("cache maintenance", () => { it("evicts in bounded batches", async () => expect(await maintainCache({ async evictExpired(_now, limit) { return limit; } }, 20)).toBe(20)); });

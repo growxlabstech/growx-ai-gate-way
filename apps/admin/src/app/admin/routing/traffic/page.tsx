@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Traffic allocations"><p>Auditable weighted provider, model, regional, and canary allocations with stable assignment.</p><AdminTable subject="Traffic allocations" /></AdminShell>; }

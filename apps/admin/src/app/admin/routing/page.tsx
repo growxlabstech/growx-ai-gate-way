@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../components/admin-shell"; export default function Page() { return <AdminShell title="Routing"><p>Versioned explicit-model and alias fallback policies. Every mutation is audited.</p><AdminTable subject="Routing policies" /></AdminShell>; }

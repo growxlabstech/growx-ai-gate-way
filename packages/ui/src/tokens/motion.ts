@@ -1,0 +1,1 @@
+export const motionTokens = { duration: { fast: "120ms", standard: "180ms", overlay: "220ms", large: "280ms" }, easing: { standard: "cubic-bezier(.2,.8,.2,1)", exit: "cubic-bezier(.4,0,1,1)" } } as const;

@@ -1,0 +1,3 @@
+# Database failure
+
+Symptoms: connection exhaustion, transaction timeout, readiness failure. Impact: control plane and durable writes; financial operations must stop safely. Detection: pool, query and error telemetry. Immediate actions: fail closed for authorization/financial/privileged writes, stop noncritical workers and page Platform. Diagnose saturation, locks, primary health and deployment. Mitigate load and restore service without bypassing transactions. Recover queues idempotently. Verify tenant queries, ledger balance and reconciliation. Escalate to Platform/Billing/Security as indicated.

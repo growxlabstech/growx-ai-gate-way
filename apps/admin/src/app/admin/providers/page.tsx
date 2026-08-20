@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../components/admin-shell"; export default function Page() { return <AdminShell title="Providers"><p>Provider status, credential configuration, latency, and maintenance controls. Credential values are never displayed.</p><AdminTable subject="Providers" /></AdminShell>; }

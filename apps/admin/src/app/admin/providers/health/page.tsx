@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Provider health"><p>Health score, reliability, latency, timeouts, rate limits, stream failures, and recovery state.</p><AdminTable subject="Provider health snapshots" /></AdminShell>; }

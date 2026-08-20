@@ -1,0 +1,2 @@
+import { AppShell, StatePanel } from "../../../components/app-shell";
+export default async function Page({ params }: { params: Promise<{ organizationSlug: string }> }) { const { organizationSlug } = await params; return <AppShell organizationSlug={organizationSlug} title="Members"><div className="toolbar"><button type="button">Create</button><button type="button">Filter</button></div><StatePanel title="Members" detail="Manage active members and pending invitations." /></AppShell>; }

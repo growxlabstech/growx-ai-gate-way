@@ -1,0 +1,1 @@
+import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Circuit breakers"><p>Closed, open, and half-open state. Manual overrides require dedicated permission, confirmation, reason, and audit.</p><AdminTable subject="Provider circuits" /></AdminShell>; }

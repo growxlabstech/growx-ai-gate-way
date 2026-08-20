@@ -1,0 +1,35 @@
+{
+  "name": "@growx/batch-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@growx/api-key-service": "workspace:*",
+    "@growx/audit-service": "workspace:*",
+    "@growx/contracts": "workspace:*",
+    "@growx/credit-service": "workspace:*",
+    "@growx/database": "workspace:*",
+    "@growx/gateway-service": "workspace:*",
+    "@growx/notification-service": "workspace:*",
+    "@growx/policy": "workspace:*",
+    "@growx/pricing-service": "workspace:*",
+    "@growx/rate-limits": "workspace:*",
+    "@growx/storage-service": "workspace:*",
+    "@growx/webhook-service": "workspace:*",
+    "drizzle-orm": "^0.41.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

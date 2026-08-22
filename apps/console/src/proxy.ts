@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const identityServiceUrl = process.env.IDENTITY_SERVICE_URL ?? "http://localhost:4000";
+const identityServiceUrl =
+  process.env.IDENTITY_SERVICE_URL ?? "http://localhost:4000";
 
 function createContentSecurityPolicy(nonce: string): string {
-  const developmentDirective = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
-  const styleDirective = process.env.NODE_ENV === "development" ? " 'unsafe-inline'" : ` 'nonce-${nonce}'`;
+  const developmentDirective =
+    process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+  const styleDirective =
+    process.env.NODE_ENV === "development"
+      ? " 'unsafe-inline'"
+      : ` 'nonce-${nonce}'`;
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${developmentDirective}`,
@@ -18,7 +23,11 @@ function createContentSecurityPolicy(nonce: string): string {
   ].join("; ");
 }
 
-function continueWithSecurityHeaders(request: NextRequest, nonce: string, contentSecurityPolicy: string): NextResponse {
+function continueWithSecurityHeaders(
+  request: NextRequest,
+  nonce: string,
+  contentSecurityPolicy: string,
+): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
@@ -45,29 +54,61 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const publicPaths = ["/", "/sign-in", "/sign-up", "/verify-email", "/forgot-password", "/reset-password", "/health", "/live", "/ready"];
+  const publicPaths = [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/verify-email",
+    "/forgot-password",
+    "/reset-password",
+    "/health",
+    "/live",
+    "/ready",
+  ];
   if (process.env.D2_FIXTURE_IDENTITY === "1") publicPaths.push("/d2-session");
-  const protectedRoute = pathname === "/select-organization" || pathname.startsWith("/onboarding/") || pathname === "/onboarding" || (!publicPaths.includes(pathname) && !pathname.startsWith("/design/"));
-  if (!protectedRoute) return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy);
+  const protectedRoute =
+    pathname === "/select-organization" ||
+    pathname.startsWith("/onboarding/") ||
+    pathname === "/onboarding" ||
+    (!publicPaths.includes(pathname) && !pathname.startsWith("/design/"));
+  if (!protectedRoute)
+    return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy);
 
+  const identityServiceUrl =
+    process.env.IDENTITY_SERVICE_URL ?? "http://127.0.0.1:4100";
   try {
     const response = await fetch(`${identityServiceUrl}/v1/auth/get-session`, {
-      headers: { cookie: request.headers.get("cookie") ?? "", ...(process.env.D2_FIXTURE_IDENTITY === "1" ? { "x-d2-fixture": "tenant-a" } : {}) },
+      headers: {
+        cookie: request.headers.get("cookie") ?? "",
+        ...(process.env.D2_FIXTURE_IDENTITY === "1"
+          ? { "x-d2-fixture": "tenant-a" }
+          : {}),
+      },
       cache: "no-store",
       signal: AbortSignal.timeout(3_000),
     });
     if (response.ok) {
       const session: unknown = await response.json();
-      if (session && typeof session === "object" && "session" in session) return continueWithSecurityHeaders(request, nonce, contentSecurityPolicy);
+      if (session && typeof session === "object" && "session" in session)
+        return continueWithSecurityHeaders(
+          request,
+          nonce,
+          contentSecurityPolicy,
+        );
     }
   } catch {
     // Identity uncertainty fails closed.
   }
   const signIn = new URL("/sign-in", request.url);
-  signIn.searchParams.set("returnTo", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  signIn.searchParams.set(
+    "returnTo",
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+  );
   return NextResponse.redirect(signIn);
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|growx-auth-crystal.png).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|growx-auth-crystal.png).*)",
+  ],
 };

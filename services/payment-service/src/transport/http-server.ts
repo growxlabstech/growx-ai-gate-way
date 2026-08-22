@@ -1,9 +1,16 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import type { PaymentService } from "../application/payment-service.js";
 
 export function createPaymentHttpServer(paymentService: PaymentService) {
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
@@ -17,7 +24,11 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
     };
 
     // Health endpoints
-    if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
+    if (
+      pathname === "/health" ||
+      pathname === "/live" ||
+      pathname === "/ready"
+    ) {
       return sendJson(200, {
         status: "ok",
         service: "payment-service",
@@ -56,17 +67,33 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
         });
 
         if (result.status === "failed") {
-          return sendError(400, "INVALID_WEBHOOK", result.error ?? "Webhook processing failed");
+          return sendError(
+            400,
+            "INVALID_WEBHOOK",
+            result.error ?? "Webhook processing failed",
+          );
         }
 
         return sendJson(200, { received: true, ...result });
       }
 
       // ─── Customer Billing Endpoints ───────────────────────────
-      if (method === "POST" && pathname === "/v1/billing/checkout/subscription") {
+      if (
+        method === "POST" &&
+        pathname === "/v1/billing/checkout/subscription"
+      ) {
         const body = JSON.parse(rawBody.toString("utf8") || "{}");
-        if (!body.organizationId || !body.planId || !body.successReturnUrl || !body.cancelReturnUrl) {
-          return sendError(400, "INVALID_ARGUMENT", "Missing required checkout parameters");
+        if (
+          !body.organizationId ||
+          !body.planId ||
+          !body.successReturnUrl ||
+          !body.cancelReturnUrl
+        ) {
+          return sendError(
+            400,
+            "INVALID_ARGUMENT",
+            "Missing required checkout parameters",
+          );
         }
 
         const session = await paymentService.createSubscriptionCheckout({
@@ -76,7 +103,8 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
           provider: body.provider,
           successReturnUrl: body.successReturnUrl,
           cancelReturnUrl: body.cancelReturnUrl,
-          idempotencyKey: body.idempotencyKey ?? `ck_${Date.now()}_${Math.random()}`,
+          idempotencyKey:
+            body.idempotencyKey ?? `ck_${Date.now()}_${Math.random()}`,
           metadata: body.metadata,
         });
 
@@ -92,7 +120,9 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
       }
 
       if (method === "GET" && pathname === "/v1/billing/payments") {
-        const orgId = (req.headers["x-organization-id"] as string) ?? url.searchParams.get("organizationId");
+        const orgId =
+          (req.headers["x-organization-id"] as string) ??
+          url.searchParams.get("organizationId");
         if (!orgId) {
           return sendError(400, "MISSING_ORG", "Organization ID required");
         }
@@ -113,7 +143,9 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
 
       if (method === "GET" && pathname.startsWith("/v1/billing/payments/")) {
         const paymentId = pathname.replace("/v1/billing/payments/", "");
-        const orgId = (req.headers["x-organization-id"] as string) ?? url.searchParams.get("organizationId");
+        const orgId =
+          (req.headers["x-organization-id"] as string) ??
+          url.searchParams.get("organizationId");
         if (!orgId) {
           return sendError(400, "MISSING_ORG", "Organization ID required");
         }
@@ -133,12 +165,22 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
       }
 
       // ─── Privileged Internal Endpoints ────────────────────────
-      if (method === "POST" && pathname.startsWith("/internal/payments/") && pathname.endsWith("/refund")) {
-        const paymentId = pathname.replace("/internal/payments/", "").replace("/refund", "");
+      if (
+        method === "POST" &&
+        pathname.startsWith("/internal/payments/") &&
+        pathname.endsWith("/refund")
+      ) {
+        const paymentId = pathname
+          .replace("/internal/payments/", "")
+          .replace("/refund", "");
         const body = JSON.parse(rawBody.toString("utf8") || "{}");
 
         if (!body.organizationId || !body.reason || !body.createdBy) {
-          return sendError(400, "INVALID_ARGUMENT", "Missing organizationId, reason, or createdBy");
+          return sendError(
+            400,
+            "INVALID_ARGUMENT",
+            "Missing organizationId, reason, or createdBy",
+          );
         }
 
         const refund = await paymentService.refundPayment({
@@ -147,7 +189,8 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
           amount: body.amount ? body.amount : undefined,
           reason: body.reason,
           createdBy: body.createdBy,
-          idempotencyKey: body.idempotencyKey ?? `ref_${paymentId}_${Date.now()}`,
+          idempotencyKey:
+            body.idempotencyKey ?? `ref_${paymentId}_${Date.now()}`,
         });
 
         return sendJson(200, {
@@ -161,8 +204,14 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
         });
       }
 
-      if (method === "POST" && pathname.startsWith("/internal/payments/") && pathname.endsWith("/reconcile")) {
-        const paymentId = pathname.replace("/internal/payments/", "").replace("/reconcile", "");
+      if (
+        method === "POST" &&
+        pathname.startsWith("/internal/payments/") &&
+        pathname.endsWith("/reconcile")
+      ) {
+        const paymentId = pathname
+          .replace("/internal/payments/", "")
+          .replace("/reconcile", "");
         const reconciled = await paymentService.reconcilePayment(paymentId);
         return sendJson(200, {
           id: reconciled.id,
@@ -175,7 +224,11 @@ export function createPaymentHttpServer(paymentService: PaymentService) {
 
       return sendError(404, "NOT_FOUND", "Route not found");
     } catch (err: any) {
-      return sendError(500, "INTERNAL_ERROR", err?.message ?? "Internal server error");
+      return sendError(
+        500,
+        "INTERNAL_ERROR",
+        err?.message ?? "Internal server error",
+      );
     }
   });
 }

@@ -110,7 +110,9 @@ export class CustomerPricingResolver {
    * 3. Organization policy
    * 4. Global default policy
    */
-  public resolvePolicy(params: ResolveCustomerPolicyParams): CustomerPolicyWithRates | undefined {
+  public resolvePolicy(
+    params: ResolveCustomerPolicyParams,
+  ): CustomerPolicyWithRates | undefined {
     const targetDate = params.targetDate ?? new Date();
 
     if (params.policyId) {
@@ -131,11 +133,16 @@ export class CustomerPricingResolver {
         const target = targetDate.getTime();
         return target >= from && target < to;
       })
-      .sort((a, b) => b.policy.effectiveFrom.getTime() - a.policy.effectiveFrom.getTime());
+      .sort(
+        (a, b) =>
+          b.policy.effectiveFrom.getTime() - a.policy.effectiveFrom.getTime(),
+      );
 
     // 1. Workspace scope
     const workspacePolicy = activePolicies.find(
-      (item) => item.policy.scopeType === "workspace" && item.policy.scopeId === params.workspaceId
+      (item) =>
+        item.policy.scopeType === "workspace" &&
+        item.policy.scopeId === params.workspaceId,
     );
     if (workspacePolicy) {
       return workspacePolicy;
@@ -143,7 +150,9 @@ export class CustomerPricingResolver {
 
     // 2. Organization scope
     const orgPolicy = activePolicies.find(
-      (item) => item.policy.scopeType === "organization" && item.policy.scopeId === params.organizationId
+      (item) =>
+        item.policy.scopeType === "organization" &&
+        item.policy.scopeId === params.organizationId,
     );
     if (orgPolicy) {
       return orgPolicy;
@@ -151,7 +160,7 @@ export class CustomerPricingResolver {
 
     // 3. Global default
     const globalPolicy = activePolicies.find(
-      (item) => item.policy.scopeType === "global"
+      (item) => item.policy.scopeType === "global",
     );
     if (globalPolicy) {
       return globalPolicy;

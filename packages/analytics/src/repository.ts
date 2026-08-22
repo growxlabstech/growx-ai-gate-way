@@ -6,7 +6,11 @@ import type {
   AnalyticsTimeRange,
 } from "./types.js";
 import { LatencyDistributionSketch } from "./distribution.js";
-import type { GatewayRequestRecord, GatewayAttemptRecord, UsageEvent } from "@growx/metering";
+import type {
+  GatewayRequestRecord,
+  GatewayAttemptRecord,
+  UsageEvent,
+} from "@growx/metering";
 
 export interface AnalyticsCheckpointRecord {
   id: string;
@@ -43,13 +47,22 @@ export interface RequestDrilldownQueryOptions {
 export interface AnalyticsRepository {
   saveRollup(record: AnalyticsRollupRecord): Promise<void>;
   queryRollups(options: RollupQueryOptions): Promise<AnalyticsRollupRecord[]>;
-  getCheckpoint(projectorName: string): Promise<AnalyticsCheckpointRecord | null>;
+  getCheckpoint(
+    projectorName: string,
+  ): Promise<AnalyticsCheckpointRecord | null>;
   saveCheckpoint(checkpoint: AnalyticsCheckpointRecord): Promise<void>;
   saveAnomaly(anomaly: AnomalySignal): Promise<void>;
-  queryAnomalies(options: { organizationId?: string; providerId?: string; limit?: number }): Promise<AnomalySignal[]>;
+  queryAnomalies(options: {
+    organizationId?: string;
+    providerId?: string;
+    limit?: number;
+  }): Promise<AnomalySignal[]>;
   saveRequestRecord(record: GatewayRequestRecord): Promise<void>;
   getRequestRecord(requestId: string): Promise<GatewayRequestRecord | null>;
-  queryRequestRecords(options: RequestDrilldownQueryOptions): Promise<{ records: GatewayRequestRecord[]; nextCursor?: string | undefined }>;
+  queryRequestRecords(options: RequestDrilldownQueryOptions): Promise<{
+    records: GatewayRequestRecord[];
+    nextCursor?: string | undefined;
+  }>;
   saveAttemptRecord(record: GatewayAttemptRecord): Promise<void>;
   listAttemptsForRequest(requestId: string): Promise<GatewayAttemptRecord[]>;
   saveUsageEvent(event: UsageEvent): Promise<void>;
@@ -90,8 +103,12 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     }
 
     // Atomic merge of distributions and counters
-    const mergedLatency = new LatencyDistributionSketch(existing.latencySketch).merge(record.latencySketch);
-    const mergedTtft = new LatencyDistributionSketch(existing.ttftSketch).merge(record.ttftSketch);
+    const mergedLatency = new LatencyDistributionSketch(
+      existing.latencySketch,
+    ).merge(record.latencySketch);
+    const mergedTtft = new LatencyDistributionSketch(existing.ttftSketch).merge(
+      record.ttftSketch,
+    );
 
     const mergedErrors = { ...existing.errorCounts };
     for (const [err, cnt] of Object.entries(record.errorCounts)) {
@@ -124,9 +141,12 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       totalTokens: existing.totalTokens + record.totalTokens,
       cachedInputTokens: existing.cachedInputTokens + record.cachedInputTokens,
       reasoningTokens: existing.reasoningTokens + record.reasoningTokens,
-      providerInputTokens: existing.providerInputTokens + record.providerInputTokens,
-      providerOutputTokens: existing.providerOutputTokens + record.providerOutputTokens,
-      providerTotalTokens: existing.providerTotalTokens + record.providerTotalTokens,
+      providerInputTokens:
+        existing.providerInputTokens + record.providerInputTokens,
+      providerOutputTokens:
+        existing.providerOutputTokens + record.providerOutputTokens,
+      providerTotalTokens:
+        existing.providerTotalTokens + record.providerTotalTokens,
       latencySketch: mergedLatency.toJSON(),
       ttftSketch: mergedTtft.toJSON(),
       errorCounts: mergedErrors,
@@ -136,25 +156,43 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     });
   }
 
-  public async queryRollups(options: RollupQueryOptions): Promise<AnalyticsRollupRecord[]> {
-    return Array.from(this.rollups.values()).filter((r) => {
-      if (r.bucket !== options.granularity) return false;
-      if (options.organizationId && r.organizationId !== options.organizationId) return false;
-      if (options.workspaceId && r.workspaceId !== options.workspaceId) return false;
-      if (options.apiKeyId && r.apiKeyId !== options.apiKeyId) return false;
-      if (options.canonicalModelId && r.canonicalModelId !== options.canonicalModelId) return false;
-      if (options.providerId && r.providerId !== options.providerId) return false;
-      if (r.bucketEnd < options.startTime) return false;
-      if (r.bucketStart > options.endTime) return false;
-      return true;
-    }).sort((a, b) => a.bucketStart.getTime() - b.bucketStart.getTime());
+  public async queryRollups(
+    options: RollupQueryOptions,
+  ): Promise<AnalyticsRollupRecord[]> {
+    return Array.from(this.rollups.values())
+      .filter((r) => {
+        if (r.bucket !== options.granularity) return false;
+        if (
+          options.organizationId &&
+          r.organizationId !== options.organizationId
+        )
+          return false;
+        if (options.workspaceId && r.workspaceId !== options.workspaceId)
+          return false;
+        if (options.apiKeyId && r.apiKeyId !== options.apiKeyId) return false;
+        if (
+          options.canonicalModelId &&
+          r.canonicalModelId !== options.canonicalModelId
+        )
+          return false;
+        if (options.providerId && r.providerId !== options.providerId)
+          return false;
+        if (r.bucketEnd < options.startTime) return false;
+        if (r.bucketStart > options.endTime) return false;
+        return true;
+      })
+      .sort((a, b) => a.bucketStart.getTime() - b.bucketStart.getTime());
   }
 
-  public async getCheckpoint(projectorName: string): Promise<AnalyticsCheckpointRecord | null> {
+  public async getCheckpoint(
+    projectorName: string,
+  ): Promise<AnalyticsCheckpointRecord | null> {
     return this.checkpoints.get(projectorName) ?? null;
   }
 
-  public async saveCheckpoint(checkpoint: AnalyticsCheckpointRecord): Promise<void> {
+  public async saveCheckpoint(
+    checkpoint: AnalyticsCheckpointRecord,
+  ): Promise<void> {
     this.checkpoints.set(checkpoint.projectorName, { ...checkpoint });
   }
 
@@ -162,11 +200,25 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.anomalies.set(anomaly.id, { ...anomaly });
   }
 
-  public async queryAnomalies(options: { organizationId?: string; providerId?: string; limit?: number }): Promise<AnomalySignal[]> {
+  public async queryAnomalies(options: {
+    organizationId?: string;
+    providerId?: string;
+    limit?: number;
+  }): Promise<AnomalySignal[]> {
     return Array.from(this.anomalies.values())
       .filter((a) => {
-        if (options.organizationId && a.organizationId && a.organizationId !== options.organizationId) return false;
-        if (options.providerId && a.providerId && a.providerId !== options.providerId) return false;
+        if (
+          options.organizationId &&
+          a.organizationId &&
+          a.organizationId !== options.organizationId
+        )
+          return false;
+        if (
+          options.providerId &&
+          a.providerId &&
+          a.providerId !== options.providerId
+        )
+          return false;
         return true;
       })
       .sort((a, b) => b.detectedAt.getTime() - a.detectedAt.getTime())
@@ -177,22 +229,33 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.requests.set(record.requestId, { ...record });
   }
 
-  public async getRequestRecord(requestId: string): Promise<GatewayRequestRecord | null> {
+  public async getRequestRecord(
+    requestId: string,
+  ): Promise<GatewayRequestRecord | null> {
     return this.requests.get(requestId) ?? null;
   }
 
-  public async queryRequestRecords(options: RequestDrilldownQueryOptions): Promise<{ records: GatewayRequestRecord[]; nextCursor?: string }> {
+  public async queryRequestRecords(
+    options: RequestDrilldownQueryOptions,
+  ): Promise<{ records: GatewayRequestRecord[]; nextCursor?: string }> {
     const limit = Math.min(100, Math.max(1, options.limit ?? 20));
-    let matched = Array.from(this.requests.values()).filter((r) => {
-      if (r.organizationId !== options.organizationId) return false;
-      if (options.workspaceId && r.workspaceId !== options.workspaceId) return false;
-      if (options.apiKeyId && r.apiKeyId !== options.apiKeyId) return false;
-      if (options.canonicalModelId && r.canonicalModelId !== options.canonicalModelId) return false;
-      if (options.status && r.status !== options.status) return false;
-      if (options.startTime && r.startedAt < options.startTime) return false;
-      if (options.endTime && r.startedAt > options.endTime) return false;
-      return true;
-    }).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+    let matched = Array.from(this.requests.values())
+      .filter((r) => {
+        if (r.organizationId !== options.organizationId) return false;
+        if (options.workspaceId && r.workspaceId !== options.workspaceId)
+          return false;
+        if (options.apiKeyId && r.apiKeyId !== options.apiKeyId) return false;
+        if (
+          options.canonicalModelId &&
+          r.canonicalModelId !== options.canonicalModelId
+        )
+          return false;
+        if (options.status && r.status !== options.status) return false;
+        if (options.startTime && r.startedAt < options.startTime) return false;
+        if (options.endTime && r.startedAt > options.endTime) return false;
+        return true;
+      })
+      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
 
     if (options.cursor) {
       const idx = matched.findIndex((r) => r.requestId === options.cursor);
@@ -213,7 +276,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.attempts.set(record.id, { ...record });
   }
 
-  public async listAttemptsForRequest(requestId: string): Promise<GatewayAttemptRecord[]> {
+  public async listAttemptsForRequest(
+    requestId: string,
+  ): Promise<GatewayAttemptRecord[]> {
     return Array.from(this.attempts.values())
       .filter((a) => a.requestId === requestId)
       .sort((a, b) => a.attemptNumber - b.attemptNumber);
@@ -223,8 +288,12 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.usageEvents.set(event.id, { ...event });
   }
 
-  public async listUsageEventsForRequest(requestId: string): Promise<UsageEvent[]> {
-    return Array.from(this.usageEvents.values()).filter((e) => e.requestId === requestId);
+  public async listUsageEventsForRequest(
+    requestId: string,
+  ): Promise<UsageEvent[]> {
+    return Array.from(this.usageEvents.values()).filter(
+      (e) => e.requestId === requestId,
+    );
   }
 
   public async getAllUsageEvents(): Promise<UsageEvent[]> {

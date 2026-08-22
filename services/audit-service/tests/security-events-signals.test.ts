@@ -47,7 +47,7 @@ describe("Phase 22 — Security Events & Signal Correlation", () => {
     // 3. Update signal operational status without mutating raw security event
     const updated = await securityService.updateSignalStatus(
       ssrfSignal!.id,
-      "investigating"
+      "investigating",
     );
     expect(updated.status).toBe("investigating");
 

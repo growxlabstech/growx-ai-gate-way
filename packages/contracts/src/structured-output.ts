@@ -4,35 +4,60 @@ import { z } from "zod";
 // 1. Response Format Types
 // ==========================================
 
-export const responseFormatTypeSchema = z.enum(["text", "json_object", "json_schema"]);
+export const responseFormatTypeSchema = z.enum([
+  "text",
+  "json_object",
+  "json_schema",
+]);
 export type ResponseFormatType = z.infer<typeof responseFormatTypeSchema>;
 
 export const canonicalResponseFormatSchema = z.object({
   type: responseFormatTypeSchema,
-  name: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/).optional(),
+  name: z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
   description: z.string().max(2048).optional(),
   strict: z.boolean().optional(),
   schema: z.record(z.string(), z.unknown()).optional(),
   schemaId: z.string().optional(),
   schemaVersionId: z.string().optional(),
 });
-export type CanonicalResponseFormat = z.infer<typeof canonicalResponseFormatSchema>;
+export type CanonicalResponseFormat = z.infer<
+  typeof canonicalResponseFormatSchema
+>;
 
 // ==========================================
 // 2. Response Schema Registry
 // ==========================================
 
-export const responseSchemaStatusSchema = z.enum(["active", "disabled", "archived"]);
+export const responseSchemaStatusSchema = z.enum([
+  "active",
+  "disabled",
+  "archived",
+]);
 export type ResponseSchemaStatus = z.infer<typeof responseSchemaStatusSchema>;
 
-export const responseSchemaVisibilitySchema = z.enum(["organization", "workspace", "internal"]);
-export type ResponseSchemaVisibility = z.infer<typeof responseSchemaVisibilitySchema>;
+export const responseSchemaVisibilitySchema = z.enum([
+  "organization",
+  "workspace",
+  "internal",
+]);
+export type ResponseSchemaVisibility = z.infer<
+  typeof responseSchemaVisibilitySchema
+>;
 
 export const responseSchemaSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   workspaceId: z.string().optional(),
-  key: z.string().min(1).max(128).regex(/^[a-z0-9_.-]+$/),
+  key: z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[a-z0-9_.-]+$/),
   name: z.string().min(1).max(256),
   description: z.string().max(2048).optional(),
   status: responseSchemaStatusSchema.default("active"),
@@ -94,22 +119,30 @@ export const structuredOutputStatusSchema = z.enum([
   "provider_unsupported",
   "retry_exhausted",
 ]);
-export type StructuredOutputStatus = z.infer<typeof structuredOutputStatusSchema>;
+export type StructuredOutputStatus = z.infer<
+  typeof structuredOutputStatusSchema
+>;
 
 export const structuredOutputOutcomeSchema = z.object({
   status: structuredOutputStatusSchema,
   responseFormatType: responseFormatTypeSchema.optional(),
   strict: z.boolean().optional(),
   schemaHash: z.string().optional(),
-  validationErrors: z.array(z.object({
-    path: z.string(),
-    code: z.string(),
-    message: z.string(),
-  })).optional(),
+  validationErrors: z
+    .array(
+      z.object({
+        path: z.string(),
+        code: z.string(),
+        message: z.string(),
+      }),
+    )
+    .optional(),
   retryCount: z.number().int().nonnegative().default(0),
   parsedSuccessfully: z.boolean().optional(),
 });
-export type StructuredOutputOutcome = z.infer<typeof structuredOutputOutcomeSchema>;
+export type StructuredOutputOutcome = z.infer<
+  typeof structuredOutputOutcomeSchema
+>;
 
 // ==========================================
 // 5. Structured Output Model Capabilities
@@ -125,7 +158,9 @@ export const structuredOutputCapabilitiesSchema = z.object({
   unionSupport: z.boolean().default(false),
   additionalPropertiesControl: z.boolean().default(false),
 });
-export type StructuredOutputCapabilities = z.infer<typeof structuredOutputCapabilitiesSchema>;
+export type StructuredOutputCapabilities = z.infer<
+  typeof structuredOutputCapabilitiesSchema
+>;
 
 // ==========================================
 // 6. Schema Complexity Limits
@@ -142,7 +177,9 @@ export const structuredOutputComplexityLimitsSchema = z.object({
   maxPatternLength: z.number().int().positive().default(256),
   maxOutputBytes: z.number().int().positive().default(1_048_576),
 });
-export type StructuredOutputComplexityLimits = z.infer<typeof structuredOutputComplexityLimitsSchema>;
+export type StructuredOutputComplexityLimits = z.infer<
+  typeof structuredOutputComplexityLimitsSchema
+>;
 
 // ==========================================
 // 7. Structured Retry Policy
@@ -167,4 +204,6 @@ export const providerResponseFormatSchema = z.object({
   translationLossless: z.boolean(),
   translationNotes: z.array(z.string()).optional(),
 });
-export type ProviderResponseFormat = z.infer<typeof providerResponseFormatSchema>;
+export type ProviderResponseFormat = z.infer<
+  typeof providerResponseFormatSchema
+>;

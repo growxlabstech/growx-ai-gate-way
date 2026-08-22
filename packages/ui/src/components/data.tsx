@@ -1,8 +1,83 @@
-import type { HTMLAttributes, ReactNode, TableHTMLAttributes } from "react"; import { cx } from "./primitives"; import { IconButton } from "./controls"; import { Pagination } from "./navigation";
-export type DataColumn<T>={key:keyof T|string;header:string;render?:(row:T)=>ReactNode;technical?:boolean;sortable?:boolean};
-export function Table(props:TableHTMLAttributes<HTMLTableElement>){return <div className="gx-table-wrap"><table {...props} className={cx("gx-table",props.className)}/></div>}
-export function TableToolbar(props:HTMLAttributes<HTMLDivElement>){return <div {...props} className={cx("gx-table-toolbar",props.className)}/>} export const TablePagination=Pagination;
-export function RowActions({label="Open row actions"}: {label?:string}){return <IconButton icon="more" label={label} variant="ghost" size="xs"/>}
-export function KeyValue({items}: {items:Array<{label:string;value:ReactNode;technical?:boolean}>}){return <dl className="gx-key-value">{items.map(item=><div key={item.label}><dt>{item.label}</dt><dd className={item.technical?"gx-technical":undefined}>{item.value}</dd></div>)}</dl>}
-export function Timeline({items}: {items:Array<{title:string;detail:string;time:string}>}){return <ol className="gx-timeline">{items.map(item=><li key={`${item.title}-${item.time}`}><span/><div><strong>{item.title}</strong><p>{item.detail}</p></div><time>{item.time}</time></li>)}</ol>}
-export function LogRow({requestId,model,status,latency}: {requestId:string;model:string;status:string;latency:string}){return <div className="gx-log-row"><code>{requestId}</code><span>{model}</span><span>{status}</span><code>{latency}</code></div>}
+import type { HTMLAttributes, ReactNode, TableHTMLAttributes } from "react";
+import { cx } from "./primitives";
+import { IconButton } from "./controls";
+import { Pagination } from "./navigation";
+export type DataColumn<T> = {
+  key: keyof T | string;
+  header: string;
+  render?: (row: T) => ReactNode;
+  technical?: boolean;
+  sortable?: boolean;
+};
+export function Table(props: TableHTMLAttributes<HTMLTableElement>) {
+  return (
+    <div className="gx-table-wrap">
+      <table {...props} className={cx("gx-table", props.className)} />
+    </div>
+  );
+}
+export function TableToolbar(props: HTMLAttributes<HTMLDivElement>) {
+  return <div {...props} className={cx("gx-table-toolbar", props.className)} />;
+}
+export const TablePagination = Pagination;
+export function RowActions({ label = "Open row actions" }: { label?: string }) {
+  return <IconButton icon="more" label={label} variant="ghost" size="xs" />;
+}
+export function KeyValue({
+  items,
+}: {
+  items: Array<{ label: string; value: ReactNode; technical?: boolean }>;
+}) {
+  return (
+    <dl className="gx-key-value">
+      {items.map((item) => (
+        <div key={item.label}>
+          <dt>{item.label}</dt>
+          <dd className={item.technical ? "gx-technical" : undefined}>
+            {item.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+export function Timeline({
+  items,
+}: {
+  items: Array<{ title: string; detail: string; time: string }>;
+}) {
+  return (
+    <ol className="gx-timeline">
+      {items.map((item) => (
+        <li key={`${item.title}-${item.time}`}>
+          <span />
+          <div>
+            <strong>{item.title}</strong>
+            <p>{item.detail}</p>
+          </div>
+          <time>{item.time}</time>
+        </li>
+      ))}
+    </ol>
+  );
+}
+export function LogRow({
+  requestId,
+  model,
+  status,
+  latency,
+}: {
+  requestId: string;
+  model: string;
+  status: string;
+  latency: string;
+}) {
+  return (
+    <div className="gx-log-row">
+      <code>{requestId}</code>
+      <span>{model}</span>
+      <span>{status}</span>
+      <code>{latency}</code>
+    </div>
+  );
+}

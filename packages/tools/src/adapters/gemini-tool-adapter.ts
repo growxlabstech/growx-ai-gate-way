@@ -46,7 +46,11 @@ export class GeminiToolAdapter implements ProviderToolAdapter {
         requestId,
         providerCallId: `call_${idx}`,
         name: fc.name,
-        arguments: (fc.args && typeof fc.args === "object" && !Array.isArray(fc.args) ? fc.args : {}) as Record<string, unknown>,
+        arguments: (fc.args &&
+        typeof fc.args === "object" &&
+        !Array.isArray(fc.args)
+          ? fc.args
+          : {}) as Record<string, unknown>,
         rawArguments: JSON.stringify(fc.args),
         index: idx,
         status: "validated",

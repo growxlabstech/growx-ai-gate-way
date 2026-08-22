@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { canonicalCapabilitySchema, providerCredentialStatusSchema, type ProviderCredentialStatus } from "./ai.js";
+import {
+  canonicalCapabilitySchema,
+  providerCredentialStatusSchema,
+  type ProviderCredentialStatus,
+} from "./ai.js";
 
 // ============================================================================
 // Enums
@@ -31,7 +35,9 @@ export const providerCredentialTypeSchema = z.enum([
   "access_token",
   "signed_key",
 ]);
-export type ProviderCredentialType = z.infer<typeof providerCredentialTypeSchema>;
+export type ProviderCredentialType = z.infer<
+  typeof providerCredentialTypeSchema
+>;
 
 export { providerCredentialStatusSchema, type ProviderCredentialStatus };
 
@@ -44,7 +50,9 @@ export const credentialVersionStatusSchema = z.enum([
   "revoked",
   "invalid",
 ]);
-export type CredentialVersionStatus = z.infer<typeof credentialVersionStatusSchema>;
+export type CredentialVersionStatus = z.infer<
+  typeof credentialVersionStatusSchema
+>;
 
 export const credentialValidationStatusSchema = z.enum([
   "unknown",
@@ -52,7 +60,9 @@ export const credentialValidationStatusSchema = z.enum([
   "invalid",
   "skipped",
 ]);
-export type CredentialValidationStatus = z.infer<typeof credentialValidationStatusSchema>;
+export type CredentialValidationStatus = z.infer<
+  typeof credentialValidationStatusSchema
+>;
 
 export const providerPoolStatusSchema = z.enum([
   "active",
@@ -78,7 +88,9 @@ export const providerAccountLimitTypeSchema = z.enum([
   "batch_concurrency",
   "provider_specific",
 ]);
-export type ProviderAccountLimitType = z.infer<typeof providerAccountLimitTypeSchema>;
+export type ProviderAccountLimitType = z.infer<
+  typeof providerAccountLimitTypeSchema
+>;
 
 export const providerAccountLimitSourceSchema = z.enum([
   "configured",
@@ -86,7 +98,9 @@ export const providerAccountLimitSourceSchema = z.enum([
   "observed",
   "contract",
 ]);
-export type ProviderAccountLimitSource = z.infer<typeof providerAccountLimitSourceSchema>;
+export type ProviderAccountLimitSource = z.infer<
+  typeof providerAccountLimitSourceSchema
+>;
 
 // ============================================================================
 // Domain Entities & DTOs
@@ -143,7 +157,9 @@ export const providerCredentialVersionSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).default({}),
   createdAt: z.coerce.date(),
 });
-export type ProviderCredentialVersion = z.infer<typeof providerCredentialVersionSchema>;
+export type ProviderCredentialVersion = z.infer<
+  typeof providerCredentialVersionSchema
+>;
 
 export const credentialValidationSchema = z.object({
   id: z.string(),
@@ -168,7 +184,9 @@ export const providerCredentialPoolMemberSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
-export type ProviderCredentialPoolMember = z.infer<typeof providerCredentialPoolMemberSchema>;
+export type ProviderCredentialPoolMember = z.infer<
+  typeof providerCredentialPoolMemberSchema
+>;
 
 export const providerCredentialPoolSchema = z.object({
   id: z.string(),
@@ -184,7 +202,9 @@ export const providerCredentialPoolSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
-export type ProviderCredentialPool = z.infer<typeof providerCredentialPoolSchema>;
+export type ProviderCredentialPool = z.infer<
+  typeof providerCredentialPoolSchema
+>;
 
 export const providerAccountCapabilitySchema = z.object({
   id: z.string(),
@@ -197,7 +217,9 @@ export const providerAccountCapabilitySchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
-export type ProviderAccountCapability = z.infer<typeof providerAccountCapabilitySchema>;
+export type ProviderAccountCapability = z.infer<
+  typeof providerAccountCapabilitySchema
+>;
 
 export const providerAccountLimitSchema = z.object({
   id: z.string(),
@@ -254,7 +276,9 @@ export const createProviderAccountRequestSchema = z.object({
   priority: z.number().int().default(100),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
-export type CreateProviderAccountRequest = z.infer<typeof createProviderAccountRequestSchema>;
+export type CreateProviderAccountRequest = z.infer<
+  typeof createProviderAccountRequestSchema
+>;
 
 export const updateProviderAccountRequestSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
@@ -266,7 +290,9 @@ export const updateProviderAccountRequestSchema = z.object({
   priority: z.number().int().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
-export type UpdateProviderAccountRequest = z.infer<typeof updateProviderAccountRequestSchema>;
+export type UpdateProviderAccountRequest = z.infer<
+  typeof updateProviderAccountRequestSchema
+>;
 
 export const createProviderCredentialRequestV2Schema = z.object({
   name: z.string().min(1).max(100).default("default"),
@@ -278,7 +304,9 @@ export const createProviderCredentialRequestV2Schema = z.object({
   autoActivate: z.boolean().default(true),
   validateBeforeActivation: z.boolean().default(true),
 });
-export type CreateProviderCredentialRequestV2 = z.infer<typeof createProviderCredentialRequestV2Schema>;
+export type CreateProviderCredentialRequestV2 = z.infer<
+  typeof createProviderCredentialRequestV2Schema
+>;
 
 export const createProviderCredentialVersionRequestSchema = z.object({
   rawSecret: z.string().min(1),
@@ -287,7 +315,9 @@ export const createProviderCredentialVersionRequestSchema = z.object({
   autoActivate: z.boolean().default(false),
   validateBeforeActivation: z.boolean().default(true),
 });
-export type CreateProviderCredentialVersionRequest = z.infer<typeof createProviderCredentialVersionRequestSchema>;
+export type CreateProviderCredentialVersionRequest = z.infer<
+  typeof createProviderCredentialVersionRequestSchema
+>;
 
 export const rotateProviderCredentialRequestV2Schema = z.object({
   newRawSecret: z.string().min(1),
@@ -295,7 +325,9 @@ export const rotateProviderCredentialRequestV2Schema = z.object({
   expiresAt: z.coerce.date().optional(),
   validateBeforeActivation: z.boolean().default(true),
 });
-export type RotateProviderCredentialRequestV2 = z.infer<typeof rotateProviderCredentialRequestV2Schema>;
+export type RotateProviderCredentialRequestV2 = z.infer<
+  typeof rotateProviderCredentialRequestV2Schema
+>;
 
 export const createProviderPoolRequestSchema = z.object({
   providerId: z.string().min(1),
@@ -306,7 +338,9 @@ export const createProviderPoolRequestSchema = z.object({
   strategy: providerPoolStrategySchema.default("capacity_aware"),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
-export type CreateProviderPoolRequest = z.infer<typeof createProviderPoolRequestSchema>;
+export type CreateProviderPoolRequest = z.infer<
+  typeof createProviderPoolRequestSchema
+>;
 
 export const addPoolMemberRequestSchema = z.object({
   providerAccountId: z.string().min(1),
@@ -324,7 +358,9 @@ export const setAccountCapabilityRequestSchema = z.object({
   enabled: z.boolean().default(true),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
-export type SetAccountCapabilityRequest = z.infer<typeof setAccountCapabilityRequestSchema>;
+export type SetAccountCapabilityRequest = z.infer<
+  typeof setAccountCapabilityRequestSchema
+>;
 
 export const setAccountLimitRequestSchema = z.object({
   canonicalModelId: z.string().optional(),
@@ -335,4 +371,6 @@ export const setAccountLimitRequestSchema = z.object({
   effectiveAt: z.coerce.date().optional(),
   expiresAt: z.coerce.date().optional(),
 });
-export type SetAccountLimitRequest = z.infer<typeof setAccountLimitRequestSchema>;
+export type SetAccountLimitRequest = z.infer<
+  typeof setAccountLimitRequestSchema
+>;

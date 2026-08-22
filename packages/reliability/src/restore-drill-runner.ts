@@ -1,6 +1,9 @@
 import type { RecoveryRun, RecoveryRunType } from "@growx/contracts";
 import { generateId } from "@growx/ids";
-import { CriticalInvariantVerifier, type PlatformStateSnapshot } from "./invariant-verifier.js";
+import {
+  CriticalInvariantVerifier,
+  type PlatformStateSnapshot,
+} from "./invariant-verifier.js";
 
 export class RestoreDrillRunner {
   private verifier = new CriticalInvariantVerifier();
@@ -30,7 +33,9 @@ export class RestoreDrillRunner {
       status: hasFailures ? "failed" : "passed",
       startedBy: options.operatorId,
       startedAt,
-      completedAt: new Date(startedAt.getTime() + (options.simulatedDurationMs ?? 2500)),
+      completedAt: new Date(
+        startedAt.getTime() + (options.simulatedDurationMs ?? 2500),
+      ),
       observedRpoSeconds: rpoSeconds,
       observedRtoSeconds: rtoSeconds,
       evidenceSummary: hasFailures

@@ -18,7 +18,12 @@ describe("Batch Reconciler Integration", () => {
     environmentId: "env_dev",
     environment: "development",
     name: "Recon Key",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -38,7 +43,13 @@ describe("Batch Reconciler Integration", () => {
   it("recovers expired leases and re-queues stuck items", async () => {
     const batch = await batchService.createBatch(authContext, {
       items: [
-        { custom_id: "rec-1", body: { model: "gpt-4o", messages: [{ role: "user", content: "hi" }] } },
+        {
+          custom_id: "rec-1",
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "hi" }],
+          },
+        },
       ],
     });
 
@@ -64,8 +75,14 @@ describe("Batch Reconciler Integration", () => {
   it("reconciles counter drift with actual item rows", async () => {
     const batch = await batchService.createBatch(authContext, {
       items: [
-        { custom_id: "drift-1", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } },
-        { custom_id: "drift-2", body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] } },
+        {
+          custom_id: "drift-1",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] },
+        },
+        {
+          custom_id: "drift-2",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] },
+        },
       ],
     });
 

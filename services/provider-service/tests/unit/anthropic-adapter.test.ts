@@ -52,12 +52,14 @@ describe("AnthropicAdapter Unit Tests", () => {
               input_tokens: 15,
               output_tokens: 10,
             },
-          })
+          }),
         );
       });
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -128,7 +130,9 @@ describe("AnthropicAdapter Unit Tests", () => {
       res.end();
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -164,7 +168,10 @@ describe("AnthropicAdapter Unit Tests", () => {
       expect(types).toContain("output_text.done");
       expect(types).toContain("response.completed");
 
-      const deltas = events.filter((e) => e.type === "output_text.delta").map((e) => e.delta).join("");
+      const deltas = events
+        .filter((e) => e.type === "output_text.delta")
+        .map((e) => e.delta)
+        .join("");
       expect(deltas).toBe("Claude!");
 
       const completed = events.find((e) => e.type === "response.completed");
@@ -196,11 +203,13 @@ describe("AnthropicAdapter Unit Tests", () => {
             input_tokens: 30,
             output_tokens: 20,
           },
-        })
+        }),
       );
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -241,7 +250,9 @@ describe("AnthropicAdapter Unit Tests", () => {
       expect(response.toolCalls?.length).toBe(1);
       expect(response.toolCalls?.[0]?.id).toBe("toolu_01A09q90tc1q09");
       expect(response.toolCalls?.[0]?.name).toBe("search_database");
-      expect(response.toolCalls?.[0]?.arguments).toBe('{"query":"GrowX AI architecture"}');
+      expect(response.toolCalls?.[0]?.arguments).toBe(
+        '{"query":"GrowX AI architecture"}',
+      );
     } finally {
       server.close();
     }

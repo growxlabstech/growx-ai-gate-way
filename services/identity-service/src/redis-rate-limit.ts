@@ -18,9 +18,17 @@ function getMemoryCount(key: string, windowSeconds: number, now: Date): number {
   return current.count;
 }
 
-export function checkOtpStartRateLimit(ip: string, email: string, now = new Date()) {
+export function checkOtpStartRateLimit(
+  ip: string,
+  email: string,
+  now = new Date(),
+) {
   const ipPolicy: RateLimit = { dimension: "ip", window: "minute", limit: 5 };
-  const emailPolicy: RateLimit = { dimension: "endpoint", window: "minute", limit: 3 };
+  const emailPolicy: RateLimit = {
+    dimension: "endpoint",
+    window: "minute",
+    limit: 3,
+  };
 
   const ipKey = `auth:otp:start:ip:${ip}`;
   const emailKey = `auth:otp:start:email:${email.toLowerCase().trim()}`;
@@ -32,10 +40,18 @@ export function checkOtpStartRateLimit(ip: string, email: string, now = new Date
   const emailDecision = evaluateFixedWindow(emailCount - 1, emailPolicy, now);
 
   if (!ipDecision.allowed) {
-    return { allowed: false, error: "Too many authentication attempts from this IP address. Please wait." };
+    return {
+      allowed: false,
+      error:
+        "Too many authentication attempts from this IP address. Please wait.",
+    };
   }
   if (!emailDecision.allowed) {
-    return { allowed: false, error: "Too many code requests for this email address. Please wait before requesting another." };
+    return {
+      allowed: false,
+      error:
+        "Too many code requests for this email address. Please wait before requesting another.",
+    };
   }
 
   return { allowed: true };
@@ -48,7 +64,11 @@ export function checkOtpResendCooldown(email: string, now = new Date()) {
 
   if (entry && entry.resetAt > nowMs) {
     const retryAfter = Math.ceil((entry.resetAt - nowMs) / 1000);
-    return { allowed: false, retryAfterSeconds: retryAfter, error: `Please wait ${retryAfter}s before requesting a new code.` };
+    return {
+      allowed: false,
+      retryAfterSeconds: retryAfter,
+      error: `Please wait ${retryAfter}s before requesting a new code.`,
+    };
   }
 
   memoryStore.set(key, { count: 1, resetAt: nowMs + 60 * 1000 }); // 60s cooldown
@@ -56,13 +76,21 @@ export function checkOtpResendCooldown(email: string, now = new Date()) {
 }
 
 export function checkOtpVerifyRateLimit(challengeId: string, now = new Date()) {
-  const policy: RateLimit = { dimension: "endpoint", window: "minute", limit: 5 };
+  const policy: RateLimit = {
+    dimension: "endpoint",
+    window: "minute",
+    limit: 5,
+  };
   const key = `auth:otp:verify:${challengeId}`;
   const count = getMemoryCount(key, 900, now); // 15 minute challenge window
 
   const decision = evaluateFixedWindow(count - 1, policy, now);
   if (!decision.allowed) {
-    return { allowed: false, error: "Maximum verification attempts exceeded for this code. Please request a new code." };
+    return {
+      allowed: false,
+      error:
+        "Maximum verification attempts exceeded for this code. Please request a new code.",
+    };
   }
 
   return { allowed: true };

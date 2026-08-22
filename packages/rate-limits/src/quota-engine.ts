@@ -36,10 +36,13 @@ export interface QuotaEngineOptions {
 }
 
 export interface CustomerQuotaRequest {
-  apiKey?: {
-    id: string;
-    rateLimits?: readonly { window: string; requestLimit: number }[] | undefined;
-  } | undefined;
+  apiKey?:
+    | {
+        id: string;
+        rateLimits?:
+          readonly { window: string; requestLimit: number }[] | undefined;
+      }
+    | undefined;
   organizationId: string;
   workspaceId: string;
   estimatedTokens: TokenEstimate;
@@ -64,7 +67,7 @@ export class QuotaEngine {
   constructor(
     public readonly counterStore: IRuntimeCounterStore,
     public readonly policyRepo: IQuotaPolicyRepository,
-    private readonly options: QuotaEngineOptions = {}
+    private readonly options: QuotaEngineOptions = {},
   ) {
     this.leaseTtlSec = options.concurrencyLeaseTtlSeconds ?? 120; // 2 minute safety TTL
   }
@@ -74,16 +77,26 @@ export class QuotaEngine {
    * and atomically reserves capacity across all scopes before routing or provider calls.
    */
   async evaluateAndReserveCustomerQuota(
-    request: CustomerQuotaRequest
+    request: CustomerQuotaRequest,
   ): Promise<{ decision: QuotaDecision; reservation?: QuotaReservation }> {
     const now = request.now ?? new Date();
-    const requestId = request.requestId ?? `req_${randomUUID().replace(/-/g, "")}`;
+    const requestId =
+      request.requestId ?? `req_${randomUUID().replace(/-/g, "")}`;
     const reservationId = `qres_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
 
     // 1. Gather all applicable limits across scopes
-    const globalLimits = await this.policyRepo.getLimitsForScope("global", "global");
-    const orgLimits = await this.policyRepo.getLimitsForScope("organization", request.organizationId);
-    const wsLimits = await this.policyRepo.getLimitsForScope("workspace", request.workspaceId);
+    const globalLimits = await this.policyRepo.getLimitsForScope(
+      "global",
+      "global",
+    );
+    const orgLimits = await this.policyRepo.getLimitsForScope(
+      "organization",
+      request.organizationId,
+    );
+    const wsLimits = await this.policyRepo.getLimitsForScope(
+      "workspace",
+      request.workspaceId,
+    );
     const keyLimits = request.apiKey
       ? await this.policyRepo.getLimitsForScope("api_key", request.apiKey.id)
       : [];
@@ -96,7 +109,8 @@ export class QuotaEngine {
             scopeType: "api_key",
             scopeId: request.apiKey.id,
             dimension: "requests",
-            windowSeconds: rl.window === "hour" ? 3600 : rl.window === "day" ? 86400 : 60,
+            windowSeconds:
+              rl.window === "hour" ? 3600 : rl.window === "day" ? 86400 : 60,
             limit: rl.requestLimit,
             hard: true,
             enabled: true,
@@ -107,26 +121,47 @@ export class QuotaEngine {
     }
 
     // Apply defaults if no configured limit exists
-    const effectiveGlobal = this.mergeDefaults(globalLimits, "global", "global", {
-      rpm: this.options.globalLimits?.rpm ?? 50_000,
-      tpm: this.options.globalLimits?.tpm ?? 50_000_000,
-      concurrentRequests: this.options.globalLimits?.concurrentRequests ?? 5_000,
-      concurrentStreams: this.options.globalLimits?.concurrentStreams ?? 2_000,
-    });
+    const effectiveGlobal = this.mergeDefaults(
+      globalLimits,
+      "global",
+      "global",
+      {
+        rpm: this.options.globalLimits?.rpm ?? 50_000,
+        tpm: this.options.globalLimits?.tpm ?? 50_000_000,
+        concurrentRequests:
+          this.options.globalLimits?.concurrentRequests ?? 5_000,
+        concurrentStreams:
+          this.options.globalLimits?.concurrentStreams ?? 2_000,
+      },
+    );
 
-    const effectiveOrg = this.mergeDefaults(orgLimits, "organization", request.organizationId, {
-      rpm: this.options.defaultOrgLimits?.rpm ?? 2_000,
-      tpm: this.options.defaultOrgLimits?.tpm ?? 2_000_000,
-      concurrentRequests: this.options.defaultOrgLimits?.concurrentRequests ?? 100,
-      concurrentStreams: this.options.defaultOrgLimits?.concurrentStreams ?? 50,
-    });
+    const effectiveOrg = this.mergeDefaults(
+      orgLimits,
+      "organization",
+      request.organizationId,
+      {
+        rpm: this.options.defaultOrgLimits?.rpm ?? 2_000,
+        tpm: this.options.defaultOrgLimits?.tpm ?? 2_000_000,
+        concurrentRequests:
+          this.options.defaultOrgLimits?.concurrentRequests ?? 100,
+        concurrentStreams:
+          this.options.defaultOrgLimits?.concurrentStreams ?? 50,
+      },
+    );
 
-    const effectiveWs = this.mergeDefaults(wsLimits, "workspace", request.workspaceId, {
-      rpm: this.options.defaultWorkspaceLimits?.rpm ?? 1_000,
-      tpm: this.options.defaultWorkspaceLimits?.tpm ?? 1_000_000,
-      concurrentRequests: this.options.defaultWorkspaceLimits?.concurrentRequests ?? 50,
-      concurrentStreams: this.options.defaultWorkspaceLimits?.concurrentStreams ?? 25,
-    });
+    const effectiveWs = this.mergeDefaults(
+      wsLimits,
+      "workspace",
+      request.workspaceId,
+      {
+        rpm: this.options.defaultWorkspaceLimits?.rpm ?? 1_000,
+        tpm: this.options.defaultWorkspaceLimits?.tpm ?? 1_000_000,
+        concurrentRequests:
+          this.options.defaultWorkspaceLimits?.concurrentRequests ?? 50,
+        concurrentStreams:
+          this.options.defaultWorkspaceLimits?.concurrentStreams ?? 25,
+      },
+    );
 
     const allLimits: QuotaLimit[] = [
       ...effectiveGlobal,
@@ -146,7 +181,7 @@ export class QuotaEngine {
           concKey,
           limit.limit,
           this.leaseTtlSec,
-          now
+          now,
         );
         if (!res.acquired) {
           // Release any already acquired concurrency permits
@@ -155,14 +190,19 @@ export class QuotaEngine {
           }
 
           const denialCode: QuotaDenialCode =
-            limit.scopeType === "global" ? "global_overload" : "concurrency_limit_exceeded";
+            limit.scopeType === "global"
+              ? "global_overload"
+              : "concurrency_limit_exceeded";
 
           return {
             decision: {
               allowed: false,
               denialCode,
               reason: `Concurrency limit exceeded on ${limit.scopeType} (${res.current} >= ${limit.limit})`,
-              blockingScope: { scopeType: limit.scopeType, scopeId: limit.scopeId },
+              blockingScope: {
+                scopeType: limit.scopeType,
+                scopeId: limit.scopeId,
+              },
               blockingDimension: "concurrent_requests",
               limit: limit.limit,
               used: res.current,
@@ -174,13 +214,17 @@ export class QuotaEngine {
         concurrencyPermitIds.push({ key: concKey, permitId: res.permitId! });
       }
 
-      if (request.stream && limit.dimension === "concurrent_streams" && limit.limit > 0) {
+      if (
+        request.stream &&
+        limit.dimension === "concurrent_streams" &&
+        limit.limit > 0
+      ) {
         const streamKey = `concurrency:${limit.scopeType}:${limit.scopeId}:streams`;
         const res = await this.counterStore.acquireConcurrencyPermit(
           streamKey,
           limit.limit,
           this.leaseTtlSec,
-          now
+          now,
         );
         if (!res.acquired) {
           // Release all acquired
@@ -193,7 +237,10 @@ export class QuotaEngine {
               allowed: false,
               denialCode: "concurrency_limit_exceeded",
               reason: `Concurrent streams limit exceeded on ${limit.scopeType} (${res.current} >= ${limit.limit})`,
-              blockingScope: { scopeType: limit.scopeType, scopeId: limit.scopeId },
+              blockingScope: {
+                scopeType: limit.scopeType,
+                scopeId: limit.scopeId,
+              },
               blockingDimension: "concurrent_streams",
               limit: limit.limit,
               used: res.current,
@@ -234,7 +281,10 @@ export class QuotaEngine {
         });
       }
 
-      if (limit.dimension === "total_tokens" || limit.dimension === "input_tokens") {
+      if (
+        limit.dimension === "total_tokens" ||
+        limit.dimension === "input_tokens"
+      ) {
         const amount =
           limit.dimension === "total_tokens"
             ? request.estimatedTokens.totalEstimatedTokens
@@ -266,7 +316,7 @@ export class QuotaEngine {
     // 4. Atomically evaluate and reserve
     const atomicResult = await this.counterStore.checkAndReserveAtomic(
       atomicReservations,
-      now
+      now,
     );
 
     if (!atomicResult.allowed) {
@@ -280,13 +330,15 @@ export class QuotaEngine {
         blocking.scopeType === "global"
           ? "global_overload"
           : blocking.dimension === "requests"
-          ? "rate_limit_exceeded"
-          : "token_rate_limit_exceeded";
+            ? "rate_limit_exceeded"
+            : "token_rate_limit_exceeded";
 
       const headers: Record<string, string> = {
         "x-ratelimit-limit-requests": String(blocking.limit),
         "x-ratelimit-remaining-requests": String(atomicResult.remaining ?? 0),
-        "x-ratelimit-reset-requests": String(atomicResult.resetAt?.toISOString() ?? ""),
+        "x-ratelimit-reset-requests": String(
+          atomicResult.resetAt?.toISOString() ?? "",
+        ),
         "retry-after": String(atomicResult.retryAfterSeconds ?? 1),
       };
 
@@ -295,7 +347,10 @@ export class QuotaEngine {
           allowed: false,
           denialCode,
           reason: `${denialCode.replace(/_/g, " ")} on ${blocking.scopeType} (${atomicResult.used} + ${blocking.amount} > ${blocking.limit})`,
-          blockingScope: { scopeType: blocking.scopeType, scopeId: blocking.scopeId },
+          blockingScope: {
+            scopeType: blocking.scopeType,
+            scopeId: blocking.scopeId,
+          },
           blockingDimension: blocking.dimension,
           limit: blocking.limit,
           used: atomicResult.used,
@@ -314,9 +369,15 @@ export class QuotaEngine {
       scopes: reservedScopes,
       reservedTokens: request.estimatedTokens.totalEstimatedTokens,
       reservedRequests: 1,
-      holdsConcurrency: concurrencyPermitIds.some((p) => p.key.includes(":requests")),
-      holdsStreamConcurrency: concurrencyPermitIds.some((p) => p.key.includes(":streams")),
-      concurrencyKeys: concurrencyPermitIds.map((p) => `${p.key}:${p.permitId}`),
+      holdsConcurrency: concurrencyPermitIds.some((p) =>
+        p.key.includes(":requests"),
+      ),
+      holdsStreamConcurrency: concurrencyPermitIds.some((p) =>
+        p.key.includes(":streams"),
+      ),
+      concurrencyKeys: concurrencyPermitIds.map(
+        (p) => `${p.key}:${p.permitId}`,
+      ),
       expiresAt: new Date(now.getTime() + this.leaseTtlSec * 1000),
       status: "active",
       createdAt: now,
@@ -343,15 +404,22 @@ export class QuotaEngine {
    * Evaluates and reserves capacity for an individual provider attempt (attempt 1, retry, fallback).
    */
   async evaluateAndReserveProviderAttempt(
-    request: ProviderAttemptQuotaRequest
+    request: ProviderAttemptQuotaRequest,
   ): Promise<{ decision: QuotaDecision; reservation?: QuotaReservation }> {
     const now = request.now ?? new Date();
-    const requestId = request.requestId ?? `attempt_${randomUUID().slice(0, 12)}`;
+    const requestId =
+      request.requestId ?? `attempt_${randomUUID().slice(0, 12)}`;
     const reservationId = `pres_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
 
     // 1. Fetch Route & Provider Limits
-    const routeLimits = await this.policyRepo.getLimitsForScope("provider_route", request.routeId);
-    const provLimits = await this.policyRepo.getLimitsForScope("provider", request.providerId);
+    const routeLimits = await this.policyRepo.getLimitsForScope(
+      "provider_route",
+      request.routeId,
+    );
+    const provLimits = await this.policyRepo.getLimitsForScope(
+      "provider",
+      request.providerId,
+    );
 
     const effectiveRouteLimits = this.mergeDefaults(
       routeLimits,
@@ -362,7 +430,7 @@ export class QuotaEngine {
         tpm: 1_000_000,
         concurrentRequests: 50,
         concurrentStreams: 25,
-      }
+      },
     );
 
     const allLimits = [...effectiveRouteLimits, ...provLimits];
@@ -377,7 +445,7 @@ export class QuotaEngine {
           concKey,
           limit.limit,
           this.leaseTtlSec,
-          now
+          now,
         );
         if (!res.acquired) {
           for (const p of concurrencyPermitIds) {
@@ -388,7 +456,10 @@ export class QuotaEngine {
               allowed: false,
               denialCode: "provider_capacity_exhausted",
               reason: `Provider route concurrency limit reached (${res.current} >= ${limit.limit})`,
-              blockingScope: { scopeType: limit.scopeType, scopeId: limit.scopeId },
+              blockingScope: {
+                scopeType: limit.scopeType,
+                scopeId: limit.scopeId,
+              },
               blockingDimension: "concurrent_requests",
               limit: limit.limit,
               used: res.current,
@@ -455,7 +526,7 @@ export class QuotaEngine {
 
     const atomicResult = await this.counterStore.checkAndReserveAtomic(
       atomicReservations,
-      now
+      now,
     );
 
     if (!atomicResult.allowed) {
@@ -468,7 +539,10 @@ export class QuotaEngine {
           denialCode: "provider_capacity_exhausted",
           reason: `Provider route rate or token limit exhausted`,
           blockingScope: atomicResult.blockingRequest
-            ? { scopeType: atomicResult.blockingRequest.scopeType, scopeId: atomicResult.blockingRequest.scopeId }
+            ? {
+                scopeType: atomicResult.blockingRequest.scopeType,
+                scopeId: atomicResult.blockingRequest.scopeId,
+              }
             : undefined,
           blockingDimension: atomicResult.blockingRequest?.dimension,
           limit: atomicResult.blockingRequest?.limit,
@@ -486,7 +560,9 @@ export class QuotaEngine {
       reservedRequests: 1,
       holdsConcurrency: concurrencyPermitIds.length > 0,
       holdsStreamConcurrency: false,
-      concurrencyKeys: concurrencyPermitIds.map((p) => `${p.key}:${p.permitId}`),
+      concurrencyKeys: concurrencyPermitIds.map(
+        (p) => `${p.key}:${p.permitId}`,
+      ),
       expiresAt: new Date(now.getTime() + this.leaseTtlSec * 1000),
       status: "active",
       createdAt: now,
@@ -507,15 +583,22 @@ export class QuotaEngine {
    */
   async finalizeReservation(
     reservation: QuotaReservation,
-    actualTokens?: { inputTokens: number; outputTokens: number; totalTokens: number },
-    now = new Date()
+    actualTokens?: {
+      inputTokens: number;
+      outputTokens: number;
+      totalTokens: number;
+    },
+    now = new Date(),
   ): Promise<void> {
     if (reservation.status !== "active") return;
 
     // 1. Reconcile tokens if actual usage is reported
     if (actualTokens) {
       for (const scope of reservation.scopes) {
-        if (scope.dimension === "total_tokens" || scope.dimension === "input_tokens") {
+        if (
+          scope.dimension === "total_tokens" ||
+          scope.dimension === "input_tokens"
+        ) {
           const actual =
             scope.dimension === "total_tokens"
               ? actualTokens.totalTokens
@@ -526,7 +609,7 @@ export class QuotaEngine {
             scope.windowSeconds,
             scope.reservedAmount,
             actual,
-            now
+            now,
           );
         }
       }
@@ -548,7 +631,7 @@ export class QuotaEngine {
    */
   async cancelReservation(
     reservation: QuotaReservation,
-    now = new Date()
+    now = new Date(),
   ): Promise<void> {
     if (reservation.status !== "active") return;
 
@@ -570,7 +653,7 @@ export class QuotaEngine {
   async heartbeatLease(
     reservation: QuotaReservation,
     ttlSeconds = this.leaseTtlSec,
-    now = new Date()
+    now = new Date(),
   ): Promise<boolean> {
     if (reservation.status !== "active") return false;
 
@@ -583,7 +666,7 @@ export class QuotaEngine {
         key,
         permitId,
         ttlSeconds,
-        now
+        now,
       );
       if (!renewed) allRenewed = false;
     }
@@ -603,7 +686,7 @@ export class QuotaEngine {
       tpm: number;
       concurrentRequests: number;
       concurrentStreams: number;
-    }
+    },
   ): QuotaLimit[] {
     const list = [...existing];
     if (!list.some((l) => l.dimension === "requests")) {

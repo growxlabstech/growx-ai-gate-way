@@ -1,10 +1,20 @@
 import { createServer, type Server } from "node:http";
-import { loadEnvironment, assertProductionEnvironment } from "@growx/configuration";
+import {
+  loadEnvironment,
+  assertProductionEnvironment,
+} from "@growx/configuration";
 import { createDatabase, schema } from "@growx/database";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { ApiKeyService } from "./application/api-key-service.js";
-import { DrizzleApiKeyRepository, InMemoryApiKeyRepository, type ApiKeyRepository } from "./infrastructure/database-repository.js";
-import { InMemoryLifecycleEvents, type LifecycleEvents } from "./infrastructure/events.js";
+import {
+  DrizzleApiKeyRepository,
+  InMemoryApiKeyRepository,
+  type ApiKeyRepository,
+} from "./infrastructure/database-repository.js";
+import {
+  InMemoryLifecycleEvents,
+  type LifecycleEvents,
+} from "./infrastructure/events.js";
 import { createHttpHandler } from "./transport/http-routes.js";
 import {
   DrizzleManagementAuthResolver,
@@ -36,7 +46,9 @@ export function createApiKeyApplication(options?: {
   // Validate explicitly supplied pepper first
   if (options?.pepper !== undefined) {
     if (!options.pepper || Buffer.byteLength(options.pepper) < 32) {
-      throw new Error("API_KEY_PEPPER is mandatory and must contain at least 32 bytes");
+      throw new Error(
+        "API_KEY_PEPPER is mandatory and must contain at least 32 bytes",
+      );
     }
   }
 
@@ -45,7 +57,9 @@ export function createApiKeyApplication(options?: {
     envConfig = loadEnvironment();
   } catch (err) {
     if (isProduction && !options?.repository && !options?.db) {
-      throw new Error(`Production configuration failure: ${err instanceof Error ? err.message : "Invalid environment"}`);
+      throw new Error(
+        `Production configuration failure: ${err instanceof Error ? err.message : "Invalid environment"}`,
+      );
     }
   }
 
@@ -53,36 +67,51 @@ export function createApiKeyApplication(options?: {
   const pepper = options?.pepper ?? envConfig?.API_KEY_PEPPER;
   if (!pepper || Buffer.byteLength(pepper) < 32) {
     if (isProduction || !options) {
-      throw new Error("API_KEY_PEPPER is mandatory and must contain at least 32 bytes");
+      throw new Error(
+        "API_KEY_PEPPER is mandatory and must contain at least 32 bytes",
+      );
     }
   }
-  const effectivePepper = pepper ?? "growx-secret-pepper-32-bytes-long-string!!";
+  const effectivePepper =
+    pepper ?? "growx-secret-pepper-32-bytes-long-string!!";
 
   // 2. Resolve Database & Repository
   let repository: ApiKeyRepository;
-  let managementAuth: ManagementAuthResolver | undefined = options?.managementAuth;
+  let managementAuth: ManagementAuthResolver | undefined =
+    options?.managementAuth;
 
   if (options?.repository) {
     repository = options.repository;
   } else if (options?.db) {
     repository = new DrizzleApiKeyRepository(options.db);
     if (!managementAuth) {
-      const sessionPepper = options?.sessionPepper ?? envConfig?.BETTER_AUTH_SECRET ?? envConfig?.SERVICE_AUTH_SECRET ?? "growx-session-secret-32-bytes-long!!";
-      managementAuth = new DrizzleManagementAuthResolver(options.db, sessionPepper);
+      const sessionPepper =
+        options?.sessionPepper ??
+        envConfig?.BETTER_AUTH_SECRET ??
+        envConfig?.SERVICE_AUTH_SECRET ??
+        "growx-session-secret-32-bytes-long!!";
+      managementAuth = new DrizzleManagementAuthResolver(
+        options.db,
+        sessionPepper,
+      );
     }
   } else if (envConfig?.DATABASE_URL && !isProduction) {
     try {
-      const db = createDatabase(envConfig.DATABASE_URL).db as unknown as PostgresJsDatabase<typeof schema>;
+      const db = createDatabase(envConfig.DATABASE_URL)
+        .db as unknown as PostgresJsDatabase<typeof schema>;
       repository = new DrizzleApiKeyRepository(db);
       if (!managementAuth) {
-        const sessionPepper = envConfig.BETTER_AUTH_SECRET ?? envConfig.SERVICE_AUTH_SECRET;
+        const sessionPepper =
+          envConfig.BETTER_AUTH_SECRET ?? envConfig.SERVICE_AUTH_SECRET;
         managementAuth = new DrizzleManagementAuthResolver(db, sessionPepper);
       }
     } catch {
       repository = new InMemoryApiKeyRepository();
     }
   } else if (isProduction) {
-    throw new Error("Production API Key Service requires a valid database connection (DATABASE_URL)");
+    throw new Error(
+      "Production API Key Service requires a valid database connection (DATABASE_URL)",
+    );
   } else {
     repository = new InMemoryApiKeyRepository();
   }
@@ -91,7 +120,8 @@ export function createApiKeyApplication(options?: {
 
   const service = new ApiKeyService(repository, events, {
     pepper: effectivePepper,
-    maxActiveKeysPerWorkspace: envConfig?.API_KEY_MAX_ACTIVE_PER_WORKSPACE ?? 50,
+    maxActiveKeysPerWorkspace:
+      envConfig?.API_KEY_MAX_ACTIVE_PER_WORKSPACE ?? 50,
     defaultExpiryDays: envConfig?.API_KEY_DEFAULT_EXPIRY_DAYS ?? 365,
     maxExpiryDays: envConfig?.API_KEY_MAX_EXPIRY_DAYS ?? 730,
   });
@@ -105,7 +135,8 @@ export function createApp() {
   if (isProduction) {
     const env = loadEnvironment();
     assertProductionEnvironment(env);
-    const db = createDatabase(env.DATABASE_URL).db as unknown as PostgresJsDatabase<typeof schema>;
+    const db = createDatabase(env.DATABASE_URL)
+      .db as unknown as PostgresJsDatabase<typeof schema>;
     const app = createApiKeyApplication({
       db,
       pepper: env.API_KEY_PEPPER,

@@ -19,6 +19,7 @@ Runtime topology consists of Vercel-hosted web apps plus containerized services/
 ## Phase 6 commercial plane
 
 The gateway performs only pricing lookup and atomic credit reservation synchronously. Immutable usage is settled asynchronously into exact provider cost, customer charge, grant consumption, and balanced ledger postings. Payment providers are isolated behind Payment Service adapters and verified webhooks. PostgreSQL remains financial truth; cached wallet balances and analytics are projections that reconciliation can rebuild or challenge. See `PRICING_AND_BILLING.md` for invariants and the current release boundary.
+
 # Identity compatibility boundary
 
 The identity stack remains TypeScript, Better Auth, Drizzle, and PostgreSQL. `GrowXBetterAuthAdapter` is the sole translation boundary between Better Auth logical models and GrowX physical tables. Better Auth owns email-OTP verification records in `verifications`; GrowX invitation and password-reset verification records remain separate flows in `verification_tokens`.

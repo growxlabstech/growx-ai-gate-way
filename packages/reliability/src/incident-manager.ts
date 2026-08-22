@@ -1,4 +1,8 @@
-import type { PlatformIncident, IncidentSeverity, IncidentStatus } from "@growx/contracts";
+import type {
+  PlatformIncident,
+  IncidentSeverity,
+  IncidentStatus,
+} from "@growx/contracts";
 import { generateId } from "@growx/ids";
 
 export class PlatformIncidentManager {
@@ -27,7 +31,7 @@ export class PlatformIncidentManager {
   public updateStatus(
     id: string,
     status: IncidentStatus,
-    extraMitigation?: string
+    extraMitigation?: string,
   ): PlatformIncident {
     const inc = this.incidents.get(id);
     if (!inc) throw new Error(`Incident '${id}' not found`);

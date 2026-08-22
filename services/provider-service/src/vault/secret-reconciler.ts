@@ -12,12 +12,16 @@ export interface ReconciliationReport {
 export class SecretReconciliationWorker {
   constructor(
     private readonly repository: IProviderRepository,
-    private readonly secretProvider: SecretProvider
+    private readonly secretProvider: SecretProvider,
   ) {}
 
   public async reconcile(): Promise<ReconciliationReport> {
-    const missingVaultSecrets: Array<{ versionId: string; secretReference: string }> = [];
-    const versions = await this.repository.listAllCredentialVersions?.() || [];
+    const missingVaultSecrets: Array<{
+      versionId: string;
+      secretReference: string;
+    }> = [];
+    const versions =
+      (await this.repository.listAllCredentialVersions?.()) || [];
 
     let scannedCount = 0;
     let healthyCount = 0;

@@ -18,7 +18,10 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
     counterStore = new InMemoryCounterStore();
     policyRepo = new InMemoryQuotaPolicyRepository();
     tokenEstimator = new TokenEstimator();
-    capacitySignalProvider = new RouteCapacitySignalProvider(counterStore, policyRepo);
+    capacitySignalProvider = new RouteCapacitySignalProvider(
+      counterStore,
+      policyRepo,
+    );
 
     quotaEngine = new QuotaEngine(counterStore, policyRepo, {
       globalLimits: {
@@ -48,13 +51,20 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
       const estimate = tokenEstimator.estimate({
         messages: [
           { role: "user", content: "Hello world, what is quantum computing?" },
-          { role: "assistant", content: "Quantum computing is a field of computer science..." },
+          {
+            role: "assistant",
+            content: "Quantum computing is a field of computer science...",
+          },
         ],
         system: "You are a helpful assistant.",
         tools: [
           {
             type: "function",
-            function: { name: "get_weather", description: "Get weather in city", parameters: {} },
+            function: {
+              name: "get_weather",
+              description: "Get weather in city",
+              parameters: {},
+            },
           },
         ],
         max_tokens: 256,
@@ -71,7 +81,7 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         {
           messages: [{ role: "user", content: "Hi" }],
         },
-        { maxOutputTokens: 4096 }
+        { maxOutputTokens: 4096 },
       );
 
       expect(estimate.estimatedOutputReservation).toBe(1024); // min(1024, 4096 * 0.25)
@@ -91,7 +101,9 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         enabled: true,
       });
 
-      const estimate = tokenEstimator.estimate({ messages: [{ role: "user", content: "Hi" }] });
+      const estimate = tokenEstimator.estimate({
+        messages: [{ role: "user", content: "Hi" }],
+      });
 
       // Request 1: Allowed
       const r1 = await quotaEngine.evaluateAndReserveCustomerQuota({
@@ -135,7 +147,9 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         enabled: true,
       });
 
-      const estimate = tokenEstimator.estimate({ messages: [{ role: "user", content: "Hi" }] });
+      const estimate = tokenEstimator.estimate({
+        messages: [{ role: "user", content: "Hi" }],
+      });
 
       // Key 1 makes 2 requests
       await quotaEngine.evaluateAndReserveCustomerQuota({
@@ -190,11 +204,12 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
       }); // ~605 tokens
 
       // Reserve 605 tokens
-      const { decision, reservation } = await quotaEngine.evaluateAndReserveCustomerQuota({
-        organizationId: "org_1",
-        workspaceId: "ws_tokens",
-        estimatedTokens: estimate,
-      });
+      const { decision, reservation } =
+        await quotaEngine.evaluateAndReserveCustomerQuota({
+          organizationId: "org_1",
+          workspaceId: "ws_tokens",
+          estimatedTokens: estimate,
+        });
       expect(decision.allowed).toBe(true);
       expect(reservation).toBeDefined();
 
@@ -244,7 +259,9 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         enabled: true,
       });
 
-      const estimate = tokenEstimator.estimate({ messages: [{ role: "user", content: "Hi" }] });
+      const estimate = tokenEstimator.estimate({
+        messages: [{ role: "user", content: "Hi" }],
+      });
 
       // Request 1: Succeeds
       await quotaEngine.evaluateAndReserveCustomerQuota({
@@ -267,7 +284,9 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
       const metrics = await counterStore.getCapacityMetrics([
         "ratelimit:api_key:key_rollback:requests:60",
       ]);
-      expect(metrics["ratelimit:api_key:key_rollback:requests:60"]?.used).toBe(1);
+      expect(metrics["ratelimit:api_key:key_rollback:requests:60"]?.used).toBe(
+        1,
+      );
     });
 
     it("enforces concurrent request and stream limits and releases on finalize", async () => {
@@ -281,7 +300,9 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         enabled: true,
       });
 
-      const estimate = tokenEstimator.estimate({ messages: [{ role: "user", content: "Hi" }] });
+      const estimate = tokenEstimator.estimate({
+        messages: [{ role: "user", content: "Hi" }],
+      });
 
       const req1 = await quotaEngine.evaluateAndReserveCustomerQuota({
         organizationId: "org_1",
@@ -331,12 +352,14 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
         enabled: true,
       });
 
-      const estimate = tokenEstimator.estimate({ messages: [{ role: "user", content: "Hi" }] });
+      const estimate = tokenEstimator.estimate({
+        messages: [{ role: "user", content: "Hi" }],
+      });
 
       // Signal before any attempts
       const signal0 = await capacitySignalProvider.getCapacitySignal(
         "route_openai_gpt4",
-        "openai"
+        "openai",
       );
       expect(signal0.headroom).toBe(1.0);
       expect(signal0.state).toBe("available");
@@ -354,7 +377,7 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
       // Signal at 80% saturation -> near_limit / busy
       const signal1 = await capacitySignalProvider.getCapacitySignal(
         "route_openai_gpt4",
-        "openai"
+        "openai",
       );
       expect(signal1.saturation).toBe(0.8);
       expect(signal1.state).toBe("busy");
@@ -371,7 +394,7 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
 
       const signal2 = await capacitySignalProvider.getCapacitySignal(
         "route_openai_gpt4",
-        "openai"
+        "openai",
       );
       expect(signal2.state).toBe("exhausted");
       expect(signal2.headroom).toBe(0);
@@ -397,7 +420,7 @@ describe("Phase 11 — Capacity & Quota Engine Tests", () => {
 
       const signal = await capacitySignalProvider.getCapacitySignal(
         "route_anthropic_claude",
-        "anthropic"
+        "anthropic",
       );
       expect(signal.state).toBe("exhausted");
       expect(signal.headroom).toBe(0);

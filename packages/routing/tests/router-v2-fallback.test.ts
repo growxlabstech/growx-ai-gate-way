@@ -11,7 +11,12 @@ describe("Router V2 - Fallback Plan & Failure Domain Isolation", () => {
       region: "us-east-1",
       rank: 1,
       eligible: true,
-      failureDomain: { routeId: "r1", providerId: "openai", region: "us-east-1", credentialId: "cred_1" },
+      failureDomain: {
+        routeId: "r1",
+        providerId: "openai",
+        region: "us-east-1",
+        credentialId: "cred_1",
+      },
     },
     {
       routeId: "r2",
@@ -20,7 +25,12 @@ describe("Router V2 - Fallback Plan & Failure Domain Isolation", () => {
       region: "us-east-1",
       rank: 2,
       eligible: true,
-      failureDomain: { routeId: "r2", providerId: "openai", region: "us-east-1", credentialId: "cred_1" },
+      failureDomain: {
+        routeId: "r2",
+        providerId: "openai",
+        region: "us-east-1",
+        credentialId: "cred_1",
+      },
     },
     {
       routeId: "r3",
@@ -29,7 +39,12 @@ describe("Router V2 - Fallback Plan & Failure Domain Isolation", () => {
       region: "us-east-1",
       rank: 3,
       eligible: true,
-      failureDomain: { routeId: "r3", providerId: "anthropic", region: "us-east-1", credentialId: "cred_2" },
+      failureDomain: {
+        routeId: "r3",
+        providerId: "anthropic",
+        region: "us-east-1",
+        credentialId: "cred_2",
+      },
     },
   ];
 

@@ -9,7 +9,7 @@ export class ProviderOperationCallbackHandler {
 
   constructor(
     private repository: IProviderOperationRepository,
-    private finalizer?: ProviderOperationFinalizer
+    private finalizer?: ProviderOperationFinalizer,
   ) {}
 
   public registerAdapter(adapter: ProviderOperationAdapter): void {
@@ -20,13 +20,16 @@ export class ProviderOperationCallbackHandler {
     providerId: string,
     payload: Record<string, unknown>,
     headers: Record<string, string>,
-    expectedSecret?: string
+    expectedSecret?: string,
   ): Promise<{ handled: boolean; operationId?: string; status?: string }> {
     // Optional secret verification
     if (expectedSecret) {
-      const authHeader = headers["authorization"] || headers["x-provider-signature"];
+      const authHeader =
+        headers["authorization"] || headers["x-provider-signature"];
       if (!authHeader || !authHeader.includes(expectedSecret)) {
-        throw new CallbackAuthError("Invalid or missing callback signature header");
+        throw new CallbackAuthError(
+          "Invalid or missing callback signature header",
+        );
       }
     }
 
@@ -36,7 +39,10 @@ export class ProviderOperationCallbackHandler {
     }
 
     const parsed = adapter.parseCallback(payload, headers);
-    const op = await this.repository.getByProviderOperationId(providerId, parsed.providerOperationId);
+    const op = await this.repository.getByProviderOperationId(
+      providerId,
+      parsed.providerOperationId,
+    );
     if (!op) {
       return { handled: false };
     }
@@ -47,7 +53,10 @@ export class ProviderOperationCallbackHandler {
     }
 
     if (parsed.status === "completed") {
-      ProviderOperationStateMachine.assertCanTransition(op.status, "finalizing");
+      ProviderOperationStateMachine.assertCanTransition(
+        op.status,
+        "finalizing",
+      );
       await this.repository.update(op.id, {
         status: "finalizing",
         resultReference: parsed.resultReference || op.resultReference,
@@ -65,7 +74,9 @@ export class ProviderOperationCallbackHandler {
         failedAt: new Date(),
       });
     } else {
-      if (ProviderOperationStateMachine.canTransition(op.status, parsed.status)) {
+      if (
+        ProviderOperationStateMachine.canTransition(op.status, parsed.status)
+      ) {
         await this.repository.update(op.id, { status: parsed.status });
       }
     }

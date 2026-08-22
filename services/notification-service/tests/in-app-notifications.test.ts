@@ -46,7 +46,10 @@ describe("Phase 23 — In-App Notifications & User Scope Isolation", () => {
     expect(userBNotifs[0]!.body).toContain("50.00");
 
     // User B cannot mark User A's notification as read
-    const crossUserRead = await repository.markInAppRead("usr_B", userANotifs[0]!.id);
+    const crossUserRead = await repository.markInAppRead(
+      "usr_B",
+      userANotifs[0]!.id,
+    );
     expect(crossUserRead).toBeUndefined();
   });
 

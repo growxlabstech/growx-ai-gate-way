@@ -26,7 +26,12 @@ import {
 import type { PricingRepository } from "../infrastructure/pricing-repository.js";
 
 export interface OutboxEventEmitter {
-  emit(topic: string, payload: Record<string, unknown>, orgId?: string, wsId?: string): Promise<void>;
+  emit(
+    topic: string,
+    payload: Record<string, unknown>,
+    orgId?: string,
+    wsId?: string,
+  ): Promise<void>;
 }
 
 export interface PricingServiceOptions {
@@ -96,14 +101,20 @@ export class PricingService {
     this.outbox = options.outbox;
 
     this.providerPriceResolver = new ProviderPriceResolver();
-    this.providerCostCalculator = new ProviderCostCalculator(this.providerPriceResolver);
-    this.providerCostEstimator = new ProviderCostEstimator(this.providerPriceResolver);
+    this.providerCostCalculator = new ProviderCostCalculator(
+      this.providerPriceResolver,
+    );
+    this.providerCostEstimator = new ProviderCostEstimator(
+      this.providerPriceResolver,
+    );
 
     this.customerPricingResolver = new CustomerPricingResolver();
-    this.customerPriceCalculator = new CustomerPriceCalculator(this.customerPricingResolver);
+    this.customerPriceCalculator = new CustomerPriceCalculator(
+      this.customerPricingResolver,
+    );
     this.reconciliationEngine = new PriceReconciliationEngine(
       this.providerCostCalculator,
-      this.customerPriceCalculator
+      this.customerPriceCalculator,
     );
     this.scheduleCache = new PriceScheduleCache({ ttlMs: options.cacheTtlMs });
   }
@@ -124,13 +135,17 @@ export class PricingService {
    * Initializes resolvers from repository data.
    */
   public async initialize(): Promise<void> {
-    const providerSchedules = await this.repository.listProviderSchedules({ status: "active" });
+    const providerSchedules = await this.repository.listProviderSchedules({
+      status: "active",
+    });
     for (const sched of providerSchedules) {
       this.providerPriceResolver.addSchedule(sched);
       this.scheduleCache.setProviderSchedule(sched.schedule.id, sched);
     }
 
-    const customerPolicies = await this.repository.listCustomerPolicies({ status: "active" });
+    const customerPolicies = await this.repository.listCustomerPolicies({
+      status: "active",
+    });
     for (const pol of customerPolicies) {
       this.customerPricingResolver.addPolicy(pol);
       this.scheduleCache.setCustomerPolicy(pol.policy.id, pol);
@@ -151,7 +166,8 @@ export class PricingService {
     currency?: Currency | undefined;
     effectiveFrom?: Date | undefined;
     effectiveTo?: Date | null | undefined;
-    source?: "manual" | "provider_api" | "contract" | "import" | "sync" | undefined;
+    source?:
+      "manual" | "provider_api" | "contract" | "import" | "sync" | undefined;
     sourceReference?: string | undefined;
     rates: Array<{
       usageType: UsageType;
@@ -190,7 +206,9 @@ export class PricingService {
         unit: (r.unit ?? "token") as any,
         price: Decimal.from(r.price),
         perUnits: BigInt(r.perUnits ?? 1_000_000n),
-        minimumCharge: r.minimumCharge ? Decimal.from(r.minimumCharge) : undefined,
+        minimumCharge: r.minimumCharge
+          ? Decimal.from(r.minimumCharge)
+          : undefined,
         createdAt: now,
       })),
     };
@@ -211,15 +229,22 @@ export class PricingService {
     return schedule;
   }
 
-  public async getProviderSchedule(id: string): Promise<ProviderScheduleWithRates | undefined> {
+  public async getProviderSchedule(
+    id: string,
+  ): Promise<ProviderScheduleWithRates | undefined> {
     return this.repository.getProviderSchedule(id);
   }
 
-  public async listProviderSchedules(filter?: { providerId?: string; status?: string }): Promise<ProviderScheduleWithRates[]> {
+  public async listProviderSchedules(filter?: {
+    providerId?: string;
+    status?: string;
+  }): Promise<ProviderScheduleWithRates[]> {
     return this.repository.listProviderSchedules(filter);
   }
 
-  public async retireProviderSchedule(id: string): Promise<ProviderScheduleWithRates> {
+  public async retireProviderSchedule(
+    id: string,
+  ): Promise<ProviderScheduleWithRates> {
     const existing = await this.repository.getProviderSchedule(id);
     if (!existing) {
       throw new Error(`Provider price schedule ${id} not found`);
@@ -253,24 +278,33 @@ export class PricingService {
     scopeType?: "global" | "organization" | "workspace" | "plan" | undefined;
     scopeId?: string | undefined;
     currency?: Currency | undefined;
-    pricingModel?: "fixed_model_rate" | "markup_over_provider_cost" | "usage_rate" | "hybrid" | undefined;
-    cachePricingMode?: "normal" | "discount_percentage" | "separate_rate" | "free" | undefined;
+    pricingModel?:
+      | "fixed_model_rate"
+      | "markup_over_provider_cost"
+      | "usage_rate"
+      | "hybrid"
+      | undefined;
+    cachePricingMode?:
+      "normal" | "discount_percentage" | "separate_rate" | "free" | undefined;
     cacheDiscountPercentage?: string | number | Decimal | undefined;
-    retryOverheadPolicy?: "absorbed_by_growx" | "passed_through" | "partially_passed" | undefined;
+    retryOverheadPolicy?:
+      "absorbed_by_growx" | "passed_through" | "partially_passed" | undefined;
     markupBasisPoints?: bigint | number | undefined;
     markupMultiplier?: string | number | Decimal | undefined;
     fixedFee?: string | number | Decimal | undefined;
     minimumMarginBasisPoints?: bigint | number | undefined;
-    rateSchedules?: Array<{
-      canonicalModelId?: string | undefined;
-      operation?: string | undefined;
-      rates: Array<{
-        usageType: UsageType;
-        unit?: string | undefined;
-        price: string | number | Decimal;
-        perUnits?: number | bigint | undefined;
-      }>;
-    }> | undefined;
+    rateSchedules?:
+      | Array<{
+          canonicalModelId?: string | undefined;
+          operation?: string | undefined;
+          rates: Array<{
+            usageType: UsageType;
+            unit?: string | undefined;
+            price: string | number | Decimal;
+            perUnits?: number | bigint | undefined;
+          }>;
+        }>
+      | undefined;
   }): Promise<CustomerPolicyWithRates> {
     const policyId = generateId("cpol");
     const now = new Date();
@@ -286,12 +320,22 @@ export class PricingService {
         effectiveFrom: now,
         pricingModel: params.pricingModel ?? "fixed_model_rate",
         cachePricingMode: params.cachePricingMode ?? "discount_percentage",
-        cacheDiscountPercentage: params.cacheDiscountPercentage ? Decimal.from(params.cacheDiscountPercentage) : undefined,
+        cacheDiscountPercentage: params.cacheDiscountPercentage
+          ? Decimal.from(params.cacheDiscountPercentage)
+          : undefined,
         retryOverheadPolicy: params.retryOverheadPolicy ?? "absorbed_by_growx",
-        markupBasisPoints: params.markupBasisPoints !== undefined ? BigInt(params.markupBasisPoints) : undefined,
-        markupMultiplier: params.markupMultiplier ? Decimal.from(params.markupMultiplier) : undefined,
+        markupBasisPoints:
+          params.markupBasisPoints !== undefined
+            ? BigInt(params.markupBasisPoints)
+            : undefined,
+        markupMultiplier: params.markupMultiplier
+          ? Decimal.from(params.markupMultiplier)
+          : undefined,
         fixedFee: params.fixedFee ? Decimal.from(params.fixedFee) : undefined,
-        minimumMarginBasisPoints: params.minimumMarginBasisPoints !== undefined ? BigInt(params.minimumMarginBasisPoints) : undefined,
+        minimumMarginBasisPoints:
+          params.minimumMarginBasisPoints !== undefined
+            ? BigInt(params.minimumMarginBasisPoints)
+            : undefined,
         createdAt: now,
         updatedAt: now,
       },
@@ -338,11 +382,17 @@ export class PricingService {
     return policyWithRates;
   }
 
-  public async getCustomerPolicy(id: string): Promise<CustomerPolicyWithRates | undefined> {
+  public async getCustomerPolicy(
+    id: string,
+  ): Promise<CustomerPolicyWithRates | undefined> {
     return this.repository.getCustomerPolicy(id);
   }
 
-  public async listCustomerPolicies(filter?: { scopeType?: string; scopeId?: string; status?: string }): Promise<CustomerPolicyWithRates[]> {
+  public async listCustomerPolicies(filter?: {
+    scopeType?: string;
+    scopeId?: string;
+    status?: string;
+  }): Promise<CustomerPolicyWithRates[]> {
     return this.repository.listCustomerPolicies(filter);
   }
 
@@ -350,7 +400,9 @@ export class PricingService {
   // SIMULATION & ESTIMATION
   // =========================================================================
 
-  public async simulatePrice(request: PriceSimulationRequest): Promise<PriceSimulationResult> {
+  public async simulatePrice(
+    request: PriceSimulationRequest,
+  ): Promise<PriceSimulationResult> {
     const currency = request.currency ?? "USD";
 
     // 1. Estimate provider cost
@@ -367,31 +419,34 @@ export class PricingService {
         cachedInputTokens: request.cachedInputTokens,
         reasoningTokens: request.reasoningTokens,
       },
-      currency
+      currency,
     );
 
     const estimatedProviderCost = providerRouteCost ?? Decimal.ZERO;
 
     // 2. Estimate customer price
-    const customerPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-      requestId: "simulated_request",
-      organizationId: request.organizationId ?? "org_sim",
-      workspaceId: request.workspaceId ?? "ws_sim",
-      canonicalModelId: request.canonicalModelId,
-      logicalUsage: {
-        inputTokens: request.inputTokens,
-        outputTokens: request.outputTokens,
-        cachedInputTokens: request.cachedInputTokens,
-        reasoningTokens: request.reasoningTokens,
-      },
-      providerCost: estimatedProviderCost,
-      currency,
-    });
+    const customerPriceResult =
+      this.customerPriceCalculator.calculateRequestPrice({
+        requestId: "simulated_request",
+        organizationId: request.organizationId ?? "org_sim",
+        workspaceId: request.workspaceId ?? "ws_sim",
+        canonicalModelId: request.canonicalModelId,
+        logicalUsage: {
+          inputTokens: request.inputTokens,
+          outputTokens: request.outputTokens,
+          cachedInputTokens: request.cachedInputTokens,
+          reasoningTokens: request.reasoningTokens,
+        },
+        providerCost: estimatedProviderCost,
+        currency,
+      });
 
     return {
       estimatedProviderCost,
       estimatedCustomerPrice: customerPriceResult.subtotal,
-      estimatedGrossProfit: customerPriceResult.grossProfit ?? customerPriceResult.subtotal.sub(estimatedProviderCost),
+      estimatedGrossProfit:
+        customerPriceResult.grossProfit ??
+        customerPriceResult.subtotal.sub(estimatedProviderCost),
       estimatedGrossMargin: customerPriceResult.grossMargin ?? null,
       currency,
       costStatus: providerRouteCost ? "exact" : "unpriced",
@@ -405,20 +460,24 @@ export class PricingService {
   // AUTHORITATIVE REQUEST PRICING & PERSISTENCE
   // =========================================================================
 
-  public async priceRequest(params: PriceRequestParams): Promise<RequestPricingDetail> {
+  public async priceRequest(
+    params: PriceRequestParams,
+  ): Promise<RequestPricingDetail> {
     const currency = params.currency ?? "USD";
 
     // 1. Calculate Authoritative Provider Cost across all attempts
-    const providerCostResult = this.providerCostCalculator.calculateRequestCost({
-      requestId: params.requestId,
-      organizationId: params.organizationId,
-      workspaceId: params.workspaceId,
-      canonicalModelId: params.canonicalModelId,
-      attempts: params.attempts,
-      executionSource: params.executionSource,
-      currency,
-      targetDate: params.targetDate,
-    });
+    const providerCostResult = this.providerCostCalculator.calculateRequestCost(
+      {
+        requestId: params.requestId,
+        organizationId: params.organizationId,
+        workspaceId: params.workspaceId,
+        canonicalModelId: params.canonicalModelId,
+        attempts: params.attempts,
+        executionSource: params.executionSource,
+        currency,
+        targetDate: params.targetDate,
+      },
+    );
 
     const providerCostRecord: ProviderCostRecord = {
       id: generateId("costrec"),
@@ -442,26 +501,35 @@ export class PricingService {
       (acc, att) => ({
         inputTokens: BigInt(acc.inputTokens) + BigInt(att.usage.inputTokens),
         outputTokens: BigInt(acc.outputTokens) + BigInt(att.usage.outputTokens),
-        cachedInputTokens: BigInt(acc.cachedInputTokens) + BigInt(att.usage.cachedInputTokens ?? 0),
-        reasoningTokens: BigInt(acc.reasoningTokens) + BigInt(att.usage.reasoningTokens ?? 0),
+        cachedInputTokens:
+          BigInt(acc.cachedInputTokens) +
+          BigInt(att.usage.cachedInputTokens ?? 0),
+        reasoningTokens:
+          BigInt(acc.reasoningTokens) + BigInt(att.usage.reasoningTokens ?? 0),
       }),
-      { inputTokens: 0n, outputTokens: 0n, cachedInputTokens: 0n, reasoningTokens: 0n }
+      {
+        inputTokens: 0n,
+        outputTokens: 0n,
+        cachedInputTokens: 0n,
+        reasoningTokens: 0n,
+      },
     );
 
-    const customerPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-      requestId: params.requestId,
-      organizationId: params.organizationId,
-      workspaceId: params.workspaceId,
-      apiKeyId: params.apiKeyId,
-      canonicalModelId: params.canonicalModelId,
-      logicalUsage: params.logicalUsage,
-      totalProviderUsage,
-      providerCost: providerCostResult.subtotal,
-      executionSource: params.executionSource,
-      policyId: params.policyId,
-      currency,
-      targetDate: params.targetDate,
-    });
+    const customerPriceResult =
+      this.customerPriceCalculator.calculateRequestPrice({
+        requestId: params.requestId,
+        organizationId: params.organizationId,
+        workspaceId: params.workspaceId,
+        apiKeyId: params.apiKeyId,
+        canonicalModelId: params.canonicalModelId,
+        logicalUsage: params.logicalUsage,
+        totalProviderUsage,
+        providerCost: providerCostResult.subtotal,
+        executionSource: params.executionSource,
+        policyId: params.policyId,
+        currency,
+        targetDate: params.targetDate,
+      });
 
     const customerPriceRecord: CustomerPriceRecord = {
       id: generateId("prcrec"),
@@ -495,22 +563,35 @@ export class PricingService {
           executionSource: params.executionSource ?? "live_provider",
           providerCost: providerCostResult.subtotal.toString(),
           customerPrice: customerPriceResult.subtotal.toString(),
-          grossProfit: (customerPriceResult.grossProfit ?? Decimal.ZERO).toString(),
-          grossMargin: customerPriceResult.grossMargin ? customerPriceResult.grossMargin.toString() : null,
-          marginBasisPoints: customerPriceResult.marginBasisPoints !== null && customerPriceResult.marginBasisPoints !== undefined ? customerPriceResult.marginBasisPoints.toString() : null,
+          grossProfit: (
+            customerPriceResult.grossProfit ?? Decimal.ZERO
+          ).toString(),
+          grossMargin: customerPriceResult.grossMargin
+            ? customerPriceResult.grossMargin.toString()
+            : null,
+          marginBasisPoints:
+            customerPriceResult.marginBasisPoints !== null &&
+            customerPriceResult.marginBasisPoints !== undefined
+              ? customerPriceResult.marginBasisPoints.toString()
+              : null,
           currency,
           costStatus: providerCostResult.costStatus,
           pricingStatus: customerPriceResult.pricingStatus,
         },
         params.organizationId,
-        params.workspaceId
+        params.workspaceId,
       );
     }
 
     // Attempt breakdown
     const attemptCosts = params.attempts.map((att) => {
-      const attemptLines = providerCostResult.lines.filter((l) => l.attemptId === att.id);
-      const attemptCost = attemptLines.reduce((acc, l) => acc.add(l.amount), Decimal.ZERO);
+      const attemptLines = providerCostResult.lines.filter(
+        (l) => l.attemptId === att.id,
+      );
+      const attemptCost = attemptLines.reduce(
+        (acc, l) => acc.add(l.amount),
+        Decimal.ZERO,
+      );
       return {
         attemptId: att.id,
         attemptNumber: att.attemptNumber,
@@ -532,7 +613,9 @@ export class PricingService {
       executionSource: params.executionSource ?? "live_provider",
       providerCost: providerCostResult.subtotal,
       customerPrice: customerPriceResult.subtotal,
-      grossProfit: customerPriceResult.grossProfit ?? customerPriceResult.subtotal.sub(providerCostResult.subtotal),
+      grossProfit:
+        customerPriceResult.grossProfit ??
+        customerPriceResult.subtotal.sub(providerCostResult.subtotal),
       grossMargin: customerPriceResult.grossMargin ?? null,
       marginBasisPoints: customerPriceResult.marginBasisPoints ?? null,
       providerCostStatus: providerCostResult.costStatus,
@@ -540,12 +623,15 @@ export class PricingService {
       attemptCosts,
       retryProviderCost: providerCostResult.retryCost,
       fallbackProviderCost: providerCostResult.fallbackCost,
-      cacheAvoidedProviderCost: params.executionSource === "cache_exact" ? Decimal.ZERO : undefined,
+      cacheAvoidedProviderCost:
+        params.executionSource === "cache_exact" ? Decimal.ZERO : undefined,
       calculatedAt: new Date(),
     };
   }
 
-  public async getRequestPricing(requestId: string): Promise<RequestPricingDetail | undefined> {
+  public async getRequestPricing(
+    requestId: string,
+  ): Promise<RequestPricingDetail | undefined> {
     const costRecord = await this.repository.getProviderCostRecord(requestId);
     const priceRecord = await this.repository.getCustomerPriceRecord(requestId);
 
@@ -566,7 +652,8 @@ export class PricingService {
 
     return {
       requestId,
-      organizationId: costRecord?.organizationId ?? priceRecord?.organizationId ?? "",
+      organizationId:
+        costRecord?.organizationId ?? priceRecord?.organizationId ?? "",
       workspaceId: costRecord?.workspaceId ?? priceRecord?.workspaceId ?? "",
       apiKeyId: priceRecord?.apiKeyId,
       canonicalModelId: costRecord?.lines[0]?.canonicalModelId ?? "",
@@ -582,7 +669,8 @@ export class PricingService {
       attemptCosts: [],
       retryProviderCost: Decimal.ZERO,
       fallbackProviderCost: Decimal.ZERO,
-      calculatedAt: costRecord?.createdAt ?? priceRecord?.createdAt ?? new Date(),
+      calculatedAt:
+        costRecord?.createdAt ?? priceRecord?.createdAt ?? new Date(),
     };
   }
 }

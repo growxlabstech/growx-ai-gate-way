@@ -32,7 +32,7 @@ describe("Concurrency & Race Conditions Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate"],
       },
-      "usr_admin"
+      "usr_admin",
     );
   });
 
@@ -50,8 +50,8 @@ describe("Concurrency & Race Conditions Tests", () => {
           routingEligible: true,
           priority: 100 + i,
         },
-        "usr_admin"
-      )
+        "usr_admin",
+      ),
     );
 
     const routes = await Promise.all(createPromises);
@@ -69,8 +69,8 @@ describe("Concurrency & Race Conditions Tests", () => {
           canonicalModelId: "openai/gpt-4o",
           type: "static",
         },
-        "usr_admin"
-      )
+        "usr_admin",
+      ),
     );
 
     const aliases = await Promise.all(aliasPromises);

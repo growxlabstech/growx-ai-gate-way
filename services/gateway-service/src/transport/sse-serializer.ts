@@ -51,7 +51,7 @@ export function serializeHeartbeat(): string {
 export function serializeStreamError(
   code: string,
   message: string,
-  requestId: string
+  requestId: string,
 ): string {
   const errorPayload = {
     error: {

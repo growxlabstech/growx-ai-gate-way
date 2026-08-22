@@ -17,7 +17,7 @@ describe("Single-Flight Stampede Coalescing & Streaming Replay", () => {
     };
 
     const promises = Array.from({ length: 50 }, () =>
-      singleFlight.run("cache_key_shared", 5000, factory)
+      singleFlight.run("cache_key_shared", 5000, factory),
     );
 
     const results = await Promise.all(promises);
@@ -44,7 +44,10 @@ describe("Single-Flight Stampede Coalescing & Streaming Replay", () => {
     };
 
     const chunks: any[] = [];
-    for await (const chunk of replayCachedResponseAsStream(cachedResponse, "req_new_456")) {
+    for await (const chunk of replayCachedResponseAsStream(
+      cachedResponse,
+      "req_new_456",
+    )) {
       chunks.push(chunk);
     }
 

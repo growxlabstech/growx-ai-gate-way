@@ -1,19 +1,33 @@
-import type { ApiKeyRecord, ApiKeyScope, ApiKeyStatus, ModelRule } from "./types.js";
+import type {
+  ApiKeyRecord,
+  ApiKeyScope,
+  ApiKeyStatus,
+  ModelRule,
+} from "./types.js";
 
-export function resolveEffectiveStatus(record: ApiKeyRecord, now = new Date()): ApiKeyStatus {
+export function resolveEffectiveStatus(
+  record: ApiKeyRecord,
+  now = new Date(),
+): ApiKeyStatus {
   if (record.status === "revoked" || record.revokedAt !== null) {
     return "revoked";
   }
   if (record.status === "disabled") {
     return "disabled";
   }
-  if (record.status === "expired" || (record.expiresAt !== null && record.expiresAt <= now)) {
+  if (
+    record.status === "expired" ||
+    (record.expiresAt !== null && record.expiresAt <= now)
+  ) {
     return "expired";
   }
   return "active";
 }
 
-export function modelAllowed(rules: readonly ModelRule[], model: string): boolean {
+export function modelAllowed(
+  rules: readonly ModelRule[],
+  model: string,
+): boolean {
   if (!model || typeof model !== "string") return false;
 
   const matches = (pattern: string) => {
@@ -28,7 +42,9 @@ export function modelAllowed(rules: readonly ModelRule[], model: string): boolea
     return model === pattern;
   };
 
-  const hasDenyMatch = rules.some((rule) => rule.effect === "deny" && matches(rule.pattern));
+  const hasDenyMatch = rules.some(
+    (rule) => rule.effect === "deny" && matches(rule.pattern),
+  );
   if (hasDenyMatch) {
     return false;
   }
@@ -67,11 +83,14 @@ function isIpv4InCidr(ip: string, cidr: string): boolean {
   if (ipInt === null || rangeInt === null) return false;
 
   if (bits === 0) return true;
-  const mask = ((0xffffffff << (32 - bits)) >>> 0);
+  const mask = (0xffffffff << (32 - bits)) >>> 0;
   return (ipInt & mask) === (rangeInt & mask);
 }
 
-export function isIpAllowed(clientIp: string, allowlist: readonly string[]): boolean {
+export function isIpAllowed(
+  clientIp: string,
+  allowlist: readonly string[],
+): boolean {
   if (!allowlist || allowlist.length === 0) {
     return true;
   }
@@ -83,7 +102,11 @@ export function isIpAllowed(clientIp: string, allowlist: readonly string[]): boo
 
   return allowlist.some((entry) => {
     const cleanEntry = entry.trim().replace(/^::ffff:/, "");
-    if (cleanEntry === "*" || cleanEntry === "0.0.0.0/0" || cleanEntry === "::/0") {
+    if (
+      cleanEntry === "*" ||
+      cleanEntry === "0.0.0.0/0" ||
+      cleanEntry === "::/0"
+    ) {
       return true;
     }
     if (cleanEntry === cleanIp) {
@@ -102,7 +125,7 @@ export function isIpAllowed(clientIp: string, allowlist: readonly string[]): boo
 
 export function validateDelegation(
   creatorCapabilities: ReadonlySet<string>,
-  requestedScopes: readonly ApiKeyScope[]
+  requestedScopes: readonly ApiKeyScope[],
 ): { valid: boolean; unauthorizedScopes: ApiKeyScope[] } {
   const scopePermissionMap: Record<ApiKeyScope, string[]> = {
     "models.read": ["model.read"],
@@ -123,7 +146,9 @@ export function validateDelegation(
 
   for (const scope of requestedScopes) {
     const requiredPermissions = scopePermissionMap[scope] ?? ["apiKey.create"];
-    const hasAny = requiredPermissions.some((perm) => creatorCapabilities.has(perm));
+    const hasAny = requiredPermissions.some((perm) =>
+      creatorCapabilities.has(perm),
+    );
     if (!hasAny) {
       unauthorizedScopes.push(scope);
     }

@@ -41,18 +41,29 @@ class ControllableMockAdapter implements ProviderAdapter {
   constructor(public readonly providerId: string = "mock") {}
 
   public behavior?: (req: any, ctx: any) => Promise<any>;
-  public streamBehavior?: (req: any, ctx: any) => AsyncIterable<NormalizedStreamEvent>;
+  public streamBehavior?: (
+    req: any,
+    ctx: any,
+  ) => AsyncIterable<NormalizedStreamEvent>;
 
   async validateConfiguration(): Promise<boolean> {
     return true;
   }
 
   async healthProbe(context?: any): Promise<any> {
-    return { state: "healthy", latencyMs: 5, checkedAt: new Date().toISOString() };
+    return {
+      state: "healthy",
+      latencyMs: 5,
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   async health(options?: any): Promise<any> {
-    return { state: "healthy", latencyMs: 5, checkedAt: new Date().toISOString() };
+    return {
+      state: "healthy",
+      latencyMs: 5,
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   supports(capability: any): boolean {
@@ -64,7 +75,12 @@ class ControllableMockAdapter implements ProviderAdapter {
   }
 
   extractUsage(raw: unknown): any {
-    return { inputTokens: 10, outputTokens: 15, totalTokens: 25, source: "provider_reported" as const };
+    return {
+      inputTokens: 10,
+      outputTokens: 15,
+      totalTokens: 25,
+      source: "provider_reported" as const,
+    };
   }
 
   async execute(request: any, context: any): Promise<any> {
@@ -81,12 +97,24 @@ class ControllableMockAdapter implements ProviderAdapter {
       providerRequestId: `mock_req_${Date.now()}`,
       output: [{ role: "assistant", content: "Mock response" }],
       finishReason: "stop",
-      usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-      timing: { startedAt: now, completedAt: new Date(now.getTime() + 15), latencyMs: 15 },
+      usage: {
+        inputTokens: 10,
+        outputTokens: 20,
+        totalTokens: 30,
+        source: "provider_reported" as const,
+      },
+      timing: {
+        startedAt: now,
+        completedAt: new Date(now.getTime() + 15),
+        latencyMs: 15,
+      },
     };
   }
 
-  async *stream(request: any, context: any): AsyncIterable<NormalizedStreamEvent> {
+  async *stream(
+    request: any,
+    context: any,
+  ): AsyncIterable<NormalizedStreamEvent> {
     this.callCount++;
     if (this.streamBehavior) {
       yield* this.streamBehavior(request, context);
@@ -122,8 +150,17 @@ class ControllableMockAdapter implements ProviderAdapter {
         providerRequestId: `mock_req_${Date.now()}`,
         finishReason: "stop",
         output: [{ role: "assistant", content: "Mock streaming text" }],
-        usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-        timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 15 },
+        usage: {
+          inputTokens: 10,
+          outputTokens: 20,
+          totalTokens: 30,
+          source: "provider_reported" as const,
+        },
+        timing: {
+          startedAt: new Date(),
+          completedAt: new Date(),
+          latencyMs: 15,
+        },
       },
     };
   }
@@ -141,7 +178,9 @@ async function setupResilienceTestFixture() {
 
   const provRepo = new InMemoryProviderRepository();
   const provEvents = new InMemoryProviderEvents();
-  const crypto = new ProviderCredentialCrypto("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+  const crypto = new ProviderCredentialCrypto(
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  );
   const adapterRegistry = new AdapterRegistry();
 
   const mockOpenAI = new ControllableMockAdapter("openai");
@@ -150,11 +189,21 @@ async function setupResilienceTestFixture() {
   adapterRegistry.register(mockOpenAI);
   adapterRegistry.register(mockAnthropic);
 
-  const providerService = new ProviderService(provRepo, provEvents, crypto, adapterRegistry);
+  const providerService = new ProviderService(
+    provRepo,
+    provEvents,
+    crypto,
+    adapterRegistry,
+  );
 
   const routingRepo = new InMemoryRoutingRepository();
   const routingEvents = new InMemoryRoutingEvents();
-  const routingEngine = new RoutingEngine(modelRegistry, providerService, routingRepo, routingEvents);
+  const routingEngine = new RoutingEngine(
+    modelRegistry,
+    providerService,
+    routingRepo,
+    routingEvents,
+  );
   const routeResolver = new RoutingEngineRouteResolver(routingEngine);
 
   const gatewayRepo = new InMemoryGatewayRepository();
@@ -176,7 +225,7 @@ async function setupResilienceTestFixture() {
         jitter: "none",
         minimumRemainingDeadlineMs: 100,
       },
-    }
+    },
   );
 
   const gatewayEngine = new GatewayEngine(
@@ -186,7 +235,7 @@ async function setupResilienceTestFixture() {
     gatewayEvents,
     routeResolver,
     streamRegistry,
-    resilienceController
+    resilienceController,
   );
 
   const server = createGatewayServer({
@@ -238,82 +287,110 @@ async function setupResilienceTestFixture() {
 
   const secretKey = creds.fullSecret;
 
-  const createdModel = await modelRegistry.createModel({
-    canonicalId: "anthropic/claude-3-5-sonnet",
-    displayName: "Claude 3.5 Sonnet",
-    family: "claude-3-5",
-    category: "chat",
-    status: "active",
-    customerVisible: true,
-    routingEligible: true,
-    description: "Sonnet model",
-    contextWindow: 200_000,
-    maxOutputTokens: 8192,
-    supportsStreaming: true,
-    supportsTools: true,
-    supportsStructuredOutput: true,
-    supportsReasoning: false,
-    inputModalities: ["text"],
-    outputModalities: ["text"],
-    capabilities: ["text.generate", "streaming", "tools.call", "structured_output"],
-  }, "admin_1");
+  const createdModel = await modelRegistry.createModel(
+    {
+      canonicalId: "anthropic/claude-3-5-sonnet",
+      displayName: "Claude 3.5 Sonnet",
+      family: "claude-3-5",
+      category: "chat",
+      status: "active",
+      customerVisible: true,
+      routingEligible: true,
+      description: "Sonnet model",
+      contextWindow: 200_000,
+      maxOutputTokens: 8192,
+      supportsStreaming: true,
+      supportsTools: true,
+      supportsStructuredOutput: true,
+      supportsReasoning: false,
+      inputModalities: ["text"],
+      outputModalities: ["text"],
+      capabilities: [
+        "text.generate",
+        "streaming",
+        "tools.call",
+        "structured_output",
+      ],
+    },
+    "admin_1",
+  );
 
   // Providers
-  const pAnthropic = await providerService.createProvider({
-    code: "anthropic",
-    displayName: "Anthropic",
-    adapterType: "anthropic",
-    baseUrl: "https://api.anthropic.com",
-    priority: 10,
-    enabled: true,
-    status: "active",
-  }, "admin_1");
+  const pAnthropic = await providerService.createProvider(
+    {
+      code: "anthropic",
+      displayName: "Anthropic",
+      adapterType: "anthropic",
+      baseUrl: "https://api.anthropic.com",
+      priority: 10,
+      enabled: true,
+      status: "active",
+    },
+    "admin_1",
+  );
 
-  const pOpenAI = await providerService.createProvider({
-    code: "openai",
-    displayName: "OpenAI",
-    adapterType: "openai",
-    baseUrl: "https://api.openai.com",
-    priority: 20,
-    enabled: true,
-    status: "active",
-  }, "admin_1");
+  const pOpenAI = await providerService.createProvider(
+    {
+      code: "openai",
+      displayName: "OpenAI",
+      adapterType: "openai",
+      baseUrl: "https://api.openai.com",
+      priority: 20,
+      enabled: true,
+      status: "active",
+    },
+    "admin_1",
+  );
 
-  await providerService.createCredential(pAnthropic.id, {
-    name: "Anthropic Key",
-    environment: "production",
-    rawSecret: "sk-ant-test-key",
-    encryptionKeyVersion: "v1",
-  }, "admin_1");
+  await providerService.createCredential(
+    pAnthropic.id,
+    {
+      name: "Anthropic Key",
+      environment: "production",
+      rawSecret: "sk-ant-test-key",
+      encryptionKeyVersion: "v1",
+    },
+    "admin_1",
+  );
 
-  await providerService.createCredential(pOpenAI.id, {
-    name: "OpenAI Key",
-    environment: "production",
-    rawSecret: "sk-oai-test-key",
-    encryptionKeyVersion: "v1",
-  }, "admin_1");
+  await providerService.createCredential(
+    pOpenAI.id,
+    {
+      name: "OpenAI Key",
+      environment: "production",
+      rawSecret: "sk-oai-test-key",
+      encryptionKeyVersion: "v1",
+    },
+    "admin_1",
+  );
 
   // Route 1: Anthropic (Priority 10)
-  const rAnthropic = await modelRegistry.addProviderRoute({
-    modelId: createdModel.id,
-    providerId: pAnthropic.id,
-    providerModelId: "claude-3-5-sonnet-20241022",
-    region: "global",
-    priority: 10,
-    status: "active",
-    routingEligible: true,
-  }, "admin_1");
+  const rAnthropic = await modelRegistry.addProviderRoute(
+    {
+      modelId: createdModel.id,
+      providerId: pAnthropic.id,
+      providerModelId: "claude-3-5-sonnet-20241022",
+      region: "global",
+      priority: 10,
+      status: "active",
+      routingEligible: true,
+    },
+    "admin_1",
+  );
 
   // Route 2: OpenAI (Priority 20)
-  const rOpenAI = await modelRegistry.addProviderRoute({
-    modelId: createdModel.id,
-    providerId: pOpenAI.id,
-    providerModelId: "gpt-4o",
-    region: "global",
-    priority: 20,
-    status: "active",
-    routingEligible: true,
-  }, "admin_1");
+  const rOpenAI = await modelRegistry.addProviderRoute(
+    {
+      modelId: createdModel.id,
+      providerId: pOpenAI.id,
+      providerModelId: "gpt-4o",
+      region: "global",
+      priority: 20,
+      status: "active",
+      routingEligible: true,
+    },
+    "admin_1",
+  );
 
   return {
     server,
@@ -340,7 +417,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     try {
       // Primary route (Anthropic) fails with 429
       fixture.mockAnthropic.behavior = async () => {
-        throw new GrowXProviderError("provider_rate_limit", "Rate limit exceeded", true, 429);
+        throw new GrowXProviderError(
+          "provider_rate_limit",
+          "Rate limit exceeded",
+          true,
+          429,
+        );
       };
 
       // Fallback route (OpenAI) succeeds
@@ -351,9 +433,20 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
         providerModelId: "gpt-4o",
         providerRequestId: "mock_req_openai",
         finishReason: "stop",
-        output: [{ role: "assistant", content: "Response from OpenAI fallback" }],
-        usage: { inputTokens: 15, outputTokens: 25, totalTokens: 40, source: "provider_reported" as const },
-        timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 20 },
+        output: [
+          { role: "assistant", content: "Response from OpenAI fallback" },
+        ],
+        usage: {
+          inputTokens: 15,
+          outputTokens: 25,
+          totalTokens: 40,
+          source: "provider_reported" as const,
+        },
+        timing: {
+          startedAt: new Date(),
+          completedAt: new Date(),
+          latencyMs: 20,
+        },
       });
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -370,13 +463,16 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
 
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.choices[0].message.content).toBe("Response from OpenAI fallback");
+      expect(body.choices[0].message.content).toBe(
+        "Response from OpenAI fallback",
+      );
 
       expect(fixture.mockAnthropic.callCount).toBe(2); // Attempt 1 + same-route retry Attempt 2
       expect(fixture.mockOpenAI.callCount).toBe(1); // Fallback Attempt 3
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(3);
 
       expect(attempts[0]!.providerId).toBe(fixture.pAnthropic.id);
@@ -391,9 +487,15 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(attempts[2]!.fallbackReason).toBe("RATE_LIMIT");
 
       // Verify fallback event was emitted
-      expect(fixture.gatewayEvents.fallbackSelectedEvents.length).toBeGreaterThan(0);
-      expect(fixture.gatewayEvents.fallbackSelectedEvents[0]!.fromProviderId).toBe(fixture.pAnthropic.id);
-      expect(fixture.gatewayEvents.fallbackSelectedEvents[0]!.toProviderId).toBe(fixture.pOpenAI.id);
+      expect(
+        fixture.gatewayEvents.fallbackSelectedEvents.length,
+      ).toBeGreaterThan(0);
+      expect(
+        fixture.gatewayEvents.fallbackSelectedEvents[0]!.fromProviderId,
+      ).toBe(fixture.pAnthropic.id);
+      expect(
+        fixture.gatewayEvents.fallbackSelectedEvents[0]!.toProviderId,
+      ).toBe(fixture.pOpenAI.id);
     } finally {
       await fixture.cleanup();
     }
@@ -406,7 +508,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       fixture.mockAnthropic.behavior = async (req: any, ctx: any) => {
         callNum++;
         if (callNum === 1) {
-          throw new GrowXProviderError("provider_unavailable", "Temporary 503", true, 503);
+          throw new GrowXProviderError(
+            "provider_unavailable",
+            "Temporary 503",
+            true,
+            503,
+          );
         }
         return {
           id: "gen_anthropic_recovered",
@@ -417,8 +524,17 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
           providerRequestId: "mock_req_anthropic",
           finishReason: "stop",
           output: [{ role: "assistant", content: "Recovered on attempt 2" }],
-          usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-          timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 15 },
+          usage: {
+            inputTokens: 10,
+            outputTokens: 20,
+            totalTokens: 30,
+            source: "provider_reported" as const,
+          },
+          timing: {
+            startedAt: new Date(),
+            completedAt: new Date(),
+            latencyMs: 15,
+          },
         };
       };
 
@@ -442,7 +558,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(fixture.mockOpenAI.callCount).toBe(0); // Never called fallback
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(2);
       expect(attempts[0]!.attemptNumber).toBe(1);
       expect(attempts[0]!.status).toBe("failed");
@@ -452,7 +569,9 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
 
       // Verify retry scheduled event
       expect(fixture.gatewayEvents.retryScheduledEvents.length).toBe(1);
-      expect(fixture.gatewayEvents.retryScheduledEvents[0]!.attemptNumber).toBe(2);
+      expect(fixture.gatewayEvents.retryScheduledEvents[0]!.attemptNumber).toBe(
+        2,
+      );
     } finally {
       await fixture.cleanup();
     }
@@ -462,7 +581,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     const fixture = await setupResilienceTestFixture();
     try {
       fixture.mockAnthropic.behavior = async () => {
-        throw new GrowXProviderError("provider_invalid_request", "Invalid parameters for provider", false, 400);
+        throw new GrowXProviderError(
+          "provider_invalid_request",
+          "Invalid parameters for provider",
+          false,
+          400,
+        );
       };
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -482,7 +606,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(fixture.mockOpenAI.callCount).toBe(0);
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(1);
       expect(attempts[0]!.status).toBe("failed");
       expect(attempts[0]!.errorCode).toBe("provider_invalid_request");
@@ -495,7 +620,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     const fixture = await setupResilienceTestFixture();
     try {
       fixture.mockAnthropic.behavior = async () => {
-        throw new GrowXProviderError("provider_authentication_error", "Invalid API key", false, 401);
+        throw new GrowXProviderError(
+          "provider_authentication_error",
+          "Invalid API key",
+          false,
+          401,
+        );
       };
       fixture.mockOpenAI.behavior = async (req: any, ctx: any) => ({
         id: "gen_fallback_auth",
@@ -506,8 +636,17 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
         providerRequestId: "mock_req_openai",
         finishReason: "stop",
         output: [{ role: "assistant", content: "OpenAI saved the day" }],
-        usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-        timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 15 },
+        usage: {
+          inputTokens: 10,
+          outputTokens: 20,
+          totalTokens: 30,
+          source: "provider_reported" as const,
+        },
+        timing: {
+          startedAt: new Date(),
+          completedAt: new Date(),
+          latencyMs: 15,
+        },
       });
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -527,7 +666,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(fixture.mockOpenAI.callCount).toBe(1); // Succeeded on fallback
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(2);
       expect(attempts[0]!.status).toBe("failed");
       expect(attempts[0]!.errorCode).toBe("provider_authentication_error");
@@ -543,7 +683,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     try {
       // Anthropic fails before emitting any token
       fixture.mockAnthropic.streamBehavior = async function* () {
-        throw new GrowXProviderError("provider_server_error", "Stream connect error", true, 500);
+        throw new GrowXProviderError(
+          "provider_server_error",
+          "Stream connect error",
+          true,
+          500,
+        );
       };
 
       // OpenAI succeeds with stream
@@ -577,9 +722,20 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
             providerModelId: "gpt-4o",
             providerRequestId: "mock_req_openai",
             finishReason: "stop",
-            output: [{ role: "assistant", content: "Hello from stream fallback!" }],
-            usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-            timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 25 },
+            output: [
+              { role: "assistant", content: "Hello from stream fallback!" },
+            ],
+            usage: {
+              inputTokens: 10,
+              outputTokens: 20,
+              totalTokens: 30,
+              source: "provider_reported" as const,
+            },
+            timing: {
+              startedAt: new Date(),
+              completedAt: new Date(),
+              latencyMs: 25,
+            },
           },
         };
       };
@@ -607,7 +763,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(fixture.mockOpenAI.callCount).toBe(1);
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(2);
       expect(attempts[0]!.emittedClientOutput).toBe(false);
       expect(attempts[1]!.emittedClientOutput).toBe(true);
@@ -638,7 +795,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
           delta: "Partial output...",
         };
         // Simulated network drop mid-generation
-        throw new GrowXProviderError("provider_server_error", "Mid-stream disconnect", true, 500);
+        throw new GrowXProviderError(
+          "provider_server_error",
+          "Mid-stream disconnect",
+          true,
+          500,
+        );
       };
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -663,7 +825,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(fixture.mockAnthropic.callCount).toBe(1);
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBe(1);
       expect(attempts[0]!.emittedClientOutput).toBe(true);
       expect(attempts[0]!.status).toBe("failed");
@@ -697,7 +860,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
             argumentsDelta: '{"location": "Tokyo"}',
           },
         };
-        throw new GrowXProviderError("provider_timeout", "Stream timed out after tool call delta", true, 504);
+        throw new GrowXProviderError(
+          "provider_timeout",
+          "Stream timed out after tool call delta",
+          true,
+          504,
+        );
       };
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -729,10 +897,20 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     const fixture = await setupResilienceTestFixture();
     try {
       fixture.mockAnthropic.behavior = async () => {
-        throw new GrowXProviderError("provider_unavailable", "Anthropic is down", true, 503);
+        throw new GrowXProviderError(
+          "provider_unavailable",
+          "Anthropic is down",
+          true,
+          503,
+        );
       };
       fixture.mockOpenAI.behavior = async () => {
-        throw new GrowXProviderError("provider_unavailable", "OpenAI is down", true, 503);
+        throw new GrowXProviderError(
+          "provider_unavailable",
+          "OpenAI is down",
+          true,
+          503,
+        );
       };
 
       const res = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -752,7 +930,8 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(body.error.code).toBe("provider_unavailable");
 
       const requestId = res.headers.get("x-growx-request-id")!;
-      const attempts = await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
+      const attempts =
+        await fixture.gatewayRepo.listAttemptsByRequestId(requestId);
       expect(attempts.length).toBeGreaterThanOrEqual(2);
       expect(attempts.every((a) => a.status === "failed")).toBe(true);
 
@@ -767,7 +946,12 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
     const fixture = await setupResilienceTestFixture();
     try {
       fixture.mockAnthropic.behavior = async () => {
-        throw new GrowXProviderError("provider_rate_limit", "Rate limited", true, 429);
+        throw new GrowXProviderError(
+          "provider_rate_limit",
+          "Rate limited",
+          true,
+          429,
+        );
       };
       fixture.mockOpenAI.behavior = async (req: any, ctx: any) => ({
         id: "gen_debug_test",
@@ -778,8 +962,17 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
         providerRequestId: "mock_req_debug",
         finishReason: "stop",
         output: [{ role: "assistant", content: "Debug test OK" }],
-        usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30, source: "provider_reported" as const },
-        timing: { startedAt: new Date(), completedAt: new Date(), latencyMs: 15 },
+        usage: {
+          inputTokens: 10,
+          outputTokens: 20,
+          totalTokens: 30,
+          source: "provider_reported" as const,
+        },
+        timing: {
+          startedAt: new Date(),
+          completedAt: new Date(),
+          latencyMs: 15,
+        },
       });
 
       const execRes = await fetch(`${fixture.baseUrl}/v1/chat/completions`, {
@@ -797,7 +990,9 @@ describe("Phase 9 — Fallback + Retry + Resilience Engine", () => {
       expect(execRes.status).toBe(200);
       const reqId = execRes.headers.get("x-growx-request-id")!;
 
-      const debugRes = await fetch(`${fixture.baseUrl}/internal/gateway/requests/${reqId}/attempts`);
+      const debugRes = await fetch(
+        `${fixture.baseUrl}/internal/gateway/requests/${reqId}/attempts`,
+      );
       expect(debugRes.status).toBe(200);
       const debugData = await debugRes.json();
       expect(debugData.requestId).toBe(reqId);

@@ -16,7 +16,7 @@ export interface EligibilityResult {
  */
 function candidateSupportsCapability(
   candidate: RouteCandidate,
-  cap: string
+  cap: string,
 ): boolean {
   if (candidate.capabilities instanceof Set) {
     return candidate.capabilities.has(cap as any);
@@ -44,7 +44,7 @@ export function evaluateEligibility(
   candidate: RouteCandidate,
   request: RoutingRequest,
   policy?: RoutingPolicy | RoutingConstraints | undefined,
-  estimatedCost?: number | undefined
+  estimatedCost?: number | undefined,
 ): EligibilityResult {
   // 1. Route status & routingEligible flag
   if (candidate.routingEligible === false) {
@@ -121,7 +121,11 @@ export function evaluateEligibility(
   }
 
   const minContext = request.constraints?.minimumContext;
-  if (minContext && candidate.limits && candidate.limits.contextWindow < minContext) {
+  if (
+    minContext &&
+    candidate.limits &&
+    candidate.limits.contextWindow < minContext
+  ) {
     return { eligible: false, exclusionReason: "CONTEXT_LIMIT" };
   }
 
@@ -130,13 +134,15 @@ export function evaluateEligibility(
     ...(policy?.deniedProviders ?? []),
     ...(request.constraints?.deniedProviders ?? []),
   ];
-  const allowedProviders = policy?.allowedProviders ?? request.constraints?.allowedProviders;
+  const allowedProviders =
+    policy?.allowedProviders ?? request.constraints?.allowedProviders;
 
   const deniedRegions = [
     ...(policy?.deniedRegions ?? []),
     ...(request.constraints?.deniedRegions ?? []),
   ];
-  const allowedRegions = policy?.allowedRegions ?? request.constraints?.allowedRegions;
+  const allowedRegions =
+    policy?.allowedRegions ?? request.constraints?.allowedRegions;
   const requiredRegion =
     (policy as RoutingPolicy)?.requiredRegion ??
     (policy as RoutingPolicy)?.dataRegion ??
@@ -148,7 +154,11 @@ export function evaluateEligibility(
   if (deniedProviders.includes(candidate.providerId)) {
     return { eligible: false, exclusionReason: "PROVIDER_DENIED" };
   }
-  if (allowedProviders && allowedProviders.length > 0 && !allowedProviders.includes(candidate.providerId)) {
+  if (
+    allowedProviders &&
+    allowedProviders.length > 0 &&
+    !allowedProviders.includes(candidate.providerId)
+  ) {
     return { eligible: false, exclusionReason: "PROVIDER_DENIED" };
   }
 
@@ -177,7 +187,11 @@ export function evaluateEligibility(
   const maxCost =
     (policy as RoutingPolicy)?.maxEstimatedProviderCost ??
     request.constraints?.maxEstimatedProviderCost;
-  if (maxCost !== undefined && estimatedCost !== undefined && estimatedCost > maxCost) {
+  if (
+    maxCost !== undefined &&
+    estimatedCost !== undefined &&
+    estimatedCost > maxCost
+  ) {
     return { eligible: false, exclusionReason: "COST_LIMIT" };
   }
 
@@ -192,8 +206,13 @@ export function evaluateEligibility(
 
   // 9. Latency Constraints
   const maxLatencyMs = request.constraints?.maxLatencyMs;
-  const latency = candidate.latencySignal?.p95LatencyMs ?? candidate.p95LatencyMs;
-  if (maxLatencyMs !== undefined && latency !== undefined && latency > maxLatencyMs) {
+  const latency =
+    candidate.latencySignal?.p95LatencyMs ?? candidate.p95LatencyMs;
+  if (
+    maxLatencyMs !== undefined &&
+    latency !== undefined &&
+    latency > maxLatencyMs
+  ) {
     return { eligible: false, exclusionReason: "UNAVAILABLE" };
   }
 

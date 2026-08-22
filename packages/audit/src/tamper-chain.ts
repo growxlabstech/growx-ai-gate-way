@@ -23,8 +23,8 @@ export function canonicalJsonStringify(value: unknown): string {
   const pairs = keys.map(
     (k) =>
       `${JSON.stringify(k)}:${canonicalJsonStringify(
-        (value as Record<string, unknown>)[k]
-      )}`
+        (value as Record<string, unknown>)[k],
+      )}`,
   );
   return `{${pairs.join(",")}}`;
 }
@@ -34,7 +34,7 @@ export function canonicalJsonStringify(value: unknown): string {
  */
 export function calculateEventHash(
   event: Omit<AuditEvent, "eventHash">,
-  secretKey?: string | undefined
+  secretKey?: string | undefined,
 ): string {
   const canonicalData = {
     id: event.id,
@@ -63,7 +63,9 @@ export function calculateEventHash(
   const rawBytes = canonicalJsonStringify(canonicalData);
 
   if (secretKey) {
-    return createHmac("sha256", secretKey).update(rawBytes, "utf8").digest("hex");
+    return createHmac("sha256", secretKey)
+      .update(rawBytes, "utf8")
+      .digest("hex");
   }
 
   return createHash("sha256").update(rawBytes, "utf8").digest("hex");
@@ -83,7 +85,7 @@ export interface AuditVerificationResult {
 export function verifyAuditChain(
   events: readonly AuditEvent[],
   initialPreviousHash: string = GENESIS_HASH,
-  secretKey?: string | undefined
+  secretKey?: string | undefined,
 ): AuditVerificationResult {
   if (events.length === 0) {
     return { valid: true };

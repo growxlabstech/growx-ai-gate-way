@@ -15,7 +15,7 @@ export interface ProviderEmbeddingAdapter {
   parseResponse(
     rawResponse: unknown,
     request: NormalizedEmbeddingRequest,
-    dimensions: number
+    dimensions: number,
   ): NormalizedEmbeddingResponse;
 
   supportsDimensions(model: string, dimensions: number): boolean;

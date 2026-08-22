@@ -16,7 +16,12 @@ export class ReleaseOrchestrator {
     gitSha: string;
     environment: DeploymentEnvironment;
   }): Promise<DeploymentRelease> {
-    if (this.activeRelease && this.activeRelease.status !== "deployed" && this.activeRelease.status !== "rolled_back" && this.activeRelease.status !== "failed") {
+    if (
+      this.activeRelease &&
+      this.activeRelease.status !== "deployed" &&
+      this.activeRelease.status !== "rolled_back" &&
+      this.activeRelease.status !== "failed"
+    ) {
       throw new DeploymentLockError(this.activeRelease.id);
     }
 
@@ -55,7 +60,8 @@ export class ReleaseOrchestrator {
   }
 
   public rollbackRelease(releaseId: string, reason: string): DeploymentRelease {
-    const release = this.releaseHistory.find((r) => r.id === releaseId) || this.activeRelease;
+    const release =
+      this.releaseHistory.find((r) => r.id === releaseId) || this.activeRelease;
     if (!release) {
       throw new Error(`Release ${releaseId} not found`);
     }

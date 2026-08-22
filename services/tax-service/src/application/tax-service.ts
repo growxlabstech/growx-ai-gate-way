@@ -36,13 +36,14 @@ export class TaxService {
       throw new Error(`Legal entity with code ${params.code} already exists`);
     }
 
-    const validatedTaxIds: TaxIdentifier[] = (params.taxIdentifiers ?? []).map((t) =>
-      TaxIdentifierValidator.createTaxIdentifier({
-        type: t.type,
-        value: t.value,
-        country: params.country,
-        verified: true, // Internal seller configuration is pre-verified
-      })
+    const validatedTaxIds: TaxIdentifier[] = (params.taxIdentifiers ?? []).map(
+      (t) =>
+        TaxIdentifierValidator.createTaxIdentifier({
+          type: t.type,
+          value: t.value,
+          country: params.country,
+          verified: true, // Internal seller configuration is pre-verified
+        }),
     );
 
     const now = new Date();
@@ -77,7 +78,9 @@ export class TaxService {
 
   // ─── Customer Billing Profiles ───────────────────────────────
 
-  async getBillingProfile(organizationId: string): Promise<BillingProfile | undefined> {
+  async getBillingProfile(
+    organizationId: string,
+  ): Promise<BillingProfile | undefined> {
     return this.repository.getBillingProfile(organizationId);
   }
 
@@ -95,18 +98,19 @@ export class TaxService {
       taxIdentifiers?: { type: TaxIdentifierType; value: string }[] | undefined;
       billingCurrency?: string | undefined;
       taxExemptionStatus?: "none" | "exempt" | "pending_review" | undefined;
-    }
+    },
   ): Promise<BillingProfile> {
     const existing = await this.repository.getBillingProfile(organizationId);
     const country = params.country.toUpperCase();
 
     // Validate tax identifiers syntax
-    const validatedTaxIds: TaxIdentifier[] = (params.taxIdentifiers ?? []).map((t) =>
-      TaxIdentifierValidator.createTaxIdentifier({
-        type: t.type,
-        value: t.value,
-        country,
-      })
+    const validatedTaxIds: TaxIdentifier[] = (params.taxIdentifiers ?? []).map(
+      (t) =>
+        TaxIdentifierValidator.createTaxIdentifier({
+          type: t.type,
+          value: t.value,
+          country,
+        }),
     );
 
     const now = new Date();
@@ -122,7 +126,8 @@ export class TaxService {
         addressLine2: params.addressLine2,
         taxIdentifiers: validatedTaxIds,
         billingCurrency: params.billingCurrency ?? existing.billingCurrency,
-        taxExemptionStatus: params.taxExemptionStatus ?? existing.taxExemptionStatus,
+        taxExemptionStatus:
+          params.taxExemptionStatus ?? existing.taxExemptionStatus,
       });
     }
 
@@ -199,15 +204,17 @@ export class TaxService {
 
   async calculateTax(
     lines: readonly TaxDraftLine[],
-    context: TaxCalculationContext
+    context: TaxCalculationContext,
   ): Promise<TaxCalculation> {
-    const activeRules = await this.repository.listActiveTaxRules(context.taxPointDate);
+    const activeRules = await this.repository.listActiveTaxRules(
+      context.taxPointDate,
+    );
     return TaxEngine.calculate(lines, context, activeRules);
   }
 
   async simulateTax(
     lines: readonly TaxDraftLine[],
-    context: TaxCalculationContext
+    context: TaxCalculationContext,
   ): Promise<TaxCalculation> {
     return this.calculateTax(lines, context);
   }

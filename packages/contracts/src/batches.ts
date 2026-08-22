@@ -75,15 +75,20 @@ export const batchJobSchema = z.object({
 });
 export type BatchJob = z.infer<typeof batchJobSchema>;
 
-export const createBatchRequestSchema = z.object({
-  input_file_id: z.string().optional(),
-  items: z.array(batchItemRequestSchema).min(1).max(50000).optional(),
-  endpoint: batchEndpointSchema.default("/v1/chat/completions"),
-  completion_window: batchCompletionWindowSchema.default("24h"),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).refine(data => !!data.input_file_id || (!!data.items && data.items.length > 0), {
-  message: "Either input_file_id or items array must be provided",
-});
+export const createBatchRequestSchema = z
+  .object({
+    input_file_id: z.string().optional(),
+    items: z.array(batchItemRequestSchema).min(1).max(50000).optional(),
+    endpoint: batchEndpointSchema.default("/v1/chat/completions"),
+    completion_window: batchCompletionWindowSchema.default("24h"),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine(
+    (data) => !!data.input_file_id || (!!data.items && data.items.length > 0),
+    {
+      message: "Either input_file_id or items array must be provided",
+    },
+  );
 export type CreateBatchRequest = z.infer<typeof createBatchRequestSchema>;
 
 export const createBatchResponseSchema = z.object({
@@ -129,15 +134,19 @@ export type BatchItem = z.infer<typeof batchItemSchema>;
 export const batchOutputRecordSchema = z.object({
   id: z.string(),
   custom_id: z.string(),
-  response: z.object({
-    status_code: z.number().int(),
-    request_id: z.string(),
-    body: z.record(z.string(), z.unknown()),
-  }).nullable(),
-  error: z.object({
-    code: z.string(),
-    message: z.string(),
-    category: z.string().optional(),
-  }).nullable(),
+  response: z
+    .object({
+      status_code: z.number().int(),
+      request_id: z.string(),
+      body: z.record(z.string(), z.unknown()),
+    })
+    .nullable(),
+  error: z
+    .object({
+      code: z.string(),
+      message: z.string(),
+      category: z.string().optional(),
+    })
+    .nullable(),
 });
 export type BatchOutputRecord = z.infer<typeof batchOutputRecordSchema>;

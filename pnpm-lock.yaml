@@ -87,6 +87,15 @@ importers:
 
   apps/console:
     dependencies:
+      '@growx/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@growx/ids':
+        specifier: workspace:*
+        version: link:../../packages/ids
+      '@growx/money':
+        specifier: workspace:*
+        version: link:../../packages/money
       '@growx/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1398,15 +1407,27 @@ importers:
 
   services/identity-service:
     dependencies:
+      '@growx/authorization-service':
+        specifier: workspace:*
+        version: link:../authorization-service
       '@growx/configuration':
         specifier: workspace:*
         version: link:../../packages/configuration
+      '@growx/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@growx/cryptography':
         specifier: workspace:*
         version: link:../../packages/cryptography
       '@growx/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@growx/ids':
+        specifier: workspace:*
+        version: link:../../packages/ids
+      '@growx/organization-service':
+        specifier: workspace:*
+        version: link:../organization-service
       '@growx/privileged-access':
         specifier: workspace:*
         version: link:../../packages/privileged-access
@@ -1565,6 +1586,12 @@ importers:
       '@growx/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@growx/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@growx/ids':
+        specifier: workspace:*
+        version: link:../../packages/ids
     devDependencies:
       tsx:
         specifier: ^4.20.3
@@ -4933,6 +4960,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

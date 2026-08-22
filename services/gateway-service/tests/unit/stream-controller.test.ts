@@ -27,10 +27,7 @@ function createDeps() {
   return { repository, events, registry };
 }
 
-function createController(
-  deps = createDeps(),
-  options: any = {}
-) {
+function createController(deps = createDeps(), options: any = {}) {
   const ctx = {
     requestId: "req_test123",
     auth: createMockAuth(),
@@ -173,7 +170,10 @@ describe("GatewayStreamController", () => {
 
       await controller.finalizeOnce(StreamState.COMPLETED);
       // Second call should be a no-op
-      await controller.finalizeOnce(StreamState.FAILED, new Error("late error"));
+      await controller.finalizeOnce(
+        StreamState.FAILED,
+        new Error("late error"),
+      );
 
       // Should still be COMPLETED, not FAILED
       const req = await deps.repository.getRequest("req_test123");
@@ -300,7 +300,10 @@ describe("GatewayStreamController", () => {
       controller.transitionToConnecting();
       controller.transitionToStreaming();
 
-      await controller.finalizeOnce(StreamState.FAILED, new Error("Provider exploded"));
+      await controller.finalizeOnce(
+        StreamState.FAILED,
+        new Error("Provider exploded"),
+      );
 
       // Verify error record was saved
       expect(deps.repository.errors.size).toBe(1);
@@ -436,7 +439,9 @@ describe("GatewayStreamController", () => {
       expect(c1.shouldIncludeUsage).toBe(false);
       c1.cleanup();
 
-      const { controller: c2 } = createController(undefined, { includeUsage: true });
+      const { controller: c2 } = createController(undefined, {
+        includeUsage: true,
+      });
       expect(c2.shouldIncludeUsage).toBe(true);
       c2.cleanup();
     });

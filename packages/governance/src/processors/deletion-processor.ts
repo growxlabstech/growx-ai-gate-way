@@ -16,9 +16,15 @@ export interface GovernanceDeletionProcessor {
     resourceId?: string;
   }): Promise<string[]>;
 
-  delete(resourceId: string, context: { organizationId: string }): Promise<void>;
+  delete(
+    resourceId: string,
+    context: { organizationId: string },
+  ): Promise<void>;
 
-  verify(resourceId: string, context: { organizationId: string }): Promise<boolean>;
+  verify(
+    resourceId: string,
+    context: { organizationId: string },
+  ): Promise<boolean>;
 }
 
 export class MockDomainDeletionProcessor implements GovernanceDeletionProcessor {
@@ -37,11 +43,17 @@ export class MockDomainDeletionProcessor implements GovernanceDeletionProcessor 
     return [`${this.processorType}_sample_res_${options.organizationId}`];
   }
 
-  public async delete(resourceId: string, _context: { organizationId: string }): Promise<void> {
+  public async delete(
+    resourceId: string,
+    _context: { organizationId: string },
+  ): Promise<void> {
     this.deletedItems.add(resourceId);
   }
 
-  public async verify(resourceId: string, _context: { organizationId: string }): Promise<boolean> {
+  public async verify(
+    resourceId: string,
+    _context: { organizationId: string },
+  ): Promise<boolean> {
     return this.deletedItems.has(resourceId);
   }
 }

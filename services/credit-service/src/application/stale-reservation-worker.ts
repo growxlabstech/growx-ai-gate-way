@@ -10,15 +10,19 @@ export interface StaleRecoveryResult {
 export class StaleReservationWorker {
   constructor(
     private readonly repository: ICreditRepository,
-    private readonly creditService: CreditService
+    private readonly creditService: CreditService,
   ) {}
 
   /**
    * Sweeps active reservations that have exceeded their expiration TTL and releases them.
    */
-  async recoverStaleReservations(maxAgeMs: number = 300_000, now: Date = new Date()): Promise<StaleRecoveryResult> {
+  async recoverStaleReservations(
+    maxAgeMs: number = 300_000,
+    now: Date = new Date(),
+  ): Promise<StaleRecoveryResult> {
     const cutoff = new Date(now.getTime() - maxAgeMs);
-    const staleReservations = await this.repository.listStaleReservations(cutoff);
+    const staleReservations =
+      await this.repository.listStaleReservations(cutoff);
 
     let releasedCount = 0;
     const releasedIds: string[] = [];

@@ -29,6 +29,7 @@ Identity routes under `/v1/auth` provide registration, login/logout, email verif
 Organization routes provide collection/create/read/update/archive, members, create/cancel invitations, and token acceptance. Workspace routes are nested below `/v1/organizations/:organizationId/workspaces` and provide CRUD plus environment collection/create. Authorization routes expose roles and permissions and assign/revoke member roles. Tenant path parameters are mandatory query scope, not merely resource lookup hints.
 
 Collections return `{ data, pagination: { cursor, hasMore } }`; resources return `{ data }`; errors return `{ error: { code, message, requestId } }`.
+
 # Console authentication boundary
 
 The console exposes same-origin `/api/auth/*`, rewritten server-side to the identity service `/v1/auth/*`. Customer routes are gated by a fail-closed session check. This gate establishes authentication only; protected backend APIs must still resolve active membership, organization/workspace scope, permissions, and resource status.

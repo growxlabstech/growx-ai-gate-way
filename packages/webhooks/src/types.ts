@@ -1,4 +1,5 @@
-export type WebhookEndpointStatus = "active" | "disabled" | "failing" | "blocked";
+export type WebhookEndpointStatus =
+  "active" | "disabled" | "failing" | "blocked";
 
 export interface WebhookEndpoint {
   id: string;
@@ -152,7 +153,14 @@ export const DEFAULT_WEBHOOK_RETRY_POLICY: WebhookRetryPolicy = {
 export interface WebhookEventTypeMetadata {
   key: string;
   version: string;
-  category: "gateway" | "auth" | "usage" | "subscription" | "payment" | "billing" | "test";
+  category:
+    | "gateway"
+    | "auth"
+    | "usage"
+    | "subscription"
+    | "payment"
+    | "billing"
+    | "test";
   description: string;
   customerVisible: boolean;
   deprecatedAt?: string | undefined;

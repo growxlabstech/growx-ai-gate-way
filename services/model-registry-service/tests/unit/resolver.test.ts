@@ -31,7 +31,14 @@ const mockModel: CanonicalModelEntity = {
   supportsReasoning: true,
   inputModalities: ["text", "image"],
   outputModalities: ["text"],
-  capabilities: ["text.generate", "text.reason", "tools.call", "structured_output", "vision.input", "streaming"],
+  capabilities: [
+    "text.generate",
+    "text.reason",
+    "tools.call",
+    "structured_output",
+    "vision.input",
+    "streaming",
+  ],
   metadata: {},
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -72,7 +79,7 @@ describe("Canonical Model Resolver Unit Tests", () => {
       "openai/gpt-4o",
       [mockModel],
       [],
-      [mockRoute]
+      [mockRoute],
     );
 
     expect(resolved.canonicalModelId).toBe("openai/gpt-4o");
@@ -87,7 +94,7 @@ describe("Canonical Model Resolver Unit Tests", () => {
       "growx/fast",
       [mockModel],
       [mockAlias],
-      [mockRoute]
+      [mockRoute],
     );
 
     expect(resolved.canonicalModelId).toBe("openai/gpt-4o");
@@ -97,7 +104,7 @@ describe("Canonical Model Resolver Unit Tests", () => {
 
   it("throws 404 model_not_found for unknown model", () => {
     expect(() =>
-      resolveModelContext("unknown/model", [mockModel], [], [mockRoute])
+      resolveModelContext("unknown/model", [mockModel], [], [mockRoute]),
     ).toThrow(/not found in canonical model registry/);
   });
 
@@ -111,7 +118,7 @@ describe("Canonical Model Resolver Unit Tests", () => {
     };
 
     expect(() =>
-      resolveModelContext("anthropic/claude-disabled", [disabledModel], [], [])
+      resolveModelContext("anthropic/claude-disabled", [disabledModel], [], []),
     ).toThrow(/is currently disabled/);
   });
 
@@ -125,7 +132,7 @@ describe("Canonical Model Resolver Unit Tests", () => {
     };
 
     expect(() =>
-      resolveModelContext("google/gemini-1.0-pro", [retiredModel], [], [])
+      resolveModelContext("google/gemini-1.0-pro", [retiredModel], [], []),
     ).toThrow(/is retired and no longer available/);
   });
 
@@ -143,7 +150,9 @@ describe("Canonical Model Resolver Unit Tests", () => {
     };
 
     expect(routeSupports(mockRoute, mockModel, "tools.call")).toBe(true);
-    expect(routeSupports(routeWithOverride, mockModel, "tools.call")).toBe(false);
+    expect(routeSupports(routeWithOverride, mockModel, "tools.call")).toBe(
+      false,
+    );
     expect(routeSupports(routeWithOverride, mockModel, "streaming")).toBe(true);
   });
 

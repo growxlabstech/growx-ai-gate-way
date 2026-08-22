@@ -79,27 +79,50 @@ export interface ApplyAdjustmentParams {
 
 export interface ICreditRepository {
   getWalletById(walletId: string): Promise<Wallet | null>;
-  getWalletByOrganization(organizationId: string, currency?: string): Promise<Wallet | null>;
+  getWalletByOrganization(
+    organizationId: string,
+    currency?: string,
+  ): Promise<Wallet | null>;
   createWallet(wallet: Wallet): Promise<Wallet>;
   updateWalletStatus(walletId: string, status: WalletStatus): Promise<void>;
   getWalletBalance(walletId: string): Promise<WalletBalance | null>;
   saveWalletBalance(balance: WalletBalance): Promise<void>;
   appendLedgerEntry(entry: WalletLedgerEntry): Promise<void>;
-  listLedgerEntries(walletId: string, limit?: number, beforeSequence?: bigint): Promise<WalletLedgerEntry[]>;
-  getLedgerEntryByIdempotencyKey(walletId: string, idempotencyKey: string): Promise<WalletLedgerEntry | null>;
+  listLedgerEntries(
+    walletId: string,
+    limit?: number,
+    beforeSequence?: bigint,
+  ): Promise<WalletLedgerEntry[]>;
+  getLedgerEntryByIdempotencyKey(
+    walletId: string,
+    idempotencyKey: string,
+  ): Promise<WalletLedgerEntry | null>;
   getActiveCreditLots(walletId: string): Promise<CreditLot[]>;
   getCreditLotById(lotId: string): Promise<CreditLot | null>;
   saveCreditLot(lot: CreditLot): Promise<void>;
   saveCreditLots(lots: CreditLot[]): Promise<void>;
   getReservationById(reservationId: string): Promise<CreditReservation | null>;
-  getReservationByRequestId(requestId: string): Promise<CreditReservation | null>;
+  getReservationByRequestId(
+    requestId: string,
+  ): Promise<CreditReservation | null>;
   saveReservation(reservation: CreditReservation): Promise<void>;
-  saveReservationAllocations(allocations: ReservationAllocation[]): Promise<void>;
-  getReservationAllocations(reservationId: string): Promise<ReservationAllocation[]>;
-  getWorkspaceBudget(workspaceId: string, period?: BudgetPeriod): Promise<WorkspaceBudget | null>;
+  saveReservationAllocations(
+    allocations: ReservationAllocation[],
+  ): Promise<void>;
+  getReservationAllocations(
+    reservationId: string,
+  ): Promise<ReservationAllocation[]>;
+  getWorkspaceBudget(
+    workspaceId: string,
+    period?: BudgetPeriod,
+  ): Promise<WorkspaceBudget | null>;
   saveWorkspaceBudget(budget: WorkspaceBudget): Promise<void>;
-  saveBillingAuthorizationRecord(record: BillingAuthorizationRecord): Promise<void>;
-  getBillingAuthorizationByRequestId(requestId: string): Promise<BillingAuthorizationRecord | null>;
+  saveBillingAuthorizationRecord(
+    record: BillingAuthorizationRecord,
+  ): Promise<void>;
+  getBillingAuthorizationByRequestId(
+    requestId: string,
+  ): Promise<BillingAuthorizationRecord | null>;
   saveSettlementShortfall(record: SettlementShortfallRecord): Promise<void>;
   saveWalletAdjustmentLog(record: WalletAdjustmentRecord): Promise<void>;
   listExpiredCreditLots(now?: Date): Promise<CreditLot[]>;

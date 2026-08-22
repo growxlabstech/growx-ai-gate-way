@@ -36,7 +36,9 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
         return true;
       };
 
-      expect(() => tenantCheck(orgA, orgB)).toThrow("ACCESS_DENIED_CROSS_TENANT_ISOLATION");
+      expect(() => tenantCheck(orgA, orgB)).toThrow(
+        "ACCESS_DENIED_CROSS_TENANT_ISOLATION",
+      );
       expect(tenantCheck(orgA, orgA)).toBe(true);
     });
 
@@ -63,7 +65,9 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       const costPerThousandTokens = new Decimal("0.005000000000000000");
       const tokensUsed = 3500;
 
-      const charge = costPerThousandTokens.mul(new Decimal(tokensUsed)).div(new Decimal(1000));
+      const charge = costPerThousandTokens
+        .mul(new Decimal(tokensUsed))
+        .div(new Decimal(1000));
       const remainingBalance = initialBalance.sub(charge);
 
       expect(charge.toString()).toBe("0.0175");
@@ -88,8 +92,20 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
   describe("3. Router V2 & Failure Isolation", () => {
     it("isolates failure domains and selects healthy fallback without governance violation", () => {
       const routes = [
-        { id: "route_openai_primary", provider: "openai", status: "open", latencyMs: 250, cost: 0.03 },
-        { id: "route_anthropic_fallback", provider: "anthropic", status: "closed", latencyMs: 180, cost: 0.028 },
+        {
+          id: "route_openai_primary",
+          provider: "openai",
+          status: "open",
+          latencyMs: 250,
+          cost: 0.03,
+        },
+        {
+          id: "route_anthropic_fallback",
+          provider: "anthropic",
+          status: "closed",
+          latencyMs: 180,
+          cost: 0.028,
+        },
       ];
 
       // Exclude open circuits
@@ -108,20 +124,33 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       const schema = {
         type: "object",
         properties: {
-          sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
+          sentiment: {
+            type: "string",
+            enum: ["positive", "neutral", "negative"],
+          },
           score: { type: "number", minimum: 0, maximum: 1 },
         },
         required: ["sentiment", "score"],
         additionalProperties: false,
       };
 
-      const validOutput = JSON.stringify({ sentiment: "positive", score: 0.95 });
-      const invalidOutput = JSON.stringify({ sentiment: "unknown", score: 2.5 });
+      const validOutput = JSON.stringify({
+        sentiment: "positive",
+        score: 0.95,
+      });
+      const invalidOutput = JSON.stringify({
+        sentiment: "unknown",
+        score: 2.5,
+      });
 
       const resValid = validator.parseAndValidate(validOutput, schema, true);
       expect(resValid.valid).toBe(true);
 
-      const resInvalid = validator.parseAndValidate(invalidOutput, schema, true);
+      const resInvalid = validator.parseAndValidate(
+        invalidOutput,
+        schema,
+        true,
+      );
       expect(resInvalid.valid).toBe(false);
       expect(resInvalid.errors?.length).toBeGreaterThan(0);
     });
@@ -132,24 +161,36 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
   // ========================================================
   describe("5. Performance, Scale & Fairness", () => {
     it("enforces tenant fairness and sheds background traffic under high load", () => {
-      const admission = new AdmissionController({ maxGlobalConcurrency: 100, maxTenantConcurrency: 10 });
+      const admission = new AdmissionController({
+        maxGlobalConcurrency: 100,
+        maxTenantConcurrency: 10,
+      });
       const orgId = "org_scale_123";
 
       // Fill tenant concurrency
       for (let i = 0; i < 10; i++) {
-        const decision = admission.evaluateAdmission({ organizationId: orgId, priority: "STANDARD" });
+        const decision = admission.evaluateAdmission({
+          organizationId: orgId,
+          priority: "STANDARD",
+        });
         expect(decision.allowed).toBe(true);
         admission.acquire(orgId);
       }
 
       // 11th request exceeds tenant concurrency
-      const excessDecision = admission.evaluateAdmission({ organizationId: orgId, priority: "STANDARD" });
+      const excessDecision = admission.evaluateAdmission({
+        organizationId: orgId,
+        priority: "STANDARD",
+      });
       expect(excessDecision.allowed).toBe(false);
       expect(excessDecision.reason).toContain("exceeded");
 
       // Release one request
       admission.release(orgId);
-      const afterRelease = admission.evaluateAdmission({ organizationId: orgId, priority: "STANDARD" });
+      const afterRelease = admission.evaluateAdmission({
+        organizationId: orgId,
+        priority: "STANDARD",
+      });
       expect(afterRelease.allowed).toBe(true);
     });
 
@@ -179,7 +220,9 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       expect(updated.canaryPercentage).toBe(10);
 
       // Automated rollback on error spike
-      expect(() => canary.triggerRollback("Error rate exceeded 0.5% threshold")).toThrow();
+      expect(() =>
+        canary.triggerRollback("Error rate exceeded 0.5% threshold"),
+      ).toThrow();
       expect(canary.getPolicy().stage).toBe("0_disabled");
     });
   });
@@ -197,11 +240,26 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
         simulatedDurationMs: 2500,
         simulatedRpoSeconds: 30,
         stateSnapshot: {
-          walletBalances: [{ accountId: "acc_test", balance: "100.00", ledgerSum: "100.00" }],
-          apiKeys: [{ id: "key_1", secretHashPresent: true, orgId: "org_test" }],
-          providerCredentials: [{ accountId: "acc_test", activeVersionCount: 1 }],
-          batches: [{ id: "batch_1", totalItems: 10, processedItems: 10, isTerminal: true }],
-          deletedResources: [{ id: "res_1", isDeleted: true, stillAccessible: false }],
+          walletBalances: [
+            { accountId: "acc_test", balance: "100.00", ledgerSum: "100.00" },
+          ],
+          apiKeys: [
+            { id: "key_1", secretHashPresent: true, orgId: "org_test" },
+          ],
+          providerCredentials: [
+            { accountId: "acc_test", activeVersionCount: 1 },
+          ],
+          batches: [
+            {
+              id: "batch_1",
+              totalItems: 10,
+              processedItems: 10,
+              isTerminal: true,
+            },
+          ],
+          deletedResources: [
+            { id: "res_1", isDeleted: true, stillAccessible: false },
+          ],
         },
       });
 
@@ -224,10 +282,22 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
           new Response(
             JSON.stringify({
               id: "chatcmpl_cert123",
-              choices: [{ message: { role: "assistant", content: "Certified production ready." }, finish_reason: "stop" }],
-              usage: { prompt_tokens: 12, completion_tokens: 18, total_tokens: 30 },
+              choices: [
+                {
+                  message: {
+                    role: "assistant",
+                    content: "Certified production ready.",
+                  },
+                  finish_reason: "stop",
+                },
+              ],
+              usage: {
+                prompt_tokens: 12,
+                completion_tokens: 18,
+                total_tokens: 30,
+              },
             }),
-            { status: 200, headers: { "content-type": "application/json" } }
+            { status: 200, headers: { "content-type": "application/json" } },
           ),
       });
 
@@ -237,7 +307,9 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       });
 
       expect(res.id).toBe("chatcmpl_cert123");
-      expect(res.choices[0]!.message.content).toContain("Certified production ready");
+      expect(res.choices[0]!.message.content).toContain(
+        "Certified production ready",
+      );
       expect(res.usage.total_tokens).toBe(30);
     });
 
@@ -264,7 +336,10 @@ describe("GROWX AI GATEWAY — PHASE 40 FINAL PRODUCTION CERTIFICATION SUITE", (
       expect(release.status).toBe("deployed");
       expect(release.smokeResults!.length).toBeGreaterThanOrEqual(5);
 
-      const rollback = orchestrator.rollbackRelease(release.id, "Staging validation trigger");
+      const rollback = orchestrator.rollbackRelease(
+        release.id,
+        "Staging validation trigger",
+      );
       expect(rollback.status).toBe("rolled_back");
     });
   });

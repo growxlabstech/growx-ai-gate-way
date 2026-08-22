@@ -24,7 +24,11 @@ export interface RouteHealthTarget {
 
 export interface HealthSink {
   save(providerId: string, health: ProviderHealth): Promise<void>;
-  emitChanged(providerId: string, previous: string | null, current: string): Promise<void>;
+  emitChanged(
+    providerId: string,
+    previous: string | null,
+    current: string,
+  ): Promise<void>;
   previous(providerId: string): Promise<string | null>;
 }
 
@@ -34,20 +38,23 @@ export interface IProbeEventSink {
     providerId: string,
     previousState: string,
     currentState: string,
-    snapshot: RouteHealthSnapshot
+    snapshot: RouteHealthSnapshot,
   ): Promise<void>;
   emitCircuitTransition(transition: CircuitStateTransition): Promise<void>;
 }
 
 export interface IDistributedLock {
-  acquire(key: string, ttlMs: number): Promise<{ acquired: boolean; leaseId?: string }>;
+  acquire(
+    key: string,
+    ttlMs: number,
+  ): Promise<{ acquired: boolean; leaseId?: string }>;
   release(key: string, leaseId: string): Promise<void>;
 }
 
 export async function checkProviders(
   targets: readonly HealthTarget[],
   sink: HealthSink,
-  signal: AbortSignal
+  signal: AbortSignal,
 ) {
   for (const target of targets) {
     if (signal.aborted) break;
@@ -100,7 +107,7 @@ export class ActiveHealthProbeScheduler {
   constructor(
     private readonly healthStore: IRouteHealthStore,
     private readonly eventSink?: IProbeEventSink | undefined,
-    options: ActiveProbeSchedulerOptions = {}
+    options: ActiveProbeSchedulerOptions = {},
   ) {
     this.probeIntervalMs = options.probeIntervalMs ?? 30_000;
     this.probeTimeoutMs = options.probeTimeoutMs ?? 5_000;
@@ -108,12 +115,18 @@ export class ActiveHealthProbeScheduler {
     this.lock = options.lock;
   }
 
-  async probeSingleRoute(target: RouteHealthTarget, signal?: AbortSignal): Promise<void> {
+  async probeSingleRoute(
+    target: RouteHealthTarget,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const lockKey = `probe:route:${target.routeId}`;
     let leaseId: string | undefined;
 
     if (this.lock) {
-      const lockRes = await this.lock.acquire(lockKey, this.probeTimeoutMs + 2000);
+      const lockRes = await this.lock.acquire(
+        lockKey,
+        this.probeTimeoutMs + 2000,
+      );
       if (!lockRes.acquired) {
         return; // Another instance is probing this route
       }
@@ -123,7 +136,9 @@ export class ActiveHealthProbeScheduler {
     try {
       const abortController = new AbortController();
       if (signal) {
-        signal.addEventListener("abort", () => abortController.abort(), { once: true });
+        signal.addEventListener("abort", () => abortController.abort(), {
+          once: true,
+        });
       }
 
       const timer = setTimeout(() => {
@@ -159,19 +174,27 @@ export class ActiveHealthProbeScheduler {
       }
 
       const latencyMs = Date.now() - startTime;
-      const previousSnapshot = await this.healthStore.getRouteHealth(target.routeId, target.providerId);
+      const previousSnapshot = await this.healthStore.getRouteHealth(
+        target.routeId,
+        target.providerId,
+      );
       const transition = await this.healthStore.recordProbeOutcome(
         target.routeId,
         target.providerId,
         healthy,
-        latencyMs
+        latencyMs,
       );
 
-      const currentSnapshot = await this.healthStore.getRouteHealth(target.routeId, target.providerId);
+      const currentSnapshot = await this.healthStore.getRouteHealth(
+        target.routeId,
+        target.providerId,
+      );
 
       if (this.eventSink) {
         if (transition) {
-          await this.eventSink.emitCircuitTransition(transition).catch(() => {});
+          await this.eventSink
+            .emitCircuitTransition(transition)
+            .catch(() => {});
         }
         if (previousSnapshot.state !== currentSnapshot.state) {
           await this.eventSink
@@ -180,7 +203,7 @@ export class ActiveHealthProbeScheduler {
               target.providerId,
               previousSnapshot.state,
               currentSnapshot.state,
-              currentSnapshot
+              currentSnapshot,
             )
             .catch(() => {});
         }
@@ -192,7 +215,10 @@ export class ActiveHealthProbeScheduler {
     }
   }
 
-  async runProbeBatch(targets: readonly RouteHealthTarget[], signal?: AbortSignal): Promise<void> {
+  async runProbeBatch(
+    targets: readonly RouteHealthTarget[],
+    signal?: AbortSignal,
+  ): Promise<void> {
     for (const target of targets) {
       if (signal?.aborted) break;
 

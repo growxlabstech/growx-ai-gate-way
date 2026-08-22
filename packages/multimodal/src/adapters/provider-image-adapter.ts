@@ -13,7 +13,10 @@ export interface ProviderImageAdapter {
     body: Record<string, unknown>;
   };
 
-  parseGenerationResponse(rawResponse: unknown, request: ImageGenerationRequest): ImageGenerationResponse;
+  parseGenerationResponse(
+    rawResponse: unknown,
+    request: ImageGenerationRequest,
+  ): ImageGenerationResponse;
 
   translateEditRequest?(request: ImageEditRequest): {
     urlPath: string;
@@ -21,5 +24,8 @@ export interface ProviderImageAdapter {
     body: Record<string, unknown>;
   };
 
-  parseEditResponse?(rawResponse: unknown, request: ImageEditRequest): ImageGenerationResponse;
+  parseEditResponse?(
+    rawResponse: unknown,
+    request: ImageEditRequest,
+  ): ImageGenerationResponse;
 }

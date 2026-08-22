@@ -14,7 +14,9 @@ export class CreditHttpServer {
   constructor(
     private readonly creditService: CreditService,
     private readonly repository: ICreditRepository,
-    private readonly authenticate?: (req: http.IncomingMessage) => Promise<MachineAuthContext | null>
+    private readonly authenticate?: (
+      req: http.IncomingMessage,
+    ) => Promise<MachineAuthContext | null>,
   ) {}
 
   private safeJsonStringify(obj: unknown): string {
@@ -26,7 +28,11 @@ export class CreditHttpServer {
     });
   }
 
-  private sendJson(res: http.ServerResponse, statusCode: number, data: unknown): void {
+  private sendJson(
+    res: http.ServerResponse,
+    statusCode: number,
+    data: unknown,
+  ): void {
     const payload = this.safeJsonStringify(data);
     res.writeHead(statusCode, {
       "Content-Type": "application/json",
@@ -50,21 +56,32 @@ export class CreditHttpServer {
     });
   }
 
-  async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+  async handleRequest(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+  ): Promise<void> {
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
     try {
       // 1. Health check
       if (pathname === "/health" && method === "GET") {
-        return this.sendJson(res, 200, { status: "ok", service: "credit-service" });
+        return this.sendJson(res, 200, {
+          status: "ok",
+          service: "credit-service",
+        });
       }
 
       // 2. Public /v1/billing/* routes
       if (pathname.startsWith("/v1/billing/")) {
         if (!this.authenticate) {
-          return this.sendJson(res, 401, { error: "Authentication not configured" });
+          return this.sendJson(res, 401, {
+            error: "Authentication not configured",
+          });
         }
         const auth = await this.authenticate(req);
         if (!auth) {
@@ -72,7 +89,9 @@ export class CreditHttpServer {
         }
 
         if (pathname === "/v1/billing/wallet" && method === "GET") {
-          const wallet = await this.creditService.getOrCreateWallet(auth.organizationId);
+          const wallet = await this.creditService.getOrCreateWallet(
+            auth.organizationId,
+          );
           const balance = await this.creditService.getWalletBalance(wallet.id);
           return this.sendJson(res, 200, {
             wallet: {
@@ -91,9 +110,14 @@ export class CreditHttpServer {
         }
 
         if (pathname === "/v1/billing/ledger" && method === "GET") {
-          const wallet = await this.creditService.getOrCreateWallet(auth.organizationId);
+          const wallet = await this.creditService.getOrCreateWallet(
+            auth.organizationId,
+          );
           const limit = parseInt(url.searchParams.get("limit") ?? "50", 10);
-          const entries = await this.repository.listLedgerEntries(wallet.id, limit);
+          const entries = await this.repository.listLedgerEntries(
+            wallet.id,
+            limit,
+          );
           return this.sendJson(res, 200, {
             entries: entries.map((e) => ({
               id: e.id,
@@ -190,7 +214,9 @@ export class CreditHttpServer {
 
   async listen(port: number = 3006, host: string = "0.0.0.0"): Promise<void> {
     return new Promise((resolve) => {
-      this.server = http.createServer((req, res) => this.handleRequest(req, res));
+      this.server = http.createServer((req, res) =>
+        this.handleRequest(req, res),
+      );
       this.server.listen(port, host, () => {
         resolve();
       });

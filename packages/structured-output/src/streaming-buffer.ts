@@ -1,4 +1,4 @@
-import { StructuredOutputValidator } from './validator.js';
+import { StructuredOutputValidator } from "./validator.js";
 
 export class StructuredStreamBuffer {
   private chunks: string[] = [];
@@ -10,22 +10,22 @@ export class StructuredStreamBuffer {
   }
 
   append(chunk: string): void {
-    const bytes = Buffer.byteLength(chunk, 'utf8');
+    const bytes = Buffer.byteLength(chunk, "utf8");
     if (this.currentBytes + bytes > this.maxBufferBytes) {
-      throw new Error('Stream buffer exceeded maximum size');
+      throw new Error("Stream buffer exceeded maximum size");
     }
     this.chunks.push(chunk);
     this.currentBytes += bytes;
   }
 
   getAccumulated(): string {
-    return this.chunks.join('');
+    return this.chunks.join("");
   }
 
   isComplete(): boolean {
     const data = this.getAccumulated().trim();
-    if (!data.startsWith('{') && !data.startsWith('[')) return false;
-    
+    if (!data.startsWith("{") && !data.startsWith("[")) return false;
+
     let openBraces = 0;
     let openBrackets = 0;
     let inString = false;
@@ -37,7 +37,7 @@ export class StructuredStreamBuffer {
         escape = false;
         continue;
       }
-      if (char === '\\') {
+      if (char === "\\") {
         escape = true;
         continue;
       }
@@ -46,18 +46,18 @@ export class StructuredStreamBuffer {
         continue;
       }
       if (!inString) {
-        if (char === '{') openBraces++;
-        if (char === '}') openBraces--;
-        if (char === '[') openBrackets++;
-        if (char === ']') openBrackets--;
+        if (char === "{") openBraces++;
+        if (char === "}") openBraces--;
+        if (char === "[") openBrackets++;
+        if (char === "]") openBrackets--;
       }
     }
-    return (openBraces === 0 && openBrackets === 0);
+    return openBraces === 0 && openBrackets === 0;
   }
 
   validate(validator: StructuredOutputValidator, schema: any): any {
     if (!this.isComplete()) {
-      return { valid: false, failureCategory: 'truncated' };
+      return { valid: false, failureCategory: "truncated" };
     }
     return validator.parseAndValidate(this.getAccumulated(), schema);
   }

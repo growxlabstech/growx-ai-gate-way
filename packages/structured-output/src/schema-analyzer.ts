@@ -1,4 +1,4 @@
-import type { SchemaFeatureProfile } from '@growx/contracts';
+import type { SchemaFeatureProfile } from "@growx/contracts";
 
 export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
   let depth = 0;
@@ -16,22 +16,26 @@ export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
   let unionBranchCount = 0;
   let patternLength = 0;
 
-  function traverse(node: any, currentDepth: number, currentArrayDepth: number) {
-    if (typeof node !== 'object' || node === null) return;
+  function traverse(
+    node: any,
+    currentDepth: number,
+    currentArrayDepth: number,
+  ) {
+    if (typeof node !== "object" || node === null) return;
     depth = Math.max(depth, currentDepth);
     arrayNestingDepth = Math.max(arrayNestingDepth, currentArrayDepth);
 
-    if (node.type === 'object' && node.properties) {
+    if (node.type === "object" && node.properties) {
       const keys = Object.keys(node.properties);
       propertyCount += keys.length;
       for (const key of keys) {
         traverse(node.properties[key], currentDepth + 1, currentArrayDepth);
       }
-    } else if (node.type === 'array' && node.items) {
+    } else if (node.type === "array" && node.items) {
       usesNestedArrays = currentArrayDepth > 0;
       traverse(node.items, currentDepth + 1, currentArrayDepth + 1);
     }
-    
+
     if (node.required && Array.isArray(node.required)) {
       requiredCount += node.required.length;
     }
@@ -43,12 +47,16 @@ export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
     if (node.anyOf) {
       usesUnions = true;
       unionBranchCount += node.anyOf.length;
-      node.anyOf.forEach((n: any) => traverse(n, currentDepth + 1, currentArrayDepth));
+      node.anyOf.forEach((n: any) =>
+        traverse(n, currentDepth + 1, currentArrayDepth),
+      );
     }
     if (node.oneOf) {
       usesUnions = true;
       unionBranchCount += node.oneOf.length;
-      node.oneOf.forEach((n: any) => traverse(n, currentDepth + 1, currentArrayDepth));
+      node.oneOf.forEach((n: any) =>
+        traverse(n, currentDepth + 1, currentArrayDepth),
+      );
     }
     if (node.pattern) {
       usesPatterns = true;
@@ -59,7 +67,7 @@ export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
     }
     if (node.format) usesFormat = true;
     if (node.const !== undefined) usesConst = true;
-    
+
     if (node.$defs) {
       for (const key of Object.keys(node.$defs)) {
         traverse(node.$defs[key], currentDepth + 1, currentArrayDepth);
@@ -69,15 +77,15 @@ export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
 
   traverse(schema, 1, 0);
 
-  let complexityBucket: 'simple' | 'moderate' | 'complex' = 'complex';
+  let complexityBucket: "simple" | "moderate" | "complex" = "complex";
   if (depth <= 3 && propertyCount <= 10) {
-    complexityBucket = 'simple';
+    complexityBucket = "simple";
   } else if (depth <= 5 && propertyCount <= 30) {
-    complexityBucket = 'moderate';
+    complexityBucket = "moderate";
   }
 
   const schemaStr = JSON.stringify(schema) || "";
-  const schemaSizeBytes = Buffer.byteLength(schemaStr, 'utf8');
+  const schemaSizeBytes = Buffer.byteLength(schemaStr, "utf8");
 
   return {
     depth,
@@ -95,6 +103,6 @@ export function analyzeSchemaFeatures(schema: any): SchemaFeatureProfile {
     unionBranchCount,
     patternLength,
     schemaSizeBytes,
-    complexityBucket
+    complexityBucket,
   };
 }

@@ -42,7 +42,7 @@ export class NotificationDeliveryService {
    */
   async ingestAndFanout(
     sourceEvent: DomainEventInput,
-    explicitRecipients?: readonly NotificationRecipient[] | undefined
+    explicitRecipients?: readonly NotificationRecipient[] | undefined,
   ): Promise<{
     intent: NotificationIntent;
     deliveries: NotificationDelivery[];
@@ -53,13 +53,17 @@ export class NotificationDeliveryService {
     // 1. Idempotency check: has this source event already produced an intent?
     const existing = await this.repository.findIntentBySource(
       sourceEvent.id,
-      cleanType
+      cleanType,
     );
     if (existing) {
       const existingDeliveries = await this.repository.listDeliveries({
         intentId: existing.id,
       });
-      return { intent: existing, deliveries: existingDeliveries, inAppNotifications: [] };
+      return {
+        intent: existing,
+        deliveries: existingDeliveries,
+        inAppNotifications: [],
+      };
     }
 
     // 2. Map to canonical intent
@@ -68,7 +72,10 @@ export class NotificationDeliveryService {
 
     const policy = getNotificationPolicy(intent.type);
     const targetChannels = policy?.defaultChannels ?? ["email"];
-    const recipients = RecipientResolver.resolveRecipients(intent, explicitRecipients);
+    const recipients = RecipientResolver.resolveRecipients(
+      intent,
+      explicitRecipients,
+    );
 
     const deliveriesToCreate: NotificationDelivery[] = [];
     const inAppToCreate: InAppNotification[] = [];
@@ -79,7 +86,7 @@ export class NotificationDeliveryService {
         const allowed = await this.preferenceResolver.shouldDeliver(
           recipient,
           intent,
-          channel
+          channel,
         );
         if (!allowed) continue;
 
@@ -87,7 +94,7 @@ export class NotificationDeliveryService {
           const rendered = renderNotificationContent(
             intent.templateKey,
             "in_app",
-            intent.data
+            intent.data,
           );
           const inApp: InAppNotification = {
             id: generateId("ntf"),
@@ -142,7 +149,7 @@ export class NotificationDeliveryService {
         escalationCount: 0,
         maxEscalations: policy.escalationPolicy.maxEscalations,
         nextEscalationAt: new Date(
-          now.getTime() + policy.escalationPolicy.escalationDelayMs
+          now.getTime() + policy.escalationPolicy.escalationDelayMs,
         ),
         status: "pending",
         createdAt: now,
@@ -161,11 +168,13 @@ export class NotificationDeliveryService {
   /**
    * Claims and processes a priority batch of pending deliveries.
    */
-  async processBatch(params: {
-    batchSize?: number | undefined;
-    leaseDurationMs?: number | undefined;
-    workerId?: string | undefined;
-  } = {}): Promise<{ delivered: number; retried: number; failed: number }> {
+  async processBatch(
+    params: {
+      batchSize?: number | undefined;
+      leaseDurationMs?: number | undefined;
+      workerId?: string | undefined;
+    } = {},
+  ): Promise<{ delivered: number; retried: number; failed: number }> {
     const batchSize = params.batchSize ?? 10;
     const leaseDurationMs = params.leaseDurationMs ?? 30_000;
     const workerId = params.workerId ?? generateId("wrk");
@@ -173,7 +182,7 @@ export class NotificationDeliveryService {
     const claimed = await this.repository.claimPendingDeliveries(
       batchSize,
       leaseDurationMs,
-      workerId
+      workerId,
     );
 
     let delivered = 0;
@@ -194,7 +203,7 @@ export class NotificationDeliveryService {
    * Executes delivery for a single claimed delivery job.
    */
   async deliverSingle(
-    delivery: NotificationDelivery
+    delivery: NotificationDelivery,
   ): Promise<{ status: string; providerStatus?: number | undefined }> {
     const now = new Date();
     const startedAt = now;
@@ -223,7 +232,7 @@ export class NotificationDeliveryService {
 
     // 3. Check Suppression (hard bounces / complaints)
     const suppression = await this.repository.getSuppression(
-      delivery.recipientSnapshot
+      delivery.recipientSnapshot,
     );
     if (suppression) {
       await this.repository.updateDelivery(delivery.id, {
@@ -240,7 +249,7 @@ export class NotificationDeliveryService {
       rendered = renderNotificationContent(
         delivery.templateKey,
         "email",
-        intent.data
+        intent.data,
       );
     } catch {
       await this.repository.updateDelivery(delivery.id, {
@@ -341,7 +350,9 @@ export class NotificationDeliveryService {
 
     // Replay Safety: Never replay expired OTPs
     if (intent.type === "auth.otp") {
-      throw new Error("Expired or completed OTP notifications cannot be replayed");
+      throw new Error(
+        "Expired or completed OTP notifications cannot be replayed",
+      );
     }
 
     const now = new Date();

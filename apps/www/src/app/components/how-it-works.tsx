@@ -31,7 +31,8 @@ export function HowItWorks() {
     <section className="www-section">
       <h2 className="www-heading">How GrowX AI works</h2>
       <p className="www-body">
-        Integrate in five steps. Each step builds on the previous to give you complete control over AI model access.
+        Integrate in five steps. Each step builds on the previous to give you
+        complete control over AI model access.
       </p>
       <div className="www-steps">
         {steps.map((s) => (

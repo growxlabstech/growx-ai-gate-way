@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Tool Calling End-to-End Tests", () => {
   let fixture: TestGatewayFixture;
@@ -38,7 +41,10 @@ describe("Tool Calling End-to-End Tests", () => {
         {
           id: "call_abc123",
           name: "get_current_weather",
-          arguments: JSON.stringify({ location: "San Francisco, CA", unit: "celsius" }),
+          arguments: JSON.stringify({
+            location: "San Francisco, CA",
+            unit: "celsius",
+          }),
         },
       ],
       usage: {
@@ -57,7 +63,7 @@ describe("Tool Calling End-to-End Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -89,9 +95,12 @@ describe("Tool Calling End-to-End Tests", () => {
     expect(body.choices[0].message.tool_calls).toHaveLength(1);
     expect(body.choices[0].message.tool_calls[0].id).toBe("call_abc123");
     expect(body.choices[0].message.tool_calls[0].type).toBe("function");
-    expect(body.choices[0].message.tool_calls[0].function.name).toBe("get_current_weather");
+    expect(body.choices[0].message.tool_calls[0].function.name).toBe(
+      "get_current_weather",
+    );
     expect(
-      JSON.parse(body.choices[0].message.tool_calls[0].function.arguments).location
+      JSON.parse(body.choices[0].message.tool_calls[0].function.arguments)
+        .location,
     ).toBe("San Francisco, CA");
   });
 });

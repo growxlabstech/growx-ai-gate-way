@@ -25,7 +25,7 @@ export class DeterministicCandidateRanker {
   public static rank(
     candidates: RouteCandidate[],
     profile: RequestCapabilityProfile,
-    options: CandidateRankingOptions = {}
+    options: CandidateRankingOptions = {},
   ): { ranked: RankedCandidateRecord[]; topChoice: RankedCandidateRecord } {
     if (candidates.length === 0) {
       throw new Error("Cannot rank empty candidate list");
@@ -35,7 +35,11 @@ export class DeterministicCandidateRanker {
     const weights = this.resolveWeights(objective, options.weights);
 
     // Compute scores for each candidate
-    const scoredCandidates: { candidate: RouteCandidate; score: RouteScoreDetails; rawTotal: number }[] = [];
+    const scoredCandidates: {
+      candidate: RouteCandidate;
+      score: RouteScoreDetails;
+      rawTotal: number;
+    }[] = [];
 
     for (const cand of candidates) {
       const latRes = LatencyScorer.score(cand, profile.streaming);
@@ -48,22 +52,29 @@ export class DeterministicCandidateRanker {
       const reasons: string[] = [];
 
       // Customer provider preference bonus
-      if (profile.providerPreference && profile.providerPreference === cand.providerId) {
+      if (
+        profile.providerPreference &&
+        profile.providerPreference === cand.providerId
+      ) {
         policyAdjustment += 15;
         reasons.push("PREFERRED_PROVIDER_BONUS");
       }
 
       // Hysteresis stability penalty to prevent route flapping
-      if (options.currentActiveRouteId && cand.routeId !== options.currentActiveRouteId) {
+      if (
+        options.currentActiveRouteId &&
+        cand.routeId !== options.currentActiveRouteId
+      ) {
         const pen = options.hysteresisPenalty ?? 2;
         policyAdjustment -= pen;
         reasons.push("HYSTERESIS_STABILITY_FACTOR");
       }
 
       // Priority bias (only for balanced/pinned where explicit metric is not dominant)
-      const priorityBonus = objective === "balanced" || objective === "pinned"
-        ? Math.max(0, 5 - Math.min(5, cand.priority / 10))
-        : 0;
+      const priorityBonus =
+        objective === "balanced" || objective === "pinned"
+          ? Math.max(0, 5 - Math.min(5, cand.priority / 10))
+          : 0;
       policyAdjustment += priorityBonus;
 
       const weightedScore =
@@ -74,7 +85,8 @@ export class DeterministicCandidateRanker {
         locRes.score * weights.locality +
         policyAdjustment;
 
-      const totalScore = Math.round(Math.max(0, Math.min(100, weightedScore)) * 100) / 100;
+      const totalScore =
+        Math.round(Math.max(0, Math.min(100, weightedScore)) * 100) / 100;
 
       const scoreDetails: RouteScoreDetails = {
         candidateId: cand.routeId,
@@ -90,7 +102,11 @@ export class DeterministicCandidateRanker {
         reasons,
       };
 
-      scoredCandidates.push({ candidate: cand, score: scoreDetails, rawTotal: totalScore });
+      scoredCandidates.push({
+        candidate: cand,
+        score: scoreDetails,
+        rawTotal: totalScore,
+      });
     }
 
     // Deterministic Sorting:
@@ -104,8 +120,14 @@ export class DeterministicCandidateRanker {
       if (a.candidate.priority !== b.candidate.priority) {
         return a.candidate.priority - b.candidate.priority;
       }
-      const hashA = crypto.createHash("md5").update(a.candidate.routeId).digest("hex");
-      const hashB = crypto.createHash("md5").update(b.candidate.routeId).digest("hex");
+      const hashA = crypto
+        .createHash("md5")
+        .update(a.candidate.routeId)
+        .digest("hex");
+      const hashB = crypto
+        .createHash("md5")
+        .update(b.candidate.routeId)
+        .digest("hex");
       return hashA.localeCompare(hashB);
     });
 
@@ -118,7 +140,11 @@ export class DeterministicCandidateRanker {
       rank: idx + 1,
       eligible: true,
       score: sc.score,
-      estimatedCostMinor: sc.candidate.estimatedCost ?? (sc.candidate.priceInputPerMillionMinor !== undefined ? Number(sc.candidate.priceInputPerMillionMinor) : undefined),
+      estimatedCostMinor:
+        sc.candidate.estimatedCost ??
+        (sc.candidate.priceInputPerMillionMinor !== undefined
+          ? Number(sc.candidate.priceInputPerMillionMinor)
+          : undefined),
       estimatedLatencyMs: sc.candidate.p95LatencyMs,
       failureDomain: {
         routeId: sc.candidate.routeId,
@@ -135,7 +161,7 @@ export class DeterministicCandidateRanker {
 
   private static resolveWeights(
     objective: RoutingObjective,
-    customWeights?: RoutingPolicyWeights
+    customWeights?: RoutingPolicyWeights,
   ): RoutingPolicyWeights {
     if (objective === "custom_policy" && customWeights) {
       return customWeights;
@@ -143,18 +169,54 @@ export class DeterministicCandidateRanker {
 
     switch (objective) {
       case "lowest_latency":
-        return { latency: 0.8, cost: 0.05, reliability: 0.1, capacity: 0.025, locality: 0.025 };
+        return {
+          latency: 0.8,
+          cost: 0.05,
+          reliability: 0.1,
+          capacity: 0.025,
+          locality: 0.025,
+        };
       case "lowest_cost":
-        return { latency: 0.05, cost: 0.8, reliability: 0.1, capacity: 0.025, locality: 0.025 };
+        return {
+          latency: 0.05,
+          cost: 0.8,
+          reliability: 0.1,
+          capacity: 0.025,
+          locality: 0.025,
+        };
       case "highest_reliability":
-        return { latency: 0.05, cost: 0.05, reliability: 0.85, capacity: 0.025, locality: 0.025 };
+        return {
+          latency: 0.05,
+          cost: 0.05,
+          reliability: 0.85,
+          capacity: 0.025,
+          locality: 0.025,
+        };
       case "highest_throughput":
-        return { latency: 0.05, cost: 0.35, reliability: 0.2, capacity: 0.35, locality: 0.05 };
+        return {
+          latency: 0.05,
+          cost: 0.35,
+          reliability: 0.2,
+          capacity: 0.35,
+          locality: 0.05,
+        };
       case "pinned":
-        return { latency: 0.2, cost: 0.2, reliability: 0.4, capacity: 0.1, locality: 0.1 };
+        return {
+          latency: 0.2,
+          cost: 0.2,
+          reliability: 0.4,
+          capacity: 0.1,
+          locality: 0.1,
+        };
       case "balanced":
       default:
-        return { latency: 0.3, cost: 0.25, reliability: 0.25, capacity: 0.1, locality: 0.1 };
+        return {
+          latency: 0.3,
+          cost: 0.25,
+          reliability: 0.25,
+          capacity: 0.1,
+          locality: 0.1,
+        };
     }
   }
 }

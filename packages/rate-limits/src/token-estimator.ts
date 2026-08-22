@@ -2,7 +2,10 @@ import type { TokenEstimate } from "./types.js";
 
 export interface MessageInput {
   role?: string;
-  content?: string | Array<{ type: string; text?: string; image_url?: unknown }> | unknown;
+  content?:
+    | string
+    | Array<{ type: string; text?: string; image_url?: unknown }>
+    | unknown;
   name?: string;
   tool_call_id?: string;
   tool_calls?: unknown[];
@@ -32,7 +35,7 @@ export class TokenEstimator {
    */
   estimateInput(
     request: EstimationRequestInput,
-    _model?: ModelMetadataInput
+    _model?: ModelMetadataInput,
   ): number {
     let charCount = 0;
     let messageOverhead = 0;
@@ -99,7 +102,7 @@ export class TokenEstimator {
    */
   estimateOutputReservation(
     request: EstimationRequestInput,
-    model?: ModelMetadataInput
+    model?: ModelMetadataInput,
   ): { reservation: number; source: "explicit_max_tokens" | "heuristic" } {
     const explicit = request.max_completion_tokens ?? request.max_tokens;
     if (typeof explicit === "number" && explicit > 0) {
@@ -108,7 +111,10 @@ export class TokenEstimator {
 
     const modelMax = model?.maxOutputTokens ?? 4096;
     // Default safe reservation: 512 tokens or 25% of model max, capped at 1024
-    const defaultReservation = Math.min(1024, Math.max(256, Math.floor(modelMax * 0.25)));
+    const defaultReservation = Math.min(
+      1024,
+      Math.max(256, Math.floor(modelMax * 0.25)),
+    );
 
     return { reservation: defaultReservation, source: "heuristic" };
   }
@@ -118,7 +124,7 @@ export class TokenEstimator {
    */
   estimate(
     request: EstimationRequestInput,
-    model?: ModelMetadataInput
+    model?: ModelMetadataInput,
   ): TokenEstimate {
     const inputTokens = this.estimateInput(request, model);
     const { reservation: estimatedOutputReservation, source } =

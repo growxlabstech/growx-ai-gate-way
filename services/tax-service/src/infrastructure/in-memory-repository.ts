@@ -1,8 +1,4 @@
-import type {
-  BillingProfile,
-  LegalEntity,
-  TaxRule,
-} from "@growx/tax";
+import type { BillingProfile, LegalEntity, TaxRule } from "@growx/tax";
 import type { ITaxRepository } from "../domain/types.js";
 
 export class InMemoryTaxRepository implements ITaxRepository {
@@ -27,7 +23,10 @@ export class InMemoryTaxRepository implements ITaxRepository {
     return Array.from(this.legalEntities.values());
   }
 
-  async updateLegalEntity(id: string, updates: Partial<LegalEntity>): Promise<LegalEntity> {
+  async updateLegalEntity(
+    id: string,
+    updates: Partial<LegalEntity>,
+  ): Promise<LegalEntity> {
     const existing = this.legalEntities.get(id);
     if (!existing) throw new Error(`Legal entity not found: ${id}`);
     const updated = { ...existing, ...updates, updatedAt: new Date() };
@@ -40,16 +39,19 @@ export class InMemoryTaxRepository implements ITaxRepository {
     return profile;
   }
 
-  async getBillingProfile(organizationId: string): Promise<BillingProfile | undefined> {
+  async getBillingProfile(
+    organizationId: string,
+  ): Promise<BillingProfile | undefined> {
     return this.billingProfiles.get(organizationId);
   }
 
   async updateBillingProfile(
     organizationId: string,
-    updates: Partial<BillingProfile>
+    updates: Partial<BillingProfile>,
   ): Promise<BillingProfile> {
     const existing = this.billingProfiles.get(organizationId);
-    if (!existing) throw new Error(`Billing profile not found for org: ${organizationId}`);
+    if (!existing)
+      throw new Error(`Billing profile not found for org: ${organizationId}`);
     const updated = { ...existing, ...updates, updatedAt: new Date() };
     this.billingProfiles.set(organizationId, updated);
     return updated;

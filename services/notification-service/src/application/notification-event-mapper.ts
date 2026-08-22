@@ -23,7 +23,9 @@ export class NotificationEventMapper {
     const policy = getNotificationPolicy(cleanType);
 
     if (!policy) {
-      throw new Error(`Unsupported domain notification event type: ${event.type}`);
+      throw new Error(
+        `Unsupported domain notification event type: ${event.type}`,
+      );
     }
 
     const now = event.createdAt ?? new Date();

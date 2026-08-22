@@ -18,10 +18,11 @@ import { maskApiKey } from "@growx/observability";
 export function resolveTimeGranularity(
   startTime: Date,
   endTime: Date,
-  requestedGranularity?: AnalyticsTimeGranularity
+  requestedGranularity?: AnalyticsTimeGranularity,
 ): "hour" | "day" {
   if (requestedGranularity && requestedGranularity !== "auto") {
-    if (requestedGranularity === "day" || requestedGranularity === "month") return "day";
+    if (requestedGranularity === "day" || requestedGranularity === "month")
+      return "day";
     return "hour";
   }
 
@@ -71,7 +72,11 @@ export class AnalyticsQueryService {
       throw new Error("startTime cannot be greater than endTime");
     }
 
-    const granularity = resolveTimeGranularity(params.startTime, params.endTime, params.granularity);
+    const granularity = resolveTimeGranularity(
+      params.startTime,
+      params.endTime,
+      params.granularity,
+    );
     const cacheKey = `summary:${params.organizationId}:${params.workspaceId ?? ""}:${params.apiKeyId ?? ""}:${params.startTime.toISOString()}:${params.endTime.toISOString()}:${granularity}`;
 
     const cached = this.getFromCache<CustomerUsageSummary>(cacheKey);
@@ -126,24 +131,42 @@ export class AnalyticsQueryService {
       ttftSketch.merge(r.ttftSketch);
 
       if (r.canonicalModelId) {
-        const m = modelCounts.get(r.canonicalModelId) ?? { requests: 0, tokens: 0n };
+        const m = modelCounts.get(r.canonicalModelId) ?? {
+          requests: 0,
+          tokens: 0n,
+        };
         m.requests += r.requestsTotal;
         m.tokens += r.totalTokens;
         modelCounts.set(r.canonicalModelId, m);
       }
     }
 
-    const successRate = totalRequests > 0 ? Math.round((completedRequests / totalRequests) * 10000) / 100 : 100;
-    const errorRate = totalRequests > 0 ? Math.round((failedRequests / totalRequests) * 10000) / 100 : 0;
-    const retryRate = totalRequests > 0 ? Math.round((retriedRequests / totalRequests) * 10000) / 10000 : 0;
-    const fallbackRate = totalRequests > 0 ? Math.round((fallbackRequests / totalRequests) * 10000) / 10000 : 0;
+    const successRate =
+      totalRequests > 0
+        ? Math.round((completedRequests / totalRequests) * 10000) / 100
+        : 100;
+    const errorRate =
+      totalRequests > 0
+        ? Math.round((failedRequests / totalRequests) * 10000) / 100
+        : 0;
+    const retryRate =
+      totalRequests > 0
+        ? Math.round((retriedRequests / totalRequests) * 10000) / 10000
+        : 0;
+    const fallbackRate =
+      totalRequests > 0
+        ? Math.round((fallbackRequests / totalRequests) * 10000) / 10000
+        : 0;
 
     const topModels = Array.from(modelCounts.entries())
       .map(([modelId, data]) => ({
         modelId,
         requestCount: data.requests,
         totalTokens: data.tokens.toString(),
-        sharePercentage: totalRequests > 0 ? Math.round((data.requests / totalRequests) * 1000) / 10 : 0,
+        sharePercentage:
+          totalRequests > 0
+            ? Math.round((data.requests / totalRequests) * 1000) / 10
+            : 0,
       }))
       .sort((a, b) => b.requestCount - a.requestCount)
       .slice(0, 5);
@@ -210,7 +233,11 @@ export class AnalyticsQueryService {
     endTime: Date;
     granularity?: AnalyticsTimeGranularity;
   }): Promise<CustomerTimeSeriesResponse> {
-    const granularity = resolveTimeGranularity(params.startTime, params.endTime, params.granularity);
+    const granularity = resolveTimeGranularity(
+      params.startTime,
+      params.endTime,
+      params.granularity,
+    );
     const rollups = await this.repository.queryRollups({
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
@@ -221,16 +248,19 @@ export class AnalyticsQueryService {
       granularity,
     });
 
-    const timeMap = new Map<string, {
-      reqTotal: number;
-      reqCompleted: number;
-      reqFailed: number;
-      inputTokens: bigint;
-      outputTokens: bigint;
-      totalTokens: bigint;
-      latency: LatencyDistributionSketch;
-      ttft: LatencyDistributionSketch;
-    }>();
+    const timeMap = new Map<
+      string,
+      {
+        reqTotal: number;
+        reqCompleted: number;
+        reqFailed: number;
+        inputTokens: bigint;
+        outputTokens: bigint;
+        totalTokens: bigint;
+        latency: LatencyDistributionSketch;
+        ttft: LatencyDistributionSketch;
+      }
+    >();
 
     for (const r of rollups) {
       const ts = r.bucketStart.toISOString();
@@ -298,14 +328,17 @@ export class AnalyticsQueryService {
       granularity: "day",
     });
 
-    const modelMap = new Map<string, {
-      reqCount: number;
-      failedCount: number;
-      inputTokens: bigint;
-      outputTokens: bigint;
-      totalTokens: bigint;
-      latency: LatencyDistributionSketch;
-    }>();
+    const modelMap = new Map<
+      string,
+      {
+        reqCount: number;
+        failedCount: number;
+        inputTokens: bigint;
+        outputTokens: bigint;
+        totalTokens: bigint;
+        latency: LatencyDistributionSketch;
+      }
+    >();
 
     for (const r of rollups) {
       const model = r.canonicalModelId ?? "unknown";
@@ -335,7 +368,10 @@ export class AnalyticsQueryService {
         outputTokens: data.outputTokens.toString(),
         totalTokens: data.totalTokens.toString(),
         latencyP95Ms: data.latency.percentile(95),
-        errorRate: data.reqCount > 0 ? Math.round((data.failedCount / data.reqCount) * 10000) / 100 : 0,
+        errorRate:
+          data.reqCount > 0
+            ? Math.round((data.failedCount / data.reqCount) * 10000) / 100
+            : 0,
       }))
       .sort((a, b) => b.requestCount - a.requestCount)
       .slice(0, params.limit ?? 20);
@@ -358,7 +394,10 @@ export class AnalyticsQueryService {
       granularity: "day",
     });
 
-    const keyMap = new Map<string, { reqCount: number; totalTokens: bigint; lastUsed?: Date }>();
+    const keyMap = new Map<
+      string,
+      { reqCount: number; totalTokens: bigint; lastUsed?: Date }
+    >();
 
     for (const r of rollups) {
       const keyId = r.apiKeyId ?? "direct";
@@ -398,23 +437,35 @@ export class AnalyticsQueryService {
       granularity: "day",
     });
 
-    const wsMap = new Map<string, { reqCount: number; failedCount: number; totalTokens: bigint }>();
+    const wsMap = new Map<
+      string,
+      { reqCount: number; failedCount: number; totalTokens: bigint }
+    >();
 
     for (const r of rollups) {
       const ws = r.workspaceId;
-      const entry = wsMap.get(ws) ?? { reqCount: 0, failedCount: 0, totalTokens: 0n };
+      const entry = wsMap.get(ws) ?? {
+        reqCount: 0,
+        failedCount: 0,
+        totalTokens: 0n,
+      };
       entry.reqCount += r.requestsTotal;
       entry.failedCount += r.requestsFailed;
       entry.totalTokens += r.totalTokens;
       wsMap.set(ws, entry);
     }
 
-    const items: WorkspaceBreakdownItem[] = Array.from(wsMap.entries()).map(([workspaceId, data]) => ({
-      workspaceId,
-      requestCount: data.reqCount,
-      totalTokens: data.totalTokens.toString(),
-      errorRate: data.reqCount > 0 ? Math.round((data.failedCount / data.reqCount) * 10000) / 100 : 0,
-    }));
+    const items: WorkspaceBreakdownItem[] = Array.from(wsMap.entries()).map(
+      ([workspaceId, data]) => ({
+        workspaceId,
+        requestCount: data.reqCount,
+        totalTokens: data.totalTokens.toString(),
+        errorRate:
+          data.reqCount > 0
+            ? Math.round((data.failedCount / data.reqCount) * 10000) / 100
+            : 0,
+      }),
+    );
 
     return { items };
   }
@@ -473,21 +524,24 @@ export class AnalyticsQueryService {
       granularity: "day",
     });
 
-    const provMap = new Map<string, {
-      attempts: number;
-      completed: number;
-      failed: number;
-      err429: number;
-      err5xx: number;
-      timeouts: number;
-      latency: LatencyDistributionSketch;
-      ttft: LatencyDistributionSketch;
-      provInput: bigint;
-      provOutput: bigint;
-      provTotal: bigint;
-      fallbackFrom: number;
-      fallbackTo: number;
-    }>();
+    const provMap = new Map<
+      string,
+      {
+        attempts: number;
+        completed: number;
+        failed: number;
+        err429: number;
+        err5xx: number;
+        timeouts: number;
+        latency: LatencyDistributionSketch;
+        ttft: LatencyDistributionSketch;
+        provInput: bigint;
+        provOutput: bigint;
+        provTotal: bigint;
+        fallbackFrom: number;
+        fallbackTo: number;
+      }
+    >();
 
     for (const r of rollups) {
       const prov = r.providerId ?? "direct";
@@ -517,9 +571,11 @@ export class AnalyticsQueryService {
       entry.ttft.merge(r.ttftSketch);
 
       for (const [err, cnt] of Object.entries(r.errorCounts)) {
-        if (err.includes("429") || err.includes("rate_limit")) entry.err429 += cnt;
+        if (err.includes("429") || err.includes("rate_limit"))
+          entry.err429 += cnt;
         else if (err.includes("timeout")) entry.timeouts += cnt;
-        else if (err.includes("5") || err.includes("server_error")) entry.err5xx += cnt;
+        else if (err.includes("5") || err.includes("server_error"))
+          entry.err5xx += cnt;
       }
 
       if (r.fallbackAttempts > 0) {
@@ -529,13 +585,18 @@ export class AnalyticsQueryService {
       provMap.set(prov, entry);
     }
 
-    const providers: InternalProviderAnalyticsSummary[] = Array.from(provMap.entries()).map(([providerId, data]) => ({
+    const providers: InternalProviderAnalyticsSummary[] = Array.from(
+      provMap.entries(),
+    ).map(([providerId, data]) => ({
       providerId,
       displayName: providerId.toUpperCase(),
       attemptCount: data.attempts,
       successfulAttempts: data.completed,
       failedAttempts: data.failed,
-      errorRate: data.attempts > 0 ? Math.round((data.failed / data.attempts) * 10000) / 100 : 0,
+      errorRate:
+        data.attempts > 0
+          ? Math.round((data.failed / data.attempts) * 10000) / 100
+          : 0,
       rateLimit429Count: data.err429,
       serverError5xxCount: data.err5xx,
       timeoutCount: data.timeouts,
@@ -580,11 +641,20 @@ export class AnalyticsQueryService {
       providerTokens += r.providerTotalTokens;
     }
 
-    const firstAttemptSuccess = Math.max(0, totalRequests - retriedRequests - fallbackRequests);
+    const firstAttemptSuccess = Math.max(
+      0,
+      totalRequests - retriedRequests - fallbackRequests,
+    );
     const recoveryCount = retriedRequests + fallbackRequests;
-    const recoveryRate = (retriedRequests + fallbackRequests) > 0 ? 1.0 : 0;
-    const retryAmplificationAttempts = totalRequests > 0 ? Math.round((totalAttempts / totalRequests) * 100) / 100 : 1;
-    const retryAmplificationTokens = logicalTokens > 0n ? Number((providerTokens * 100n) / logicalTokens) / 100 : 1;
+    const recoveryRate = retriedRequests + fallbackRequests > 0 ? 1.0 : 0;
+    const retryAmplificationAttempts =
+      totalRequests > 0
+        ? Math.round((totalAttempts / totalRequests) * 100) / 100
+        : 1;
+    const retryAmplificationTokens =
+      logicalTokens > 0n
+        ? Number((providerTokens * 100n) / logicalTokens) / 100
+        : 1;
 
     return {
       totalRequests,

@@ -3,19 +3,10 @@ import type {
   OpenAIChatCompletionRequest,
   OpenAIChatCompletionResponse,
 } from "@growx/contracts";
-import {
-  evaluateSemanticCacheEligibility,
-} from "./eligibility.js";
-import {
-  DeterministicEmbeddingProvider,
-} from "./embedding-provider.js";
-import {
-  extractSemanticInput,
-  sha256,
-} from "./normalization.js";
-import {
-  SemanticCacheCandidateValidator,
-} from "./candidate-validator.js";
+import { evaluateSemanticCacheEligibility } from "./eligibility.js";
+import { DeterministicEmbeddingProvider } from "./embedding-provider.js";
+import { extractSemanticInput, sha256 } from "./normalization.js";
+import { SemanticCacheCandidateValidator } from "./candidate-validator.js";
 import {
   InMemorySemanticVectorStore,
   type SemanticInvalidationFilter,
@@ -42,7 +33,8 @@ export class SemanticCacheService {
   private isKillSwitchActive = false;
 
   constructor(options?: SemanticCacheServiceOptions) {
-    this.vectorStore = options?.vectorStore ?? new InMemorySemanticVectorStore();
+    this.vectorStore =
+      options?.vectorStore ?? new InMemorySemanticVectorStore();
     this.embeddingProvider =
       options?.embeddingProvider ?? new DeterministicEmbeddingProvider();
     this.policy = { ...DEFAULT_SEMANTIC_CACHE_POLICY, ...options?.policy };
@@ -80,7 +72,7 @@ export class SemanticCacheService {
     // 2. Eligibility Evaluation
     const eligibility = evaluateSemanticCacheEligibility(
       params.request,
-      this.policy
+      this.policy,
     );
     if (!eligibility.eligible) {
       return {
@@ -107,8 +99,8 @@ export class SemanticCacheService {
         new Promise<never>((_, reject) =>
           setTimeout(
             () => reject(new Error("Embedding generation timed out")),
-            this.policy.lookupTimeoutMs
-          )
+            this.policy.lookupTimeoutMs,
+          ),
         ),
       ]);
     } catch {
@@ -163,7 +155,7 @@ export class SemanticCacheService {
     for (const match of matches) {
       const validation = SemanticCacheCandidateValidator.validate(
         match.entry,
-        validationContext
+        validationContext,
       );
       if (validation.valid) {
         bestMatch = match;
@@ -230,7 +222,7 @@ export class SemanticCacheService {
     // 2. Check Request Eligibility
     const eligibility = evaluateSemanticCacheEligibility(
       params.request,
-      this.policy
+      this.policy,
     );
     if (!eligibility.eligible) {
       return false;
@@ -309,7 +301,9 @@ export class SemanticCacheService {
     return await this.vectorStore.invalidate(filter);
   }
 
-  public async getStats(organizationId?: string): Promise<{ totalEntries: number }> {
+  public async getStats(
+    organizationId?: string,
+  ): Promise<{ totalEntries: number }> {
     const totalEntries = await this.vectorStore.count(organizationId);
     return { totalEntries };
   }

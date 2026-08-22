@@ -12,7 +12,12 @@ describe("Provider & Credential CRUD Integration Tests", () => {
   const repository = new InMemoryProviderRepository();
   const events = new InMemoryProviderEvents();
   const crypto = new ProviderCredentialCrypto();
-  const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+  const service = new ProviderService(
+    repository,
+    events,
+    crypto,
+    defaultAdapterRegistry,
+  );
 
   it("creates and retrieves a new provider", async () => {
     const provider = await service.createProvider(
@@ -24,7 +29,7 @@ describe("Provider & Credential CRUD Integration Tests", () => {
         priority: 100,
         region: "global",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     expect(provider.id).toMatch(/^prov_/);
@@ -46,8 +51,8 @@ describe("Provider & Credential CRUD Integration Tests", () => {
           adapterType: "openai",
           baseUrl: "https://api.openai.com/v1",
         },
-        "usr_operator_1"
-      )
+        "usr_operator_1",
+      ),
     ).rejects.toThrow(GrowXProviderError);
   });
 
@@ -60,7 +65,7 @@ describe("Provider & Credential CRUD Integration Tests", () => {
         environment: "production",
         rawSecret,
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     expect(credential.id).toMatch(/^pcred_/);
@@ -74,7 +79,10 @@ describe("Provider & Credential CRUD Integration Tests", () => {
     expect((metadata as any).encryptedPayload).toBeUndefined();
 
     // Verify it decrypts accurately
-    const decrypted = crypto.decrypt(credential.encryptedPayload, credential.encryptionKeyVersion);
+    const decrypted = crypto.decrypt(
+      credential.encryptedPayload,
+      credential.encryptionKeyVersion,
+    );
     expect(decrypted).toBe(rawSecret);
   });
 
@@ -82,7 +90,7 @@ describe("Provider & Credential CRUD Integration Tests", () => {
     const updated = await service.updateProvider(
       "openai",
       { displayName: "OpenAI Platform Updated" },
-      "usr_operator_1"
+      "usr_operator_1",
     );
     expect(updated.displayName).toBe("OpenAI Platform Updated");
 

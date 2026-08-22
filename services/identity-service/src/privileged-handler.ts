@@ -1,5 +1,8 @@
 import { and, eq, gt, isNull, schema } from "@growx/database";
-import { privilegedCapabilities, type PrivilegedCapability } from "@growx/privileged-access";
+import {
+  privilegedCapabilities,
+  type PrivilegedCapability,
+} from "@growx/privileged-access";
 
 export interface StepUpRequest {
   operatorId: string;
@@ -7,16 +10,19 @@ export interface StepUpRequest {
   capabilities: PrivilegedCapability[];
   approvalReference?: string;
   breakGlass?: boolean;
-  scope?: { organizationId?: string; workspaceId?: string; environmentId?: string };
+  scope?: {
+    organizationId?: string;
+    workspaceId?: string;
+    environmentId?: string;
+  };
   requestId: string;
 }
 
-export async function createJitPrivilegedSession(
-  db: any,
-  req: StepUpRequest
-) {
+export async function createJitPrivilegedSession(db: any, req: StepUpRequest) {
   if (!req.reason || req.reason.trim().length < 10) {
-    throw new Error("Privileged access requires a detailed reason (at least 10 characters)");
+    throw new Error(
+      "Privileged access requires a detailed reason (at least 10 characters)",
+    );
   }
 
   if (!req.capabilities || req.capabilities.length === 0) {
@@ -66,7 +72,10 @@ export async function createJitPrivilegedSession(
       approvalReference: req.approvalReference ?? null,
       requestId: req.requestId,
       result: "allowed",
-      metadata: { capabilities: req.capabilities, breakGlass: req.breakGlass ?? false },
+      metadata: {
+        capabilities: req.capabilities,
+        breakGlass: req.breakGlass ?? false,
+      },
       createdAt: now,
     });
   });
@@ -82,7 +91,7 @@ export async function revokeJitPrivilegedSession(
   db: any,
   operatorId: string,
   sessionId: string,
-  requestId: string
+  requestId: string,
 ): Promise<boolean> {
   const now = new Date();
   const result = await db
@@ -92,10 +101,13 @@ export async function revokeJitPrivilegedSession(
       and(
         eq(schema.privilegedSessions.id, sessionId),
         eq(schema.privilegedSessions.operatorId, operatorId),
-        isNull(schema.privilegedSessions.revokedAt)
-      )
+        isNull(schema.privilegedSessions.revokedAt),
+      ),
     )
-    .returning({ id: schema.privilegedSessions.id, reason: schema.privilegedSessions.reason });
+    .returning({
+      id: schema.privilegedSessions.id,
+      reason: schema.privilegedSessions.reason,
+    });
 
   if (result.length > 0) {
     await db.insert(schema.privilegedAuditEvents).values({
@@ -118,7 +130,7 @@ export async function revokeJitPrivilegedSession(
 export async function validateJitPrivilegedSession(
   db: any,
   sessionId: string,
-  operatorId: string
+  operatorId: string,
 ) {
   const now = new Date();
   const rows = await db
@@ -129,8 +141,8 @@ export async function validateJitPrivilegedSession(
         eq(schema.privilegedSessions.id, sessionId),
         eq(schema.privilegedSessions.operatorId, operatorId),
         isNull(schema.privilegedSessions.revokedAt),
-        gt(schema.privilegedSessions.expiresAt, now)
-      )
+        gt(schema.privilegedSessions.expiresAt, now),
+      ),
     )
     .limit(1);
 
@@ -144,6 +156,8 @@ export async function validateJitPrivilegedSession(
 
   return {
     ...session,
-    capabilities: caps.map((c: { capability: string }) => c.capability as PrivilegedCapability),
+    capabilities: caps.map(
+      (c: { capability: string }) => c.capability as PrivilegedCapability,
+    ),
   };
 }

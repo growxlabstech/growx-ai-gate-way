@@ -78,14 +78,17 @@ describe("OpenAI Translator Unit Tests", () => {
           type: "json_schema",
           json_schema: {
             name: "UserInfo",
-            schema: { type: "object", properties: { name: { type: "string" } } },
+            schema: {
+              type: "object",
+              properties: { name: { type: "string" } },
+            },
             strict: true,
           },
         },
       },
       "req_123",
       "openai/gpt-4o-mini",
-      "gpt-4o-mini"
+      "gpt-4o-mini",
     );
 
     expect(req.structuredOutput).toBeDefined();
@@ -118,13 +121,15 @@ describe("OpenAI Translator Unit Tests", () => {
           latencyMs: 50,
         },
       },
-      "growx/fast"
+      "growx/fast",
     );
 
     expect(openAIResp.id).toBe("chatcmpl_test123");
     expect(openAIResp.object).toBe("chat.completion");
     expect(openAIResp.model).toBe("growx/fast");
-    expect(openAIResp.choices[0]!.message.content).toBe("Generated output text");
+    expect(openAIResp.choices[0]!.message.content).toBe(
+      "Generated output text",
+    );
     expect(openAIResp.choices[0]!.finish_reason).toBe("stop");
     expect(openAIResp.usage.prompt_tokens).toBe(15);
     expect(openAIResp.usage.completion_tokens).toBe(10);
@@ -143,7 +148,7 @@ describe("OpenAI Translator Unit Tests", () => {
         timestamp: new Date().toISOString(),
       },
       "openai/gpt-4o-mini",
-      1234567890
+      1234567890,
     );
 
     expect(chunk.id).toBe("chatcmpl_test123");

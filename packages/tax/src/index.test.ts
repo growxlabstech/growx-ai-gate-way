@@ -146,7 +146,7 @@ describe("Phase 20 — @growx/tax Package", () => {
         customer: customerKA,
         currency: "INR",
       },
-      gstRules
+      gstRules,
     );
 
     expect(calc.jurisdictionDecision.supplyClassification).toBe("intra_state");
@@ -195,7 +195,7 @@ describe("Phase 20 — @growx/tax Package", () => {
         customer: customerMH,
         currency: "INR",
       },
-      gstRules
+      gstRules,
     );
 
     expect(calc.jurisdictionDecision.supplyClassification).toBe("inter_state");
@@ -233,7 +233,7 @@ describe("Phase 20 — @growx/tax Package", () => {
         customer: customerUS,
         currency: "USD",
       },
-      gstRules
+      gstRules,
     );
 
     expect(calc.taxTreatment).toBe("zero_rated");
@@ -274,7 +274,7 @@ describe("Phase 20 — @growx/tax Package", () => {
         customer: customerUK,
         currency: "GBP",
       },
-      gstRules
+      gstRules,
     );
 
     expect(calc.lines[0]!.taxType).toBe("VAT");
@@ -310,7 +310,7 @@ describe("Phase 20 — @growx/tax Package", () => {
         customer: customerExempt,
         currency: "INR",
       },
-      gstRules
+      gstRules,
     );
 
     expect(calc.taxTreatment).toBe("exempt");
@@ -350,24 +350,36 @@ describe("Phase 20 — @growx/tax Package", () => {
           customer: customerJapan,
           currency: "JPY",
         },
-        gstRules
-      )
+        gstRules,
+      ),
     ).toThrow("No active tax rule found");
   });
 
   it("validates tax identifiers syntax properly", () => {
     // Valid GSTIN
-    const validGstin = TaxIdentifierValidator.validate("GSTIN", "29AABCG1234F1Z5", "IN");
+    const validGstin = TaxIdentifierValidator.validate(
+      "GSTIN",
+      "29AABCG1234F1Z5",
+      "IN",
+    );
     expect(validGstin.isValid).toBe(true);
     expect(validGstin.status).toBe("syntactically_valid");
 
     // Invalid GSTIN (wrong length/chars)
-    const invalidGstin = TaxIdentifierValidator.validate("GSTIN", "12345", "IN");
+    const invalidGstin = TaxIdentifierValidator.validate(
+      "GSTIN",
+      "12345",
+      "IN",
+    );
     expect(invalidGstin.isValid).toBe(false);
     expect(invalidGstin.status).toBe("invalid");
 
     // Valid UK VAT
-    const validUkVat = TaxIdentifierValidator.validate("VAT_ID", "GB123456789", "GB");
+    const validUkVat = TaxIdentifierValidator.validate(
+      "VAT_ID",
+      "GB123456789",
+      "GB",
+    );
     expect(validUkVat.isValid).toBe(true);
 
     // Valid US EIN

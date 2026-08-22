@@ -4,7 +4,11 @@ import type {
   RoutingPolicy,
   ScoreWeights,
 } from "./types.js";
-import { DEFAULT_WEIGHTS, normalizeWeights, validateWeights } from "./scoring.js";
+import {
+  DEFAULT_WEIGHTS,
+  normalizeWeights,
+  validateWeights,
+} from "./scoring.js";
 
 export const DEFAULT_GLOBAL_POLICY: RoutingPolicy = {
   id: "pol_global_default",
@@ -40,10 +44,11 @@ export const DEFAULT_GLOBAL_POLICY: RoutingPolicy = {
  */
 export function mergeRoutingPolicies(
   policies: Array<RoutingPolicy | undefined | null>,
-  constraints?: RoutingConstraints | undefined
+  constraints?: RoutingConstraints | undefined,
 ): RoutingPolicy {
   const activePolicies = policies.filter(
-    (p): p is RoutingPolicy => p !== undefined && p !== null && p.enabled !== false
+    (p): p is RoutingPolicy =>
+      p !== undefined && p !== null && p.enabled !== false,
   );
 
   let merged: RoutingPolicy = {
@@ -89,7 +94,9 @@ export function mergeRoutingPolicies(
       } else {
         const currentAllowed: Set<string> = allowedProviders;
         allowedProviders = new Set<string>(
-          [...currentAllowed].filter((p: string) => pol.allowedProviders!.includes(p))
+          [...currentAllowed].filter((p: string) =>
+            pol.allowedProviders!.includes(p),
+          ),
         );
       }
     }
@@ -106,7 +113,9 @@ export function mergeRoutingPolicies(
       } else {
         const currentAllowedRegions: Set<string> = allowedRegions;
         allowedRegions = new Set<string>(
-          [...currentAllowedRegions].filter((r: string) => pol.allowedRegions!.includes(r))
+          [...currentAllowedRegions].filter((r: string) =>
+            pol.allowedRegions!.includes(r),
+          ),
         );
       }
     }
@@ -141,15 +150,18 @@ export function mergeRoutingPolicies(
     if (constraints.deniedProviders) {
       for (const p of constraints.deniedProviders) allDeniedProviders.add(p);
     }
-    if (constraints.allowedProviders && constraints.allowedProviders.length > 0) {
+    if (
+      constraints.allowedProviders &&
+      constraints.allowedProviders.length > 0
+    ) {
       if (allowedProviders === null) {
         allowedProviders = new Set<string>(constraints.allowedProviders);
       } else {
         const currentAllowed: Set<string> = allowedProviders;
         allowedProviders = new Set<string>(
           [...currentAllowed].filter((p: string) =>
-            constraints.allowedProviders!.includes(p)
-          )
+            constraints.allowedProviders!.includes(p),
+          ),
         );
       }
     }
@@ -163,12 +175,16 @@ export function mergeRoutingPolicies(
         const currentAllowedRegions: Set<string> = allowedRegions;
         allowedRegions = new Set<string>(
           [...currentAllowedRegions].filter((r: string) =>
-            constraints.allowedRegions!.includes(r)
-          )
+            constraints.allowedRegions!.includes(r),
+          ),
         );
       }
     }
-    if (constraints.requiredRegion || constraints.dataRegion || constraints.region) {
+    if (
+      constraints.requiredRegion ||
+      constraints.dataRegion ||
+      constraints.region
+    ) {
       requiredRegion =
         constraints.requiredRegion ??
         constraints.dataRegion ??
@@ -200,7 +216,9 @@ export function mergeRoutingPolicies(
 }
 
 /** Legacy PolicyVersion resolution preserved for backward compatibility */
-export function resolvePolicy(versions: readonly PolicyVersion[]): PolicyVersion {
+export function resolvePolicy(
+  versions: readonly PolicyVersion[],
+): PolicyVersion {
   const precedence = [
     "global",
     "plan",
@@ -214,7 +232,7 @@ export function resolvePolicy(versions: readonly PolicyVersion[]): PolicyVersion
   const selected = active.sort(
     (a, b) =>
       precedence.indexOf(b.level) - precedence.indexOf(a.level) ||
-      b.version - a.version
+      b.version - a.version,
   )[0];
   if (!selected) throw new Error("No active routing policy");
   validateWeights(selected.weights);

@@ -10,7 +10,9 @@ import { TenantContext, StorageError } from "../domain/types.js";
 function parseJsonBody<T>(req: IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    req.on("data", (chunk) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)),
+    );
     req.on("end", () => {
       try {
         const raw = Buffer.concat(chunks).toString("utf8");
@@ -37,14 +39,25 @@ function extractTenant(req: IncomingMessage): TenantContext {
 
 export function createStorageHttpServer(fileService: FileService) {
   return createServer(async (req, res) => {
-    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    const url = new URL(
+      req.url || "/",
+      `http://${req.headers.host || "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method || "GET";
 
     try {
       // Health routes
-      if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
-        sendJson(res, 200, { status: "ok", service: "storage-service", timestamp: new Date().toISOString() });
+      if (
+        pathname === "/health" ||
+        pathname === "/live" ||
+        pathname === "/ready"
+      ) {
+        sendJson(res, 200, {
+          status: "ok",
+          service: "storage-service",
+          timestamp: new Date().toISOString(),
+        });
         return;
       }
 
@@ -65,7 +78,11 @@ export function createStorageHttpServer(fileService: FileService) {
         const fileId = completeMatch[1]!;
         const body = await parseJsonBody(req);
         const parsed = completeFileUploadRequestSchema.parse(body);
-        const response = await fileService.completeUpload(tenant, fileId, parsed);
+        const response = await fileService.completeUpload(
+          tenant,
+          fileId,
+          parsed,
+        );
         sendJson(res, 200, response);
         return;
       }
@@ -83,7 +100,10 @@ export function createStorageHttpServer(fileService: FileService) {
       const contentMatch = pathname.match(/^\/v1\/files\/([^\/]+)\/content$/);
       if (method === "GET" && contentMatch) {
         const fileId = contentMatch[1]!;
-        const { body, file } = await fileService.getFileContentStream(tenant, fileId);
+        const { body, file } = await fileService.getFileContentStream(
+          tenant,
+          fileId,
+        );
         res.writeHead(200, {
           "content-type": file.detectedMimeType || file.mimeType,
           "content-disposition": `attachment; filename="${file.safeFileName}"`,
@@ -121,7 +141,9 @@ export function createStorageHttpServer(fileService: FileService) {
           status: url.searchParams.get("status") || undefined,
           workspaceId: url.searchParams.get("workspaceId") || undefined,
           cursor: url.searchParams.get("cursor") || undefined,
-          limit: url.searchParams.get("limit") ? Number(url.searchParams.get("limit")) : undefined,
+          limit: url.searchParams.get("limit")
+            ? Number(url.searchParams.get("limit"))
+            : undefined,
         });
         const result = await fileService.listFiles(tenant, query);
         sendJson(res, 200, result);
@@ -129,39 +151,57 @@ export function createStorageHttpServer(fileService: FileService) {
       }
 
       // Privileged /internal/files/:id/quarantine
-      const quarantineMatch = pathname.match(/^\/internal\/files\/([^\/]+)\/quarantine$/);
+      const quarantineMatch = pathname.match(
+        /^\/internal\/files\/([^\/]+)\/quarantine$/,
+      );
       if (method === "POST" && quarantineMatch) {
         const fileId = quarantineMatch[1]!;
         const body: any = await parseJsonBody(req);
-        const updated = await fileService.quarantineFile(tenant.organizationId, fileId, body.reason || "Operator quarantined");
+        const updated = await fileService.quarantineFile(
+          tenant.organizationId,
+          fileId,
+          body.reason || "Operator quarantined",
+        );
         sendJson(res, 200, updated);
         return;
       }
 
       // Privileged /internal/files/:id/restore
-      const restoreMatch = pathname.match(/^\/internal\/files\/([^\/]+)\/restore$/);
+      const restoreMatch = pathname.match(
+        /^\/internal\/files\/([^\/]+)\/restore$/,
+      );
       if (method === "POST" && restoreMatch) {
         const fileId = restoreMatch[1]!;
-        const updated = await fileService.restoreFile(tenant.organizationId, fileId);
+        const updated = await fileService.restoreFile(
+          tenant.organizationId,
+          fileId,
+        );
         sendJson(res, 200, updated);
         return;
       }
 
-      sendJson(res, 404, { error: { code: "NOT_FOUND", message: "Route not found" } });
+      sendJson(res, 404, {
+        error: { code: "NOT_FOUND", message: "Route not found" },
+      });
     } catch (err: any) {
       if (err instanceof StorageError) {
         const status =
           err.code === "FILE_NOT_FOUND"
             ? 404
             : err.code === "UNAUTHORIZED_TENANT"
-            ? 403
-            : err.code === "FILE_QUARANTINED" || err.code === "DANGEROUS_FILE_REJECTED"
-            ? 422
-            : 400;
-        sendJson(res, status, { error: { code: err.code, message: err.message, details: err.details } });
+              ? 403
+              : err.code === "FILE_QUARANTINED" ||
+                  err.code === "DANGEROUS_FILE_REJECTED"
+                ? 422
+                : 400;
+        sendJson(res, status, {
+          error: { code: err.code, message: err.message, details: err.details },
+        });
         return;
       }
-      sendJson(res, 500, { error: { code: "INTERNAL_ERROR", message: err.message } });
+      sendJson(res, 500, {
+        error: { code: "INTERNAL_ERROR", message: err.message },
+      });
     }
   });
 }

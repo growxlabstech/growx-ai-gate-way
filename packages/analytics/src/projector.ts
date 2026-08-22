@@ -1,10 +1,20 @@
 import { createPublicId } from "@growx/ids";
-import type { AnalyticsRepository, AnalyticsCheckpointRecord } from "./repository.js";
+import type {
+  AnalyticsRepository,
+  AnalyticsCheckpointRecord,
+} from "./repository.js";
 import type { AnalyticsRollupRecord } from "./types.js";
 import { LatencyDistributionSketch } from "./distribution.js";
-import type { GatewayRequestRecord, GatewayAttemptRecord, UsageEvent } from "@growx/metering";
+import type {
+  GatewayRequestRecord,
+  GatewayAttemptRecord,
+  UsageEvent,
+} from "@growx/metering";
 
-export function getBucketBoundaries(date: Date, granularity: "minute" | "hour" | "day"): { bucketStart: Date; bucketEnd: Date } {
+export function getBucketBoundaries(
+  date: Date,
+  granularity: "minute" | "hour" | "day",
+): { bucketStart: Date; bucketEnd: Date } {
   const d = new Date(date.getTime());
   if (granularity === "minute") {
     d.setUTCSeconds(0, 0);
@@ -31,7 +41,7 @@ export class AnalyticsProjectionEngine {
   public async projectRequest(
     request: GatewayRequestRecord,
     attempts: GatewayAttemptRecord[] = [],
-    events: UsageEvent[] = []
+    events: UsageEvent[] = [],
   ): Promise<void> {
     // 1. Save raw drilldown records
     await this.repository.saveRequestRecord(request);
@@ -48,9 +58,12 @@ export class AnalyticsProjectionEngine {
     const daily = getBucketBoundaries(timestamp, "day");
 
     const primaryAttempt = attempts[0];
-    const winningAttempt = attempts.find((a) => a.status === "completed") ?? attempts[attempts.length - 1];
+    const winningAttempt =
+      attempts.find((a) => a.status === "completed") ??
+      attempts[attempts.length - 1];
 
-    const providerId = winningAttempt?.providerId ?? primaryAttempt?.providerId ?? null;
+    const providerId =
+      winningAttempt?.providerId ?? primaryAttempt?.providerId ?? null;
     const latencySketch = new LatencyDistributionSketch();
     if (request.durationMs !== undefined && request.durationMs > 0) {
       latencySketch.record(request.durationMs);
@@ -68,7 +81,7 @@ export class AnalyticsProjectionEngine {
 
     const buildRollup = (
       bucket: "hour" | "day",
-      bounds: { bucketStart: Date; bucketEnd: Date }
+      bounds: { bucketStart: Date; bucketEnd: Date },
     ): AnalyticsRollupRecord => ({
       id: createPublicId("anl"),
       organizationId: request.organizationId,
@@ -125,7 +138,7 @@ export class AnalyticsProjectionEngine {
 
     const buildRollup = (
       bucket: "hour" | "day",
-      bounds: { bucketStart: Date; bucketEnd: Date }
+      bounds: { bucketStart: Date; bucketEnd: Date },
     ): AnalyticsRollupRecord => ({
       id: createPublicId("anl"),
       organizationId: params.organizationId,
@@ -180,7 +193,7 @@ export class AnalyticsProjectionEngine {
 
     const buildRollup = (
       bucket: "hour" | "day",
-      bounds: { bucketStart: Date; bucketEnd: Date }
+      bounds: { bucketStart: Date; bucketEnd: Date },
     ): AnalyticsRollupRecord => ({
       id: createPublicId("anl"),
       organizationId: params.organizationId,

@@ -1,13 +1,28 @@
 export interface BillingDocumentStorage {
-  put(key: string, content: Buffer | string, contentType?: string): Promise<{ storageKey: string; byteSize: number }>;
-  get(key: string): Promise<{ content: Buffer; contentType: string } | undefined>;
+  put(
+    key: string,
+    content: Buffer | string,
+    contentType?: string,
+  ): Promise<{ storageKey: string; byteSize: number }>;
+  get(
+    key: string,
+  ): Promise<{ content: Buffer; contentType: string } | undefined>;
   getSignedUrl(key: string, expiresInSeconds?: number): Promise<string>;
 }
 
 export interface MinimalObjectStorageProvider {
-  putObject(key: string, data: Buffer | Uint8Array, options?: { contentType?: string }): Promise<{ contentLength: number }>;
-  getObject(key: string): Promise<{ body: Buffer | any; metadata: { contentType: string } }>;
-  createSignedDownloadUrl(key: string, options?: { expiresInSeconds?: number }): Promise<{ downloadUrl: string }>;
+  putObject(
+    key: string,
+    data: Buffer | Uint8Array,
+    options?: { contentType?: string },
+  ): Promise<{ contentLength: number }>;
+  getObject(
+    key: string,
+  ): Promise<{ body: Buffer | any; metadata: { contentType: string } }>;
+  createSignedDownloadUrl(
+    key: string,
+    options?: { expiresInSeconds?: number },
+  ): Promise<{ downloadUrl: string }>;
 }
 
 export class ObjectStorageBillingDocumentAdapter implements BillingDocumentStorage {
@@ -16,9 +31,11 @@ export class ObjectStorageBillingDocumentAdapter implements BillingDocumentStora
   async put(
     key: string,
     content: Buffer | string,
-    contentType = "text/html"
+    contentType = "text/html",
   ): Promise<{ storageKey: string; byteSize: number }> {
-    const buf = Buffer.isBuffer(content) ? content : Buffer.from(content, "utf8");
+    const buf = Buffer.isBuffer(content)
+      ? content
+      : Buffer.from(content, "utf8");
     const meta = await this.provider.putObject(key, buf, { contentType });
     return {
       storageKey: key,
@@ -26,7 +43,9 @@ export class ObjectStorageBillingDocumentAdapter implements BillingDocumentStora
     };
   }
 
-  async get(key: string): Promise<{ content: Buffer; contentType: string } | undefined> {
+  async get(
+    key: string,
+  ): Promise<{ content: Buffer; contentType: string } | undefined> {
     try {
       const res = await this.provider.getObject(key);
       let buf: Buffer;
@@ -46,20 +65,27 @@ export class ObjectStorageBillingDocumentAdapter implements BillingDocumentStora
   }
 
   async getSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
-    const res = await this.provider.createSignedDownloadUrl(key, { expiresInSeconds });
+    const res = await this.provider.createSignedDownloadUrl(key, {
+      expiresInSeconds,
+    });
     return res.downloadUrl;
   }
 }
 
 export class InMemoryBillingDocumentStorage implements BillingDocumentStorage {
-  private readonly files = new Map<string, { content: Buffer; contentType: string }>();
+  private readonly files = new Map<
+    string,
+    { content: Buffer; contentType: string }
+  >();
 
   async put(
     key: string,
     content: Buffer | string,
-    contentType = "text/html"
+    contentType = "text/html",
   ): Promise<{ storageKey: string; byteSize: number }> {
-    const buf = Buffer.isBuffer(content) ? content : Buffer.from(content, "utf8");
+    const buf = Buffer.isBuffer(content)
+      ? content
+      : Buffer.from(content, "utf8");
     this.files.set(key, { content: buf, contentType });
     return {
       storageKey: key,
@@ -67,7 +93,9 @@ export class InMemoryBillingDocumentStorage implements BillingDocumentStorage {
     };
   }
 
-  async get(key: string): Promise<{ content: Buffer; contentType: string } | undefined> {
+  async get(
+    key: string,
+  ): Promise<{ content: Buffer; contentType: string } | undefined> {
     return this.files.get(key);
   }
 
@@ -79,4 +107,3 @@ export class InMemoryBillingDocumentStorage implements BillingDocumentStorage {
     return `https://storage.growx.internal/documents/${key}?signature=sig_${Date.now()}`;
   }
 }
-

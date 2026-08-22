@@ -57,7 +57,11 @@ export const deploymentTopologyConfigSchema = z.object({
   consoleHostname: z.string().default("app.growxlabs.tech"),
   databasePoolSize: z.number().int().positive().default(20),
   workerConcurrency: z.number().int().positive().default(10),
-  corsAllowedOrigins: z.array(z.string()).default(["https://app.growxlabs.tech"]),
+  corsAllowedOrigins: z
+    .array(z.string())
+    .default(["https://app.growxlabs.tech"]),
   enablePersistentRuntime: z.boolean().default(true),
 });
-export type DeploymentTopologyConfig = z.infer<typeof deploymentTopologyConfigSchema>;
+export type DeploymentTopologyConfig = z.infer<
+  typeof deploymentTopologyConfigSchema
+>;

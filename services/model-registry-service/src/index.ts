@@ -17,9 +17,12 @@ export function createApp(options?: {
 }) {
   const repository = new InMemoryModelRegistryRepository();
   const events = new InMemoryModelRegistryEvents();
-  const service = options?.service ?? new ModelRegistryService(repository, events);
-  const privilegedAuth = options?.privilegedAuth ?? new InMemoryPrivilegedAuthResolver(events);
-  const customerAuth = options?.customerAuth ?? new DefaultCustomerAuthResolver();
+  const service =
+    options?.service ?? new ModelRegistryService(repository, events);
+  const privilegedAuth =
+    options?.privilegedAuth ?? new InMemoryPrivilegedAuthResolver(events);
+  const customerAuth =
+    options?.customerAuth ?? new DefaultCustomerAuthResolver();
 
   const handler = createModelRegistryHttpApp({
     service,

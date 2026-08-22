@@ -5,7 +5,9 @@ import { z } from "zod";
 // ==========================================
 
 export const embeddingEncodingFormatSchema = z.enum(["float", "base64"]);
-export type EmbeddingEncodingFormat = z.infer<typeof embeddingEncodingFormatSchema>;
+export type EmbeddingEncodingFormat = z.infer<
+  typeof embeddingEncodingFormatSchema
+>;
 
 export const openAIEmbeddingInputSchema = z.union([
   z.string().min(1),
@@ -22,7 +24,9 @@ export const openAIEmbeddingRequestSchema = z.object({
   dimensions: z.number().int().positive().max(65_536).optional(),
   user: z.string().max(256).optional(),
 });
-export type OpenAIEmbeddingRequest = z.input<typeof openAIEmbeddingRequestSchema>;
+export type OpenAIEmbeddingRequest = z.input<
+  typeof openAIEmbeddingRequestSchema
+>;
 
 export const openAIEmbeddingDataSchema = z.object({
   object: z.literal("embedding").default("embedding"),
@@ -43,7 +47,9 @@ export const openAIEmbeddingResponseSchema = z.object({
   data: z.array(openAIEmbeddingDataSchema),
   usage: openAIEmbeddingUsageSchema,
 });
-export type OpenAIEmbeddingResponse = z.infer<typeof openAIEmbeddingResponseSchema>;
+export type OpenAIEmbeddingResponse = z.infer<
+  typeof openAIEmbeddingResponseSchema
+>;
 
 // ==========================================
 // 2. Canonical Embedding Model Metadata
@@ -59,10 +65,14 @@ export const embeddingModelMetadataSchema = z.object({
   maxBatchItems: z.number().int().positive().default(2048),
   maxInputTokensPerItem: z.number().int().positive().default(8192),
   normalizedVector: z.boolean().default(true),
-  distanceRecommendations: z.array(z.enum(["cosine", "dot", "euclidean"])).default(["cosine"]),
+  distanceRecommendations: z
+    .array(z.enum(["cosine", "dot", "euclidean"]))
+    .default(["cosine"]),
   providerCompatibilityGroup: z.string().optional(),
 });
-export type EmbeddingModelMetadata = z.infer<typeof embeddingModelMetadataSchema>;
+export type EmbeddingModelMetadata = z.infer<
+  typeof embeddingModelMetadataSchema
+>;
 
 // ==========================================
 // 3. Batch Planning & Chunking
@@ -94,7 +104,9 @@ export const embeddingCompatibilityTypeSchema = z.enum([
   "same_canonical_revision",
   "incompatible",
 ]);
-export type EmbeddingCompatibilityType = z.infer<typeof embeddingCompatibilityTypeSchema>;
+export type EmbeddingCompatibilityType = z.infer<
+  typeof embeddingCompatibilityTypeSchema
+>;
 
 export const embeddingCompatibilityRecordSchema = z.object({
   canonicalModelId: z.string(),
@@ -104,7 +116,9 @@ export const embeddingCompatibilityRecordSchema = z.object({
   verifiedAt: z.coerce.date(),
   source: z.enum(["configured", "provider_contract", "verified_fixture"]),
 });
-export type EmbeddingCompatibilityRecord = z.infer<typeof embeddingCompatibilityRecordSchema>;
+export type EmbeddingCompatibilityRecord = z.infer<
+  typeof embeddingCompatibilityRecordSchema
+>;
 
 // ==========================================
 // 5. Normalized Provider Embedding Execution Context
@@ -120,14 +134,18 @@ export const normalizedEmbeddingRequestSchema = z.object({
   user: z.string().optional(),
   timeoutMs: z.number().int().positive().default(60_000),
 });
-export type NormalizedEmbeddingRequest = z.infer<typeof normalizedEmbeddingRequestSchema>;
+export type NormalizedEmbeddingRequest = z.infer<
+  typeof normalizedEmbeddingRequestSchema
+>;
 
 export const normalizedEmbeddingItemSchema = z.object({
   index: z.number().int().nonnegative(),
   embedding: z.array(z.number()),
   base64Embedding: z.string().optional(),
 });
-export type NormalizedEmbeddingItem = z.infer<typeof normalizedEmbeddingItemSchema>;
+export type NormalizedEmbeddingItem = z.infer<
+  typeof normalizedEmbeddingItemSchema
+>;
 
 export const normalizedEmbeddingResponseSchema = z.object({
   model: z.string(),
@@ -137,4 +155,6 @@ export const normalizedEmbeddingResponseSchema = z.object({
   dimensions: z.number().int().positive(),
   rawUsage: z.record(z.string(), z.unknown()).optional(),
 });
-export type NormalizedEmbeddingResponse = z.infer<typeof normalizedEmbeddingResponseSchema>;
+export type NormalizedEmbeddingResponse = z.infer<
+  typeof normalizedEmbeddingResponseSchema
+>;

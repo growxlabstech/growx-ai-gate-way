@@ -15,7 +15,7 @@ export class PreferenceResolver {
   async shouldDeliver(
     recipient: NotificationRecipient,
     intent: NotificationIntent,
-    channel: NotificationChannel
+    channel: NotificationChannel,
   ): Promise<boolean> {
     // 1. Mandatory notifications cannot be disabled by user or organization preferences
     if (intent.preferenceMode === "mandatory") {
@@ -25,13 +25,19 @@ export class PreferenceResolver {
     // 2. Organization settings check
     if (recipient.organizationId) {
       const orgSettings = await this.repository.getOrganizationSettings(
-        recipient.organizationId
+        recipient.organizationId,
       );
       if (orgSettings) {
-        if (intent.category === "security" && !orgSettings.securityAlertsEnabled) {
+        if (
+          intent.category === "security" &&
+          !orgSettings.securityAlertsEnabled
+        ) {
           return false;
         }
-        if (intent.category === "billing" && !orgSettings.billingAlertsEnabled) {
+        if (
+          intent.category === "billing" &&
+          !orgSettings.billingAlertsEnabled
+        ) {
           return false;
         }
         if (intent.category === "usage" && !orgSettings.usageAlertsEnabled) {
@@ -44,10 +50,10 @@ export class PreferenceResolver {
     if (recipient.userId) {
       const userPrefs = await this.repository.getPreferences(
         recipient.userId,
-        recipient.organizationId
+        recipient.organizationId,
       );
       const match = userPrefs.find(
-        (p) => p.category === intent.category && p.channel === channel
+        (p) => p.category === intent.category && p.channel === channel,
       );
       if (match) {
         return match.enabled;

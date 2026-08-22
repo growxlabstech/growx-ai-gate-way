@@ -16,7 +16,9 @@ describe("Provider SDK Unit Tests", () => {
     expect(registry.get("openai")).toBeInstanceOf(OpenAIAdapter);
     expect(registry.get("anthropic")).toBeInstanceOf(AnthropicAdapter);
 
-    expect(() => registry.get("non-existent-provider")).toThrow(GrowXProviderError);
+    expect(() => registry.get("non-existent-provider")).toThrow(
+      GrowXProviderError,
+    );
   });
 
   it("exports defaultAdapterRegistry with built-in providers", () => {
@@ -27,7 +29,8 @@ describe("Provider SDK Unit Tests", () => {
   });
 
   it("parses SSE streams accurately", async () => {
-    const sseText = "event: message\ndata: Hello\n\nevent: custom\ndata: World\n\n";
+    const sseText =
+      "event: message\ndata: Hello\n\nevent: custom\ndata: World\n\n";
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {

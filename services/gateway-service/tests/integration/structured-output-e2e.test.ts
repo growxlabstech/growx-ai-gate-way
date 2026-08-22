@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Structured Output End-to-End Tests", () => {
   let fixture: TestGatewayFixture;
@@ -57,12 +60,17 @@ describe("Structured Output End-to-End Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "Extract info: Alice is 30, alice@example.com" }],
+        messages: [
+          {
+            role: "user",
+            content: "Extract info: Alice is 30, alice@example.com",
+          },
+        ],
         response_format: {
           type: "json_schema",
           json_schema: {

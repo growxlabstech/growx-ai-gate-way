@@ -18,7 +18,10 @@ export class InMemoryGatewayRepository implements IGatewayRepository {
     this.requests.set(request.id, { ...request });
   }
 
-  async updateRequest(id: string, updates: Partial<GatewayRequestEntity>): Promise<void> {
+  async updateRequest(
+    id: string,
+    updates: Partial<GatewayRequestEntity>,
+  ): Promise<void> {
     const existing = this.requests.get(id);
     if (existing) {
       this.requests.set(id, { ...existing, ...updates });
@@ -46,14 +49,19 @@ export class InMemoryGatewayRepository implements IGatewayRepository {
     this.attempts.set(attempt.id, { ...attempt });
   }
 
-  async updateAttempt(id: string, updates: Partial<GatewayAttemptEntity>): Promise<void> {
+  async updateAttempt(
+    id: string,
+    updates: Partial<GatewayAttemptEntity>,
+  ): Promise<void> {
     const existing = this.attempts.get(id);
     if (existing) {
       this.attempts.set(id, { ...existing, ...updates });
     }
   }
 
-  async listAttemptsByRequestId(requestId: string): Promise<GatewayAttemptEntity[]> {
+  async listAttemptsByRequestId(
+    requestId: string,
+  ): Promise<GatewayAttemptEntity[]> {
     return Array.from(this.attempts.values())
       .filter((a) => a.requestId === requestId)
       .sort((a, b) => a.attemptNumber - b.attemptNumber)

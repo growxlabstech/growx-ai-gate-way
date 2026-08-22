@@ -27,7 +27,7 @@ export class PromptLinter {
   public static lint(
     messages: PromptMessageTemplate[] | undefined,
     template: string | undefined,
-    variableSchema: PromptVariableDefinition[]
+    variableSchema: PromptVariableDefinition[],
   ): PromptLintIssue[] {
     const issues: PromptLintIssue[] = [];
 
@@ -43,7 +43,8 @@ export class PromptLinter {
       issues.push({
         severity: "error",
         code: "EMPTY_TEMPLATE",
-        message: "Prompt version must provide either messages or template content",
+        message:
+          "Prompt version must provide either messages or template content",
       });
       return issues;
     }
@@ -84,7 +85,11 @@ export class PromptLinter {
 
     // 5. Unused required variables in schema
     for (const [name, def] of schemaVars.entries()) {
-      if (!referencedVars.has(name) && def.required && def.defaultValue === undefined) {
+      if (
+        !referencedVars.has(name) &&
+        def.required &&
+        def.defaultValue === undefined
+      ) {
         issues.push({
           severity: "warning",
           code: "UNUSED_REQUIRED_VARIABLE",
@@ -100,7 +105,10 @@ export class PromptLinter {
       for (const m of messages) {
         if (m.role === "user" || m.role === "assistant") {
           seenUserOrAssistant = true;
-        } else if ((m.role === "system" || m.role === "developer") && seenUserOrAssistant) {
+        } else if (
+          (m.role === "system" || m.role === "developer") &&
+          seenUserOrAssistant
+        ) {
           issues.push({
             severity: "warning",
             code: "SYSTEM_MESSAGE_AFTER_USER",

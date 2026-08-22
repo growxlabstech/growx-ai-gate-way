@@ -1,7 +1,8 @@
 import type { ModelCapability } from "@growx/contracts";
 import type { ModelRecord, ModelRegistry } from "@growx/model-registry-service";
 
-export type ProviderHealth = "healthy" | "degraded" | "unhealthy" | "unknown" | "maintenance";
+export type ProviderHealth =
+  "healthy" | "degraded" | "unhealthy" | "unknown" | "maintenance";
 
 export interface LegacyRouteTarget {
   providerId: string;
@@ -40,14 +41,16 @@ export class RoutingService {
   constructor(
     private readonly registry: ModelRegistry,
     private readonly providers: readonly ProviderState[],
-    private readonly id: () => string
+    private readonly id: () => string,
   ) {}
 
   decide(input: RoutingInput): LegacyRoutingDecision {
     const candidates = this.registry
       .resolve(input.requestedModel)
       .filter((model) => this.available(model))
-      .sort((a, b) => this.priority(a.providerId) - this.priority(b.providerId));
+      .sort(
+        (a, b) => this.priority(a.providerId) - this.priority(b.providerId),
+      );
 
     for (const model of candidates)
       this.registry.requireCapabilities(model, input.requiredCapabilities);
@@ -80,11 +83,11 @@ export class RoutingService {
 
   private available(model: ModelRecord) {
     const provider = this.providers.find(
-      (value) => value.id === model.providerId
+      (value) => value.id === model.providerId,
     );
     return Boolean(
       provider?.enabled &&
-        !["unhealthy", "maintenance"].includes(provider.health)
+      !["unhealthy", "maintenance"].includes(provider.health),
     );
   }
 

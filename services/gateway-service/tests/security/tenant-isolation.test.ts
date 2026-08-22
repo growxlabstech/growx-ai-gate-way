@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Tenant Isolation Security Tests", () => {
   let fixture: TestGatewayFixture;
@@ -38,7 +41,7 @@ describe("Tenant Isolation Security Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
         "x-organization-id": "org_bravo_spoofed",
         "x-workspace-id": "ws_bravo_spoofed",
@@ -59,7 +62,9 @@ describe("Tenant Isolation Security Tests", () => {
     expect(req?.environmentId).toBe(envA);
 
     // Verify emitted event belongs strictly to Org A
-    const startedEvent = fixture.gatewayEvents.startedEvents.find((e) => e.requestId === reqId);
+    const startedEvent = fixture.gatewayEvents.startedEvents.find(
+      (e) => e.requestId === reqId,
+    );
     expect(startedEvent?.organizationId).toBe(orgA);
     expect(startedEvent?.workspaceId).toBe(wsA);
   });

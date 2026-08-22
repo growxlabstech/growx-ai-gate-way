@@ -6,7 +6,9 @@ import {
 } from "../helpers/test-fixture.js";
 import type { MachineAuthContext } from "@growx/api-key-service";
 
-function createMockAuth(overrides: Partial<MachineAuthContext> = {}): MachineAuthContext {
+function createMockAuth(
+  overrides: Partial<MachineAuthContext> = {},
+): MachineAuthContext {
   return {
     actorType: "apiKey",
     apiKeyId: "key_test_mm_123",
@@ -65,7 +67,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
           },
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     await fixture.modelService.addProviderRoute(
@@ -78,7 +80,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     // Seed Whisper Audio Transcription Model
@@ -108,7 +110,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
           },
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     await fixture.modelService.addProviderRoute(
@@ -121,7 +123,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     // Seed TTS Speech Synthesis Model
@@ -146,12 +148,19 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         metadata: {
           multimodal: {
             supportsSpeech: true,
-            supportedVoices: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+            supportedVoices: [
+              "alloy",
+              "echo",
+              "fable",
+              "onyx",
+              "nova",
+              "shimmer",
+            ],
             supportedSpeechFormats: ["mp3", "wav", "opus", "aac", "flac"],
           },
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     await fixture.modelService.addProviderRoute(
@@ -164,7 +173,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_operator"
+      "usr_operator",
     );
   });
 
@@ -181,7 +190,9 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
     expect(response).toBeDefined();
     expect(response.data.length).toBe(1);
     expect(response.data[0]!.b64_json).toBeDefined();
-    expect(response.data[0]!.revised_prompt).toContain("A neon cyberpunk cityscape");
+    expect(response.data[0]!.revised_prompt).toContain(
+      "A neon cyberpunk cityscape",
+    );
     expect(response.usage?.images_generated).toBe(1);
   });
 
@@ -194,7 +205,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
       engine.executeImageGeneration(auth, {
         model: "openai/dall-e-3",
         prompt: "A beautiful mountain landscape",
-      })
+      }),
     ).rejects.toThrow(/API key lacks 'images.generate' capability/);
   });
 
@@ -204,7 +215,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
       engine.executeImageGeneration(auth, {
         model: "openai/gpt-4o-mini",
         prompt: "Try to generate image with text model",
-      })
+      }),
     ).rejects.toThrow(/not an image generation model/);
   });
 
@@ -212,7 +223,8 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
     const auth = createMockAuth();
     const response = await engine.executeImageEdit(auth, {
       model: "openai/dall-e-3",
-      image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      image:
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
       prompt: "Add a red hat to the subject",
       n: 1,
     });
@@ -229,9 +241,10 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
     await expect(
       engine.executeImageEdit(auth, {
         model: "openai/dall-e-3",
-        image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        image:
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
         prompt: "Edit this image",
-      })
+      }),
     ).rejects.toThrow(/API key lacks 'images.edit' capability/);
   });
 
@@ -258,7 +271,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
     await expect(
       engine.executeTranscription(auth, {
         model: "openai/whisper-1",
-      })
+      }),
     ).rejects.toThrow(/API key lacks 'audio.transcribe' capability/);
   });
 
@@ -266,7 +279,8 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
     const auth = createMockAuth();
     const response = await engine.executeSpeech(auth, {
       model: "openai/tts-1",
-      input: "GrowX AI Multimodal Gateway brings unified multimodal intelligence.",
+      input:
+        "GrowX AI Multimodal Gateway brings unified multimodal intelligence.",
       voice: "alloy",
       response_format: "wav",
     });
@@ -284,7 +298,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         model: "openai/tts-1",
         input: "Test voice",
         voice: "invalid_alien_voice" as any,
-      })
+      }),
     ).rejects.toThrow(/Voice 'invalid_alien_voice' is unsupported/);
   });
 
@@ -298,7 +312,7 @@ describe("Multimodal Gateway Integration (Phase 33)", () => {
         model: "openai/tts-1",
         input: "Test speech permission",
         voice: "alloy",
-      })
+      }),
     ).rejects.toThrow(/API key lacks 'audio.speech' capability/);
   });
 });

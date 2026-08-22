@@ -17,7 +17,11 @@ import type {
   RetrievePaymentResult,
   RetrieveSubscriptionResult,
 } from "../adapter.js";
-import type { PaymentStatus, NormalizedPaymentEvent, PaymentFailureCategory } from "../types.js";
+import type {
+  PaymentStatus,
+  NormalizedPaymentEvent,
+  PaymentFailureCategory,
+} from "../types.js";
 import { toMinorUnits, fromMinorUnits } from "../types.js";
 
 export interface StripeAdapterOptions {
@@ -33,14 +37,17 @@ export class StripeAdapter implements PaymentProviderAdapter {
 
   constructor(options?: StripeAdapterOptions) {
     this.apiKey = options?.apiKey ?? process.env.STRIPE_SECRET_KEY;
-    this.webhookSecret = options?.webhookSecret ?? process.env.STRIPE_WEBHOOK_SECRET;
+    this.webhookSecret =
+      options?.webhookSecret ?? process.env.STRIPE_WEBHOOK_SECRET;
   }
 
   hasCredentials(): boolean {
     return Boolean(this.apiKey);
   }
 
-  async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult> {
+  async createCustomer(
+    input: CreateCustomerInput,
+  ): Promise<CreateCustomerResult> {
     if (!this.apiKey) {
       // Deterministic fixture for offline/credential-blocked environments
       return {
@@ -53,7 +60,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
-        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
+        ...(input.idempotencyKey
+          ? { "Idempotency-Key": input.idempotencyKey }
+          : {}),
       },
       body: new URLSearchParams({
         ...(input.email ? { email: input.email } : {}),
@@ -64,14 +73,18 @@ export class StripeAdapter implements PaymentProviderAdapter {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Stripe createCustomer failed (${res.status}): ${JSON.stringify(err)}`);
+      throw new Error(
+        `Stripe createCustomer failed (${res.status}): ${JSON.stringify(err)}`,
+      );
     }
 
     const data = await res.json();
     return { providerCustomerId: data.id };
   }
 
-  async createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionResult> {
+  async createCheckoutSession(
+    input: CreateCheckoutSessionInput,
+  ): Promise<CreateCheckoutSessionResult> {
     if (!this.apiKey) {
       const id = `cs_sim_${input.idempotencyKey}`;
       return {
@@ -91,7 +104,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
       "line_items[0][quantity]": "1",
       "metadata[organizationId]": input.organizationId,
       "metadata[idempotencyKey]": input.idempotencyKey,
-      ...(input.providerCustomerId ? { customer: input.providerCustomerId } : {}),
+      ...(input.providerCustomerId
+        ? { customer: input.providerCustomerId }
+        : {}),
     });
 
     const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -106,7 +121,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Stripe createCheckoutSession failed (${res.status}): ${JSON.stringify(err)}`);
+      throw new Error(
+        `Stripe createCheckoutSession failed (${res.status}): ${JSON.stringify(err)}`,
+      );
     }
 
     const data = await res.json();
@@ -116,7 +133,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createPaymentIntent(input: CreatePaymentIntentInput): Promise<CreatePaymentIntentResult> {
+  async createPaymentIntent(
+    input: CreatePaymentIntentInput,
+  ): Promise<CreatePaymentIntentResult> {
     if (!this.apiKey) {
       const id = `pi_sim_${input.idempotencyKey}`;
       return {
@@ -131,9 +150,15 @@ export class StripeAdapter implements PaymentProviderAdapter {
       amount: minorAmount.toString(),
       currency: input.currency.toLowerCase(),
       "metadata[organizationId]": input.organizationId,
-      ...(input.providerCustomerId ? { customer: input.providerCustomerId } : {}),
-      ...(input.providerPaymentMethodId ? { payment_method: input.providerPaymentMethodId } : {}),
-      ...(input.confirmImmediate ? { confirm: "true", off_session: "true" } : {}),
+      ...(input.providerCustomerId
+        ? { customer: input.providerCustomerId }
+        : {}),
+      ...(input.providerPaymentMethodId
+        ? { payment_method: input.providerPaymentMethodId }
+        : {}),
+      ...(input.confirmImmediate
+        ? { confirm: "true", off_session: "true" }
+        : {}),
     });
 
     const res = await fetch("https://api.stripe.com/v1/payment_intents", {
@@ -151,7 +176,8 @@ export class StripeAdapter implements PaymentProviderAdapter {
       const stripeCode = data.error?.code;
       const failureCategory = this.mapStripeFailureCode(stripeCode);
       return {
-        providerPaymentId: data.error?.payment_intent?.id ?? `pi_failed_${Date.now()}`,
+        providerPaymentId:
+          data.error?.payment_intent?.id ?? `pi_failed_${Date.now()}`,
         status: "failed",
         failureCategory,
         failureMessage: data.error?.message ?? "Stripe payment failed",
@@ -166,7 +192,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
+  async createSubscription(
+    input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult> {
     if (!this.apiKey) {
       return {
         providerSubscriptionId: `sub_sim_${input.idempotencyKey}`,
@@ -196,7 +224,10 @@ export class StripeAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async cancelSubscription(providerSubscriptionId: string, atPeriodEnd?: boolean): Promise<CancelSubscriptionResult> {
+  async cancelSubscription(
+    providerSubscriptionId: string,
+    atPeriodEnd?: boolean,
+  ): Promise<CancelSubscriptionResult> {
     if (!this.apiKey) {
       return {
         providerSubscriptionId,
@@ -208,13 +239,17 @@ export class StripeAdapter implements PaymentProviderAdapter {
       ? `https://api.stripe.com/v1/subscriptions/${providerSubscriptionId}`
       : `https://api.stripe.com/v1/subscriptions/${providerSubscriptionId}`;
     const method = atPeriodEnd ? "POST" : "DELETE";
-    const body = atPeriodEnd ? new URLSearchParams({ cancel_at_period_end: "true" }).toString() : undefined;
+    const body = atPeriodEnd
+      ? new URLSearchParams({ cancel_at_period_end: "true" }).toString()
+      : undefined;
 
     const res = await fetch(url, {
       method,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
-        ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+        ...(body
+          ? { "Content-Type": "application/x-www-form-urlencoded" }
+          : {}),
       },
       body: body ?? null,
     });
@@ -266,15 +301,17 @@ export class StripeAdapter implements PaymentProviderAdapter {
   async verifyWebhook(
     payload: Uint8Array,
     signature: string,
-    _headers?: Record<string, string>
+    _headers?: Record<string, string>,
   ): Promise<VerifyWebhookResult> {
     const secret = this.webhookSecret ?? "stripe_test_webhook_secret";
 
-    const parts = signature.split(",").reduce<Record<string, string>>((acc, part) => {
-      const [k, v] = part.split("=");
-      if (k && v) acc[k] = v;
-      return acc;
-    }, {});
+    const parts = signature
+      .split(",")
+      .reduce<Record<string, string>>((acc, part) => {
+        const [k, v] = part.split("=");
+        if (k && v) acc[k] = v;
+        return acc;
+      }, {});
 
     const timestamp = parseInt(parts.t ?? "0", 10);
     const expectedSig = parts.v1;
@@ -318,7 +355,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
     try {
       const computedBuf = Buffer.from(computedHex, "hex");
       const expectedBuf = Buffer.from(expectedSig, "hex");
-      verified = computedBuf.length === expectedBuf.length && timingSafeEqual(computedBuf, expectedBuf);
+      verified =
+        computedBuf.length === expectedBuf.length &&
+        timingSafeEqual(computedBuf, expectedBuf);
     } catch {
       verified = false;
     }
@@ -356,7 +395,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
     }
   }
 
-  async retrievePayment(providerPaymentId: string): Promise<RetrievePaymentResult> {
+  async retrievePayment(
+    providerPaymentId: string,
+  ): Promise<RetrievePaymentResult> {
     if (!this.apiKey) {
       return {
         providerPaymentId,
@@ -366,9 +407,12 @@ export class StripeAdapter implements PaymentProviderAdapter {
       };
     }
 
-    const res = await fetch(`https://api.stripe.com/v1/payment_intents/${providerPaymentId}`, {
-      headers: { Authorization: `Bearer ${this.apiKey}` },
-    });
+    const res = await fetch(
+      `https://api.stripe.com/v1/payment_intents/${providerPaymentId}`,
+      {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      },
+    );
 
     const data = await res.json();
     if (!res.ok) {
@@ -394,7 +438,9 @@ export class StripeAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async retrieveSubscription(providerSubscriptionId: string): Promise<RetrieveSubscriptionResult> {
+  async retrieveSubscription(
+    providerSubscriptionId: string,
+  ): Promise<RetrieveSubscriptionResult> {
     if (!this.apiKey) {
       return {
         providerSubscriptionId,
@@ -402,9 +448,12 @@ export class StripeAdapter implements PaymentProviderAdapter {
       };
     }
 
-    const res = await fetch(`https://api.stripe.com/v1/subscriptions/${providerSubscriptionId}`, {
-      headers: { Authorization: `Bearer ${this.apiKey}` },
-    });
+    const res = await fetch(
+      `https://api.stripe.com/v1/subscriptions/${providerSubscriptionId}`,
+      {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      },
+    );
 
     const data = await res.json();
     return {
@@ -487,14 +536,20 @@ export class StripeAdapter implements PaymentProviderAdapter {
       provider: "stripe",
       eventId: json.id ?? `evt_${Date.now()}`,
       eventType,
-      providerPaymentId: obj.payment_intent ?? (type.startsWith("payment_intent") ? obj.id : undefined),
+      providerPaymentId:
+        obj.payment_intent ??
+        (type.startsWith("payment_intent") ? obj.id : undefined),
       providerCustomerId: obj.customer,
-      providerSessionId: type.startsWith("checkout.session") ? obj.id : undefined,
+      providerSessionId: type.startsWith("checkout.session")
+        ? obj.id
+        : undefined,
       providerRefundId: obj.refunds?.data?.[0]?.id,
       amount,
       currency,
       status,
-      failureCategory: obj.last_payment_error?.code ? this.mapStripeFailureCode(obj.last_payment_error.code) : undefined,
+      failureCategory: obj.last_payment_error?.code
+        ? this.mapStripeFailureCode(obj.last_payment_error.code)
+        : undefined,
       failureMessage: obj.last_payment_error?.message,
       occurredAt: json.created ? new Date(json.created * 1000) : new Date(),
       metadata: obj.metadata ?? {},

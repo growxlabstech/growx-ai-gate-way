@@ -18,7 +18,11 @@ describe("Phase 25: File Retention & Orphan Reconciliation", () => {
   beforeEach(() => {
     storageProvider = new InMemoryObjectStorageProvider();
     repository = new InMemoryFileRepository();
-    fileService = new FileService(storageProvider, repository, new TruthfulFileScanner());
+    fileService = new FileService(
+      storageProvider,
+      repository,
+      new TruthfulFileScanner(),
+    );
     retentionWorker = new FileRetentionWorker(fileService);
     orphanReconciler = new OrphanReconciler(fileService);
   });
@@ -30,10 +34,17 @@ describe("Phase 25: File Retention & Orphan Reconciliation", () => {
       mimeType: "text/plain",
       sizeBytes: 100,
     });
-    await storageProvider.putObject(tempFileRes.file.storageKey, Buffer.from("temp data"));
-    const tempReady = await fileService.completeUpload(tenant, tempFileRes.file.id, {
-      uploadSessionId: tempFileRes.uploadSessionId,
-    });
+    await storageProvider.putObject(
+      tempFileRes.file.storageKey,
+      Buffer.from("temp data"),
+    );
+    const tempReady = await fileService.completeUpload(
+      tenant,
+      tempFileRes.file.id,
+      {
+        uploadSessionId: tempFileRes.uploadSessionId,
+      },
+    );
     tempReady.file.expiresAt = new Date(Date.now() - 3600 * 1000);
     await repository.updateFile(tempReady.file);
 
@@ -43,23 +54,40 @@ describe("Phase 25: File Retention & Orphan Reconciliation", () => {
       mimeType: "application/pdf",
       sizeBytes: 200,
     });
-    await storageProvider.putObject(invoiceFileRes.file.storageKey, Buffer.from("%PDF invoice content"));
-    const invoiceReady = await fileService.completeUpload(tenant, invoiceFileRes.file.id, {
-      uploadSessionId: invoiceFileRes.uploadSessionId,
-    });
+    await storageProvider.putObject(
+      invoiceFileRes.file.storageKey,
+      Buffer.from("%PDF invoice content"),
+    );
+    const invoiceReady = await fileService.completeUpload(
+      tenant,
+      invoiceFileRes.file.id,
+      {
+        uploadSessionId: invoiceFileRes.uploadSessionId,
+      },
+    );
     invoiceReady.file.expiresAt = new Date(Date.now() - 3600 * 1000);
     await repository.updateFile(invoiceReady.file);
 
     const report = await retentionWorker.runRetentionPass();
     expect(report.expiredCount).toBe(1);
 
-    const tempAfter = await repository.getFile(tenant.organizationId, tempFileRes.file.id);
+    const tempAfter = await repository.getFile(
+      tenant.organizationId,
+      tempFileRes.file.id,
+    );
     expect(tempAfter?.status).toBe("deleted");
-    expect(await storageProvider.headObject(tempFileRes.file.storageKey)).toBeNull();
+    expect(
+      await storageProvider.headObject(tempFileRes.file.storageKey),
+    ).toBeNull();
 
-    const invoiceAfter = await repository.getFile(tenant.organizationId, invoiceFileRes.file.id);
+    const invoiceAfter = await repository.getFile(
+      tenant.organizationId,
+      invoiceFileRes.file.id,
+    );
     expect(invoiceAfter?.status).toBe("ready");
-    expect(await storageProvider.headObject(invoiceFileRes.file.storageKey)).not.toBeNull();
+    expect(
+      await storageProvider.headObject(invoiceFileRes.file.storageKey),
+    ).not.toBeNull();
   });
 
   it("2. Cleans up stale pending upload sessions", async () => {
@@ -69,14 +97,20 @@ describe("Phase 25: File Retention & Orphan Reconciliation", () => {
       mimeType: "image/png",
     });
 
-    const session = await repository.getUploadSession(tenant.organizationId, createRes.uploadSessionId);
+    const session = await repository.getUploadSession(
+      tenant.organizationId,
+      createRes.uploadSessionId,
+    );
     session!.expiresAt = new Date(Date.now() - 1000);
     await repository.updateUploadSession(session!);
 
     const cleanedCount = await retentionWorker.runSessionCleanupPass();
     expect(cleanedCount).toBe(1);
 
-    const sessionAfter = await repository.getUploadSession(tenant.organizationId, createRes.uploadSessionId);
+    const sessionAfter = await repository.getUploadSession(
+      tenant.organizationId,
+      createRes.uploadSessionId,
+    );
     expect(sessionAfter?.status).toBe("expired");
   });
 
@@ -86,7 +120,10 @@ describe("Phase 25: File Retention & Orphan Reconciliation", () => {
       purpose: "ai_input",
       mimeType: "text/plain",
     });
-    await storageProvider.putObject(createRes.file.storageKey, Buffer.from("data"));
+    await storageProvider.putObject(
+      createRes.file.storageKey,
+      Buffer.from("data"),
+    );
     await fileService.completeUpload(tenant, createRes.file.id, {
       uploadSessionId: createRes.uploadSessionId,
     });

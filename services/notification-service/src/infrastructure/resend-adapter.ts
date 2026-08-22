@@ -71,7 +71,9 @@ export class ResendEmailAdapter implements EmailProviderAdapter {
     }
 
     if (!response.ok) {
-      const err = new Error(`Resend rejected delivery with status ${response.status}`);
+      const err = new Error(
+        `Resend rejected delivery with status ${response.status}`,
+      );
       (err as any).status = response.status;
       throw err;
     }

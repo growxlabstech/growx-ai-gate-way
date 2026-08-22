@@ -1,6 +1,10 @@
 import { Decimal } from "@growx/money";
 import { createPublicId } from "@growx/ids";
-import type { CreditLot, CreditLotType, ReservationAllocation } from "./types.js";
+import type {
+  CreditLot,
+  CreditLotType,
+  ReservationAllocation,
+} from "./types.js";
 
 const lotTypePriority: Record<CreditLotType, number> = {
   promotional: 0,
@@ -18,11 +22,17 @@ const lotTypePriority: Record<CreditLotType, number> = {
  * 3. Grant timestamp (oldest first)
  * 4. Lot ID (lexical tie-breaker)
  */
-export function consumptionOrder(lots: readonly CreditLot[], now: Date = new Date()): CreditLot[] {
+export function consumptionOrder(
+  lots: readonly CreditLot[],
+  now: Date = new Date(),
+): CreditLot[] {
   return lots
     .filter((lot) => {
       const availableInLot = lot.remainingAmount.sub(lot.reservedAmount);
-      const isUnexpired = lot.expiresAt === null || lot.expiresAt === undefined || lot.expiresAt.getTime() > now.getTime();
+      const isUnexpired =
+        lot.expiresAt === null ||
+        lot.expiresAt === undefined ||
+        lot.expiresAt.getTime() > now.getTime();
       return availableInLot.gt(Decimal.ZERO) && isUnexpired;
     })
     .sort((a, b) => {
@@ -65,7 +75,7 @@ export function allocateCreditLots(
   lots: readonly CreditLot[],
   requiredAmount: Decimal,
   reservationId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): AllocationResult {
   if (requiredAmount.lt(Decimal.ZERO)) {
     throw new Error("Required reservation amount cannot be negative");
@@ -91,10 +101,14 @@ export function allocateCreditLots(
 
     if (availableInLot.lte(Decimal.ZERO)) continue;
 
-    const amountToTake = availableInLot.lt(remainingToAllocate) ? availableInLot : remainingToAllocate;
+    const amountToTake = availableInLot.lt(remainingToAllocate)
+      ? availableInLot
+      : remainingToAllocate;
 
     allocations.push({
-      id: createPublicId("alloc" as any) || `alloc_${Date.now()}_${allocations.length}`,
+      id:
+        createPublicId("alloc" as any) ||
+        `alloc_${Date.now()}_${allocations.length}`,
       reservationId,
       creditLotId: lot.id,
       allocatedAmount: amountToTake,
@@ -111,8 +125,15 @@ export function allocateCreditLots(
 
   if (remainingToAllocate.gt(Decimal.ZERO)) {
     const err = Object.assign(
-      new Error(`Insufficient credits: needed ${requiredAmount.toString()}, short by ${remainingToAllocate.toString()}`),
-      { code: "insufficient_credits", status: 402, required: requiredAmount, shortfall: remainingToAllocate }
+      new Error(
+        `Insufficient credits: needed ${requiredAmount.toString()}, short by ${remainingToAllocate.toString()}`,
+      ),
+      {
+        code: "insufficient_credits",
+        status: 402,
+        required: requiredAmount,
+        shortfall: remainingToAllocate,
+      },
     );
     throw err;
   }

@@ -41,7 +41,10 @@ describe("Phase 22 — Multi-Tenant Chain Isolation", () => {
     expect(orgAList.length).toBe(1);
     expect(orgAList[0]!.id).toBe(orgAEvent1.id);
 
-    const orgBReadFromA = await auditService.getCustomerAuditEvent("org_a", orgBEvent1.id);
+    const orgBReadFromA = await auditService.getCustomerAuditEvent(
+      "org_a",
+      orgBEvent1.id,
+    );
     expect(orgBReadFromA).toBeUndefined();
   });
 });

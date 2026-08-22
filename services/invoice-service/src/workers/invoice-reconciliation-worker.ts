@@ -20,13 +20,15 @@ export class InvoiceReconciliationWorker {
    * Runs a single reconciliation sweep.
    * Finds unallocated or partially paid invoices with matching payment records.
    */
-  async runOnce(unallocatedPayments: {
-    organizationId: string;
-    invoiceId: string;
-    paymentId: string;
-    amount: Decimal;
-    currency: string;
-  }[]): Promise<{ reconciled: number; failed: number }> {
+  async runOnce(
+    unallocatedPayments: {
+      organizationId: string;
+      invoiceId: string;
+      paymentId: string;
+      amount: Decimal;
+      currency: string;
+    }[],
+  ): Promise<{ reconciled: number; failed: number }> {
     let reconciled = 0;
     let failed = 0;
 

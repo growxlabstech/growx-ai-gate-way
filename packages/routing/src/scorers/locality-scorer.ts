@@ -7,7 +7,7 @@ export class LocalityScorer {
    */
   public static score(
     candidate: RouteCandidate,
-    profile: RequestCapabilityProfile
+    profile: RequestCapabilityProfile,
   ): { score: number; matchedRegion: boolean } {
     const pref = profile.regionRequirement?.toLowerCase();
     const candReg = (candidate.region || "global").toLowerCase();

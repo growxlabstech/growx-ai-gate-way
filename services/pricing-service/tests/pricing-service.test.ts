@@ -30,7 +30,11 @@ describe("PricingService and HTTP Server", () => {
       rates: [
         { usageType: "input_tokens", price: "5.00", perUnits: 1_000_000n },
         { usageType: "output_tokens", price: "15.00", perUnits: 1_000_000n },
-        { usageType: "cached_input_tokens", price: "2.50", perUnits: 1_000_000n },
+        {
+          usageType: "cached_input_tokens",
+          price: "2.50",
+          perUnits: 1_000_000n,
+        },
       ],
     });
 
@@ -46,7 +50,11 @@ describe("PricingService and HTTP Server", () => {
           canonicalModelId: "gpt-4o",
           rates: [
             { usageType: "input_tokens", price: "6.00", perUnits: 1_000_000n },
-            { usageType: "output_tokens", price: "18.00", perUnits: 1_000_000n },
+            {
+              usageType: "output_tokens",
+              price: "18.00",
+              perUnits: 1_000_000n,
+            },
           ],
         },
       ],
@@ -81,7 +89,7 @@ describe("PricingService and HTTP Server", () => {
     method: string,
     path: string,
     body?: Record<string, unknown> | undefined,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): Promise<{ status: number; body: any }> {
     return new Promise((resolve, reject) => {
       const url = new URL(path, baseUrl);
@@ -110,7 +118,7 @@ describe("PricingService and HTTP Server", () => {
               });
             }
           });
-        }
+        },
       );
       req.on("error", reject);
       if (body) {
@@ -121,11 +129,15 @@ describe("PricingService and HTTP Server", () => {
   }
 
   it("creates and retrieves provider price schedules and customer policies", async () => {
-    const schedules = await service.listProviderSchedules({ providerId: "openai" });
+    const schedules = await service.listProviderSchedules({
+      providerId: "openai",
+    });
     expect(schedules.length).toBe(1);
     expect(schedules[0]?.schedule.providerId).toBe("openai");
 
-    const policies = await service.listCustomerPolicies({ scopeType: "global" });
+    const policies = await service.listCustomerPolicies({
+      scopeType: "global",
+    });
     expect(policies.length).toBe(1);
     expect(policies[0]?.policy.scopeType).toBe("global");
   });
@@ -214,14 +226,22 @@ describe("PricingService and HTTP Server", () => {
   });
 
   it("rejects unauthenticated requests to internal pricing plane", async () => {
-    const unauthRes = await apiCall("GET", "/internal/pricing/provider-schedules");
+    const unauthRes = await apiCall(
+      "GET",
+      "/internal/pricing/provider-schedules",
+    );
     expect(unauthRes.status).toBe(403);
   });
 
   it("allows authenticated requests to internal pricing plane", async () => {
-    const authRes = await apiCall("GET", "/internal/pricing/provider-schedules", undefined, {
-      "x-growx-internal-key": "test_secret_ops_key",
-    });
+    const authRes = await apiCall(
+      "GET",
+      "/internal/pricing/provider-schedules",
+      undefined,
+      {
+        "x-growx-internal-key": "test_secret_ops_key",
+      },
+    );
     expect(authRes.status).toBe(200);
     expect(authRes.body.data.length).toBe(1);
   });

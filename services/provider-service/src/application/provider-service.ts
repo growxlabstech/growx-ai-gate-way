@@ -27,7 +27,7 @@ export class ProviderService {
     private readonly repository: IProviderRepository,
     private readonly events: IProviderEvents,
     private readonly crypto: ProviderCredentialCrypto,
-    private readonly adapterRegistry: AdapterRegistry
+    private readonly adapterRegistry: AdapterRegistry,
   ) {}
 
   // -------------------------------------------------------------
@@ -37,7 +37,7 @@ export class ProviderService {
   async createProvider(
     input: CreateProviderRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderEntity> {
     const existing = await this.repository.getProviderByCode(input.code);
     if (existing) {
@@ -45,7 +45,7 @@ export class ProviderService {
         "provider_invalid_request",
         `Provider with code '${input.code}' already exists`,
         false,
-        409
+        409,
       );
     }
 
@@ -77,7 +77,7 @@ export class ProviderService {
     idOrCode: string,
     input: UpdateProviderRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderEntity> {
     const current = await this.getProvider(idOrCode);
 
@@ -86,8 +86,10 @@ export class ProviderService {
     }
 
     const updates: Partial<ProviderEntity> = {};
-    if (input.displayName !== undefined) updates.displayName = input.displayName;
-    if (input.adapterType !== undefined) updates.adapterType = input.adapterType.toLowerCase();
+    if (input.displayName !== undefined)
+      updates.displayName = input.displayName;
+    if (input.adapterType !== undefined)
+      updates.adapterType = input.adapterType.toLowerCase();
     if (input.baseUrl !== undefined) updates.baseUrl = input.baseUrl;
     if (input.apiVersion !== undefined) updates.apiVersion = input.apiVersion;
     if (input.region !== undefined) updates.region = input.region;
@@ -105,7 +107,7 @@ export class ProviderService {
   async disableProvider(
     idOrCode: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderEntity> {
     const current = await this.getProvider(idOrCode);
     const updated = await this.repository.updateProvider(current.id, {
@@ -121,7 +123,7 @@ export class ProviderService {
   async enableProvider(
     idOrCode: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderEntity> {
     const current = await this.getProvider(idOrCode);
     const updated = await this.repository.updateProvider(current.id, {
@@ -144,7 +146,7 @@ export class ProviderService {
         "model_not_found",
         `Provider '${idOrCode}' not found`,
         false,
-        404
+        404,
       );
     }
     return provider;
@@ -162,11 +164,13 @@ export class ProviderService {
     providerIdOrCode: string,
     input: CreateProviderCredentialRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialEntity> {
     const provider = await this.getProvider(providerIdOrCode);
 
-    const { encryptedPayload, keyVersion } = this.crypto.encrypt(input.rawSecret);
+    const { encryptedPayload, keyVersion } = this.crypto.encrypt(
+      input.rawSecret,
+    );
 
     const now = new Date();
     const credential: ProviderCredentialEntity = {
@@ -191,7 +195,7 @@ export class ProviderService {
     credentialId: string,
     input: RotateProviderCredentialRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialEntity> {
     const current = await this.repository.getCredentialById(credentialId);
     if (!current) {
@@ -199,11 +203,13 @@ export class ProviderService {
         "model_not_found",
         `Provider credential '${credentialId}' not found`,
         false,
-        404
+        404,
       );
     }
 
-    const { encryptedPayload, keyVersion } = this.crypto.encrypt(input.newRawSecret);
+    const { encryptedPayload, keyVersion } = this.crypto.encrypt(
+      input.newRawSecret,
+    );
     const now = new Date();
 
     const updated = await this.repository.updateCredential(credentialId, {
@@ -218,14 +224,19 @@ export class ProviderService {
       },
     });
 
-    await this.events.emitCredentialRotated(updated, current.id, operatorId, requestId);
+    await this.events.emitCredentialRotated(
+      updated,
+      current.id,
+      operatorId,
+      requestId,
+    );
     return updated;
   }
 
   async disableCredential(
     credentialId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialEntity> {
     const current = await this.repository.getCredentialById(credentialId);
     if (!current) {
@@ -233,7 +244,7 @@ export class ProviderService {
         "model_not_found",
         `Provider credential '${credentialId}' not found`,
         false,
-        404
+        404,
       );
     }
 
@@ -248,7 +259,9 @@ export class ProviderService {
     return updated;
   }
 
-  async listCredentials(providerIdOrCode: string): Promise<ProviderCredentialEntity[]> {
+  async listCredentials(
+    providerIdOrCode: string,
+  ): Promise<ProviderCredentialEntity[]> {
     const provider = await this.getProvider(providerIdOrCode);
     return this.repository.listCredentialsByProviderId(provider.id);
   }
@@ -260,7 +273,7 @@ export class ProviderService {
   private async prepareExecutionContext(
     route: ResolvedExecutionRoute,
     request: NormalizedGenerationRequest,
-    callerContext?: Partial<ProviderExecutionContext>
+    callerContext?: Partial<ProviderExecutionContext>,
   ): Promise<{ context: ProviderExecutionContext; provider: ProviderEntity }> {
     // 1. Resolve Provider
     const provider = await this.getProvider(route.providerId);
@@ -270,7 +283,7 @@ export class ProviderService {
         "provider_unavailable",
         `Provider '${provider.code}' is currently disabled`,
         false,
-        503
+        503,
       );
     }
 
@@ -279,7 +292,7 @@ export class ProviderService {
         "provider_unavailable",
         `Provider '${provider.code}' is undergoing maintenance`,
         true,
-        503
+        503,
       );
     }
 
@@ -288,7 +301,7 @@ export class ProviderService {
         "model_retired",
         `Provider '${provider.code}' has been retired`,
         false,
-        410
+        410,
       );
     }
 
@@ -299,7 +312,7 @@ export class ProviderService {
       await this.events.emitSecurityEvent(
         "security.provider.ssrf_blocked",
         { providerId: provider.id, baseUrl: provider.baseUrl },
-        request.requestId
+        request.requestId,
       );
       throw err;
     }
@@ -308,7 +321,7 @@ export class ProviderService {
     const credential = await this.repository.getEffectiveCredential(
       provider.id,
       callerContext?.organizationId ? "production" : undefined,
-      route.credentialId
+      route.credentialId,
     );
 
     if (!credential) {
@@ -316,7 +329,7 @@ export class ProviderService {
         "provider_authentication_error",
         `No active credentials configured for provider '${provider.code}'`,
         false,
-        502
+        502,
       );
     }
 
@@ -325,7 +338,7 @@ export class ProviderService {
         "provider_authentication_error",
         `Provider credential for '${provider.code}' is ${credential.status}`,
         false,
-        502
+        502,
       );
     }
 
@@ -337,13 +350,13 @@ export class ProviderService {
           credentialProviderId: credential.providerId,
           targetProviderId: provider.id,
         },
-        request.requestId
+        request.requestId,
       );
       throw new GrowXProviderError(
         "provider_authentication_error",
         "Credential scope mismatch for provider execution",
         false,
-        502
+        502,
       );
     }
 
@@ -352,13 +365,13 @@ export class ProviderService {
     try {
       decryptedSecret = this.crypto.decrypt(
         credential.encryptedPayload,
-        credential.encryptionKeyVersion
+        credential.encryptionKeyVersion,
       );
     } catch (err) {
       await this.events.emitSecurityEvent(
         "security.provider.decryption_failed",
         { credentialId: credential.id, providerId: provider.id },
-        request.requestId
+        request.requestId,
       );
       throw err;
     }
@@ -377,15 +390,24 @@ export class ProviderService {
       providerModelId: route.providerModelId,
       timeoutMs,
       decryptedCredential: decryptedSecret,
-      ...(callerContext?.organizationId ? { organizationId: callerContext.organizationId } : {}),
-      ...(callerContext?.workspaceId ? { workspaceId: callerContext.workspaceId } : {}),
+      ...(callerContext?.organizationId
+        ? { organizationId: callerContext.organizationId }
+        : {}),
+      ...(callerContext?.workspaceId
+        ? { workspaceId: callerContext.workspaceId }
+        : {}),
       ...(callerContext?.apiKeyId ? { apiKeyId: callerContext.apiKeyId } : {}),
-      ...(callerContext?.traceContext ? { traceContext: callerContext.traceContext } : {}),
-      ...(callerContext?.cancellationSignal ? { cancellationSignal: callerContext.cancellationSignal } : {}),
+      ...(callerContext?.traceContext
+        ? { traceContext: callerContext.traceContext }
+        : {}),
+      ...(callerContext?.cancellationSignal
+        ? { cancellationSignal: callerContext.cancellationSignal }
+        : {}),
     };
 
     // Attach baseUrl for the adapter
-    (executionContext as unknown as Record<string, unknown>).baseUrl = provider.baseUrl;
+    (executionContext as unknown as Record<string, unknown>).baseUrl =
+      provider.baseUrl;
 
     return { context: executionContext, provider };
   }
@@ -393,15 +415,17 @@ export class ProviderService {
   async executeRoute(
     route: ResolvedExecutionRoute,
     request: NormalizedGenerationRequest,
-    callerContext?: Partial<ProviderExecutionContext>
+    callerContext?: Partial<ProviderExecutionContext>,
   ): Promise<NormalizedGenerationResponse> {
     const { context, provider } = await this.prepareExecutionContext(
       route,
       request,
-      callerContext
+      callerContext,
     );
 
-    const adapter = this.adapterRegistry.get(provider.adapterType || provider.code);
+    const adapter = this.adapterRegistry.get(
+      provider.adapterType || provider.code,
+    );
 
     try {
       const response = await adapter.execute(request, context);
@@ -409,22 +433,25 @@ export class ProviderService {
       return response;
     } finally {
       // Discard plaintext credential reference
-      delete (context as unknown as Record<string, unknown>).decryptedCredential;
+      delete (context as unknown as Record<string, unknown>)
+        .decryptedCredential;
     }
   }
 
   async *streamRoute(
     route: ResolvedExecutionRoute,
     request: NormalizedGenerationRequest,
-    callerContext?: Partial<ProviderExecutionContext>
+    callerContext?: Partial<ProviderExecutionContext>,
   ): AsyncIterable<NormalizedStreamEvent> {
     const { context, provider } = await this.prepareExecutionContext(
       route,
       request,
-      callerContext
+      callerContext,
     );
 
-    const adapter = this.adapterRegistry.get(provider.adapterType || provider.code);
+    const adapter = this.adapterRegistry.get(
+      provider.adapterType || provider.code,
+    );
 
     try {
       for await (const event of adapter.stream(request, context)) {
@@ -435,7 +462,8 @@ export class ProviderService {
       }
     } finally {
       // Discard plaintext credential reference
-      delete (context as unknown as Record<string, unknown>).decryptedCredential;
+      delete (context as unknown as Record<string, unknown>)
+        .decryptedCredential;
     }
   }
 }

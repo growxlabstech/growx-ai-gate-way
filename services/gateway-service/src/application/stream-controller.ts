@@ -73,7 +73,7 @@ export class GatewayStreamController {
   constructor(
     private readonly deps: StreamControllerDeps,
     private readonly ctx: StreamControllerContext,
-    private readonly options: StreamExecutionOptions = {}
+    private readonly options: StreamExecutionOptions = {},
   ) {
     this.deadlineMs = options.deadlineMs ?? 300_000; // 5 min
     this.idleTimeoutMs = options.idleTimeoutMs ?? 60_000; // 1 min
@@ -91,7 +91,7 @@ export class GatewayStreamController {
         options.cancellationSignal.addEventListener(
           "abort",
           () => this.abortController.abort(options.cancellationSignal?.reason),
-          { once: true }
+          { once: true },
         );
       }
     }
@@ -227,8 +227,12 @@ export class GatewayStreamController {
    * firing simultaneously with client abort) don't produce double-writes.
    */
   async finalizeOnce(
-    terminalState: StreamState.COMPLETED | StreamState.FAILED | StreamState.CANCELLED | StreamState.TIMED_OUT,
-    error?: Error | undefined
+    terminalState:
+      | StreamState.COMPLETED
+      | StreamState.FAILED
+      | StreamState.CANCELLED
+      | StreamState.TIMED_OUT,
+    error?: Error | undefined,
   ): Promise<void> {
     if (this.finalized) return;
     this.finalized = true;
@@ -236,7 +240,10 @@ export class GatewayStreamController {
     this.clearTimers();
 
     // Transition through COMPLETING if we're in STREAMING
-    if (this.state === StreamState.STREAMING && terminalState === StreamState.COMPLETED) {
+    if (
+      this.state === StreamState.STREAMING &&
+      terminalState === StreamState.COMPLETED
+    ) {
       this.transition(StreamState.COMPLETING);
     }
 
@@ -294,7 +301,7 @@ export class GatewayStreamController {
     const errorCode = error
       ? error instanceof GrowXProviderError
         ? error.code
-        : error.name ?? "internal_error"
+        : (error.name ?? "internal_error")
       : terminalState === StreamState.TIMED_OUT
         ? "gateway_timeout"
         : undefined;
@@ -303,37 +310,47 @@ export class GatewayStreamController {
       status: statusMap[terminalState] as any,
       completedAt: new Date(endTime),
       latencyMs: totalLatency,
-      ...(this.lastFinishReason ? { finishReason: this.lastFinishReason as any } : {}),
+      ...(this.lastFinishReason
+        ? { finishReason: this.lastFinishReason as any }
+        : {}),
       ...(errorCode ? { errorCode } : {}),
     });
 
     if (this.finalUsage && terminalState === StreamState.COMPLETED) {
       const attemptId = `att_stream_${this.ctx.requestId}`;
-      await this.deps.usageMetering?.recordAttemptCompleted({
-        attemptId,
-        requestId: this.ctx.requestId,
-        completedAt: new Date(endTime),
-        durationMs: totalLatency,
-        ttftMs: this.metrics.firstTokenAt ? this.metrics.firstTokenAt - this.ctx.startTime : undefined,
-        usage: {
-          inputTokens: this.finalUsage.inputTokens,
-          outputTokens: this.finalUsage.outputTokens,
-          totalTokens: this.finalUsage.totalTokens,
-          cachedInputTokens: this.finalUsage.cachedInputTokens,
-          reasoningTokens: this.finalUsage.reasoningTokens,
-          source: this.finalUsage.source as any,
-        },
-      }).catch(() => {});
+      await this.deps.usageMetering
+        ?.recordAttemptCompleted({
+          attemptId,
+          requestId: this.ctx.requestId,
+          completedAt: new Date(endTime),
+          durationMs: totalLatency,
+          ttftMs: this.metrics.firstTokenAt
+            ? this.metrics.firstTokenAt - this.ctx.startTime
+            : undefined,
+          usage: {
+            inputTokens: this.finalUsage.inputTokens,
+            outputTokens: this.finalUsage.outputTokens,
+            totalTokens: this.finalUsage.totalTokens,
+            cachedInputTokens: this.finalUsage.cachedInputTokens,
+            reasoningTokens: this.finalUsage.reasoningTokens,
+            source: this.finalUsage.source as any,
+          },
+        })
+        .catch(() => {});
     }
 
-    await this.deps.usageMetering?.recordRequestCompleted({
-      requestId: this.ctx.requestId,
-      status: (statusMap[terminalState] as any) ?? "completed",
-      completedAt: new Date(endTime),
-      durationMs: totalLatency,
-      ttftMs: this.metrics.firstTokenAt ? this.metrics.firstTokenAt - this.ctx.startTime : undefined,
-      errorCode,
-    }).catch(() => {});
+    await this.deps.usageMetering
+      ?.recordRequestCompleted({
+        requestId: this.ctx.requestId,
+        status: (statusMap[terminalState] as any) ?? "completed",
+        completedAt: new Date(endTime),
+        durationMs: totalLatency,
+        ttftMs: this.metrics.firstTokenAt
+          ? this.metrics.firstTokenAt - this.ctx.startTime
+          : undefined,
+        errorCode,
+      })
+      .catch(() => {});
 
     // Emit terminal events
     if (terminalState === StreamState.COMPLETED) {
@@ -355,7 +372,9 @@ export class GatewayStreamController {
         organizationId: this.ctx.auth.organizationId,
         workspaceId: this.ctx.auth.workspaceId,
         apiKeyId: this.ctx.auth.apiKeyId,
-        ...(this.ctx.canonicalModelId ? { canonicalModel: this.ctx.canonicalModelId } : {}),
+        ...(this.ctx.canonicalModelId
+          ? { canonicalModel: this.ctx.canonicalModelId }
+          : {}),
         latencyMs: totalLatency,
       });
     } else {
@@ -365,8 +384,10 @@ export class GatewayStreamController {
         id: createPublicId("err"),
         requestId: this.ctx.requestId,
         code,
-        retryable: error instanceof GrowXProviderError ? error.retryable : false,
-        safeMessage: error instanceof Error ? error.message : "Stream terminated",
+        retryable:
+          error instanceof GrowXProviderError ? error.retryable : false,
+        safeMessage:
+          error instanceof Error ? error.message : "Stream terminated",
         createdAt: new Date(endTime),
       });
 
@@ -375,7 +396,9 @@ export class GatewayStreamController {
         organizationId: this.ctx.auth.organizationId,
         workspaceId: this.ctx.auth.workspaceId,
         apiKeyId: this.ctx.auth.apiKeyId,
-        ...(this.ctx.canonicalModelId ? { canonicalModel: this.ctx.canonicalModelId } : {}),
+        ...(this.ctx.canonicalModelId
+          ? { canonicalModel: this.ctx.canonicalModelId }
+          : {}),
         errorCode: code,
         latencyMs: totalLatency,
       });

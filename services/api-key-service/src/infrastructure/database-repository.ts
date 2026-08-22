@@ -14,30 +14,61 @@ import type {
 
 export interface ApiKeyRepository {
   insert(record: ApiKeyRecord, auditActorId?: string): Promise<void>;
-  findById(organizationId: string, workspaceId: string, id: string): Promise<ApiKeyRecord | null>;
-  findByKeyId(keyId: string): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null>;
+  findById(
+    organizationId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<ApiKeyRecord | null>;
+  findByKeyId(
+    keyId: string,
+  ): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null>;
   listByWorkspace(
     organizationId: string,
     workspaceId: string,
-    options?: { limit?: number; cursor?: string }
+    options?: { limit?: number; cursor?: string },
   ): Promise<{ items: ApiKeyRecord[]; hasMore: boolean }>;
-  update(organizationId: string, workspaceId: string, record: ApiKeyRecord, auditActorId?: string): Promise<void>;
+  update(
+    organizationId: string,
+    workspaceId: string,
+    record: ApiKeyRecord,
+    auditActorId?: string,
+  ): Promise<void>;
   revoke(
     organizationId: string,
     workspaceId: string,
     id: string,
-    actorId: string
+    actorId: string,
   ): Promise<ApiKeyRecord>;
   rotate(
-    oldKey: { organizationId: string; workspaceId: string; id: string; overlapMinutes?: number },
+    oldKey: {
+      organizationId: string;
+      workspaceId: string;
+      id: string;
+      overlapMinutes?: number;
+    },
     newRecord: ApiKeyRecord,
-    actorId: string
+    actorId: string,
   ): Promise<{ newRecord: ApiKeyRecord; oldRecord: ApiKeyRecord }>;
-  updatePermissions(apiKeyId: string, permissions: readonly ApiKeyScope[]): Promise<void>;
-  updateModelRules(apiKeyId: string, rules: readonly ModelRule[]): Promise<void>;
-  updateRateLimits(apiKeyId: string, limits: readonly ApiKeyRateLimit[]): Promise<void>;
-  updateSpendingLimit(apiKeyId: string, limit: ApiKeySpendingLimit | null): Promise<void>;
-  updateIpAllowlist(apiKeyId: string, allowlist: readonly string[]): Promise<void>;
+  updatePermissions(
+    apiKeyId: string,
+    permissions: readonly ApiKeyScope[],
+  ): Promise<void>;
+  updateModelRules(
+    apiKeyId: string,
+    rules: readonly ModelRule[],
+  ): Promise<void>;
+  updateRateLimits(
+    apiKeyId: string,
+    limits: readonly ApiKeyRateLimit[],
+  ): Promise<void>;
+  updateSpendingLimit(
+    apiKeyId: string,
+    limit: ApiKeySpendingLimit | null,
+  ): Promise<void>;
+  updateIpAllowlist(
+    apiKeyId: string,
+    allowlist: readonly string[],
+  ): Promise<void>;
   countActiveKeys(organizationId: string, workspaceId: string): Promise<number>;
   updateLastUsed(id: string, timestamp: Date): Promise<void>;
 }
@@ -54,15 +85,22 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     this.records.set(record.id, { ...record });
   }
 
-  async findById(organizationId: string, workspaceId: string, id: string): Promise<ApiKeyRecord | null> {
+  async findById(
+    organizationId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<ApiKeyRecord | null> {
     const record = this.records.get(id);
     if (!record) return null;
-    if (organizationId !== "*" && record.organizationId !== organizationId) return null;
+    if (organizationId !== "*" && record.organizationId !== organizationId)
+      return null;
     if (workspaceId !== "*" && record.workspaceId !== workspaceId) return null;
     return { ...record };
   }
 
-  async findByKeyId(keyId: string): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null> {
+  async findByKeyId(
+    keyId: string,
+  ): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null> {
     const record = this.records.get(keyId);
     if (!record) return null;
     const tenant = this.tenants.get(record.workspaceId) ??
@@ -77,18 +115,29 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
   async listByWorkspace(
     organizationId: string,
     workspaceId: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<{ items: ApiKeyRecord[]; hasMore: boolean }> {
     const limit = options?.limit ?? 50;
     const items = Array.from(this.records.values())
-      .filter((r) => r.organizationId === organizationId && r.workspaceId === workspaceId)
+      .filter(
+        (r) =>
+          r.organizationId === organizationId && r.workspaceId === workspaceId,
+      )
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
     return { items, hasMore: false };
   }
 
-  async update(organizationId: string, workspaceId: string, record: ApiKeyRecord): Promise<void> {
-    const existing = await this.findById(organizationId, workspaceId, record.id);
+  async update(
+    organizationId: string,
+    workspaceId: string,
+    record: ApiKeyRecord,
+  ): Promise<void> {
+    const existing = await this.findById(
+      organizationId,
+      workspaceId,
+      record.id,
+    );
     if (!existing) throw new Error("API key not found");
     this.records.set(record.id, { ...record });
   }
@@ -97,7 +146,7 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     organizationId: string,
     workspaceId: string,
     id: string,
-    actorId: string
+    actorId: string,
   ): Promise<ApiKeyRecord> {
     const existing = await this.findById(organizationId, workspaceId, id);
     if (!existing) throw new Error("API key not found");
@@ -114,11 +163,20 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
   }
 
   async rotate(
-    oldKey: { organizationId: string; workspaceId: string; id: string; overlapMinutes?: number },
+    oldKey: {
+      organizationId: string;
+      workspaceId: string;
+      id: string;
+      overlapMinutes?: number;
+    },
     newRecord: ApiKeyRecord,
-    actorId: string
+    actorId: string,
   ): Promise<{ newRecord: ApiKeyRecord; oldRecord: ApiKeyRecord }> {
-    const existing = await this.findById(oldKey.organizationId, oldKey.workspaceId, oldKey.id);
+    const existing = await this.findById(
+      oldKey.organizationId,
+      oldKey.workspaceId,
+      oldKey.id,
+    );
     if (!existing) throw new Error("API key not found");
     const now = new Date();
     const overlap = oldKey.overlapMinutes ?? 0;
@@ -128,7 +186,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
       const overlapExpiry = new Date(now.getTime() + overlap * 60 * 1000);
       updatedOld = {
         ...existing,
-        expiresAt: existing.expiresAt && existing.expiresAt < overlapExpiry ? existing.expiresAt : overlapExpiry,
+        expiresAt:
+          existing.expiresAt && existing.expiresAt < overlapExpiry
+            ? existing.expiresAt
+            : overlapExpiry,
         updatedAt: now,
       };
     } else {
@@ -146,7 +207,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     return { newRecord, oldRecord: updatedOld };
   }
 
-  async updatePermissions(apiKeyId: string, permissions: readonly ApiKeyScope[]): Promise<void> {
+  async updatePermissions(
+    apiKeyId: string,
+    permissions: readonly ApiKeyScope[],
+  ): Promise<void> {
     const record = this.records.get(apiKeyId);
     if (record) {
       record.permissions = [...permissions];
@@ -154,7 +218,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     }
   }
 
-  async updateModelRules(apiKeyId: string, rules: readonly ModelRule[]): Promise<void> {
+  async updateModelRules(
+    apiKeyId: string,
+    rules: readonly ModelRule[],
+  ): Promise<void> {
     const record = this.records.get(apiKeyId);
     if (record) {
       record.modelRules = [...rules];
@@ -162,7 +229,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     }
   }
 
-  async updateRateLimits(apiKeyId: string, limits: readonly ApiKeyRateLimit[]): Promise<void> {
+  async updateRateLimits(
+    apiKeyId: string,
+    limits: readonly ApiKeyRateLimit[],
+  ): Promise<void> {
     const record = this.records.get(apiKeyId);
     if (record) {
       record.rateLimits = [...limits];
@@ -170,7 +240,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     }
   }
 
-  async updateSpendingLimit(apiKeyId: string, limit: ApiKeySpendingLimit | null): Promise<void> {
+  async updateSpendingLimit(
+    apiKeyId: string,
+    limit: ApiKeySpendingLimit | null,
+  ): Promise<void> {
     const record = this.records.get(apiKeyId);
     if (record) {
       record.spendingLimit = limit;
@@ -178,7 +251,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     }
   }
 
-  async updateIpAllowlist(apiKeyId: string, allowlist: readonly string[]): Promise<void> {
+  async updateIpAllowlist(
+    apiKeyId: string,
+    allowlist: readonly string[],
+  ): Promise<void> {
     const record = this.records.get(apiKeyId);
     if (record) {
       record.ipAllowlist = [...allowlist];
@@ -186,7 +262,10 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
     }
   }
 
-  async countActiveKeys(organizationId: string, workspaceId: string): Promise<number> {
+  async countActiveKeys(
+    organizationId: string,
+    workspaceId: string,
+  ): Promise<number> {
     const now = new Date();
     return Array.from(this.records.values()).filter(
       (r) =>
@@ -194,7 +273,7 @@ export class InMemoryApiKeyRepository implements ApiKeyRepository {
         r.workspaceId === workspaceId &&
         r.status === "active" &&
         (!r.expiresAt || r.expiresAt > now) &&
-        !r.revokedAt
+        !r.revokedAt,
     ).length;
   }
 
@@ -235,7 +314,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             apiKeyId: record.id,
             permission,
             createdAt: record.createdAt,
-          }))
+          })),
         );
       }
 
@@ -249,7 +328,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             category: rule.category ?? null,
             maximumCostMinor: rule.maximumCostMinor ?? null,
             createdAt: record.createdAt,
-          }))
+          })),
         );
       }
 
@@ -261,7 +340,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             window: limit.window,
             requestLimit: limit.requestLimit,
             createdAt: record.createdAt,
-          }))
+          })),
         );
       }
 
@@ -286,7 +365,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             apiKeyId: record.id,
             cidr,
             createdAt: record.createdAt,
-          }))
+          })),
         );
       }
 
@@ -329,10 +408,16 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async findById(organizationId: string, workspaceId: string, id: string): Promise<ApiKeyRecord | null> {
+  async findById(
+    organizationId: string,
+    workspaceId: string,
+    id: string,
+  ): Promise<ApiKeyRecord | null> {
     const conditions = [eq(schema.apiKeys.id, id)];
-    if (organizationId !== "*") conditions.push(eq(schema.apiKeys.organizationId, organizationId));
-    if (workspaceId !== "*") conditions.push(eq(schema.apiKeys.workspaceId, workspaceId));
+    if (organizationId !== "*")
+      conditions.push(eq(schema.apiKeys.organizationId, organizationId));
+    if (workspaceId !== "*")
+      conditions.push(eq(schema.apiKeys.workspaceId, workspaceId));
 
     const rows = await this.db
       .select()
@@ -344,7 +429,9 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     return this.hydrateRecord(rows[0]);
   }
 
-  async findByKeyId(keyId: string): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null> {
+  async findByKeyId(
+    keyId: string,
+  ): Promise<{ record: ApiKeyRecord; tenant: TenantState } | null> {
     const rows = await this.db
       .select({
         apiKey: schema.apiKeys,
@@ -354,9 +441,18 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
         envType: schema.environments.type,
       })
       .from(schema.apiKeys)
-      .innerJoin(schema.organizations, eq(schema.apiKeys.organizationId, schema.organizations.id))
-      .innerJoin(schema.workspaces, eq(schema.apiKeys.workspaceId, schema.workspaces.id))
-      .innerJoin(schema.environments, eq(schema.apiKeys.environmentId, schema.environments.id))
+      .innerJoin(
+        schema.organizations,
+        eq(schema.apiKeys.organizationId, schema.organizations.id),
+      )
+      .innerJoin(
+        schema.workspaces,
+        eq(schema.apiKeys.workspaceId, schema.workspaces.id),
+      )
+      .innerJoin(
+        schema.environments,
+        eq(schema.apiKeys.environmentId, schema.environments.id),
+      )
       .where(eq(schema.apiKeys.id, keyId))
       .limit(1);
 
@@ -376,7 +472,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
   async listByWorkspace(
     organizationId: string,
     workspaceId: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<{ items: ApiKeyRecord[]; hasMore: boolean }> {
     const limit = options?.limit ?? 50;
     const rows = await this.db
@@ -385,8 +481,8 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
       .where(
         and(
           eq(schema.apiKeys.organizationId, organizationId),
-          eq(schema.apiKeys.workspaceId, workspaceId)
-        )
+          eq(schema.apiKeys.workspaceId, workspaceId),
+        ),
       )
       .orderBy(desc(schema.apiKeys.createdAt))
       .limit(limit + 1);
@@ -394,11 +490,18 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     const hasMore = rows.length > limit;
     const selectedRows = hasMore ? rows.slice(0, limit) : rows;
 
-    const items = await Promise.all(selectedRows.map((row) => this.hydrateRecord(row)));
+    const items = await Promise.all(
+      selectedRows.map((row) => this.hydrateRecord(row)),
+    );
     return { items, hasMore };
   }
 
-  async update(organizationId: string, workspaceId: string, record: ApiKeyRecord, auditActorId?: string): Promise<void> {
+  async update(
+    organizationId: string,
+    workspaceId: string,
+    record: ApiKeyRecord,
+    auditActorId?: string,
+  ): Promise<void> {
     const now = new Date();
     await this.db.transaction(async (tx) => {
       await tx
@@ -413,8 +516,8 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
           and(
             eq(schema.apiKeys.id, record.id),
             eq(schema.apiKeys.organizationId, organizationId),
-            eq(schema.apiKeys.workspaceId, workspaceId)
-          )
+            eq(schema.apiKeys.workspaceId, workspaceId),
+          ),
         );
 
       await tx.insert(schema.auditEvents).values({
@@ -456,7 +559,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     organizationId: string,
     workspaceId: string,
     id: string,
-    actorId: string
+    actorId: string,
   ): Promise<ApiKeyRecord> {
     const now = new Date();
     return await this.db.transaction(async (tx) => {
@@ -467,8 +570,8 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
           and(
             eq(schema.apiKeys.id, id),
             eq(schema.apiKeys.organizationId, organizationId),
-            eq(schema.apiKeys.workspaceId, workspaceId)
-          )
+            eq(schema.apiKeys.workspaceId, workspaceId),
+          ),
         )
         .limit(1);
 
@@ -517,15 +620,26 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
         createdAt: now,
       });
 
-      const updatedRow = { ...rows[0], status: "revoked" as const, revokedAt: now, revokedBy: actorId, updatedAt: now };
+      const updatedRow = {
+        ...rows[0],
+        status: "revoked" as const,
+        revokedAt: now,
+        revokedBy: actorId,
+        updatedAt: now,
+      };
       return this.hydrateRecord(updatedRow);
     });
   }
 
   async rotate(
-    oldKey: { organizationId: string; workspaceId: string; id: string; overlapMinutes?: number },
+    oldKey: {
+      organizationId: string;
+      workspaceId: string;
+      id: string;
+      overlapMinutes?: number;
+    },
     newRecord: ApiKeyRecord,
-    actorId: string
+    actorId: string,
   ): Promise<{ newRecord: ApiKeyRecord; oldRecord: ApiKeyRecord }> {
     const now = new Date();
     const overlap = oldKey.overlapMinutes ?? 0;
@@ -538,8 +652,8 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
           and(
             eq(schema.apiKeys.id, oldKey.id),
             eq(schema.apiKeys.organizationId, oldKey.organizationId),
-            eq(schema.apiKeys.workspaceId, oldKey.workspaceId)
-          )
+            eq(schema.apiKeys.workspaceId, oldKey.workspaceId),
+          ),
         )
         .limit(1);
 
@@ -554,7 +668,10 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
 
       if (overlap > 0) {
         const overlapExpiry = new Date(now.getTime() + overlap * 60 * 1000);
-        oldExpiresAt = oldRow.expiresAt && oldRow.expiresAt < overlapExpiry ? oldRow.expiresAt : overlapExpiry;
+        oldExpiresAt =
+          oldRow.expiresAt && oldRow.expiresAt < overlapExpiry
+            ? oldRow.expiresAt
+            : overlapExpiry;
         oldStatus = "active";
       } else {
         oldRevokedAt = now;
@@ -596,7 +713,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             apiKeyId: newRecord.id,
             permission,
             createdAt: now,
-          }))
+          })),
         );
       }
 
@@ -610,7 +727,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             category: rule.category ?? null,
             maximumCostMinor: rule.maximumCostMinor ?? null,
             createdAt: now,
-          }))
+          })),
         );
       }
 
@@ -621,7 +738,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             apiKeyId: newRecord.id,
             cidr,
             createdAt: now,
-          }))
+          })),
         );
       }
 
@@ -671,16 +788,21 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async updatePermissions(apiKeyId: string, permissions: readonly ApiKeyScope[]): Promise<void> {
+  async updatePermissions(
+    apiKeyId: string,
+    permissions: readonly ApiKeyScope[],
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      await tx.delete(schema.apiKeyPermissions).where(eq(schema.apiKeyPermissions.apiKeyId, apiKeyId));
+      await tx
+        .delete(schema.apiKeyPermissions)
+        .where(eq(schema.apiKeyPermissions.apiKeyId, apiKeyId));
       if (permissions.length > 0) {
         await tx.insert(schema.apiKeyPermissions).values(
           permissions.map((permission) => ({
             apiKeyId,
             permission,
             createdAt: new Date(),
-          }))
+          })),
         );
       }
       await tx
@@ -690,9 +812,14 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async updateModelRules(apiKeyId: string, rules: readonly ModelRule[]): Promise<void> {
+  async updateModelRules(
+    apiKeyId: string,
+    rules: readonly ModelRule[],
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      await tx.delete(schema.apiKeyModelRules).where(eq(schema.apiKeyModelRules.apiKeyId, apiKeyId));
+      await tx
+        .delete(schema.apiKeyModelRules)
+        .where(eq(schema.apiKeyModelRules.apiKeyId, apiKeyId));
       if (rules.length > 0) {
         await tx.insert(schema.apiKeyModelRules).values(
           rules.map((rule) => ({
@@ -703,7 +830,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             category: rule.category ?? null,
             maximumCostMinor: rule.maximumCostMinor ?? null,
             createdAt: new Date(),
-          }))
+          })),
         );
       }
       await tx
@@ -713,9 +840,14 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async updateRateLimits(apiKeyId: string, limits: readonly ApiKeyRateLimit[]): Promise<void> {
+  async updateRateLimits(
+    apiKeyId: string,
+    limits: readonly ApiKeyRateLimit[],
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      await tx.delete(schema.apiKeyRateLimits).where(eq(schema.apiKeyRateLimits.apiKeyId, apiKeyId));
+      await tx
+        .delete(schema.apiKeyRateLimits)
+        .where(eq(schema.apiKeyRateLimits.apiKeyId, apiKeyId));
       if (limits.length > 0) {
         await tx.insert(schema.apiKeyRateLimits).values(
           limits.map((limit) => ({
@@ -724,7 +856,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             window: limit.window,
             requestLimit: limit.requestLimit,
             createdAt: new Date(),
-          }))
+          })),
         );
       }
       await tx
@@ -734,9 +866,14 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async updateSpendingLimit(apiKeyId: string, limit: ApiKeySpendingLimit | null): Promise<void> {
+  async updateSpendingLimit(
+    apiKeyId: string,
+    limit: ApiKeySpendingLimit | null,
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      await tx.delete(schema.apiKeySpendingLimits).where(eq(schema.apiKeySpendingLimits.apiKeyId, apiKeyId));
+      await tx
+        .delete(schema.apiKeySpendingLimits)
+        .where(eq(schema.apiKeySpendingLimits.apiKeyId, apiKeyId));
       if (limit) {
         await tx.insert(schema.apiKeySpendingLimits).values({
           apiKeyId,
@@ -757,9 +894,14 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async updateIpAllowlist(apiKeyId: string, allowlist: readonly string[]): Promise<void> {
+  async updateIpAllowlist(
+    apiKeyId: string,
+    allowlist: readonly string[],
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      await tx.delete(schema.apiKeyIpAllowlists).where(eq(schema.apiKeyIpAllowlists.apiKeyId, apiKeyId));
+      await tx
+        .delete(schema.apiKeyIpAllowlists)
+        .where(eq(schema.apiKeyIpAllowlists.apiKeyId, apiKeyId));
       if (allowlist.length > 0) {
         await tx.insert(schema.apiKeyIpAllowlists).values(
           allowlist.map((cidr) => ({
@@ -767,7 +909,7 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
             apiKeyId,
             cidr,
             createdAt: new Date(),
-          }))
+          })),
         );
       }
       await tx
@@ -777,7 +919,10 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
     });
   }
 
-  async countActiveKeys(organizationId: string, workspaceId: string): Promise<number> {
+  async countActiveKeys(
+    organizationId: string,
+    workspaceId: string,
+  ): Promise<number> {
     const now = new Date();
     const result = await this.db
       .select({ count: count() })
@@ -788,8 +933,8 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
           eq(schema.apiKeys.workspaceId, workspaceId),
           eq(schema.apiKeys.status, "active"),
           sql`(${schema.apiKeys.expiresAt} IS NULL OR ${schema.apiKeys.expiresAt} > ${now})`,
-          sql`${schema.apiKeys.revokedAt} IS NULL`
-        )
+          sql`${schema.apiKeys.revokedAt} IS NULL`,
+        ),
       );
 
     return Number(result[0]?.count ?? 0);
@@ -802,7 +947,9 @@ export class DrizzleApiKeyRepository implements ApiKeyRepository {
       .where(eq(schema.apiKeys.id, id));
   }
 
-  private async hydrateRecord(row: typeof schema.apiKeys.$inferSelect): Promise<ApiKeyRecord> {
+  private async hydrateRecord(
+    row: typeof schema.apiKeys.$inferSelect,
+  ): Promise<ApiKeyRecord> {
     const permissions = await this.db
       .select()
       .from(schema.apiKeyPermissions)

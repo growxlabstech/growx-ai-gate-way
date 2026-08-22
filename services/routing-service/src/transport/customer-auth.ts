@@ -10,7 +10,7 @@ export interface CustomerAuthContext {
 export interface ICustomerAuthResolver {
   resolveCustomerSession(
     req: IncomingMessage,
-    workspaceId?: string | undefined
+    workspaceId?: string | undefined,
   ): Promise<CustomerAuthContext | null>;
 }
 
@@ -23,7 +23,7 @@ export class DefaultCustomerAuthResolver implements ICustomerAuthResolver {
 
   async resolveCustomerSession(
     req: IncomingMessage,
-    workspaceId?: string | undefined
+    workspaceId?: string | undefined,
   ): Promise<CustomerAuthContext | null> {
     const authHeader = req.headers["authorization"];
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

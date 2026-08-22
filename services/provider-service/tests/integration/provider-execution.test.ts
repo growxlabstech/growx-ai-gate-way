@@ -33,18 +33,25 @@ describe("Provider Execution Integration Tests", () => {
             completion_tokens: 9,
             total_tokens: 27,
           },
-        })
+        }),
       );
     });
 
-    await new Promise<void>((resolve) => mockServer.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      mockServer.listen(0, "127.0.0.1", resolve),
+    );
     const port = (mockServer.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
     const repository = new InMemoryProviderRepository();
     const events = new InMemoryProviderEvents();
     const crypto = new ProviderCredentialCrypto();
-    const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+    const service = new ProviderService(
+      repository,
+      events,
+      crypto,
+      defaultAdapterRegistry,
+    );
 
     const provider = await service.createProvider(
       {
@@ -53,7 +60,7 @@ describe("Provider Execution Integration Tests", () => {
         adapterType: "openai",
         baseUrl,
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const credential = await service.createCredential(
@@ -63,7 +70,7 @@ describe("Provider Execution Integration Tests", () => {
         environment: "production",
         rawSecret: "mock-proj-decrypted-secret-key",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const route: ResolvedExecutionRoute = {
@@ -89,7 +96,9 @@ describe("Provider Execution Integration Tests", () => {
 
       expect(response.requestId).toBe("req_exec_1");
       expect(response.providerId).toBe(provider.id);
-      expect(response.output[0]?.content).toBe("Executed successfully via ProviderService!");
+      expect(response.output[0]?.content).toBe(
+        "Executed successfully via ProviderService!",
+      );
       expect(response.usage.totalTokens).toBe(27);
       expect(capturedAuth).toBe("Bearer mock-proj-decrypted-secret-key");
     } finally {
@@ -124,14 +133,21 @@ describe("Provider Execution Integration Tests", () => {
       res.end();
     });
 
-    await new Promise<void>((resolve) => mockServer.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      mockServer.listen(0, "127.0.0.1", resolve),
+    );
     const port = (mockServer.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
     const repository = new InMemoryProviderRepository();
     const events = new InMemoryProviderEvents();
     const crypto = new ProviderCredentialCrypto();
-    const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+    const service = new ProviderService(
+      repository,
+      events,
+      crypto,
+      defaultAdapterRegistry,
+    );
 
     const provider = await service.createProvider(
       {
@@ -140,7 +156,7 @@ describe("Provider Execution Integration Tests", () => {
         adapterType: "anthropic",
         baseUrl,
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const credential = await service.createCredential(
@@ -150,7 +166,7 @@ describe("Provider Execution Integration Tests", () => {
         environment: "production",
         rawSecret: "mock-ant-anthropic-secret-key",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const route: ResolvedExecutionRoute = {
@@ -176,7 +192,10 @@ describe("Provider Execution Integration Tests", () => {
 
       expect(capturedApiKey).toBe("mock-ant-anthropic-secret-key");
 
-      const deltas = eventsList.filter((e) => e.type === "output_text.delta").map((e) => e.delta).join("");
+      const deltas = eventsList
+        .filter((e) => e.type === "output_text.delta")
+        .map((e) => e.delta)
+        .join("");
       expect(deltas).toBe("Streaming success!");
 
       const completed = eventsList.find((e) => e.type === "response.completed");

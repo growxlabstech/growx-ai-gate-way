@@ -11,7 +11,12 @@ describe("Router V2 - Hard Constraint Filters", () => {
     region: "us-east-1",
     priority: 10,
     weight: 1,
-    capabilities: ["chat.stream", "tools.call", "vision.read", "text.reason"] as any,
+    capabilities: [
+      "chat.stream",
+      "tools.call",
+      "vision.read",
+      "text.reason",
+    ] as any,
     limits: { contextWindow: 128000, maxOutputTokens: 4096 },
     routeStatus: "active",
     providerStatus: "active",
@@ -32,19 +37,30 @@ describe("Router V2 - Hard Constraint Filters", () => {
       maxOutputTokens: 1000,
     });
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates([baseCandidate], profile);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      [baseCandidate],
+      profile,
+    );
     expect(eligible.length).toBe(1);
     expect(rejected.length).toBe(0);
   });
 
   it("rejects disabled routes or providers", () => {
-    const profile = buildRequestCapabilityProfile({ canonicalModelId: "growx/fast" });
+    const profile = buildRequestCapabilityProfile({
+      canonicalModelId: "growx/fast",
+    });
 
     const c1: RouteCandidate = { ...baseCandidate, routeStatus: "disabled" };
-    const c2: RouteCandidate = { ...baseCandidate, providerStatus: "maintenance" };
+    const c2: RouteCandidate = {
+      ...baseCandidate,
+      providerStatus: "maintenance",
+    };
     const c3: RouteCandidate = { ...baseCandidate, routingEligible: false };
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates([c1, c2, c3], profile);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      [c1, c2, c3],
+      profile,
+    );
     expect(eligible.length).toBe(0);
     expect(rejected.length).toBe(3);
     expect(rejected[0]!.rejectionReason).toBe("ROUTE_STATUS_INACTIVE");
@@ -53,33 +69,52 @@ describe("Router V2 - Hard Constraint Filters", () => {
   });
 
   it("rejects open or forced-open circuits", () => {
-    const profile = buildRequestCapabilityProfile({ canonicalModelId: "growx/fast" });
+    const profile = buildRequestCapabilityProfile({
+      canonicalModelId: "growx/fast",
+    });
 
     const c1: RouteCandidate = { ...baseCandidate, circuit: "OPEN" };
     const c2: RouteCandidate = { ...baseCandidate, circuit: "FORCED_OPEN" };
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates([c1, c2], profile);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      [c1, c2],
+      profile,
+    );
     expect(eligible.length).toBe(0);
     expect(rejected[0]!.rejectionReason).toBe("CIRCUIT_OPEN");
     expect(rejected[1]!.rejectionReason).toBe("CIRCUIT_FORCED_OPEN");
   });
 
   it("enforces allowed and denied provider lists", () => {
-    const profile = buildRequestCapabilityProfile({ canonicalModelId: "growx/fast" });
-
-    const { eligible: el1 } = HardConstraintFilter.filterCandidates([baseCandidate], profile, {
-      deniedProviders: ["openai"],
+    const profile = buildRequestCapabilityProfile({
+      canonicalModelId: "growx/fast",
     });
+
+    const { eligible: el1 } = HardConstraintFilter.filterCandidates(
+      [baseCandidate],
+      profile,
+      {
+        deniedProviders: ["openai"],
+      },
+    );
     expect(el1.length).toBe(0);
 
-    const { eligible: el2 } = HardConstraintFilter.filterCandidates([baseCandidate], profile, {
-      allowedProviders: ["anthropic"],
-    });
+    const { eligible: el2 } = HardConstraintFilter.filterCandidates(
+      [baseCandidate],
+      profile,
+      {
+        allowedProviders: ["anthropic"],
+      },
+    );
     expect(el2.length).toBe(0);
 
-    const { eligible: el3 } = HardConstraintFilter.filterCandidates([baseCandidate], profile, {
-      allowedProviders: ["openai"],
-    });
+    const { eligible: el3 } = HardConstraintFilter.filterCandidates(
+      [baseCandidate],
+      profile,
+      {
+        allowedProviders: ["openai"],
+      },
+    );
     expect(el3.length).toBe(1);
   });
 
@@ -95,7 +130,7 @@ describe("Router V2 - Hard Constraint Filters", () => {
     const { eligible, rejected } = HardConstraintFilter.filterCandidates(
       [cIndia, cUS],
       profileIndia,
-      { dataResidency: "india" }
+      { dataResidency: "india" },
     );
 
     expect(eligible.length).toBe(1);
@@ -110,7 +145,10 @@ describe("Router V2 - Hard Constraint Filters", () => {
       contextTokensEstimated: 150000,
     });
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates([baseCandidate], profileBig);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      [baseCandidate],
+      profileBig,
+    );
     expect(eligible.length).toBe(0);
     expect(rejected[0]!.rejectionReason).toBe("CONTEXT_WINDOW_EXCEEDED");
   });
@@ -126,7 +164,10 @@ describe("Router V2 - Hard Constraint Filters", () => {
       capabilities: ["chat.stream"] as any,
     };
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates([cNoVision], profileVision);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      [cNoVision],
+      profileVision,
+    );
     expect(eligible.length).toBe(0);
     expect(rejected[0]!.rejectionReason).toBe("VISION_INPUT_NOT_SUPPORTED");
   });
@@ -137,13 +178,19 @@ describe("Router V2 - Hard Constraint Filters", () => {
       maxExecutionCostMinor: 500,
     });
 
-    const cExpensive: RouteCandidate = { ...baseCandidate, estimatedCost: 1000 };
-    const cAffordable: RouteCandidate = { ...baseCandidate, estimatedCost: 400 };
+    const cExpensive: RouteCandidate = {
+      ...baseCandidate,
+      estimatedCost: 1000,
+    };
+    const cAffordable: RouteCandidate = {
+      ...baseCandidate,
+      estimatedCost: 400,
+    };
 
     const { eligible, rejected } = HardConstraintFilter.filterCandidates(
       [cExpensive, cAffordable],
       profileBudget,
-      { maxExecutionCostMinor: 500 }
+      { maxExecutionCostMinor: 500 },
     );
 
     expect(eligible.length).toBe(1);

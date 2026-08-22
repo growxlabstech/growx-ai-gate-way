@@ -98,6 +98,14 @@ export interface InvalidationFilter {
  * Interface boundary placeholder for future Semantic / Vector cache
  */
 export interface SemanticCacheProvider {
-  lookup(tenantScope: string, embedding: readonly number[], similarityThreshold: number): Promise<CacheEntry | null>;
-  store(tenantScope: string, embedding: readonly number[], entry: CacheEntry): Promise<void>;
+  lookup(
+    tenantScope: string,
+    embedding: readonly number[],
+    similarityThreshold: number,
+  ): Promise<CacheEntry | null>;
+  store(
+    tenantScope: string,
+    embedding: readonly number[],
+    entry: CacheEntry,
+  ): Promise<void>;
 }

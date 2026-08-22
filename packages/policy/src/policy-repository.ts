@@ -24,20 +24,39 @@ export interface UpdatePolicyInput {
 }
 
 export interface IPolicyRepository {
-  createPolicy(input: CreatePolicyInput): Promise<{ policy: PolicyEntity; version: PolicyVersionEntity }>;
-  updatePolicy(id: string, input: UpdatePolicyInput, actorId: string): Promise<PolicyEntity>;
+  createPolicy(
+    input: CreatePolicyInput,
+  ): Promise<{ policy: PolicyEntity; version: PolicyVersionEntity }>;
+  updatePolicy(
+    id: string,
+    input: UpdatePolicyInput,
+    actorId: string,
+  ): Promise<PolicyEntity>;
   createVersion(
     policyId: string,
     definition: PolicyDefinition,
     actorId: string,
-    options?: { effectiveFrom?: Date | null; effectiveTo?: Date | null }
+    options?: { effectiveFrom?: Date | null; effectiveTo?: Date | null },
   ): Promise<PolicyVersionEntity>;
-  activateVersion(policyId: string, versionNumber: number, actorId: string): Promise<PolicyEntity>;
+  activateVersion(
+    policyId: string,
+    versionNumber: number,
+    actorId: string,
+  ): Promise<PolicyEntity>;
   getPolicy(id: string): Promise<PolicyEntity | null>;
-  getPolicyByScope(scopeType: PolicyScopeType, scopeId?: string | null): Promise<PolicyEntity | null>;
+  getPolicyByScope(
+    scopeType: PolicyScopeType,
+    scopeId?: string | null,
+  ): Promise<PolicyEntity | null>;
   getActiveVersion(policyId: string): Promise<PolicyVersionEntity | null>;
-  getVersion(policyId: string, versionNumber: number): Promise<PolicyVersionEntity | null>;
-  listPolicies(scopeType?: PolicyScopeType, scopeId?: string | null): Promise<PolicyEntity[]>;
+  getVersion(
+    policyId: string,
+    versionNumber: number,
+  ): Promise<PolicyVersionEntity | null>;
+  listPolicies(
+    scopeType?: PolicyScopeType,
+    scopeId?: string | null,
+  ): Promise<PolicyEntity[]>;
   listVersions(policyId: string): Promise<PolicyVersionEntity[]>;
 }
 
@@ -82,14 +101,17 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     this.versions.set(globalPolicy.id, [globalVersion]);
   }
 
-  async createPolicy(input: CreatePolicyInput): Promise<{ policy: PolicyEntity; version: PolicyVersionEntity }> {
+  async createPolicy(
+    input: CreatePolicyInput,
+  ): Promise<{ policy: PolicyEntity; version: PolicyVersionEntity }> {
     const sId = input.scopeId ?? null;
     const existing = await this.getPolicyByScope(input.scopeType, sId);
     const now = new Date();
 
     if (existing) {
       const vers = this.versions.get(existing.id) ?? [];
-      const nextVersionNum = vers.length > 0 ? Math.max(...vers.map((v) => v.version)) + 1 : 1;
+      const nextVersionNum =
+        vers.length > 0 ? Math.max(...vers.map((v) => v.version)) + 1 : 1;
       const version: PolicyVersionEntity = {
         id: `ver_${existing.id}_v${nextVersionNum}`,
         policyId: existing.id,
@@ -104,7 +126,8 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
       this.versions.set(existing.id, vers);
 
       existing.name = input.name;
-      if (input.description !== undefined) existing.description = input.description;
+      if (input.description !== undefined)
+        existing.description = input.description;
       existing.activeVersion = nextVersionNum;
       existing.status = input.status ?? "active";
       existing.updatedAt = now;
@@ -146,22 +169,32 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     return { policy, version };
   }
 
-  async updatePolicy(id: string, input: UpdatePolicyInput, actorId: string): Promise<PolicyEntity> {
+  async updatePolicy(
+    id: string,
+    input: UpdatePolicyInput,
+    actorId: string,
+  ): Promise<PolicyEntity> {
     const existing = this.policies.get(id);
     if (!existing) {
       throw new Error(`Policy '${id}' not found`);
     }
 
-    if (input.expectedVersion !== undefined && existing.activeVersion !== input.expectedVersion) {
+    if (
+      input.expectedVersion !== undefined &&
+      existing.activeVersion !== input.expectedVersion
+    ) {
       throw new Error(
-        `Optimistic concurrency conflict: policy '${id}' active version is ${existing.activeVersion}, expected ${input.expectedVersion}`
+        `Optimistic concurrency conflict: policy '${id}' active version is ${existing.activeVersion}, expected ${input.expectedVersion}`,
       );
     }
 
     const updated: PolicyEntity = {
       ...existing,
       name: input.name ?? existing.name,
-      description: input.description !== undefined ? input.description : existing.description,
+      description:
+        input.description !== undefined
+          ? input.description
+          : existing.description,
       status: input.status ?? existing.status,
       updatedAt: new Date(),
     };
@@ -174,7 +207,7 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     policyId: string,
     definition: PolicyDefinition,
     actorId: string,
-    options?: { effectiveFrom?: Date | null; effectiveTo?: Date | null }
+    options?: { effectiveFrom?: Date | null; effectiveTo?: Date | null },
   ): Promise<PolicyVersionEntity> {
     const policy = this.policies.get(policyId);
     if (!policy) {
@@ -182,7 +215,8 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     }
 
     const vers = this.versions.get(policyId) ?? [];
-    const nextVersionNum = vers.length > 0 ? Math.max(...vers.map((v) => v.version)) + 1 : 1;
+    const nextVersionNum =
+      vers.length > 0 ? Math.max(...vers.map((v) => v.version)) + 1 : 1;
 
     const version: PolicyVersionEntity = {
       id: `ver_${policyId}_v${nextVersionNum}`,
@@ -201,7 +235,11 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     return version;
   }
 
-  async activateVersion(policyId: string, versionNumber: number, actorId: string): Promise<PolicyEntity> {
+  async activateVersion(
+    policyId: string,
+    versionNumber: number,
+    actorId: string,
+  ): Promise<PolicyEntity> {
     const policy = this.policies.get(policyId);
     if (!policy) {
       throw new Error(`Policy '${policyId}' not found`);
@@ -210,7 +248,9 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     const vers = this.versions.get(policyId) ?? [];
     const target = vers.find((v) => v.version === versionNumber);
     if (!target) {
-      throw new Error(`Version ${versionNumber} not found for policy '${policyId}'`);
+      throw new Error(
+        `Version ${versionNumber} not found for policy '${policyId}'`,
+      );
     }
 
     const updated: PolicyEntity = {
@@ -228,19 +268,32 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     return this.policies.get(id) ?? null;
   }
 
-  async getPolicyByScope(scopeType: PolicyScopeType, scopeId?: string | null): Promise<PolicyEntity | null> {
+  async getPolicyByScope(
+    scopeType: PolicyScopeType,
+    scopeId?: string | null,
+  ): Promise<PolicyEntity | null> {
     const sId = scopeId ?? null;
     for (const p of this.policies.values()) {
-      if (p.scopeType === scopeType && p.scopeId === sId && p.status !== "archived") {
+      if (
+        p.scopeType === scopeType &&
+        p.scopeId === sId &&
+        p.status !== "archived"
+      ) {
         return p;
       }
     }
     return null;
   }
 
-  async getActiveVersion(policyId: string): Promise<PolicyVersionEntity | null> {
+  async getActiveVersion(
+    policyId: string,
+  ): Promise<PolicyVersionEntity | null> {
     const policy = this.policies.get(policyId);
-    if (!policy || policy.status === "disabled" || policy.status === "archived") {
+    if (
+      !policy ||
+      policy.status === "disabled" ||
+      policy.status === "archived"
+    ) {
       return null;
     }
 
@@ -248,12 +301,18 @@ export class InMemoryPolicyRepository implements IPolicyRepository {
     return vers.find((v) => v.version === policy.activeVersion) ?? null;
   }
 
-  async getVersion(policyId: string, versionNumber: number): Promise<PolicyVersionEntity | null> {
+  async getVersion(
+    policyId: string,
+    versionNumber: number,
+  ): Promise<PolicyVersionEntity | null> {
     const vers = this.versions.get(policyId) ?? [];
     return vers.find((v) => v.version === versionNumber) ?? null;
   }
 
-  async listPolicies(scopeType?: PolicyScopeType, scopeId?: string | null): Promise<PolicyEntity[]> {
+  async listPolicies(
+    scopeType?: PolicyScopeType,
+    scopeId?: string | null,
+  ): Promise<PolicyEntity[]> {
     const list: PolicyEntity[] = [];
     for (const p of this.policies.values()) {
       if (p.status === "archived") continue;

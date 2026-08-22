@@ -144,17 +144,31 @@ describe("Phase 10 — RouteCircuitBreaker", () => {
     expect(deniedProbe2.permit.reason).toBe("HALF_OPEN_CONCURRENCY_LIMIT");
 
     // 5. Successful Probe 1 recorded
-    breaker.recordOutcome("success", 100, allowedProbe1.permit.permitId, new Date(now + 1200));
+    breaker.recordOutcome(
+      "success",
+      100,
+      allowedProbe1.permit.permitId,
+      new Date(now + 1200),
+    );
 
     // Still HALF_OPEN because required successes = 2
-    expect(breaker.getSnapshot(new Date(now + 1200)).circuitState).toBe("HALF_OPEN");
+    expect(breaker.getSnapshot(new Date(now + 1200)).circuitState).toBe(
+      "HALF_OPEN",
+    );
 
     // 6. Probe 2 acquired and succeeds -> transitions to CLOSED
     const allowedProbe2 = breaker.acquirePermit(new Date(now + 1300));
-    const recoveryRes = breaker.recordOutcome("success", 95, allowedProbe2.permit.permitId, new Date(now + 1400));
+    const recoveryRes = breaker.recordOutcome(
+      "success",
+      95,
+      allowedProbe2.permit.permitId,
+      new Date(now + 1400),
+    );
 
     expect(recoveryRes.transition?.newState).toBe("CLOSED");
-    expect(breaker.getSnapshot(new Date(now + 1400)).circuitState).toBe("CLOSED");
+    expect(breaker.getSnapshot(new Date(now + 1400)).circuitState).toBe(
+      "CLOSED",
+    );
     expect(breaker.getSnapshot(new Date(now + 1400)).state).toBe("healthy");
   });
 
@@ -177,7 +191,12 @@ describe("Phase 10 — RouteCircuitBreaker", () => {
     expect(permit.permit.circuitState).toBe("HALF_OPEN");
 
     // Probe fails -> immediately reopens with backoff cooldown (2000ms)
-    const reopenRes = breaker.recordOutcome("error_5xx", undefined, permit.permit.permitId, new Date(now + 1200));
+    const reopenRes = breaker.recordOutcome(
+      "error_5xx",
+      undefined,
+      permit.permit.permitId,
+      new Date(now + 1200),
+    );
     expect(reopenRes.transition?.newState).toBe("OPEN");
 
     const snapshot = breaker.getSnapshot(new Date(now + 1200));
@@ -197,12 +216,16 @@ describe("Phase 10 — RouteCircuitBreaker", () => {
 
     const snapshot = breaker.getSnapshot(new Date(now + 1000));
     expect(snapshot.circuitState).toBe("FORCED_OPEN");
-    expect(breaker.acquirePermit(new Date(now + 1000)).permit.allowed).toBe(false);
+    expect(breaker.acquirePermit(new Date(now + 1000)).permit.allowed).toBe(
+      false,
+    );
 
     // After expiration -> reverts to normal state
     const afterExpSnapshot = breaker.getSnapshot(new Date(now + 6000));
     expect(afterExpSnapshot.circuitState).toBe("CLOSED");
-    expect(breaker.acquirePermit(new Date(now + 6000)).permit.allowed).toBe(true);
+    expect(breaker.acquirePermit(new Date(now + 6000)).permit.allowed).toBe(
+      true,
+    );
   });
 });
 

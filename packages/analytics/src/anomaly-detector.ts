@@ -13,12 +13,12 @@ export class OperationalSignalService {
 
   constructor(
     private readonly repository: AnalyticsRepository,
-    thresholds?: Partial<AnomalyThresholds>
+    thresholds?: Partial<AnomalyThresholds>,
   ) {
     this.thresholds = {
       errorRateThreshold: 0.15,
       latencyP95Multiplier: 2.5,
-      fallbackRateThreshold: 0.20,
+      fallbackRateThreshold: 0.2,
       ...thresholds,
     };
   }

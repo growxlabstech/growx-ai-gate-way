@@ -22,7 +22,11 @@ describe("Phase 20 — Tenant Isolation & Security", () => {
       code: "GXL_SEC",
       legalName: "GrowX Security Entity",
       country: "US",
-      registeredAddress: { addressLine1: "Market St", city: "San Francisco", country: "US" },
+      registeredAddress: {
+        addressLine1: "Market St",
+        city: "San Francisco",
+        country: "US",
+      },
       taxIdentifiers: [],
     });
 
@@ -65,12 +69,15 @@ describe("Phase 20 — Tenant Isolation & Security", () => {
     expect(attemptRead).toBeUndefined();
 
     // Org B tries to get document of invoice A
-    const attemptDoc = await invoiceService.getInvoiceDocument("org_b", invoiceA.id);
+    const attemptDoc = await invoiceService.getInvoiceDocument(
+      "org_b",
+      invoiceA.id,
+    );
     expect(attemptDoc).toBeUndefined();
 
     // Org B tries to void invoice A
-    await expect(invoiceService.voidInvoice("org_b", invoiceA.id, "Malicious void")).rejects.toThrow(
-      "Invoice not found"
-    );
+    await expect(
+      invoiceService.voidInvoice("org_b", invoiceA.id, "Malicious void"),
+    ).rejects.toThrow("Invoice not found");
   });
 });

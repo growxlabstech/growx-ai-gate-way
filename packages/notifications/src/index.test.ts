@@ -14,7 +14,7 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
     const malicious = '<script>alert("xss")</script> & "quotes"';
     const escaped = escapeHtml(malicious);
     expect(escaped).toBe(
-      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; &quot;quotes&quot;"
+      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; &quot;quotes&quot;",
     );
   });
 
@@ -31,9 +31,9 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
   });
 
   it("fails visibly when a required template variable is missing", () => {
-    expect(() =>
-      renderNotificationContent("credit.low", "email", {})
-    ).toThrow("Missing required variable 'remainingCredits'");
+    expect(() => renderNotificationContent("credit.low", "email", {})).toThrow(
+      "Missing required variable 'remainingCredits'",
+    );
   });
 
   it("renders security.alert in both email and in_app channels", () => {
@@ -50,7 +50,9 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
     const inApp = renderNotificationContent("security.alert", "in_app", data);
     expect(inApp.title).toContain("Suspicious sign-in detected");
     expect(inApp.body).toContain("198.51.100.4");
-    expect(inApp.actionUrl).toBe("https://console.growx.ai/security/incidents/1");
+    expect(inApp.actionUrl).toBe(
+      "https://console.growx.ai/security/incidents/1",
+    );
   });
 
   it("provides canonical policy catalog definitions", () => {
@@ -67,14 +69,20 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
   });
 
   it("calculates exponential backoff and respects Retry-After header", () => {
-    const delay1 = calculateNextNotificationAttemptMs(1, DEFAULT_NOTIFICATION_RETRY_POLICY);
-    const delay2 = calculateNextNotificationAttemptMs(2, DEFAULT_NOTIFICATION_RETRY_POLICY);
+    const delay1 = calculateNextNotificationAttemptMs(
+      1,
+      DEFAULT_NOTIFICATION_RETRY_POLICY,
+    );
+    const delay2 = calculateNextNotificationAttemptMs(
+      2,
+      DEFAULT_NOTIFICATION_RETRY_POLICY,
+    );
     expect(delay2).toBeGreaterThanOrEqual(delay1);
 
     const retryAfter = calculateNextNotificationAttemptMs(
       1,
       DEFAULT_NOTIFICATION_RETRY_POLICY,
-      30
+      30,
     );
     expect(retryAfter).toBe(30_000);
   });
@@ -85,7 +93,7 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
         responseStatus: 200,
         currentAttempt: 1,
         maxAttempts: 4,
-      }).status
+      }).status,
     ).toBe("delivered");
 
     expect(
@@ -93,7 +101,7 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
         responseStatus: 429,
         currentAttempt: 1,
         maxAttempts: 4,
-      }).status
+      }).status,
     ).toBe("retrying");
 
     expect(
@@ -101,7 +109,7 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
         responseStatus: 500,
         currentAttempt: 4,
         maxAttempts: 4,
-      }).status
+      }).status,
     ).toBe("failed");
 
     expect(
@@ -109,7 +117,7 @@ describe("Phase 23 — @growx/notifications Domain & Templates", () => {
         responseStatus: 400,
         currentAttempt: 1,
         maxAttempts: 4,
-      }).status
+      }).status,
     ).toBe("failed");
   });
 });

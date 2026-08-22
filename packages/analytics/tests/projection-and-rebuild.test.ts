@@ -5,7 +5,11 @@ import {
   AnalyticsRebuildService,
   getBucketBoundaries,
 } from "../src/index.js";
-import type { GatewayRequestRecord, GatewayAttemptRecord, UsageEvent } from "@growx/metering";
+import type {
+  GatewayRequestRecord,
+  GatewayAttemptRecord,
+  UsageEvent,
+} from "@growx/metering";
 
 describe("Analytics Projection & Rebuild Engine", () => {
   let repository: InMemoryAnalyticsRepository;
@@ -158,7 +162,13 @@ describe("Analytics Projection & Rebuild Engine", () => {
       completedAt: new Date(now.getTime() + 100),
       durationMs: 100,
       logicalUsage: { inputTokens: 40, outputTokens: 20, totalTokens: 60 },
-      providerConsumption: { inputTokens: 40, outputTokens: 20, totalTokens: 60, attemptCount: 1, failedAttemptCount: 0 },
+      providerConsumption: {
+        inputTokens: 40,
+        outputTokens: 20,
+        totalTokens: 60,
+        attemptCount: 1,
+        failedAttemptCount: 0,
+      },
       attemptCount: 1,
       retryCount: 0,
       fallbackCount: 0,

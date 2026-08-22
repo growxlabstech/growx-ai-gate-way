@@ -6,14 +6,17 @@ import type {
 export class ShadowEvaluator {
   public static compareResults(
     primary: RuntimeExecutionResult,
-    shadow: RuntimeExecutionResult
+    shadow: RuntimeExecutionResult,
   ): ShadowComparisonResult {
     let matches = true;
     let mismatchType: ShadowComparisonResult["mismatchType"] = "none";
     let details: string | undefined;
 
     // 1. Verify Error Code Parity
-    if (primary.status !== shadow.status || primary.errorCode !== shadow.errorCode) {
+    if (
+      primary.status !== shadow.status ||
+      primary.errorCode !== shadow.errorCode
+    ) {
       matches = false;
       mismatchType = "error_code";
       details = `Primary status '${primary.status}' vs Shadow status '${shadow.status}' (error: '${primary.errorCode}' vs '${shadow.errorCode}')`;

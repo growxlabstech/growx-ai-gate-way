@@ -1,2 +1,56 @@
 import { AppShell } from "../../../../components/app-shell";
-export default async function PlaygroundPage({ params }: { params: Promise<{ organizationSlug: string; workspaceSlug: string }> }) { const { organizationSlug, workspaceSlug } = await params; return <AppShell organizationSlug={organizationSlug} workspaceSlug={workspaceSlug} title="Playground"><form className="key-form"><div className="form-grid"><label>Model<select defaultValue="growx/fast"><option>growx/fast</option><option>growx/smart</option><option>growx/reasoning</option></select></label><label>Maximum tokens<input type="number" defaultValue="1024" min="1" /></label></div><label>System instructions<textarea rows={3} placeholder="You are a helpful assistant." /></label><label>Prompt<textarea rows={9} required placeholder="Ask GrowX anything…" /></label><label>Temperature<input type="range" min="0" max="2" step="0.1" defaultValue="0.7" /></label><div className="toolbar"><button type="button">Stop generation</button><button className="primary" type="submit">Run</button></div><section className="state"><h2>Response stream</h2><p>Execution uses the server-side control plane; customer API-key secrets are not exposed to browser JavaScript.</p><p className="muted">Request ID · Latency · Input/output tokens appear here.</p></section></form></AppShell>; }
+import { loadTenantContext } from "../../../../lib/load-tenant-context";
+import { loadWorkspaceModels } from "../../../../lib/models-data";
+import { PlaygroundView } from "../../../../components/playground/playground-view";
+
+interface PlaygroundPageProps {
+  params: Promise<{
+    organizationSlug: string;
+    workspaceSlug: string;
+  }>;
+}
+
+export default async function PlaygroundPage({ params }: PlaygroundPageProps) {
+  const { organizationSlug, workspaceSlug } = await params;
+  const contextResult = await loadTenantContext();
+
+  const organization =
+    contextResult.status === "ready"
+      ? contextResult.context.organizations.find(
+          (o) => o.organizationSlug === organizationSlug,
+        )
+      : undefined;
+
+  const workspace =
+    contextResult.status === "ready"
+      ? contextResult.context.workspaces.find(
+          (w) =>
+            w.workspaceSlug === workspaceSlug &&
+            (!organization || w.organizationId === organization.organizationId),
+        )
+      : undefined;
+
+  const workspaceId = workspace?.workspaceId ?? "ws_production";
+  const organizationId = organization?.organizationId ?? "org_northstar";
+
+  const models = await loadWorkspaceModels({
+    organizationId,
+    workspaceId,
+  });
+
+  return (
+    <AppShell
+      organizationSlug={organizationSlug}
+      workspaceSlug={workspaceSlug}
+      title="Playground"
+      description="Interactive gateway execution testbed with realtime streaming, parameters, tools, and metering."
+    >
+      <PlaygroundView
+        organizationSlug={organizationSlug}
+        workspaceSlug={workspaceSlug}
+        workspaceId={workspaceId}
+        models={models}
+      />
+    </AppShell>
+  );
+}

@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
-import { FileService, InMemoryObjectStorageProvider, InMemoryFileRepository, TruthfulFileScanner } from "@growx/storage-service";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
+import {
+  FileService,
+  InMemoryObjectStorageProvider,
+  InMemoryFileRepository,
+  TruthfulFileScanner,
+} from "@growx/storage-service";
 import { GatewayEngine } from "../../src/application/gateway-engine.js";
 import type { OpenAIChatCompletionRequest } from "@growx/contracts";
 
@@ -17,7 +25,7 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
     fileService = new FileService(
       storageProvider,
       new InMemoryFileRepository(),
-      new TruthfulFileScanner()
+      new TruthfulFileScanner(),
     );
 
     gatewayEngineWithFiles = new GatewayEngine(
@@ -37,7 +45,7 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
       undefined,
       undefined,
       fixture.gatewayEngine.semanticCacheService,
-      fileService
+      fileService,
     );
   });
 
@@ -68,14 +76,18 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
         fileName: "sample_chart.png",
         purpose: "image_input",
         mimeType: "image/png",
-      }
+      },
     );
-    const pngData = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
-    await storageProvider.putObject(createRes.file.storageKey, pngData, { contentType: "image/png" });
+    const pngData = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+    ]);
+    await storageProvider.putObject(createRes.file.storageKey, pngData, {
+      contentType: "image/png",
+    });
     await fileService.completeUpload(
       { organizationId: auth.organizationId, workspaceId: auth.workspaceId },
       createRes.file.id,
-      { uploadSessionId: createRes.uploadSessionId }
+      { uploadSessionId: createRes.uploadSessionId },
     );
 
     // 2. Execute chat request referencing fileId with gpt-4o-mini
@@ -99,8 +111,13 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
       stream: false,
     };
 
-    const response = await gatewayEngineWithFiles.executeChatCompletion(auth as any, req as any);
-    expect(response.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    const response = await gatewayEngineWithFiles.executeChatCompletion(
+      auth as any,
+      req as any,
+    );
+    expect(response.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls.length).toBe(1);
   });
 
@@ -131,7 +148,7 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
         fileName: "incomplete.png",
         purpose: "image_input",
         mimeType: "image/png",
-      }
+      },
     );
 
     const req: OpenAIChatCompletionRequest = {
@@ -155,7 +172,7 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
     };
 
     await expect(
-      gatewayEngineWithFiles.executeChatCompletion(auth as any, req as any)
+      gatewayEngineWithFiles.executeChatCompletion(auth as any, req as any),
     ).rejects.toThrowError(/is not ready/);
 
     expect(fixture.mockAdapter.calls.length).toBe(0);
@@ -191,8 +208,13 @@ describe("Phase 25: Multimodal Gateway File Integration & Modality Validation", 
     };
 
     // Text request succeeds with 0 error and 0 storage calls
-    const response = await gatewayEngineWithFiles.executeChatCompletion(auth as any, pureTextReq as any);
-    expect(response.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    const response = await gatewayEngineWithFiles.executeChatCompletion(
+      auth as any,
+      pureTextReq as any,
+    );
+    expect(response.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls.length).toBe(1);
   });
 });

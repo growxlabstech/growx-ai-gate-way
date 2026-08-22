@@ -6,7 +6,7 @@ import {
 
 export function validateRequestCapabilities(
   request: NormalizedGenerationRequest,
-  supportedCapabilities: CanonicalCapability[]
+  supportedCapabilities: CanonicalCapability[],
 ): void {
   const capSet = new Set<string>(supportedCapabilities);
 
@@ -16,7 +16,7 @@ export function validateRequestCapabilities(
       "model_capability_not_supported",
       `Model route '${request.providerModelId}' does not support streaming`,
       false,
-      400
+      400,
     );
   }
 
@@ -26,7 +26,7 @@ export function validateRequestCapabilities(
       "model_capability_not_supported",
       `Model route '${request.providerModelId}' does not support tool calling`,
       false,
-      400
+      400,
     );
   }
 
@@ -36,7 +36,7 @@ export function validateRequestCapabilities(
       "model_capability_not_supported",
       `Model route '${request.providerModelId}' does not support structured output`,
       false,
-      400
+      400,
     );
   }
 
@@ -46,20 +46,21 @@ export function validateRequestCapabilities(
       "model_capability_not_supported",
       `Model route '${request.providerModelId}' does not support reasoning effort configuration`,
       false,
-      400
+      400,
     );
   }
 
   // 5. Vision input
-  const hasImage = request.messages.some((m) =>
-    Array.isArray(m.content) && m.content.some((c) => c.type === "image_url")
+  const hasImage = request.messages.some(
+    (m) =>
+      Array.isArray(m.content) && m.content.some((c) => c.type === "image_url"),
   );
   if (hasImage && !capSet.has("vision.input")) {
     throw new GrowXProviderError(
       "model_capability_not_supported",
       `Model route '${request.providerModelId}' does not support multimodal image input`,
       false,
-      400
+      400,
     );
   }
 }

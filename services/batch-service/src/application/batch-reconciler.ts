@@ -5,7 +5,10 @@ export class BatchReconciler {
   private readonly repo: BatchRepository;
   private readonly finalizer: BatchFinalizer;
 
-  constructor(deps: { batchRepository: BatchRepository; finalizer: BatchFinalizer }) {
+  constructor(deps: {
+    batchRepository: BatchRepository;
+    finalizer: BatchFinalizer;
+  }) {
     this.repo = deps.batchRepository;
     this.finalizer = deps.finalizer;
   }
@@ -13,7 +16,10 @@ export class BatchReconciler {
   /**
    * Reconcile stuck leases, counter drift, and unfinalized jobs.
    */
-  public async reconcile(): Promise<{ recoveredLeases: number; reconciledJobs: number }> {
+  public async reconcile(): Promise<{
+    recoveredLeases: number;
+    reconciledJobs: number;
+  }> {
     const now = new Date();
     let recoveredLeases = 0;
     let reconciledJobs = 0;
@@ -31,7 +37,11 @@ export class BatchReconciler {
           });
         }
       }
-      await this.repo.releaseLease(lease.resourceType, lease.resourceId, lease.leaseOwner);
+      await this.repo.releaseLease(
+        lease.resourceType,
+        lease.resourceId,
+        lease.leaseOwner,
+      );
       recoveredLeases++;
     }
 
@@ -39,11 +49,16 @@ export class BatchReconciler {
     const activeJobs = await this.repo.findRunnableBatchJobs(50);
     for (const job of activeJobs) {
       const items = await this.repo.getAllBatchItems(job.id);
-      const succeeded = items.filter(i => i.status === "succeeded").length;
-      const failed = items.filter(i => i.status === "failed").length;
-      const cancelled = items.filter(i => i.status === "cancelled").length;
-      const running = items.filter(i => i.status === "running").length;
-      const pending = items.filter(i => i.status === "pending" || i.status === "queued" || i.status === "retry_wait").length;
+      const succeeded = items.filter((i) => i.status === "succeeded").length;
+      const failed = items.filter((i) => i.status === "failed").length;
+      const cancelled = items.filter((i) => i.status === "cancelled").length;
+      const running = items.filter((i) => i.status === "running").length;
+      const pending = items.filter(
+        (i) =>
+          i.status === "pending" ||
+          i.status === "queued" ||
+          i.status === "retry_wait",
+      ).length;
 
       if (
         job.succeededItems !== succeeded ||

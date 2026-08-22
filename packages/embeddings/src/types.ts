@@ -18,7 +18,10 @@ export interface EmbeddingLimits {
 }
 
 export class EmbeddingValidationError extends Error {
-  constructor(public code: string, message: string) {
+  constructor(
+    public code: string,
+    message: string,
+  ) {
     super(message);
     this.name = "EmbeddingValidationError";
   }
@@ -32,7 +35,10 @@ export class EmbeddingDimensionsUnsupportedError extends Error {
 }
 
 export class EmbeddingProviderInvalidResponseError extends Error {
-  constructor(public code: string, message: string) {
+  constructor(
+    public code: string,
+    message: string,
+  ) {
     super(message);
     this.name = "EmbeddingProviderInvalidResponseError";
   }

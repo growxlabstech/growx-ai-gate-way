@@ -10,7 +10,9 @@ import type {
 import type { ProviderImageAdapter } from "./provider-image-adapter.js";
 import type { ProviderAudioAdapter } from "./provider-audio-adapter.js";
 
-export class DeterministicMultimodalAdapter implements ProviderImageAdapter, ProviderAudioAdapter {
+export class DeterministicMultimodalAdapter
+  implements ProviderImageAdapter, ProviderAudioAdapter
+{
   public readonly providerId = "deterministic";
 
   // 1x1 transparent PNG base64
@@ -25,7 +27,10 @@ export class DeterministicMultimodalAdapter implements ProviderImageAdapter, Pro
     };
   }
 
-  public parseGenerationResponse(_rawResponse: unknown, request: ImageGenerationRequest): ImageGenerationResponse {
+  public parseGenerationResponse(
+    _rawResponse: unknown,
+    request: ImageGenerationRequest,
+  ): ImageGenerationResponse {
     const items = Array.from({ length: request.n || 1 }, (_, i) => ({
       b64_json: this.TRANSPARENT_PNG_BASE64,
       revised_prompt: `Enhanced prompt: ${request.prompt}`,
@@ -48,7 +53,10 @@ export class DeterministicMultimodalAdapter implements ProviderImageAdapter, Pro
     };
   }
 
-  public parseEditResponse(_rawResponse: unknown, request: ImageEditRequest): ImageGenerationResponse {
+  public parseEditResponse(
+    _rawResponse: unknown,
+    request: ImageEditRequest,
+  ): ImageGenerationResponse {
     return this.parseGenerationResponse(_rawResponse, request as any);
   }
 
@@ -60,8 +68,12 @@ export class DeterministicMultimodalAdapter implements ProviderImageAdapter, Pro
     };
   }
 
-  public parseTranscriptionResponse(_rawResponse: unknown, request: TranscriptionRequest): TranscriptionResponse {
-    const mockText = "This is a deterministic transcription output from GrowX multimodal engine.";
+  public parseTranscriptionResponse(
+    _rawResponse: unknown,
+    request: TranscriptionRequest,
+  ): TranscriptionResponse {
+    const mockText =
+      "This is a deterministic transcription output from GrowX multimodal engine.";
     return {
       text: mockText,
       task: "transcribe",
@@ -94,7 +106,10 @@ export class DeterministicMultimodalAdapter implements ProviderImageAdapter, Pro
     };
   }
 
-  public parseSpeechResponse(_rawResponse: unknown, request: SpeechRequest): SpeechResponse {
+  public parseSpeechResponse(
+    _rawResponse: unknown,
+    request: SpeechRequest,
+  ): SpeechResponse {
     // Generate valid 44-byte standard WAV header + 100 bytes PCM silence
     const sampleRate = 24000;
     const numChannels = 1;

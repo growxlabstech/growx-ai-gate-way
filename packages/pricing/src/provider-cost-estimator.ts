@@ -10,13 +10,15 @@ export interface RouteCandidateLike {
   credentialId?: string | undefined;
   canonicalModelId?: string | undefined;
   estimatedCost?: number | undefined;
-  pricing?: {
-    inputPricePerMillionMinor: number;
-    outputPricePerMillionMinor: number;
-    cachedInputPricePerMillionMinor?: number | null | undefined;
-    reasoningPricePerMillionMinor?: number | null | undefined;
-    currency: string;
-  } | undefined;
+  pricing?:
+    | {
+        inputPricePerMillionMinor: number;
+        outputPricePerMillionMinor: number;
+        cachedInputPricePerMillionMinor?: number | null | undefined;
+        reasoningPricePerMillionMinor?: number | null | undefined;
+        currency: string;
+      }
+    | undefined;
 }
 
 export interface EstimatedUsageInput {
@@ -42,7 +44,7 @@ export class ProviderCostEstimator {
   public estimateRouteCost(
     candidate: RouteCandidateLike,
     usage?: EstimatedUsageInput | undefined,
-    currency: Currency = "USD"
+    currency: Currency = "USD",
   ): Decimal | undefined {
     const inputTokens = BigInt(usage?.inputTokens ?? 1000);
     const outputTokens = BigInt(usage?.outputTokens ?? 500);
@@ -74,28 +76,36 @@ export class ProviderCostEstimator {
       const inPrice = ratesMap.get("input_tokens");
       const inUnits = perUnitsMap.get("input_tokens") ?? 1_000_000n;
       if (inPrice && inputTokens > 0n) {
-        totalCost = totalCost.add(Decimal.fromUnits(inputTokens, inPrice, inUnits));
+        totalCost = totalCost.add(
+          Decimal.fromUnits(inputTokens, inPrice, inUnits),
+        );
       }
 
       // Output tokens
       const outPrice = ratesMap.get("output_tokens");
       const outUnits = perUnitsMap.get("output_tokens") ?? 1_000_000n;
       if (outPrice && outputTokens > 0n) {
-        totalCost = totalCost.add(Decimal.fromUnits(outputTokens, outPrice, outUnits));
+        totalCost = totalCost.add(
+          Decimal.fromUnits(outputTokens, outPrice, outUnits),
+        );
       }
 
       // Cached tokens
       const cachePrice = ratesMap.get("cached_input_tokens");
       const cacheUnits = perUnitsMap.get("cached_input_tokens") ?? 1_000_000n;
       if (cachePrice && cachedTokens > 0n) {
-        totalCost = totalCost.add(Decimal.fromUnits(cachedTokens, cachePrice, cacheUnits));
+        totalCost = totalCost.add(
+          Decimal.fromUnits(cachedTokens, cachePrice, cacheUnits),
+        );
       }
 
       // Reasoning tokens
       const reasoningPrice = ratesMap.get("reasoning_tokens") ?? outPrice;
       const reasoningUnits = perUnitsMap.get("reasoning_tokens") ?? outUnits;
       if (reasoningPrice && reasoningTokens > 0n) {
-        totalCost = totalCost.add(Decimal.fromUnits(reasoningTokens, reasoningPrice, reasoningUnits));
+        totalCost = totalCost.add(
+          Decimal.fromUnits(reasoningTokens, reasoningPrice, reasoningUnits),
+        );
       }
 
       return totalCost;
@@ -110,12 +120,12 @@ export class ProviderCostEstimator {
       const inCost = Decimal.fromUnits(
         inputTokens,
         Decimal.from(candidate.pricing.inputPricePerMillionMinor).div(100),
-        1_000_000n
+        1_000_000n,
       );
       const outCost = Decimal.fromUnits(
         outputTokens,
         Decimal.from(candidate.pricing.outputPricePerMillionMinor).div(100),
-        1_000_000n
+        1_000_000n,
       );
       return inCost.add(outCost);
     }
@@ -129,7 +139,7 @@ export class ProviderCostEstimator {
   public estimateBatch(
     candidates: RouteCandidateLike[],
     usage?: EstimatedUsageInput | undefined,
-    currency: Currency = "USD"
+    currency: Currency = "USD",
   ): Map<string, Decimal> {
     const results = new Map<string, Decimal>();
 

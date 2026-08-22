@@ -142,7 +142,7 @@ export class BatchDomainError extends Error {
     message: string,
     public readonly code: string,
     public readonly statusCode: number = 400,
-    public readonly details?: unknown
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = "BatchDomainError";

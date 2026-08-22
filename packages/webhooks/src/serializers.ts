@@ -30,11 +30,13 @@ export class WebhookSerializer {
 
     if (byteLength > MAX_PAYLOAD_BYTES) {
       throw new Error(
-        `Webhook payload size (${byteLength} bytes) exceeds maximum limit of ${MAX_PAYLOAD_BYTES} bytes`
+        `Webhook payload size (${byteLength} bytes) exceeds maximum limit of ${MAX_PAYLOAD_BYTES} bytes`,
       );
     }
 
-    const payloadHash = createHash("sha256").update(rawJson, "utf8").digest("hex");
+    const payloadHash = createHash("sha256")
+      .update(rawJson, "utf8")
+      .digest("hex");
 
     return { envelope, rawJson, payloadHash };
   }
@@ -46,7 +48,9 @@ export class WebhookSerializer {
     workspaceId?: string | undefined;
     model: string;
     status: string;
-    usage?: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+    usage?:
+      | { promptTokens: number; completionTokens: number; totalTokens: number }
+      | undefined;
     latencyMs?: number | undefined;
     clientRequestId?: string | undefined;
   }) {
@@ -100,8 +104,14 @@ export class WebhookSerializer {
       taxTotal: String(eventData.taxTotal),
       total: String(eventData.total),
       amountDue: String(eventData.amountDue),
-      issueDate: typeof eventData.issueDate === "string" ? eventData.issueDate : eventData.issueDate.toISOString(),
-      dueDate: typeof eventData.dueDate === "string" ? eventData.dueDate : eventData.dueDate.toISOString(),
+      issueDate:
+        typeof eventData.issueDate === "string"
+          ? eventData.issueDate
+          : eventData.issueDate.toISOString(),
+      dueDate:
+        typeof eventData.dueDate === "string"
+          ? eventData.dueDate
+          : eventData.dueDate.toISOString(),
     };
   }
 

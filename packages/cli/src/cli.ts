@@ -9,7 +9,10 @@ export class GrowXCLI {
   private apiKey: string;
   private baseUrl: string;
 
-  constructor(apiKey: string = "gx_live_default_cli_key", baseUrl: string = "https://api.growxlabs.tech") {
+  constructor(
+    apiKey: string = "gx_live_default_cli_key",
+    baseUrl: string = "https://api.growxlabs.tech",
+  ) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
   }
@@ -22,9 +25,19 @@ export class GrowXCLI {
       const keyArg = args[1];
       if (keyArg) {
         this.apiKey = keyArg;
-        return { stdout: isJson ? JSON.stringify({ status: "authenticated" }) : "✓ Successfully authenticated with GrowX.", exitCode: 0 };
+        return {
+          stdout: isJson
+            ? JSON.stringify({ status: "authenticated" })
+            : "✓ Successfully authenticated with GrowX.",
+          exitCode: 0,
+        };
       }
-      return { stdout: isJson ? JSON.stringify({ apiKey: this.apiKey }) : `Current API Key: ${this.apiKey.substring(0, 10)}...`, exitCode: 0 };
+      return {
+        stdout: isJson
+          ? JSON.stringify({ apiKey: this.apiKey })
+          : `Current API Key: ${this.apiKey.substring(0, 10)}...`,
+        exitCode: 0,
+      };
     }
 
     if (cmd === "models" && args[1] === "list") {
@@ -41,14 +54,18 @@ export class GrowXCLI {
                 { id: "gemini-1.5-pro", owned_by: "growx" },
               ],
             }),
-            { status: 200, headers: { "content-type": "application/json" } }
+            { status: 200, headers: { "content-type": "application/json" } },
           ),
       });
 
       const modelsRes = await client.models.list();
       const models = modelsRes.data;
       return {
-        stdout: isJson ? JSON.stringify(models) : models.map((m: any) => `- ${m.id} (${m.owned_by || "growx"})`).join("\n"),
+        stdout: isJson
+          ? JSON.stringify(models)
+          : models
+              .map((m: any) => `- ${m.id} (${m.owned_by || "growx"})`)
+              .join("\n"),
         exitCode: 0,
       };
     }
@@ -64,10 +81,19 @@ export class GrowXCLI {
           new Response(
             JSON.stringify({
               id: "chatcmpl_mock123",
-              choices: [{ message: { role: "assistant", content: `Echo: ${prompt}` }, finish_reason: "stop" }],
-              usage: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 },
+              choices: [
+                {
+                  message: { role: "assistant", content: `Echo: ${prompt}` },
+                  finish_reason: "stop",
+                },
+              ],
+              usage: {
+                prompt_tokens: 10,
+                completion_tokens: 15,
+                total_tokens: 25,
+              },
             }),
-            { status: 200, headers: { "content-type": "application/json" } }
+            { status: 200, headers: { "content-type": "application/json" } },
           ),
       });
 
@@ -84,11 +110,17 @@ export class GrowXCLI {
 
     if (cmd === "config") {
       const config = { apiHostname: this.baseUrl, version: "0.1.0" };
-      return { stdout: isJson ? JSON.stringify(config) : `GrowX CLI Config: ${JSON.stringify(config, null, 2)}`, exitCode: 0 };
+      return {
+        stdout: isJson
+          ? JSON.stringify(config)
+          : `GrowX CLI Config: ${JSON.stringify(config, null, 2)}`,
+        exitCode: 0,
+      };
     }
 
     return {
-      stdout: "GrowX AI Gateway CLI\nUsage: growx [auth | models list | chat <prompt> | config] [--json]",
+      stdout:
+        "GrowX AI Gateway CLI\nUsage: growx [auth | models list | chat <prompt> | config] [--json]",
       exitCode: 0,
     };
   }

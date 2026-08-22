@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { ToolAuthorizationService, ToolAuthorizationError } from "../src/authorizer.js";
+import {
+  ToolAuthorizationService,
+  ToolAuthorizationError,
+} from "../src/authorizer.js";
 
 describe("Tool Authorization Service", () => {
   const authorizer = new ToolAuthorizationService();
@@ -20,7 +23,7 @@ describe("Tool Authorization Service", () => {
           organizationId: "org_123",
           status: "active",
         },
-        mockContext
+        mockContext,
       );
     }).not.toThrow();
   });
@@ -34,7 +37,7 @@ describe("Tool Authorization Service", () => {
           organizationId: "org_other",
           status: "active",
         },
-        mockContext
+        mockContext,
       );
     }).toThrow(ToolAuthorizationError);
   });
@@ -49,7 +52,7 @@ describe("Tool Authorization Service", () => {
           status: "active",
         },
         mockContext,
-        { deniedToolNames: ["risky_tool"] }
+        { deniedToolNames: ["risky_tool"] },
       );
     }).toThrow(/Policy explicitly denies/);
   });

@@ -1,4 +1,8 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import { WEBHOOK_EVENT_CATALOG, WebhookSerializer } from "@growx/webhooks";
 import type { WebhookDeliveryService } from "../application/webhook-delivery-service.js";
 import type { WebhookEndpointService } from "../application/webhook-endpoint-service.js";
@@ -16,10 +20,19 @@ export interface WebhookHttpServerOptions {
 }
 
 export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
-  const { endpointService, eventRouter, replayService, repository, allowInsecureHttp } = options;
+  const {
+    endpointService,
+    eventRouter,
+    replayService,
+    repository,
+    allowInsecureHttp,
+  } = options;
 
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
@@ -44,7 +57,11 @@ export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
 
     try {
       // ─── Health ────────────────────────────────────────────────
-      if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
+      if (
+        pathname === "/health" ||
+        pathname === "/live" ||
+        pathname === "/ready"
+      ) {
         return sendJson(200, { status: "ok", service: "webhook-service" });
       }
 
@@ -59,10 +76,14 @@ export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
 
       // ─── Customer Endpoints ────────────────────────────────────
       if (pathname === "/v1/webhooks/endpoints") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         if (method === "GET") {
-          const endpoints = await endpointService.listEndpoints(orgId, workspaceId);
+          const endpoints = await endpointService.listEndpoints(
+            orgId,
+            workspaceId,
+          );
           return sendJson(200, { endpoints });
         }
 
@@ -80,48 +101,66 @@ export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
         }
       }
 
-      const endpointMatch = pathname.match(/^\/v1\/webhooks\/endpoints\/([^/]+)$/);
+      const endpointMatch = pathname.match(
+        /^\/v1\/webhooks\/endpoints\/([^/]+)$/,
+      );
       if (endpointMatch) {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const endpointId = endpointMatch[1] ?? "";
 
         if (method === "GET") {
           const endpoint = await endpointService.getEndpoint(orgId, endpointId);
-          if (!endpoint) return sendJson(404, { error: "Webhook endpoint not found" });
+          if (!endpoint)
+            return sendJson(404, { error: "Webhook endpoint not found" });
           return sendJson(200, { endpoint });
         }
 
         if (method === "PATCH" || method === "PUT") {
           const body = await parseBody();
-          const endpoint = await endpointService.updateEndpoint(orgId, endpointId, {
-            ...body,
-            allowInsecureHttp,
-          });
+          const endpoint = await endpointService.updateEndpoint(
+            orgId,
+            endpointId,
+            {
+              ...body,
+              allowInsecureHttp,
+            },
+          );
           return sendJson(200, { endpoint });
         }
 
         if (method === "DELETE") {
-          const endpoint = await endpointService.disableEndpoint(orgId, endpointId);
+          const endpoint = await endpointService.disableEndpoint(
+            orgId,
+            endpointId,
+          );
           return sendJson(200, { endpoint });
         }
       }
 
       // Rotate secret
-      const rotateMatch = pathname.match(/^\/v1\/webhooks\/endpoints\/([^/]+)\/rotate-secret$/);
+      const rotateMatch = pathname.match(
+        /^\/v1\/webhooks\/endpoints\/([^/]+)\/rotate-secret$/,
+      );
       if (rotateMatch && method === "POST") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const endpointId = rotateMatch[1] ?? "";
         const result = await endpointService.rotateSecret(orgId, endpointId);
         return sendJson(200, result);
       }
 
       // Test webhook trigger
-      const testMatch = pathname.match(/^\/v1\/webhooks\/endpoints\/([^/]+)\/test$/);
+      const testMatch = pathname.match(
+        /^\/v1\/webhooks\/endpoints\/([^/]+)\/test$/,
+      );
       if (testMatch && method === "POST") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const endpointId = testMatch[1] ?? "";
         const endpoint = await endpointService.getEndpoint(orgId, endpointId);
-        if (!endpoint) return sendJson(404, { error: "Webhook endpoint not found" });
+        if (!endpoint)
+          return sendJson(404, { error: "Webhook endpoint not found" });
 
         const testData = WebhookSerializer.sanitizeTestPing({
           pingId: `ping_${Date.now()}`,
@@ -138,14 +177,19 @@ export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
           data: testData,
         });
 
-        return sendJson(200, { message: "Test webhook event dispatched", eventId: routed.outboundEvent.id });
+        return sendJson(200, {
+          message: "Test webhook event dispatched",
+          eventId: routed.outboundEvent.id,
+        });
       }
 
       // ─── Customer Deliveries ───────────────────────────────────
       if (pathname === "/v1/webhooks/deliveries" && method === "GET") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const endpointIdQuery = url.searchParams.get("endpointId") ?? undefined;
-        const statusQuery = (url.searchParams.get("status") as any) ?? undefined;
+        const statusQuery =
+          (url.searchParams.get("status") as any) ?? undefined;
 
         const deliveries = await repository.listDeliveries(orgId, {
           endpointId: endpointIdQuery,
@@ -154,21 +198,31 @@ export function createWebhookHttpServer(options: WebhookHttpServerOptions) {
         return sendJson(200, { deliveries });
       }
 
-      const deliveryMatch = pathname.match(/^\/v1\/webhooks\/deliveries\/([^/]+)$/);
+      const deliveryMatch = pathname.match(
+        /^\/v1\/webhooks\/deliveries\/([^/]+)$/,
+      );
       if (deliveryMatch && method === "GET") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const deliveryId = deliveryMatch[1] ?? "";
         const delivery = await repository.getDelivery(orgId, deliveryId);
-        if (!delivery) return sendJson(404, { error: "Webhook delivery not found" });
+        if (!delivery)
+          return sendJson(404, { error: "Webhook delivery not found" });
         const attempts = await repository.listAttempts(delivery.id);
         return sendJson(200, { delivery, attempts });
       }
 
-      const replayDeliveryMatch = pathname.match(/^\/v1\/webhooks\/deliveries\/([^/]+)\/replay$/);
+      const replayDeliveryMatch = pathname.match(
+        /^\/v1\/webhooks\/deliveries\/([^/]+)\/replay$/,
+      );
       if (replayDeliveryMatch && method === "POST") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const deliveryId = replayDeliveryMatch[1] ?? "";
-        const newDelivery = await replayService.replayDelivery(orgId, deliveryId);
+        const newDelivery = await replayService.replayDelivery(
+          orgId,
+          deliveryId,
+        );
         return sendJson(201, { delivery: newDelivery });
       }
 

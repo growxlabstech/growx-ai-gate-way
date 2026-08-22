@@ -1,13 +1,24 @@
-import type { CanonicalResponseFormat, SchemaFeatureProfile, StructuredOutputCapabilities } from '@growx/contracts';
-import type { ProviderStructuredOutputAdapter, ProviderResponseFormat, StructuredOutputStatus } from './provider-structured-adapter.js';
+import type {
+  CanonicalResponseFormat,
+  SchemaFeatureProfile,
+  StructuredOutputCapabilities,
+} from "@growx/contracts";
+import type {
+  ProviderStructuredOutputAdapter,
+  ProviderResponseFormat,
+  StructuredOutputStatus,
+} from "./provider-structured-adapter.js";
 
 export class GeminiStructuredAdapter implements ProviderStructuredOutputAdapter {
-  readonly providerId = 'gemini';
+  readonly providerId = "gemini";
 
-  translateResponseFormat(format: CanonicalResponseFormat, features: SchemaFeatureProfile): ProviderResponseFormat {
-    if (format.type === 'json_schema' || format.type === 'json_object') {
-      const res: any = { responseMimeType: 'application/json' };
-      if (format.type === 'json_schema' && format.schema) {
+  translateResponseFormat(
+    format: CanonicalResponseFormat,
+    features: SchemaFeatureProfile,
+  ): ProviderResponseFormat {
+    if (format.type === "json_schema" || format.type === "json_object") {
+      const res: any = { responseMimeType: "application/json" };
+      if (format.type === "json_schema" && format.schema) {
         res.responseSchema = format.schema;
       }
       return res;
@@ -16,14 +27,19 @@ export class GeminiStructuredAdapter implements ProviderStructuredOutputAdapter 
   }
 
   parseResponse(rawResponse: any, format: CanonicalResponseFormat): string {
-    return typeof rawResponse === 'string' ? rawResponse : JSON.stringify(rawResponse);
+    return typeof rawResponse === "string"
+      ? rawResponse
+      : JSON.stringify(rawResponse);
   }
 
-  supportsSchema(features: SchemaFeatureProfile, capabilities: StructuredOutputCapabilities): boolean {
+  supportsSchema(
+    features: SchemaFeatureProfile,
+    capabilities: StructuredOutputCapabilities,
+  ): boolean {
     return true;
   }
 
   mapProviderFailure(error: any): StructuredOutputStatus {
-    return 'unknown';
+    return "unknown";
   }
 }

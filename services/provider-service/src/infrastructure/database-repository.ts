@@ -38,7 +38,10 @@ export class DatabaseProviderRepository implements IProviderRepository {
   }
 
   async getProviderById(id: string): Promise<ProviderEntity | null> {
-    const rows = await this.db.select().from(providers).where(eq(providers.id, id));
+    const rows = await this.db
+      .select()
+      .from(providers)
+      .where(eq(providers.id, id));
     const r = rows[0];
     if (!r) return null;
     return this.mapProvider(r);
@@ -56,7 +59,7 @@ export class DatabaseProviderRepository implements IProviderRepository {
 
   async updateProvider(
     id: string,
-    updates: Partial<ProviderEntity>
+    updates: Partial<ProviderEntity>,
   ): Promise<ProviderEntity> {
     const dbUpdates: Record<string, unknown> = {
       updatedAt: updates.updatedAt ?? new Date(),
@@ -64,9 +67,11 @@ export class DatabaseProviderRepository implements IProviderRepository {
     if (updates.displayName !== undefined) dbUpdates.name = updates.displayName;
     if (updates.code !== undefined) dbUpdates.slug = updates.code.toLowerCase();
     if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.adapterType !== undefined) dbUpdates.adapterType = updates.adapterType;
+    if (updates.adapterType !== undefined)
+      dbUpdates.adapterType = updates.adapterType;
     if (updates.baseUrl !== undefined) dbUpdates.baseUrl = updates.baseUrl;
-    if (updates.apiVersion !== undefined) dbUpdates.apiVersion = updates.apiVersion;
+    if (updates.apiVersion !== undefined)
+      dbUpdates.apiVersion = updates.apiVersion;
     if (updates.region !== undefined) dbUpdates.region = updates.region;
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
     if (updates.enabled !== undefined) dbUpdates.enabled = updates.enabled;
@@ -81,7 +86,9 @@ export class DatabaseProviderRepository implements IProviderRepository {
   async listProviders(filter?: ProviderListFilter): Promise<ProviderEntity[]> {
     const conditions: any[] = [];
     if (filter?.status && filter.status.length > 0) {
-      conditions.push(inArray(providers.status, filter.status as unknown as any[]));
+      conditions.push(
+        inArray(providers.status, filter.status as unknown as any[]),
+      );
     }
     if (filter?.enabled !== undefined) {
       conditions.push(eq(providers.enabled, filter.enabled));
@@ -89,14 +96,17 @@ export class DatabaseProviderRepository implements IProviderRepository {
 
     const rows =
       conditions.length > 0
-        ? await this.db.select().from(providers).where(and(...conditions))
+        ? await this.db
+            .select()
+            .from(providers)
+            .where(and(...conditions))
         : await this.db.select().from(providers);
 
     return rows.map((r: any) => this.mapProvider(r));
   }
 
   async createCredential(
-    credential: ProviderCredentialEntity
+    credential: ProviderCredentialEntity,
   ): Promise<ProviderCredentialEntity> {
     await this.db.insert(providerCredentials).values({
       id: credential.id,
@@ -116,7 +126,9 @@ export class DatabaseProviderRepository implements IProviderRepository {
     return credential;
   }
 
-  async getCredentialById(id: string): Promise<ProviderCredentialEntity | null> {
+  async getCredentialById(
+    id: string,
+  ): Promise<ProviderCredentialEntity | null> {
     const rows = await this.db
       .select()
       .from(providerCredentials)
@@ -129,7 +141,7 @@ export class DatabaseProviderRepository implements IProviderRepository {
   async getEffectiveCredential(
     providerId: string,
     environment?: string,
-    credentialId?: string
+    credentialId?: string,
   ): Promise<ProviderCredentialEntity | null> {
     if (credentialId) {
       const specific = await this.getCredentialById(credentialId);
@@ -160,8 +172,8 @@ export class DatabaseProviderRepository implements IProviderRepository {
         .where(
           and(
             eq(providerCredentials.providerId, providerId),
-            inArray(providerCredentials.status, ["active", "rotating"])
-          )
+            inArray(providerCredentials.status, ["active", "rotating"]),
+          ),
         );
       return anyRows[0] ? this.mapCredential(anyRows[0]) : null;
     }
@@ -170,7 +182,7 @@ export class DatabaseProviderRepository implements IProviderRepository {
   }
 
   async listCredentialsByProviderId(
-    providerId: string
+    providerId: string,
   ): Promise<ProviderCredentialEntity[]> {
     const rows = await this.db
       .select()
@@ -181,19 +193,24 @@ export class DatabaseProviderRepository implements IProviderRepository {
 
   async updateCredential(
     id: string,
-    updates: Partial<ProviderCredentialEntity>
+    updates: Partial<ProviderCredentialEntity>,
   ): Promise<ProviderCredentialEntity> {
     const dbUpdates: Record<string, unknown> = {
       updatedAt: updates.updatedAt ?? new Date(),
     };
     if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.environment !== undefined) dbUpdates.environment = updates.environment;
-    if (updates.encryptedPayload !== undefined) dbUpdates.encryptedPayload = updates.encryptedPayload;
-    if (updates.encryptionKeyVersion !== undefined) dbUpdates.encryptionKeyVersion = updates.encryptionKeyVersion;
+    if (updates.environment !== undefined)
+      dbUpdates.environment = updates.environment;
+    if (updates.encryptedPayload !== undefined)
+      dbUpdates.encryptedPayload = updates.encryptedPayload;
+    if (updates.encryptionKeyVersion !== undefined)
+      dbUpdates.encryptionKeyVersion = updates.encryptionKeyVersion;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.metadata !== undefined) dbUpdates.metadata = updates.metadata;
-    if (updates.rotatedAt !== undefined) dbUpdates.rotatedAt = updates.rotatedAt;
-    if (updates.disabledAt !== undefined) dbUpdates.disabledAt = updates.disabledAt;
+    if (updates.rotatedAt !== undefined)
+      dbUpdates.rotatedAt = updates.rotatedAt;
+    if (updates.disabledAt !== undefined)
+      dbUpdates.disabledAt = updates.disabledAt;
 
     await this.db
       .update(providerCredentials)
@@ -218,8 +235,10 @@ export class DatabaseProviderRepository implements IProviderRepository {
       enabled: r.enabled ?? true,
       status: r.status ?? "active",
       metadata: (r.metadata as Record<string, unknown>) ?? {},
-      createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt),
-      updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt),
+      createdAt:
+        r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt),
+      updatedAt:
+        r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt),
     };
   }
 
@@ -234,38 +253,89 @@ export class DatabaseProviderRepository implements IProviderRepository {
       encryptionKeyVersion: r.encryptionKeyVersion ?? "v1",
       status: r.status ?? "active",
       metadata: (r.metadata as Record<string, unknown>) ?? {},
-      createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt),
-      updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt),
-      rotatedAt: r.rotatedAt ? (r.rotatedAt instanceof Date ? r.rotatedAt : new Date(r.rotatedAt)) : null,
-      disabledAt: r.disabledAt ? (r.disabledAt instanceof Date ? r.disabledAt : new Date(r.disabledAt)) : null,
+      createdAt:
+        r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt),
+      updatedAt:
+        r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt),
+      rotatedAt: r.rotatedAt
+        ? r.rotatedAt instanceof Date
+          ? r.rotatedAt
+          : new Date(r.rotatedAt)
+        : null,
+      disabledAt: r.disabledAt
+        ? r.disabledAt instanceof Date
+          ? r.disabledAt
+          : new Date(r.disabledAt)
+        : null,
     };
   }
 
   // Phase 28 Database Stubs
-  async createAccount(account: any): Promise<any> { return account; }
-  async getAccountById(_id: string): Promise<any> { return null; }
-  async updateAccount(_id: string, updates: any): Promise<any> { return updates; }
-  async listAccountsByProviderId(_providerId: string): Promise<any[]> { return []; }
+  async createAccount(account: any): Promise<any> {
+    return account;
+  }
+  async getAccountById(_id: string): Promise<any> {
+    return null;
+  }
+  async updateAccount(_id: string, updates: any): Promise<any> {
+    return updates;
+  }
+  async listAccountsByProviderId(_providerId: string): Promise<any[]> {
+    return [];
+  }
 
-  async createCredentialV2(credential: any): Promise<any> { return credential; }
-  async createCredentialVersion(version: any): Promise<any> { return version; }
-  async getCredentialVersionById(_id: string): Promise<any> { return null; }
-  async getActiveCredentialVersion(_credentialId: string): Promise<any> { return null; }
-  async updateCredentialVersion(_id: string, updates: any): Promise<any> { return updates; }
-  async listCredentialVersions(_credentialId: string): Promise<any[]> { return []; }
-  async listAllCredentialVersions(): Promise<any[]> { return []; }
-  async listExpiringCredentials(_thresholdDate: Date): Promise<any[]> { return []; }
+  async createCredentialV2(credential: any): Promise<any> {
+    return credential;
+  }
+  async createCredentialVersion(version: any): Promise<any> {
+    return version;
+  }
+  async getCredentialVersionById(_id: string): Promise<any> {
+    return null;
+  }
+  async getActiveCredentialVersion(_credentialId: string): Promise<any> {
+    return null;
+  }
+  async updateCredentialVersion(_id: string, updates: any): Promise<any> {
+    return updates;
+  }
+  async listCredentialVersions(_credentialId: string): Promise<any[]> {
+    return [];
+  }
+  async listAllCredentialVersions(): Promise<any[]> {
+    return [];
+  }
+  async listExpiringCredentials(_thresholdDate: Date): Promise<any[]> {
+    return [];
+  }
 
-  async createPool(pool: any): Promise<any> { return pool; }
-  async getPoolById(_id: string): Promise<any> { return null; }
-  async listPools(_providerId?: string): Promise<any[]> { return []; }
-  async addPoolMember(member: any): Promise<any> { return member; }
+  async createPool(pool: any): Promise<any> {
+    return pool;
+  }
+  async getPoolById(_id: string): Promise<any> {
+    return null;
+  }
+  async listPools(_providerId?: string): Promise<any[]> {
+    return [];
+  }
+  async addPoolMember(member: any): Promise<any> {
+    return member;
+  }
   async removePoolMember(_memberId: string): Promise<void> {}
-  async listPoolMembers(_poolId: string): Promise<any[]> { return []; }
+  async listPoolMembers(_poolId: string): Promise<any[]> {
+    return [];
+  }
 
-  async setAccountCapability(capability: any): Promise<any> { return capability; }
-  async listAccountCapabilities(_accountId: string): Promise<any[]> { return []; }
-  async setAccountLimit(limit: any): Promise<any> { return limit; }
-  async listAccountLimits(_accountId: string): Promise<any[]> { return []; }
-
+  async setAccountCapability(capability: any): Promise<any> {
+    return capability;
+  }
+  async listAccountCapabilities(_accountId: string): Promise<any[]> {
+    return [];
+  }
+  async setAccountLimit(limit: any): Promise<any> {
+    return limit;
+  }
+  async listAccountLimits(_accountId: string): Promise<any[]> {
+    return [];
+  }
 }

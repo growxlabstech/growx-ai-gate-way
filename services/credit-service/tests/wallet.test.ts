@@ -17,7 +17,14 @@ describe("Credit & Wallet Service", () => {
     const staleWorker = new StaleReservationWorker(repo, service);
     const settlementWorker = new SettlementWorker(service);
     const reconciliationWorker = new ReconciliationWorker(repo, service);
-    return { repo, service, expirationWorker, staleWorker, settlementWorker, reconciliationWorker };
+    return {
+      repo,
+      service,
+      expirationWorker,
+      staleWorker,
+      settlementWorker,
+      reconciliationWorker,
+    };
   }
 
   it("creates a wallet and grants credits idempotently", async () => {
@@ -72,7 +79,9 @@ describe("Credit & Wallet Service", () => {
     expect(auth.reservedAmount.toString()).toBe("10");
     expect(auth.availableBalance?.toString()).toBe("40");
 
-    const balance = await service.getWalletBalance((await service.getOrCreateWallet("org_1")).id);
+    const balance = await service.getWalletBalance(
+      (await service.getOrCreateWallet("org_1")).id,
+    );
     expect(balance.available.toString()).toBe("40");
     expect(balance.reserved.toString()).toBe("10");
     expect(balance.total.toString()).toBe("50");
@@ -338,7 +347,9 @@ describe("Credit & Wallet Service", () => {
       sourceId: "o_1",
     });
 
-    const run = await expirationWorker.processExpiredLots(new Date("2026-03-01T00:00:00Z"));
+    const run = await expirationWorker.processExpiredLots(
+      new Date("2026-03-01T00:00:00Z"),
+    );
     expect(run.totalExpiredCredits.toString()).toBe("30");
     expect(run.expiredLotIds.length).toBe(1);
 

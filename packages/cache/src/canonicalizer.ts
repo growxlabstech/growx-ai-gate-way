@@ -16,7 +16,9 @@ export function canonicalJsonStringify(value: unknown): string {
     return "[" + value.map(canonicalJsonStringify).join(",") + "]";
   }
   if (typeof value === "object") {
-    const keys = Object.keys(value as Record<string, unknown>).sort((a, b) => a.localeCompare(b));
+    const keys = Object.keys(value as Record<string, unknown>).sort((a, b) =>
+      a.localeCompare(b),
+    );
     const parts: string[] = [];
     for (const key of keys) {
       const val = (value as Record<string, unknown>)[key];
@@ -34,8 +36,12 @@ export function canonicalizeRequest(request: OpenAIChatCompletionRequest): {
   requestDigest: string;
 } {
   const req = request as any;
-  const normalizedTemperature = req.temperature !== undefined ? Math.round(req.temperature * 1000) / 1000 : 0;
-  const normalizedTopP = req.top_p !== undefined ? Math.round(req.top_p * 1000) / 1000 : 1;
+  const normalizedTemperature =
+    req.temperature !== undefined
+      ? Math.round(req.temperature * 1000) / 1000
+      : 0;
+  const normalizedTopP =
+    req.top_p !== undefined ? Math.round(req.top_p * 1000) / 1000 : 1;
 
   let normalizedTools: unknown = undefined;
   if (Array.isArray(req.tools) && req.tools.length > 0) {
@@ -61,7 +67,9 @@ export function canonicalizeRequest(request: OpenAIChatCompletionRequest): {
   };
 
   const canonicalString = canonicalJsonStringify(canonicalPayload);
-  const requestDigest = createHash("sha256").update(canonicalString, "utf8").digest("hex");
+  const requestDigest = createHash("sha256")
+    .update(canonicalString, "utf8")
+    .digest("hex");
 
   return { canonicalString, requestDigest };
 }

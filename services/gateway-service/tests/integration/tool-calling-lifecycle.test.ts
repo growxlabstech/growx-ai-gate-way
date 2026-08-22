@@ -6,7 +6,11 @@ import { OpenAIToolAdapter } from "@growx/tools";
 import { AnthropicToolAdapter } from "@growx/tools";
 import { GeminiToolAdapter } from "@growx/tools";
 import { JsonSchemaValidator, ToolValidationError } from "@growx/tools";
-import type { CanonicalToolDefinition, CanonicalToolResult, ToolExecutionContext } from "@growx/contracts";
+import type {
+  CanonicalToolDefinition,
+  CanonicalToolResult,
+  ToolExecutionContext,
+} from "@growx/contracts";
 import {
   ToolRegistryService,
   InMemoryToolRepository,
@@ -61,18 +65,22 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
       // 1. Provider returns tool calls
       const openaiResponse = {
-        choices: [{
-          message: {
-            tool_calls: [{
-              id: "call_abc123",
-              type: "function",
-              function: {
-                name: "get_weather",
-                arguments: '{"city":"Tokyo","unit":"celsius"}',
-              },
-            }],
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  id: "call_abc123",
+                  type: "function",
+                  function: {
+                    name: "get_weather",
+                    arguments: '{"city":"Tokyo","unit":"celsius"}',
+                  },
+                },
+              ],
+            },
           },
-        }],
+        ],
       };
 
       // 2. Adapter parses to canonical format
@@ -82,9 +90,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
       // 3. Normalizer validates args against tool definition
       const normalized = normalizer.normalizeToolCall(
-        { id: parsed[0]!.providerCallId || "call_1", name: parsed[0]!.name, arguments: parsed[0]!.rawArguments },
+        {
+          id: parsed[0]!.providerCallId || "call_1",
+          name: parsed[0]!.name,
+          arguments: parsed[0]!.rawArguments,
+        },
         [weatherTool],
-        "req_1"
+        "req_1",
       );
       expect(normalized.status).toBe("validated");
       expect(normalized.arguments).toEqual({ city: "Tokyo", unit: "celsius" });
@@ -92,8 +104,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
       // 4. Authorization check
       expect(() => {
         authorizer.authorizeExecution(
-          { name: "get_weather", executionMode: "return_to_client", organizationId: "org_test", status: "active" },
-          executionContext
+          {
+            name: "get_weather",
+            executionMode: "return_to_client",
+            organizationId: "org_test",
+            status: "active",
+          },
+          executionContext,
         );
       }).not.toThrow();
     });
@@ -123,16 +140,20 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
       const adapter = new GeminiToolAdapter();
 
       const geminiResponse = {
-        candidates: [{
-          content: {
-            parts: [{
-              functionCall: {
-                name: "calculator",
-                args: { expression: "42 * 3" },
-              },
-            }],
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  functionCall: {
+                    name: "calculator",
+                    args: { expression: "42 * 3" },
+                  },
+                },
+              ],
+            },
           },
-        }],
+        ],
       };
 
       const parsed = adapter.parseToolCalls(geminiResponse, "req_3");
@@ -148,8 +169,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
       expect(() => {
         authorizer.authorizeExecution(
-          { name: "secret_tool", executionMode: "return_to_client", organizationId: "org_other", status: "active" },
-          executionContext
+          {
+            name: "secret_tool",
+            executionMode: "return_to_client",
+            organizationId: "org_other",
+            status: "active",
+          },
+          executionContext,
         );
       }).toThrow(ToolAuthorizationError);
     });
@@ -159,9 +185,14 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
       expect(() => {
         authorizer.authorizeExecution(
-          { name: "dangerous_tool", executionMode: "return_to_client", organizationId: "org_test", status: "active" },
+          {
+            name: "dangerous_tool",
+            executionMode: "return_to_client",
+            organizationId: "org_test",
+            status: "active",
+          },
           executionContext,
-          { deniedToolNames: ["dangerous_tool"] }
+          { deniedToolNames: ["dangerous_tool"] },
         );
       }).toThrow(/Policy explicitly denies/);
     });
@@ -171,8 +202,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
       expect(() => {
         authorizer.authorizeExecution(
-          { name: "old_tool", executionMode: "return_to_client", organizationId: "org_test", status: "archived" },
-          executionContext
+          {
+            name: "old_tool",
+            executionMode: "return_to_client",
+            organizationId: "org_test",
+            status: "archived",
+          },
+          executionContext,
         );
       }).toThrow(/archived/);
     });
@@ -238,7 +274,9 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
   describe("Continuation Service", () => {
     it("creates, resolves, and completes continuations", async () => {
-      const contService = new ToolContinuationService(new InMemoryContinuationRepository());
+      const contService = new ToolContinuationService(
+        new InMemoryContinuationRepository(),
+      );
 
       const cont = await contService.createContinuation({
         requestId: "req_cont_1",
@@ -272,7 +310,10 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
       const choiceAuto = adapter.translateToolChoice("auto");
       expect(choiceAuto).toBe("auto");
 
-      const choiceSpecific = adapter.translateToolChoice({ mode: "tool", name: "get_weather" });
+      const choiceSpecific = adapter.translateToolChoice({
+        mode: "tool",
+        name: "get_weather",
+      });
       expect((choiceSpecific as any).type).toBe("function");
       expect((choiceSpecific as any).function.name).toBe("get_weather");
     });
@@ -286,7 +327,10 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
       const required = adapter.translateToolChoice("required") as any;
       expect(required.type).toBe("any");
 
-      const specific = adapter.translateToolChoice({ mode: "tool", name: "calculator" }) as any;
+      const specific = adapter.translateToolChoice({
+        mode: "tool",
+        name: "calculator",
+      }) as any;
       expect(specific.type).toBe("tool");
       expect(specific.name).toBe("calculator");
     });
@@ -294,7 +338,10 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
     it("Gemini functionDeclarations formatted correctly", () => {
       const adapter = new GeminiToolAdapter();
 
-      const translated = adapter.translateTools([weatherTool, calculatorTool]) as any[];
+      const translated = adapter.translateTools([
+        weatherTool,
+        calculatorTool,
+      ]) as any[];
       expect(translated[0].functionDeclarations).toHaveLength(2);
       expect(translated[0].functionDeclarations[0].name).toBe("get_weather");
       expect(translated[0].functionDeclarations[1].name).toBe("calculator");
@@ -307,11 +354,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
   describe("Tool Result Serialization", () => {
     it("OpenAI result serialization", () => {
       const adapter = new OpenAIToolAdapter();
-      const results: CanonicalToolResult[] = [{
-        toolCallId: "tcall_123",
-        status: "success",
-        content: "72°F and sunny",
-      }];
+      const results: CanonicalToolResult[] = [
+        {
+          toolCallId: "tcall_123",
+          status: "success",
+          content: "72°F and sunny",
+        },
+      ];
 
       const serialized = adapter.serializeToolResults(results) as any[];
       expect(serialized[0].role).toBe("tool");
@@ -321,11 +370,13 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
 
     it("Anthropic result serialization with error", () => {
       const adapter = new AnthropicToolAdapter();
-      const results: CanonicalToolResult[] = [{
-        toolCallId: "tcall_456",
-        status: "error",
-        content: "Tool execution failed",
-      }];
+      const results: CanonicalToolResult[] = [
+        {
+          toolCallId: "tcall_456",
+          status: "error",
+          content: "Tool execution failed",
+        },
+      ];
 
       const serialized = adapter.serializeToolResults(results) as any;
       expect(serialized.role).toBe("user");
@@ -341,7 +392,7 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
         normalizer.normalizeToolCall(
           { name: "nonexistent_tool", arguments: "{}" },
           [weatherTool],
-          "req_4"
+          "req_4",
         );
       }).toThrow(/unknown or not authorized/);
     });
@@ -352,7 +403,7 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
         normalizer.normalizeToolCall(
           { name: "get_weather", arguments: "not valid json{" },
           [weatherTool],
-          "req_5"
+          "req_5",
         );
       }).toThrow(/Invalid JSON/);
     });
@@ -363,7 +414,7 @@ describe("Phase 30: Tool Calling Lifecycle Integration", () => {
         normalizer.normalizeToolCall(
           { name: "get_weather", arguments: '{"unit":"celsius"}' },
           [weatherTool],
-          "req_6"
+          "req_6",
         );
       }).toThrow(/Missing required/);
     });

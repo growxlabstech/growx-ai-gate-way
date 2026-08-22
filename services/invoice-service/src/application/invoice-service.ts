@@ -45,7 +45,7 @@ export class InvoiceService {
   }
 
   async previewDraft(
-    input: InvoiceDraftInput
+    input: InvoiceDraftInput,
   ): Promise<{ draft: InvoiceDraft; taxCalculation: TaxCalculation }> {
     const draft = this.createDraft(input);
     const taxCalc = await this.taxService.calculateTax(
@@ -61,7 +61,7 @@ export class InvoiceService {
         customer: draft.customerSnapshot,
         currency: draft.currency,
         taxPointDate: draft.issueDate,
-      }
+      },
     );
 
     return { draft, taxCalculation: taxCalc };
@@ -92,13 +92,13 @@ export class InvoiceService {
         customer: draft.customerSnapshot,
         currency: draft.currency,
         taxPointDate: params.taxPointDate ?? issueDate,
-      }
+      },
     );
 
     // 2. Concurrency-safe atomic sequence allocation
     const sequence = await this.repository.getNextSequence(
       draft.legalEntityId,
-      fiscalYear
+      fiscalYear,
     );
 
     const invoiceNumber = InvoiceNumberService.formatInvoiceNumber({
@@ -181,7 +181,8 @@ export class InvoiceService {
       id: generateId("invdoc"),
       invoiceId,
       version: 1,
-      templateVersion: params.templateVersion ?? InvoiceDocumentRenderer.TEMPLATE_VERSION,
+      templateVersion:
+        params.templateVersion ?? InvoiceDocumentRenderer.TEMPLATE_VERSION,
       format: "html",
       storageKey: stored.storageKey,
       sha256Hash,
@@ -197,7 +198,10 @@ export class InvoiceService {
 
   // ─── Querying Invoices ───────────────────────────────────────
 
-  async getInvoice(organizationId: string, invoiceId: string): Promise<Invoice | undefined> {
+  async getInvoice(
+    organizationId: string,
+    invoiceId: string,
+  ): Promise<Invoice | undefined> {
     const invoice = await this.repository.getInvoice(invoiceId);
     if (!invoice || invoice.organizationId !== organizationId) {
       return undefined;
@@ -205,13 +209,15 @@ export class InvoiceService {
     return invoice;
   }
 
-  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
+  async getInvoiceByNumber(
+    invoiceNumber: string,
+  ): Promise<Invoice | undefined> {
     return this.repository.getInvoiceByNumber(invoiceNumber);
   }
 
   async listInvoices(
     organizationId: string,
-    filters?: { status?: InvoiceStatus }
+    filters?: { status?: InvoiceStatus },
   ): Promise<Invoice[]> {
     return this.repository.listInvoices(organizationId, filters);
   }
@@ -219,7 +225,7 @@ export class InvoiceService {
   async getInvoiceDocument(
     organizationId: string,
     invoiceId: string,
-    version: number = 1
+    version: number = 1,
   ): Promise<{ document: InvoiceDocument; signedUrl: string } | undefined> {
     const invoice = await this.getInvoice(organizationId, invoiceId);
     if (!invoice) return undefined;
@@ -233,14 +239,20 @@ export class InvoiceService {
 
   // ─── Voiding ─────────────────────────────────────────────────
 
-  async voidInvoice(organizationId: string, invoiceId: string, reason: string): Promise<Invoice> {
+  async voidInvoice(
+    organizationId: string,
+    invoiceId: string,
+    reason: string,
+  ): Promise<Invoice> {
     const invoice = await this.getInvoice(organizationId, invoiceId);
     if (!invoice) {
       throw new Error(`Invoice not found for org: ${organizationId}`);
     }
 
     if (invoice.status === "paid") {
-      throw new Error("Cannot void a fully paid invoice. Issue a credit note instead.");
+      throw new Error(
+        "Cannot void a fully paid invoice. Issue a credit note instead.",
+      );
     }
 
     if (invoice.status === "void") {
@@ -267,14 +279,20 @@ export class InvoiceService {
   }): Promise<{ allocation: InvoicePaymentAllocation; invoice: Invoice }> {
     // 1. Idempotency Check
     const existing = await this.repository.getPaymentAllocationByIdempotencyKey(
-      params.idempotencyKey
+      params.idempotencyKey,
     );
     if (existing) {
-      const invoice = await this.getInvoice(params.organizationId, existing.invoiceId);
+      const invoice = await this.getInvoice(
+        params.organizationId,
+        existing.invoiceId,
+      );
       return { allocation: existing, invoice: invoice! };
     }
 
-    const invoice = await this.getInvoice(params.organizationId, params.invoiceId);
+    const invoice = await this.getInvoice(
+      params.organizationId,
+      params.invoiceId,
+    );
     if (!invoice) {
       throw new Error(`Invoice not found: ${params.invoiceId}`);
     }
@@ -285,7 +303,7 @@ export class InvoiceService {
 
     if (invoice.currency !== params.currency) {
       throw new Error(
-        `Currency mismatch: Payment is in ${params.currency}, invoice is in ${invoice.currency}`
+        `Currency mismatch: Payment is in ${params.currency}, invoice is in ${invoice.currency}`,
       );
     }
 
@@ -303,8 +321,13 @@ export class InvoiceService {
 
     // Compute updated totals
     const newAmountPaid = invoice.amountPaid.add(params.amount);
-    const newAmountDue = Decimal.max(Decimal.ZERO, invoice.total.sub(newAmountPaid));
-    const newStatus: InvoiceStatus = newAmountDue.isZero() ? "paid" : "partially_paid";
+    const newAmountDue = Decimal.max(
+      Decimal.ZERO,
+      invoice.total.sub(newAmountPaid),
+    );
+    const newStatus: InvoiceStatus = newAmountDue.isZero()
+      ? "paid"
+      : "partially_paid";
 
     const updatedInvoice = await this.repository.updateInvoice(invoice.id, {
       amountPaid: newAmountPaid,
@@ -323,15 +346,20 @@ export class InvoiceService {
     reason: string;
     amount?: Decimal | undefined;
   }): Promise<{ creditNote: CreditNote; invoice: Invoice }> {
-    const invoice = await this.getInvoice(params.organizationId, params.originalInvoiceId);
+    const invoice = await this.getInvoice(
+      params.organizationId,
+      params.originalInvoiceId,
+    );
     if (!invoice) {
-      throw new Error(`Original invoice not found: ${params.originalInvoiceId}`);
+      throw new Error(
+        `Original invoice not found: ${params.originalInvoiceId}`,
+      );
     }
 
     const fiscalYear = getFiscalYear(new Date(), 4);
     const sequence = await this.repository.getNextSequence(
       invoice.legalEntityId,
-      fiscalYear
+      fiscalYear,
     );
 
     const creditNoteNumber = InvoiceNumberService.formatCreditNoteNumber({
@@ -376,7 +404,10 @@ export class InvoiceService {
     await this.repository.createCreditNote(creditNote);
 
     // Adjust invoice amountDue
-    const newAmountDue = Decimal.max(Decimal.ZERO, invoice.amountDue.sub(creditAmount));
+    const newAmountDue = Decimal.max(
+      Decimal.ZERO,
+      invoice.amountDue.sub(creditAmount),
+    );
     const updatedInvoice = await this.repository.updateInvoice(invoice.id, {
       amountDue: newAmountDue,
       status: newAmountDue.isZero() ? "paid" : invoice.status,
@@ -391,7 +422,7 @@ export class InvoiceService {
 
   async getCreditNote(
     organizationId: string,
-    creditNoteId: string
+    creditNoteId: string,
   ): Promise<CreditNote | undefined> {
     const cn = await this.repository.getCreditNote(creditNoteId);
     if (!cn || cn.organizationId !== organizationId) return undefined;

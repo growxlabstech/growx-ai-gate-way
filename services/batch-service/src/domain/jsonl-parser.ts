@@ -1,4 +1,7 @@
-import { batchItemRequestSchema, type BatchItemRequest } from "@growx/contracts";
+import {
+  batchItemRequestSchema,
+  type BatchItemRequest,
+} from "@growx/contracts";
 import { BatchValidationError } from "./types.js";
 
 export interface JsonlParserOptions {
@@ -27,12 +30,13 @@ export class StreamingJsonlParser {
    * Parse a full string or buffer containing JSON Lines.
    */
   public parse(content: string | Buffer): ParsedBatchInput {
-    const text = typeof content === "string" ? content : content.toString("utf8");
+    const text =
+      typeof content === "string" ? content : content.toString("utf8");
     const totalBytes = Buffer.byteLength(text, "utf8");
 
     if (totalBytes > this.maxTotalSizeBytes) {
       throw new BatchValidationError(
-        `Batch input size exceeds maximum allowed limit of ${this.maxTotalSizeBytes} bytes (got ${totalBytes} bytes)`
+        `Batch input size exceeds maximum allowed limit of ${this.maxTotalSizeBytes} bytes (got ${totalBytes} bytes)`,
       );
     }
 
@@ -51,7 +55,7 @@ export class StreamingJsonlParser {
       const lineByteLength = Buffer.byteLength(line, "utf8");
       if (lineByteLength > this.maxLineSizeBytes) {
         throw new BatchValidationError(
-          `Line ${lineNumber} exceeds maximum line size of ${this.maxLineSizeBytes} bytes`
+          `Line ${lineNumber} exceeds maximum line size of ${this.maxLineSizeBytes} bytes`,
         );
       }
 
@@ -59,19 +63,25 @@ export class StreamingJsonlParser {
       try {
         parsedJson = JSON.parse(line);
       } catch (err: any) {
-        throw new BatchValidationError(`Invalid JSON at line ${lineNumber}: ${err.message}`);
+        throw new BatchValidationError(
+          `Invalid JSON at line ${lineNumber}: ${err.message}`,
+        );
       }
 
       const validation = batchItemRequestSchema.safeParse(parsedJson);
       if (!validation.success) {
-        const issues = validation.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join(", ");
-        throw new BatchValidationError(`Validation failed at line ${lineNumber}: ${issues}`);
+        const issues = validation.error.issues
+          .map((i) => `${i.path.join(".")}: ${i.message}`)
+          .join(", ");
+        throw new BatchValidationError(
+          `Validation failed at line ${lineNumber}: ${issues}`,
+        );
       }
 
       const item = validation.data;
       if (seenCustomIds.has(item.custom_id)) {
         throw new BatchValidationError(
-          `Duplicate custom_id '${item.custom_id}' found at line ${lineNumber}`
+          `Duplicate custom_id '${item.custom_id}' found at line ${lineNumber}`,
         );
       }
 
@@ -80,13 +90,15 @@ export class StreamingJsonlParser {
 
       if (items.length > this.maxItemCount) {
         throw new BatchValidationError(
-          `Batch exceeds maximum item count of ${this.maxItemCount} items`
+          `Batch exceeds maximum item count of ${this.maxItemCount} items`,
         );
       }
     }
 
     if (items.length === 0) {
-      throw new BatchValidationError("Batch input contains 0 valid request items");
+      throw new BatchValidationError(
+        "Batch input contains 0 valid request items",
+      );
     }
 
     return { items, totalBytes };
@@ -96,6 +108,6 @@ export class StreamingJsonlParser {
    * Serialize output records to JSONL string
    */
   public serialize(records: unknown[]): string {
-    return records.map(r => JSON.stringify(r)).join("\n") + "\n";
+    return records.map((r) => JSON.stringify(r)).join("\n") + "\n";
   }
 }

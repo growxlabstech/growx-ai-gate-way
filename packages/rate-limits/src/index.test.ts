@@ -1,2 +1,22 @@
-import { describe, expect, it } from "vitest"; import { evaluateFixedWindow, strictestLimit } from "./index.js";
-describe("limits", () => { it("chooses the strictest policy", () => expect(strictestLimit([{ dimension: "plan", window: "minute", limit: 100 }, { dimension: "apiKey", window: "minute", limit: 20 }], "minute")?.limit).toBe(20)); it("rejects exhausted windows", () => expect(evaluateFixedWindow(10, { dimension: "apiKey", window: "minute", limit: 10 }).allowed).toBe(false)); });
+import { describe, expect, it } from "vitest";
+import { evaluateFixedWindow, strictestLimit } from "./index.js";
+describe("limits", () => {
+  it("chooses the strictest policy", () =>
+    expect(
+      strictestLimit(
+        [
+          { dimension: "plan", window: "minute", limit: 100 },
+          { dimension: "apiKey", window: "minute", limit: 20 },
+        ],
+        "minute",
+      )?.limit,
+    ).toBe(20));
+  it("rejects exhausted windows", () =>
+    expect(
+      evaluateFixedWindow(10, {
+        dimension: "apiKey",
+        window: "minute",
+        limit: 10,
+      }).allowed,
+    ).toBe(false));
+});

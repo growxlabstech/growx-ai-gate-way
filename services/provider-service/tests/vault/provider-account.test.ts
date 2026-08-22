@@ -38,7 +38,7 @@ describe("Provider Account Multi-Tenancy & Quotas", () => {
         environment: "production",
         metadata: {},
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     expect(account.id).toBeDefined();
@@ -70,7 +70,7 @@ describe("Provider Account Multi-Tenancy & Quotas", () => {
         priority: 1,
         metadata: {},
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Set Capability

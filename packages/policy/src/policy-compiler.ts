@@ -20,7 +20,10 @@ export interface PolicyHierarchyItem {
 /**
  * Intersects two string arrays. If current is undefined, returns target.
  */
-function intersectSets(current: string[] | undefined, target: string[]): string[] {
+function intersectSets(
+  current: string[] | undefined,
+  target: string[],
+): string[] {
   if (current === undefined) {
     return [...target];
   }
@@ -51,7 +54,7 @@ function unionSets(current: string[] | undefined, target: string[]): string[] {
  */
 export function compileEffectivePolicy(
   hierarchy: PolicyHierarchyItem[],
-  requestConstraints?: Partial<EffectivePolicyConstraints>
+  requestConstraints?: Partial<EffectivePolicyConstraints>,
 ): EffectivePolicy {
   const policyVersions: Record<string, number> = {};
   const allRules: PolicyRule[] = [];
@@ -67,7 +70,7 @@ export function compileEffectivePolicy(
   };
 
   const sortedHierarchy = [...hierarchy].sort(
-    (a, b) => precedenceOrder[a.scopeType] - precedenceOrder[b.scopeType]
+    (a, b) => precedenceOrder[a.scopeType] - precedenceOrder[b.scopeType],
   );
 
   for (const item of sortedHierarchy) {
@@ -81,9 +84,15 @@ export function compileEffectivePolicy(
         case "model": {
           const models = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedModels = unionSets(constraints.deniedModels, models);
+            constraints.deniedModels = unionSets(
+              constraints.deniedModels,
+              models,
+            );
           } else {
-            constraints.allowedModels = intersectSets(constraints.allowedModels, models);
+            constraints.allowedModels = intersectSets(
+              constraints.allowedModels,
+              models,
+            );
           }
           break;
         }
@@ -91,9 +100,15 @@ export function compileEffectivePolicy(
         case "model_family": {
           const families = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedModelFamilies = unionSets(constraints.deniedModelFamilies, families);
+            constraints.deniedModelFamilies = unionSets(
+              constraints.deniedModelFamilies,
+              families,
+            );
           } else {
-            constraints.allowedModelFamilies = intersectSets(constraints.allowedModelFamilies, families);
+            constraints.allowedModelFamilies = intersectSets(
+              constraints.allowedModelFamilies,
+              families,
+            );
           }
           break;
         }
@@ -101,19 +116,33 @@ export function compileEffectivePolicy(
         case "model_category": {
           const cats = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedModelCategories = unionSets(constraints.deniedModelCategories, cats);
+            constraints.deniedModelCategories = unionSets(
+              constraints.deniedModelCategories,
+              cats,
+            );
           } else {
-            constraints.allowedModelCategories = intersectSets(constraints.allowedModelCategories, cats);
+            constraints.allowedModelCategories = intersectSets(
+              constraints.allowedModelCategories,
+              cats,
+            );
           }
           break;
         }
 
         case "provider": {
-          const providers = Array.isArray(val) ? val.map(String) : [String(val)];
+          const providers = Array.isArray(val)
+            ? val.map(String)
+            : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedProviders = unionSets(constraints.deniedProviders, providers);
+            constraints.deniedProviders = unionSets(
+              constraints.deniedProviders,
+              providers,
+            );
           } else {
-            constraints.allowedProviders = intersectSets(constraints.allowedProviders, providers);
+            constraints.allowedProviders = intersectSets(
+              constraints.allowedProviders,
+              providers,
+            );
           }
           break;
         }
@@ -121,9 +150,15 @@ export function compileEffectivePolicy(
         case "region": {
           const regions = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedRegions = unionSets(constraints.deniedRegions, regions);
+            constraints.deniedRegions = unionSets(
+              constraints.deniedRegions,
+              regions,
+            );
           } else {
-            constraints.allowedRegions = intersectSets(constraints.allowedRegions, regions);
+            constraints.allowedRegions = intersectSets(
+              constraints.allowedRegions,
+              regions,
+            );
           }
           break;
         }
@@ -132,7 +167,7 @@ export function compileEffectivePolicy(
           if (rule.effect === "deny") {
             constraints.deniedRegions = unionSets(
               constraints.deniedRegions,
-              Array.isArray(val) ? val.map(String) : [String(val)]
+              Array.isArray(val) ? val.map(String) : [String(val)],
             );
           } else {
             // Most specific required data residency wins
@@ -143,8 +178,15 @@ export function compileEffectivePolicy(
 
         case "provider_tag": {
           const tags = Array.isArray(val) ? val.map(String) : [String(val)];
-          if (rule.effect === "allow" || rule.operator === "in" || rule.operator === "equals") {
-            constraints.requiredProviderTags = unionSets(constraints.requiredProviderTags, tags);
+          if (
+            rule.effect === "allow" ||
+            rule.operator === "in" ||
+            rule.operator === "equals"
+          ) {
+            constraints.requiredProviderTags = unionSets(
+              constraints.requiredProviderTags,
+              tags,
+            );
           }
           break;
         }
@@ -152,9 +194,15 @@ export function compileEffectivePolicy(
         case "input_modality": {
           const mods = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedInputModalities = unionSets(constraints.deniedInputModalities, mods);
+            constraints.deniedInputModalities = unionSets(
+              constraints.deniedInputModalities,
+              mods,
+            );
           } else {
-            constraints.allowedInputModalities = intersectSets(constraints.allowedInputModalities, mods);
+            constraints.allowedInputModalities = intersectSets(
+              constraints.allowedInputModalities,
+              mods,
+            );
           }
           break;
         }
@@ -162,9 +210,15 @@ export function compileEffectivePolicy(
         case "output_modality": {
           const mods = Array.isArray(val) ? val.map(String) : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedOutputModalities = unionSets(constraints.deniedOutputModalities, mods);
+            constraints.deniedOutputModalities = unionSets(
+              constraints.deniedOutputModalities,
+              mods,
+            );
           } else {
-            constraints.allowedOutputModalities = intersectSets(constraints.allowedOutputModalities, mods);
+            constraints.allowedOutputModalities = intersectSets(
+              constraints.allowedOutputModalities,
+              mods,
+            );
           }
           break;
         }
@@ -180,11 +234,19 @@ export function compileEffectivePolicy(
         }
 
         case "tool_name": {
-          const toolNames = Array.isArray(val) ? val.map(String) : [String(val)];
+          const toolNames = Array.isArray(val)
+            ? val.map(String)
+            : [String(val)];
           if (rule.effect === "deny") {
-            constraints.deniedToolNames = unionSets(constraints.deniedToolNames, toolNames);
+            constraints.deniedToolNames = unionSets(
+              constraints.deniedToolNames,
+              toolNames,
+            );
           } else {
-            constraints.allowedToolNames = intersectSets(constraints.allowedToolNames, toolNames);
+            constraints.allowedToolNames = intersectSets(
+              constraints.allowedToolNames,
+              toolNames,
+            );
           }
           break;
         }
@@ -264,10 +326,14 @@ export function compileEffectivePolicy(
         }
 
         case "data_classification": {
-          const classes = (Array.isArray(val) ? val : [val]) as DataClassification[];
+          const classes = (
+            Array.isArray(val) ? val : [val]
+          ) as DataClassification[];
           if (rule.effect === "deny") {
             const currentDenied = constraints.deniedDataClassifications ?? [];
-            constraints.deniedDataClassifications = Array.from(new Set([...currentDenied, ...classes]));
+            constraints.deniedDataClassifications = Array.from(
+              new Set([...currentDenied, ...classes]),
+            );
           } else {
             const currentAllowed = constraints.allowedDataClassifications;
             constraints.allowedDataClassifications = currentAllowed
@@ -283,30 +349,52 @@ export function compileEffectivePolicy(
   // Apply optional ad-hoc request constraints (narrowing only)
   if (requestConstraints) {
     if (requestConstraints.deniedModels) {
-      constraints.deniedModels = unionSets(constraints.deniedModels, requestConstraints.deniedModels);
+      constraints.deniedModels = unionSets(
+        constraints.deniedModels,
+        requestConstraints.deniedModels,
+      );
     }
     if (requestConstraints.allowedModels) {
-      constraints.allowedModels = intersectSets(constraints.allowedModels, requestConstraints.allowedModels);
+      constraints.allowedModels = intersectSets(
+        constraints.allowedModels,
+        requestConstraints.allowedModels,
+      );
     }
     if (requestConstraints.deniedProviders) {
-      constraints.deniedProviders = unionSets(constraints.deniedProviders, requestConstraints.deniedProviders);
+      constraints.deniedProviders = unionSets(
+        constraints.deniedProviders,
+        requestConstraints.deniedProviders,
+      );
     }
     if (requestConstraints.allowedProviders) {
-      constraints.allowedProviders = intersectSets(constraints.allowedProviders, requestConstraints.allowedProviders);
+      constraints.allowedProviders = intersectSets(
+        constraints.allowedProviders,
+        requestConstraints.allowedProviders,
+      );
     }
     if (requestConstraints.deniedRegions) {
-      constraints.deniedRegions = unionSets(constraints.deniedRegions, requestConstraints.deniedRegions);
+      constraints.deniedRegions = unionSets(
+        constraints.deniedRegions,
+        requestConstraints.deniedRegions,
+      );
     }
     if (requestConstraints.allowedRegions) {
-      constraints.allowedRegions = intersectSets(constraints.allowedRegions, requestConstraints.allowedRegions);
+      constraints.allowedRegions = intersectSets(
+        constraints.allowedRegions,
+        requestConstraints.allowedRegions,
+      );
     }
     if (requestConstraints.requiredDataResidency) {
-      constraints.requiredDataResidency = requestConstraints.requiredDataResidency;
+      constraints.requiredDataResidency =
+        requestConstraints.requiredDataResidency;
     }
     if (requestConstraints.maxEstimatedCostPerRequest !== undefined) {
       constraints.maxEstimatedCostPerRequest =
         constraints.maxEstimatedCostPerRequest !== undefined
-          ? Math.min(constraints.maxEstimatedCostPerRequest, requestConstraints.maxEstimatedCostPerRequest)
+          ? Math.min(
+              constraints.maxEstimatedCostPerRequest,
+              requestConstraints.maxEstimatedCostPerRequest,
+            )
           : requestConstraints.maxEstimatedCostPerRequest;
     }
   }

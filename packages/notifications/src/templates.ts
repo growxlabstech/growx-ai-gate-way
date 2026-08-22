@@ -3,7 +3,7 @@ export interface RenderedContent {
   text?: string | undefined;
   html?: string | undefined;
   title?: string | undefined; // For in-app
-  body?: string | undefined;  // For in-app
+  body?: string | undefined; // For in-app
   actionUrl?: string | undefined;
 }
 
@@ -22,8 +22,16 @@ export interface TemplateDefinition {
   key: string;
   version: number;
   requiredVariables: readonly string[];
-  renderEmail: (data: Record<string, any>) => { subject: string; text: string; html: string };
-  renderInApp?: (data: Record<string, any>) => { title: string; body: string; actionUrl?: string };
+  renderEmail: (data: Record<string, any>) => {
+    subject: string;
+    text: string;
+    html: string;
+  };
+  renderInApp?: (data: Record<string, any>) => {
+    title: string;
+    body: string;
+    actionUrl?: string;
+  };
 }
 
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
@@ -54,7 +62,9 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
     renderEmail: (d) => {
       const title = escapeHtml(d.title);
       const desc = escapeHtml(d.description);
-      const url = escapeHtml(d.consoleUrl ?? "https://console.growx.ai/security");
+      const url = escapeHtml(
+        d.consoleUrl ?? "https://console.growx.ai/security",
+      );
       return {
         subject: `[Security Alert] ${title}`,
         text: `Security Alert: ${title}\n\n${desc}\n\nReview in console: ${url}`,
@@ -287,7 +297,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
 export function renderNotificationContent(
   templateKey: string,
   channel: "email" | "in_app",
-  data: Record<string, any>
+  data: Record<string, any>,
 ): RenderedContent {
   const tpl = TEMPLATE_REGISTRY[templateKey];
   if (!tpl) {
@@ -297,7 +307,9 @@ export function renderNotificationContent(
   // Validate required variables
   for (const v of tpl.requiredVariables) {
     if (data[v] === undefined || data[v] === null) {
-      throw new Error(`Missing required variable '${v}' for template '${templateKey}'`);
+      throw new Error(
+        `Missing required variable '${v}' for template '${templateKey}'`,
+      );
     }
   }
 

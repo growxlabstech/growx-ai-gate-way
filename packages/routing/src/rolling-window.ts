@@ -28,7 +28,8 @@ export class SlidingWindowTracker {
 
   private getOrCreateBucket(now: number): BucketCounts {
     this.prune(now);
-    const bucketStart = Math.floor(now / this.bucketDurationMs) * this.bucketDurationMs;
+    const bucketStart =
+      Math.floor(now / this.bucketDurationMs) * this.bucketDurationMs;
     let bucket = this.buckets.find((b) => b.timestamp === bucketStart);
     if (!bucket) {
       bucket = {
@@ -46,7 +47,11 @@ export class SlidingWindowTracker {
     return bucket;
   }
 
-  recordSignal(signal: HealthOutcomeSignal, latencyMs?: number, now = Date.now()): void {
+  recordSignal(
+    signal: HealthOutcomeSignal,
+    latencyMs?: number,
+    now = Date.now(),
+  ): void {
     const bucket = this.getOrCreateBucket(now);
 
     switch (signal) {
@@ -121,10 +126,12 @@ export class SlidingWindowTracker {
     // Qualifying infrastructure failures for circuit calculations
     const infrastructureFailures = errors5xx + timeouts + networkErrors;
     // Total evaluating requests (excluding client cancellations/400s)
-    const sampleCount = successes + infrastructureFailures + rateLimits429 + authFailures;
+    const sampleCount =
+      successes + infrastructureFailures + rateLimits429 + authFailures;
 
     const successRate = sampleCount > 0 ? successes / sampleCount : 1.0;
-    const errorRate = sampleCount > 0 ? infrastructureFailures / sampleCount : 0.0;
+    const errorRate =
+      sampleCount > 0 ? infrastructureFailures / sampleCount : 0.0;
     const timeoutRate = sampleCount > 0 ? timeouts / sampleCount : 0.0;
     const rateLimitRate = sampleCount > 0 ? rateLimits429 / sampleCount : 0.0;
 
@@ -137,7 +144,10 @@ export class SlidingWindowTracker {
 
     if (latencyCount > 0) {
       const p50Idx = Math.floor(latencyCount * 0.5);
-      const p95Idx = Math.min(Math.floor(latencyCount * 0.95), latencyCount - 1);
+      const p95Idx = Math.min(
+        Math.floor(latencyCount * 0.95),
+        latencyCount - 1,
+      );
       p50LatencyMs = allLatencies[p50Idx];
       p95LatencyMs = allLatencies[p95Idx];
       const sum = allLatencies.reduce((acc, v) => acc + v, 0);

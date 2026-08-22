@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { AddressInfo } from "node:net";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
-import type { NormalizedStreamEvent, NormalizedGenerationRequest, ProviderExecutionContext } from "@growx/contracts";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
+import type {
+  NormalizedStreamEvent,
+  NormalizedGenerationRequest,
+  ProviderExecutionContext,
+} from "@growx/contracts";
 import { GrowXProviderError } from "@growx/contracts";
 
 let fixture: TestGatewayFixture;
@@ -56,7 +63,7 @@ describe("Streaming Lifecycle Tests", () => {
 
     // Verify DB request record
     const reqRecord = await fixture.gatewayRepo.getRequest(
-      response.headers.get("x-growx-request-id")!
+      response.headers.get("x-growx-request-id")!,
     );
     expect(reqRecord).toBeDefined();
     expect(reqRecord!.status).toBe("completed");
@@ -73,14 +80,16 @@ describe("Streaming Lifecycle Tests", () => {
     expect(fixture.gatewayRepo.usages.size).toBeGreaterThanOrEqual(1);
 
     // Verify completed event was emitted
-    expect(fixture.gatewayEvents.completedEvents.length).toBeGreaterThanOrEqual(1);
+    expect(fixture.gatewayEvents.completedEvents.length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   it("handles provider error mid-stream with safe SSE error frame", async () => {
     // Configure mock adapter to fail mid-stream
     fixture.mockAdapter.streamMock = async function* (
       req: NormalizedGenerationRequest,
-      ctx: ProviderExecutionContext
+      ctx: ProviderExecutionContext,
     ): AsyncIterable<NormalizedStreamEvent> {
       yield {
         requestId: req.requestId,
@@ -104,7 +113,7 @@ describe("Streaming Lifecycle Tests", () => {
         "provider_server_error",
         "Provider internal failure",
         true,
-        503
+        503,
       );
     };
 
@@ -183,7 +192,7 @@ describe("Streaming Lifecycle Tests", () => {
   it("handles tool call streaming with correct delta structure", async () => {
     fixture.mockAdapter.streamMock = async function* (
       req: NormalizedGenerationRequest,
-      ctx: ProviderExecutionContext
+      ctx: ProviderExecutionContext,
     ): AsyncIterable<NormalizedStreamEvent> {
       const now = new Date().toISOString();
       yield {
@@ -246,7 +255,11 @@ describe("Streaming Lifecycle Tests", () => {
           output: [{ role: "assistant", content: "" }],
           finishReason: "tool_call",
           toolCalls: [
-            { id: "call_abc123", name: "get_weather", arguments: '{"city":"London"}' },
+            {
+              id: "call_abc123",
+              name: "get_weather",
+              arguments: '{"city":"London"}',
+            },
           ],
           usage: {
             inputTokens: 20,
@@ -279,7 +292,10 @@ describe("Streaming Lifecycle Tests", () => {
           {
             type: "function",
             name: "get_weather",
-            parameters: { type: "object", properties: { city: { type: "string" } } },
+            parameters: {
+              type: "object",
+              properties: { city: { type: "string" } },
+            },
           },
         ],
       }),
@@ -295,14 +311,18 @@ describe("Streaming Lifecycle Tests", () => {
 
     // Find tool call chunks
     const toolCallChunks = chunks.filter(
-      (c: any) => c.choices[0]?.delta?.tool_calls
+      (c: any) => c.choices[0]?.delta?.tool_calls,
     );
     expect(toolCallChunks.length).toBeGreaterThanOrEqual(2);
 
     // First tool call chunk should have id and name
     const firstToolChunk = toolCallChunks[0];
-    expect(firstToolChunk.choices[0].delta.tool_calls[0].id).toBe("call_abc123");
-    expect(firstToolChunk.choices[0].delta.tool_calls[0].function.name).toBe("get_weather");
+    expect(firstToolChunk.choices[0].delta.tool_calls[0].id).toBe(
+      "call_abc123",
+    );
+    expect(firstToolChunk.choices[0].delta.tool_calls[0].function.name).toBe(
+      "get_weather",
+    );
 
     // Last chunk should have finish_reason = tool_calls
     const lastChunk = chunks[chunks.length - 1];

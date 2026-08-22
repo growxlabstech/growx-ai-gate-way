@@ -63,7 +63,9 @@ describe("Phase 22 — Audit Lifecycle & Tamper-Evident Chaining", () => {
     }
 
     // Tamper with sequence 3 in repository
-    const events = await repository.listAuditEvents({ chainScope: "org:org_tamper_test" });
+    const events = await repository.listAuditEvents({
+      chainScope: "org:org_tamper_test",
+    });
     events[2]!.metadata = { amount: 999999 };
 
     const verifyResult = await auditService.verifyChain("org:org_tamper_test");

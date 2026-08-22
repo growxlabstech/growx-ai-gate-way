@@ -75,7 +75,7 @@ export function isForbiddenWebhookAddress(address: string): boolean {
 
 export function validateWebhookUrl(
   value: string,
-  options?: { allowInsecureHttp?: boolean | undefined }
+  options?: { allowInsecureHttp?: boolean | undefined },
 ): URL {
   const url = new URL(value);
 
@@ -89,10 +89,17 @@ export function validateWebhookUrl(
   }
 
   if (url.username || url.password) {
-    throw new Error("Webhook URL cannot contain embedded user/password credentials");
+    throw new Error(
+      "Webhook URL cannot contain embedded user/password credentials",
+    );
   }
 
-  if (url.port && url.port !== "443" && url.port !== "80" && url.port !== "8443") {
+  if (
+    url.port &&
+    url.port !== "443" &&
+    url.port !== "80" &&
+    url.port !== "8443"
+  ) {
     throw new Error(`Webhook URL port is not allowed: ${url.port}`);
   }
 
@@ -107,7 +114,9 @@ export function validateWebhookUrl(
   }
 
   if (isIP(hostname) && isForbiddenWebhookAddress(hostname)) {
-    throw new Error(`Webhook IP destination is private or forbidden: ${hostname}`);
+    throw new Error(
+      `Webhook IP destination is private or forbidden: ${hostname}`,
+    );
   }
 
   return url;
@@ -117,7 +126,7 @@ export function validateWebhookUrl(
 
 export async function resolveAndValidateDns(
   hostname: string,
-  dnsResolver: { lookup?: (host: string) => Promise<string[]> } = {}
+  dnsResolver: { lookup?: (host: string) => Promise<string[]> } = {},
 ): Promise<string[]> {
   if (isIP(hostname)) {
     if (isForbiddenWebhookAddress(hostname)) {
@@ -150,7 +159,7 @@ export async function resolveAndValidateDns(
   for (const addr of addresses) {
     if (isForbiddenWebhookAddress(addr)) {
       throw new Error(
-        `SSRF / DNS Rebinding blocked: Hostname ${hostname} resolved to forbidden IP ${addr}`
+        `SSRF / DNS Rebinding blocked: Hostname ${hostname} resolved to forbidden IP ${addr}`,
       );
     }
   }
@@ -161,7 +170,7 @@ export async function resolveAndValidateDns(
 // ─── Secret Generation & AES-256-GCM Encryption ───────────────
 
 const DEFAULT_SECRET_ENCRYPTION_KEY = Buffer.from(
-  process.env.WEBHOOK_SECRET_KEY ?? "growx_secret_encryption_key_32b_!"
+  process.env.WEBHOOK_SECRET_KEY ?? "growx_secret_encryption_key_32b_!",
 ).subarray(0, 32);
 
 export function generateWebhookSecret(): string {
@@ -170,7 +179,7 @@ export function generateWebhookSecret(): string {
 
 export function encryptWebhookSecret(
   secret: string,
-  key: Buffer = DEFAULT_SECRET_ENCRYPTION_KEY
+  key: Buffer = DEFAULT_SECRET_ENCRYPTION_KEY,
 ): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -183,7 +192,7 @@ export function encryptWebhookSecret(
 
 export function decryptWebhookSecret(
   encryptedPayload: string,
-  key: Buffer = DEFAULT_SECRET_ENCRYPTION_KEY
+  key: Buffer = DEFAULT_SECRET_ENCRYPTION_KEY,
 ): string {
   const [ivHex, authTagHex, encryptedHex] = encryptedPayload.split(":");
   if (!ivHex || !authTagHex || !encryptedHex) {
@@ -204,7 +213,11 @@ export function decryptWebhookSecret(
 
 // ─── HMAC-SHA256 Signing & Verification ───────────────────────
 
-export function canonicalWebhookPayload(id: string, timestamp: number, body: string): string {
+export function canonicalWebhookPayload(
+  id: string,
+  timestamp: number,
+  body: string,
+): string {
   return `${id}.${timestamp}.${body}`;
 }
 
@@ -214,8 +227,14 @@ export function signWebhook(input: {
   body: string;
   secret: string;
 }): string {
-  const payload = canonicalWebhookPayload(input.id, input.timestamp, input.body);
-  const signature = createHmac("sha256", input.secret).update(payload).digest("hex");
+  const payload = canonicalWebhookPayload(
+    input.id,
+    input.timestamp,
+    input.body,
+  );
+  const signature = createHmac("sha256", input.secret)
+    .update(payload)
+    .digest("hex");
   return `v1=${signature}`;
 }
 
@@ -231,7 +250,10 @@ export function verifyWebhookSignature(input: {
   const now = input.now ?? Math.floor(Date.now() / 1000);
   const tolerance = input.toleranceSeconds ?? 300;
 
-  if (!Number.isSafeInteger(input.timestamp) || Math.abs(now - input.timestamp) > tolerance) {
+  if (
+    !Number.isSafeInteger(input.timestamp) ||
+    Math.abs(now - input.timestamp) > tolerance
+  ) {
     return false;
   }
 

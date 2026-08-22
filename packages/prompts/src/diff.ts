@@ -14,10 +14,11 @@ export interface PromptVersionDiff {
 export class PromptDiffUtil {
   public static diff(vA: PromptVersion, vB: PromptVersion): PromptVersionDiff {
     const templateChanged = (vA.template || "") !== (vB.template || "");
-    const messagesChanged = JSON.stringify(vA.messages || []) !== JSON.stringify(vB.messages || []);
+    const messagesChanged =
+      JSON.stringify(vA.messages || []) !== JSON.stringify(vB.messages || []);
 
-    const schemaA = new Map(vA.variableSchema.map(s => [s.name, s]));
-    const schemaB = new Map(vB.variableSchema.map(s => [s.name, s]));
+    const schemaA = new Map(vA.variableSchema.map((s) => [s.name, s]));
+    const schemaB = new Map(vB.variableSchema.map((s) => [s.name, s]));
 
     const variablesAdded: string[] = [];
     const variablesRemoved: string[] = [];
@@ -41,7 +42,9 @@ export class PromptDiffUtil {
       }
     }
 
-    const capabilitiesChanged = JSON.stringify(vA.requiredCapabilities || []) !== JSON.stringify(vB.requiredCapabilities || []);
+    const capabilitiesChanged =
+      JSON.stringify(vA.requiredCapabilities || []) !==
+      JSON.stringify(vB.requiredCapabilities || []);
 
     return {
       versionA: vA.version,

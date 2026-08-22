@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { promptExecutionBindingSchema } from "./prompt-registry.js";
 
-export const canonicalModelStatusSchema = z.enum(["draft", "active", "deprecated", "disabled", "retired"]);
+export const canonicalModelStatusSchema = z.enum([
+  "draft",
+  "active",
+  "deprecated",
+  "disabled",
+  "retired",
+]);
 export type CanonicalModelStatus = z.infer<typeof canonicalModelStatusSchema>;
 
 export const modelCategorySchema = z.enum([
@@ -52,13 +58,31 @@ export const modelCapabilitySchema = z.enum([
 ]);
 export type ModelCapability = z.infer<typeof modelCapabilitySchema>;
 
-export const inputModalitySchema = z.enum(["text", "image", "audio", "video", "file"]);
+export const inputModalitySchema = z.enum([
+  "text",
+  "image",
+  "audio",
+  "video",
+  "file",
+]);
 export type InputModality = z.infer<typeof inputModalitySchema>;
 
-export const outputModalitySchema = z.enum(["text", "image", "audio", "embeddings", "video"]);
+export const outputModalitySchema = z.enum([
+  "text",
+  "image",
+  "audio",
+  "embeddings",
+  "video",
+]);
 export type OutputModality = z.infer<typeof outputModalitySchema>;
 
-export const providerRouteStatusSchema = z.enum(["active", "degraded", "disabled", "deprecated", "retired"]);
+export const providerRouteStatusSchema = z.enum([
+  "active",
+  "degraded",
+  "disabled",
+  "deprecated",
+  "retired",
+]);
 export type ProviderRouteStatus = z.infer<typeof providerRouteStatusSchema>;
 
 export const aliasStatusSchema = z.enum(["active", "deprecated", "retired"]);
@@ -70,13 +94,21 @@ export type AliasType = z.infer<typeof aliasTypeSchema>;
 export const pricingTypeSchema = z.enum(["standard", "tiered"]);
 export type PricingType = z.infer<typeof pricingTypeSchema>;
 
-export const pricingSourceSchema = z.enum(["manual", "provider_sync", "system"]);
+export const pricingSourceSchema = z.enum([
+  "manual",
+  "provider_sync",
+  "system",
+]);
 export type PricingSource = z.infer<typeof pricingSourceSchema>;
 
 // Canonical Model Domain Record
 export const canonicalModelSchema = z.object({
   id: z.string(),
-  canonicalId: z.string().min(3).max(128).regex(/^[a-z0-9_-]+\/[A-Za-z0-9._:-]+$/),
+  canonicalId: z
+    .string()
+    .min(3)
+    .max(128)
+    .regex(/^[a-z0-9_-]+\/[A-Za-z0-9._:-]+$/),
   displayName: z.string().min(1).max(100),
   family: z.string().min(1).max(64),
   category: modelCategorySchema.default("chat"),
@@ -93,10 +125,15 @@ export const canonicalModelSchema = z.object({
   supportsReasoning: z.boolean().default(false),
   inputModalities: z.array(inputModalitySchema).default(["text"]),
   outputModalities: z.array(outputModalitySchema).default(["text"]),
-  capabilities: z.array(canonicalCapabilitySchema).default(["text.generate", "streaming"]),
+  capabilities: z
+    .array(canonicalCapabilitySchema)
+    .default(["text.generate", "streaming"]),
   reasoningMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
   toolMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  structuredOutputMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  structuredOutputMetadata: z
+    .record(z.string(), z.unknown())
+    .nullable()
+    .optional(),
   deprecatedAt: z.coerce.date().nullable().optional(),
   sunsetAt: z.coerce.date().nullable().optional(),
   replacementModelId: z.string().nullable().optional(),
@@ -146,7 +183,9 @@ export const openAIModelListResponseSchema = z.object({
   object: z.literal("list"),
   data: z.array(openAIModelItemSchema),
 });
-export type OpenAIModelListResponse = z.infer<typeof openAIModelListResponseSchema>;
+export type OpenAIModelListResponse = z.infer<
+  typeof openAIModelListResponseSchema
+>;
 
 // Provider Route Record
 export const providerRouteSchema = z.object({
@@ -161,7 +200,10 @@ export const providerRouteSchema = z.object({
   priority: z.number().int().default(100),
   contextWindowOverride: z.number().int().positive().nullable().optional(),
   maxOutputTokensOverride: z.number().int().positive().nullable().optional(),
-  capabilitiesOverrides: z.array(canonicalCapabilitySchema).nullable().optional(),
+  capabilitiesOverrides: z
+    .array(canonicalCapabilitySchema)
+    .nullable()
+    .optional(),
   pricingReference: z.string().nullable().optional(),
   availableFrom: z.coerce.date().nullable().optional(),
   deprecatedAt: z.coerce.date().nullable().optional(),
@@ -194,8 +236,18 @@ export const modelPricingRecordSchema = z.object({
   pricingType: pricingTypeSchema.default("standard"),
   inputPricePerMillionMinor: z.number().int().nonnegative(),
   outputPricePerMillionMinor: z.number().int().nonnegative(),
-  cachedInputPricePerMillionMinor: z.number().int().nonnegative().nullable().optional(),
-  reasoningPricePerMillionMinor: z.number().int().nonnegative().nullable().optional(),
+  cachedInputPricePerMillionMinor: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullable()
+    .optional(),
+  reasoningPricePerMillionMinor: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullable()
+    .optional(),
   currency: z.string().length(3).default("USD"),
   effectiveFrom: z.coerce.date(),
   effectiveTo: z.coerce.date().nullable().optional(),
@@ -236,125 +288,166 @@ export const resolvedModelContextSchema = z.object({
 export type ResolvedModelContext = z.infer<typeof resolvedModelContextSchema>;
 
 // Admin Privileged Model Request DTOs
-export const createCanonicalModelRequestSchema = z.object({
-  canonicalId: z.string().min(3).max(128).regex(/^[a-z0-9_-]+\/[A-Za-z0-9._:-]+$/),
-  displayName: z.string().min(1).max(100),
-  family: z.string().min(1).max(64),
-  category: modelCategorySchema.default("chat"),
-  status: canonicalModelStatusSchema.default("active"),
-  customerVisible: z.boolean().default(true),
-  routingEligible: z.boolean().default(true),
-  description: z.string().max(2000).optional(),
-  contextWindow: z.number().int().positive(),
-  maxInputTokens: z.number().int().positive().optional(),
-  maxOutputTokens: z.number().int().positive(),
-  supportsStreaming: z.boolean().default(true),
-  supportsTools: z.boolean().default(false),
-  supportsStructuredOutput: z.boolean().default(false),
-  supportsReasoning: z.boolean().default(false),
-  inputModalities: z.array(inputModalitySchema).default(["text"]),
-  outputModalities: z.array(outputModalitySchema).default(["text"]),
-  capabilities: z.array(canonicalCapabilitySchema).default(["text.generate", "streaming"]),
-  reasoningMetadata: z.record(z.string(), z.unknown()).optional(),
-  toolMetadata: z.record(z.string(), z.unknown()).optional(),
-  structuredOutputMetadata: z.record(z.string(), z.unknown()).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type CreateCanonicalModelRequest = z.input<typeof createCanonicalModelRequestSchema>;
+export const createCanonicalModelRequestSchema = z
+  .object({
+    canonicalId: z
+      .string()
+      .min(3)
+      .max(128)
+      .regex(/^[a-z0-9_-]+\/[A-Za-z0-9._:-]+$/),
+    displayName: z.string().min(1).max(100),
+    family: z.string().min(1).max(64),
+    category: modelCategorySchema.default("chat"),
+    status: canonicalModelStatusSchema.default("active"),
+    customerVisible: z.boolean().default(true),
+    routingEligible: z.boolean().default(true),
+    description: z.string().max(2000).optional(),
+    contextWindow: z.number().int().positive(),
+    maxInputTokens: z.number().int().positive().optional(),
+    maxOutputTokens: z.number().int().positive(),
+    supportsStreaming: z.boolean().default(true),
+    supportsTools: z.boolean().default(false),
+    supportsStructuredOutput: z.boolean().default(false),
+    supportsReasoning: z.boolean().default(false),
+    inputModalities: z.array(inputModalitySchema).default(["text"]),
+    outputModalities: z.array(outputModalitySchema).default(["text"]),
+    capabilities: z
+      .array(canonicalCapabilitySchema)
+      .default(["text.generate", "streaming"]),
+    reasoningMetadata: z.record(z.string(), z.unknown()).optional(),
+    toolMetadata: z.record(z.string(), z.unknown()).optional(),
+    structuredOutputMetadata: z.record(z.string(), z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type CreateCanonicalModelRequest = z.input<
+  typeof createCanonicalModelRequestSchema
+>;
 
-export const updateCanonicalModelRequestSchema = z.object({
-  displayName: z.string().min(1).max(100).optional(),
-  family: z.string().min(1).max(64).optional(),
-  category: modelCategorySchema.optional(),
-  customerVisible: z.boolean().optional(),
-  routingEligible: z.boolean().optional(),
-  description: z.string().max(2000).optional(),
-  contextWindow: z.number().int().positive().optional(),
-  maxInputTokens: z.number().int().positive().nullable().optional(),
-  maxOutputTokens: z.number().int().positive().optional(),
-  supportsStreaming: z.boolean().optional(),
-  supportsTools: z.boolean().optional(),
-  supportsStructuredOutput: z.boolean().optional(),
-  supportsReasoning: z.boolean().optional(),
-  inputModalities: z.array(inputModalitySchema).optional(),
-  outputModalities: z.array(outputModalitySchema).optional(),
-  capabilities: z.array(canonicalCapabilitySchema).optional(),
-  reasoningMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  toolMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  structuredOutputMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type UpdateCanonicalModelRequest = z.input<typeof updateCanonicalModelRequestSchema>;
+export const updateCanonicalModelRequestSchema = z
+  .object({
+    displayName: z.string().min(1).max(100).optional(),
+    family: z.string().min(1).max(64).optional(),
+    category: modelCategorySchema.optional(),
+    customerVisible: z.boolean().optional(),
+    routingEligible: z.boolean().optional(),
+    description: z.string().max(2000).optional(),
+    contextWindow: z.number().int().positive().optional(),
+    maxInputTokens: z.number().int().positive().nullable().optional(),
+    maxOutputTokens: z.number().int().positive().optional(),
+    supportsStreaming: z.boolean().optional(),
+    supportsTools: z.boolean().optional(),
+    supportsStructuredOutput: z.boolean().optional(),
+    supportsReasoning: z.boolean().optional(),
+    inputModalities: z.array(inputModalitySchema).optional(),
+    outputModalities: z.array(outputModalitySchema).optional(),
+    capabilities: z.array(canonicalCapabilitySchema).optional(),
+    reasoningMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    toolMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    structuredOutputMetadata: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type UpdateCanonicalModelRequest = z.input<
+  typeof updateCanonicalModelRequestSchema
+>;
 
-export const deprecateModelRequestSchema = z.object({
-  sunsetAt: z.union([z.string(), z.date()]).optional(),
-  replacementModelId: z.string().optional(),
-  message: z.string().max(1000).optional(),
-}).strict();
+export const deprecateModelRequestSchema = z
+  .object({
+    sunsetAt: z.union([z.string(), z.date()]).optional(),
+    replacementModelId: z.string().optional(),
+    message: z.string().max(1000).optional(),
+  })
+  .strict();
 export type DeprecateModelRequest = z.input<typeof deprecateModelRequestSchema>;
 
-export const createProviderRouteRequestSchema = z.object({
-  modelId: z.string(),
-  providerId: z.string(),
-  providerModelId: z.string().min(1).max(128),
-  region: z.string().min(1).max(64).default("global"),
-  status: providerRouteStatusSchema.default("active"),
-  routingEligible: z.boolean().default(true),
-  priority: z.number().int().default(100),
-  contextWindowOverride: z.number().int().positive().optional(),
-  maxOutputTokensOverride: z.number().int().positive().optional(),
-  capabilitiesOverrides: z.array(canonicalCapabilitySchema).optional(),
-  pricingReference: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type CreateProviderRouteRequest = z.input<typeof createProviderRouteRequestSchema>;
+export const createProviderRouteRequestSchema = z
+  .object({
+    modelId: z.string(),
+    providerId: z.string(),
+    providerModelId: z.string().min(1).max(128),
+    region: z.string().min(1).max(64).default("global"),
+    status: providerRouteStatusSchema.default("active"),
+    routingEligible: z.boolean().default(true),
+    priority: z.number().int().default(100),
+    contextWindowOverride: z.number().int().positive().optional(),
+    maxOutputTokensOverride: z.number().int().positive().optional(),
+    capabilitiesOverrides: z.array(canonicalCapabilitySchema).optional(),
+    pricingReference: z.string().optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type CreateProviderRouteRequest = z.input<
+  typeof createProviderRouteRequestSchema
+>;
 
-export const updateProviderRouteRequestSchema = z.object({
-  providerModelId: z.string().min(1).max(128).optional(),
-  region: z.string().min(1).max(64).optional(),
-  status: providerRouteStatusSchema.optional(),
-  routingEligible: z.boolean().optional(),
-  priority: z.number().int().optional(),
-  contextWindowOverride: z.number().int().positive().nullable().optional(),
-  maxOutputTokensOverride: z.number().int().positive().nullable().optional(),
-  capabilitiesOverrides: z.array(canonicalCapabilitySchema).nullable().optional(),
-  pricingReference: z.string().nullable().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type UpdateProviderRouteRequest = z.input<typeof updateProviderRouteRequestSchema>;
+export const updateProviderRouteRequestSchema = z
+  .object({
+    providerModelId: z.string().min(1).max(128).optional(),
+    region: z.string().min(1).max(64).optional(),
+    status: providerRouteStatusSchema.optional(),
+    routingEligible: z.boolean().optional(),
+    priority: z.number().int().optional(),
+    contextWindowOverride: z.number().int().positive().nullable().optional(),
+    maxOutputTokensOverride: z.number().int().positive().nullable().optional(),
+    capabilitiesOverrides: z
+      .array(canonicalCapabilitySchema)
+      .nullable()
+      .optional(),
+    pricingReference: z.string().nullable().optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type UpdateProviderRouteRequest = z.input<
+  typeof updateProviderRouteRequestSchema
+>;
 
-export const createModelAliasRequestSchema = z.object({
-  alias: z.string().min(1).max(128),
-  canonicalModelId: z.string(),
-  type: aliasTypeSchema.default("static"),
-  description: z.string().max(500).optional(),
-}).strict();
-export type CreateModelAliasRequest = z.input<typeof createModelAliasRequestSchema>;
+export const createModelAliasRequestSchema = z
+  .object({
+    alias: z.string().min(1).max(128),
+    canonicalModelId: z.string(),
+    type: aliasTypeSchema.default("static"),
+    description: z.string().max(500).optional(),
+  })
+  .strict();
+export type CreateModelAliasRequest = z.input<
+  typeof createModelAliasRequestSchema
+>;
 
-export const updateModelAliasRequestSchema = z.object({
-  canonicalModelId: z.string().optional(),
-  status: aliasStatusSchema.optional(),
-  type: aliasTypeSchema.optional(),
-  description: z.string().max(500).nullable().optional(),
-}).strict();
-export type UpdateModelAliasRequest = z.input<typeof updateModelAliasRequestSchema>;
+export const updateModelAliasRequestSchema = z
+  .object({
+    canonicalModelId: z.string().optional(),
+    status: aliasStatusSchema.optional(),
+    type: aliasTypeSchema.optional(),
+    description: z.string().max(500).nullable().optional(),
+  })
+  .strict();
+export type UpdateModelAliasRequest = z.input<
+  typeof updateModelAliasRequestSchema
+>;
 
-export const createModelPricingRequestSchema = z.object({
-  modelId: z.string().optional(),
-  routeId: z.string().optional(),
-  pricingType: pricingTypeSchema.default("standard"),
-  inputPricePerMillionMinor: z.number().int().nonnegative(),
-  outputPricePerMillionMinor: z.number().int().nonnegative(),
-  cachedInputPricePerMillionMinor: z.number().int().nonnegative().optional(),
-  reasoningPricePerMillionMinor: z.number().int().nonnegative().optional(),
-  currency: z.string().length(3).default("USD"),
-  effectiveFrom: z.union([z.string(), z.date()]).optional(),
-  effectiveTo: z.union([z.string(), z.date()]).optional(),
-  source: pricingSourceSchema.default("manual"),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type CreateModelPricingRequest = z.input<typeof createModelPricingRequestSchema>;
-
+export const createModelPricingRequestSchema = z
+  .object({
+    modelId: z.string().optional(),
+    routeId: z.string().optional(),
+    pricingType: pricingTypeSchema.default("standard"),
+    inputPricePerMillionMinor: z.number().int().nonnegative(),
+    outputPricePerMillionMinor: z.number().int().nonnegative(),
+    cachedInputPricePerMillionMinor: z.number().int().nonnegative().optional(),
+    reasoningPricePerMillionMinor: z.number().int().nonnegative().optional(),
+    currency: z.string().length(3).default("USD"),
+    effectiveFrom: z.union([z.string(), z.date()]).optional(),
+    effectiveTo: z.union([z.string(), z.date()]).optional(),
+    source: pricingSourceSchema.default("manual"),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type CreateModelPricingRequest = z.input<
+  typeof createModelPricingRequestSchema
+>;
 
 // Gateway Execution Interfaces
 export const messageSchema = z
@@ -393,13 +486,21 @@ export const modelRequestSchema = z
     workspaceId: z.string(),
     environmentId: z.string(),
     apiKeyId: z.string(),
-    model: z.string().regex(/^[a-z0-9-]+\/[A-Za-z0-9._:-]+$/).max(200),
-    input: z.union([z.string().min(1).max(500_000), z.array(messageSchema).min(1).max(256)]),
+    model: z
+      .string()
+      .regex(/^[a-z0-9-]+\/[A-Za-z0-9._:-]+$/)
+      .max(200),
+    input: z.union([
+      z.string().min(1).max(500_000),
+      z.array(messageSchema).min(1).max(256),
+    ]),
     instructions: z.string().max(100_000).optional(),
     stream: z.boolean().default(false),
     generation: generationSchema.default({}),
     tools: z.array(functionToolSchema).max(64).optional(),
-    toolChoice: z.union([z.literal("auto"), z.literal("none"), z.string().max(64)]).optional(),
+    toolChoice: z
+      .union([z.literal("auto"), z.literal("none"), z.string().max(64)])
+      .optional(),
     responseFormat: z
       .object({
         type: z.enum(["text", "json_object", "json_schema"]),
@@ -407,10 +508,16 @@ export const modelRequestSchema = z
       })
       .strict()
       .optional(),
-    reasoning: z.object({ effort: z.enum(["low", "medium", "high"]).optional() }).strict().optional(),
+    reasoning: z
+      .object({ effort: z.enum(["low", "medium", "high"]).optional() })
+      .strict()
+      .optional(),
     metadata: z
       .record(z.string().max(64), z.string().max(512))
-      .refine((value) => Object.keys(value).length <= 32, "Too many metadata fields")
+      .refine(
+        (value) => Object.keys(value).length <= 32,
+        "Too many metadata fields",
+      )
       .optional(),
   })
   .strict();
@@ -424,7 +531,10 @@ export const embeddingRequestSchema = z
     environmentId: z.string(),
     apiKeyId: z.string(),
     model: z.string().max(200),
-    input: z.union([z.string().min(1), z.array(z.string().min(1)).min(1).max(2048)]),
+    input: z.union([
+      z.string().min(1),
+      z.array(z.string().min(1)).min(1).max(2048),
+    ]),
     encodingFormat: z.enum(["float", "base64"]).default("float"),
     dimensions: z.number().int().positive().max(65_536).optional(),
   })
@@ -453,7 +563,12 @@ export interface GrowXModelResponse {
   output: GrowXOutput[];
   finishReason?: string;
   usage: GrowXUsage;
-  timing: { startedAt: string; completedAt: string; latencyMs: number; timeToFirstTokenMs?: number };
+  timing: {
+    startedAt: string;
+    completedAt: string;
+    latencyMs: number;
+    timeToFirstTokenMs?: number;
+  };
 }
 
 export interface GrowXEmbeddingResponse {
@@ -519,7 +634,7 @@ export class GrowXProviderError extends Error {
     message: string,
     public readonly retryable: boolean,
     public readonly status: number,
-    options?: ErrorOptions
+    options?: ErrorOptions,
   ) {
     super(message, options);
     this.name = "GrowXProviderError";
@@ -546,7 +661,9 @@ export const providerCredentialStatusSchema = z.enum([
   "rotating",
   "revoked",
 ]);
-export type ProviderCredentialStatus = z.infer<typeof providerCredentialStatusSchema>;
+export type ProviderCredentialStatus = z.infer<
+  typeof providerCredentialStatusSchema
+>;
 
 export const finishReasonSchema = z.enum([
   "stop",
@@ -633,7 +750,9 @@ export const structuredOutputRequestSchema = z.object({
   schema: z.record(z.string(), z.unknown()).optional(),
   strict: z.boolean().optional(),
 });
-export type StructuredOutputRequest = z.infer<typeof structuredOutputRequestSchema>;
+export type StructuredOutputRequest = z.infer<
+  typeof structuredOutputRequestSchema
+>;
 
 export const reasoningConfigSchema = z.object({
   effort: z.enum(["low", "medium", "high"]).optional(),
@@ -654,18 +773,25 @@ export const normalizedGenerationRequestSchema = z.object({
   stop: z.array(z.string()).optional(),
   stream: z.boolean().optional(),
   tools: z.array(toolDefinitionSchema).optional(),
-  toolChoice: z.union([
-    z.literal("auto"),
-    z.literal("none"),
-    z.literal("required"),
-    z.object({ type: z.literal("function"), function: z.object({ name: z.string() }) }),
-  ]).optional(),
+  toolChoice: z
+    .union([
+      z.literal("auto"),
+      z.literal("none"),
+      z.literal("required"),
+      z.object({
+        type: z.literal("function"),
+        function: z.object({ name: z.string() }),
+      }),
+    ])
+    .optional(),
   structuredOutput: structuredOutputRequestSchema.optional(),
   reasoning: reasoningConfigSchema.optional(),
   metadata: z.record(z.string(), z.string()).optional(),
   timeoutMs: z.number().int().positive().optional(),
 });
-export type NormalizedGenerationRequest = z.infer<typeof normalizedGenerationRequestSchema>;
+export type NormalizedGenerationRequest = z.infer<
+  typeof normalizedGenerationRequestSchema
+>;
 
 // Provider Usage & Normalized Generation Response
 export const providerUsageSchema = z.object({
@@ -699,7 +825,9 @@ export const normalizedGenerationResponseSchema = z.object({
   }),
   rawProviderMetadata: z.record(z.string(), z.unknown()).optional(),
 });
-export type NormalizedGenerationResponse = z.infer<typeof normalizedGenerationResponseSchema>;
+export type NormalizedGenerationResponse = z.infer<
+  typeof normalizedGenerationResponseSchema
+>;
 
 // Normalized Stream Events
 export const normalizedStreamEventTypeSchema = z.enum([
@@ -713,7 +841,9 @@ export const normalizedStreamEventTypeSchema = z.enum([
   "response.completed",
   "error",
 ]);
-export type NormalizedStreamEventType = z.infer<typeof normalizedStreamEventTypeSchema>;
+export type NormalizedStreamEventType = z.infer<
+  typeof normalizedStreamEventTypeSchema
+>;
 
 export const normalizedStreamEventSchema = z.object({
   requestId: z.string(),
@@ -722,20 +852,24 @@ export const normalizedStreamEventSchema = z.object({
   type: normalizedStreamEventTypeSchema,
   timestamp: z.string(),
   delta: z.string().optional(),
-  toolCall: z.object({
-    id: z.string().optional(),
-    name: z.string().optional(),
-    index: z.number().int().optional(),
-    argumentsDelta: z.string().optional(),
-  }).optional(),
+  toolCall: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+      index: z.number().int().optional(),
+      argumentsDelta: z.string().optional(),
+    })
+    .optional(),
   usage: providerUsageSchema.optional(),
   finishReason: finishReasonSchema.optional(),
   response: normalizedGenerationResponseSchema.optional(),
-  error: z.object({
-    code: z.string(),
-    message: z.string(),
-    retryable: z.boolean().optional(),
-  }).optional(),
+  error: z
+    .object({
+      code: z.string(),
+      message: z.string(),
+      retryable: z.boolean().optional(),
+    })
+    .optional(),
 });
 export type NormalizedStreamEvent = z.infer<typeof normalizedStreamEventSchema>;
 
@@ -754,7 +888,9 @@ export const providerExecutionContextSchema = z.object({
   traceContext: z.record(z.string(), z.unknown()).optional(),
   decryptedCredential: z.string().optional(),
 });
-export type ProviderExecutionContext = z.infer<typeof providerExecutionContextSchema> & {
+export type ProviderExecutionContext = z.infer<
+  typeof providerExecutionContextSchema
+> & {
   cancellationSignal?: AbortSignal;
 };
 
@@ -771,48 +907,64 @@ export interface NormalizedProviderError {
 }
 
 // Provider and Credential Admin DTOs
-export const createProviderRequestSchema = z.object({
-  code: z.string().min(2).max(64).regex(/^[a-z0-9_-]+$/),
-  displayName: z.string().min(1).max(100),
-  adapterType: z.string().min(1).max(64),
-  baseUrl: z.string().url(),
-  apiVersion: z.string().max(32).optional(),
-  region: z.string().max(64).default("global"),
-  priority: z.number().int().default(100),
-  enabled: z.boolean().default(true),
-  status: providerStatusSchema.default("active"),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
+export const createProviderRequestSchema = z
+  .object({
+    code: z
+      .string()
+      .min(2)
+      .max(64)
+      .regex(/^[a-z0-9_-]+$/),
+    displayName: z.string().min(1).max(100),
+    adapterType: z.string().min(1).max(64),
+    baseUrl: z.string().url(),
+    apiVersion: z.string().max(32).optional(),
+    region: z.string().max(64).default("global"),
+    priority: z.number().int().default(100),
+    enabled: z.boolean().default(true),
+    status: providerStatusSchema.default("active"),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
 export type CreateProviderRequest = z.input<typeof createProviderRequestSchema>;
 
-export const updateProviderRequestSchema = z.object({
-  displayName: z.string().min(1).max(100).optional(),
-  adapterType: z.string().min(1).max(64).optional(),
-  baseUrl: z.string().url().optional(),
-  apiVersion: z.string().max(32).nullable().optional(),
-  region: z.string().max(64).optional(),
-  priority: z.number().int().optional(),
-  enabled: z.boolean().optional(),
-  status: providerStatusSchema.optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
+export const updateProviderRequestSchema = z
+  .object({
+    displayName: z.string().min(1).max(100).optional(),
+    adapterType: z.string().min(1).max(64).optional(),
+    baseUrl: z.string().url().optional(),
+    apiVersion: z.string().max(32).nullable().optional(),
+    region: z.string().max(64).optional(),
+    priority: z.number().int().optional(),
+    enabled: z.boolean().optional(),
+    status: providerStatusSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
 export type UpdateProviderRequest = z.input<typeof updateProviderRequestSchema>;
 
-export const createProviderCredentialRequestSchema = z.object({
-  name: z.string().min(1).max(100),
-  environment: z.string().min(1).max(64).default("production"),
-  rawSecret: z.string().min(1).max(8192),
-  encryptionKeyVersion: z.string().default("v1"),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-}).strict();
-export type CreateProviderCredentialRequest = z.input<typeof createProviderCredentialRequestSchema>;
+export const createProviderCredentialRequestSchema = z
+  .object({
+    name: z.string().min(1).max(100),
+    environment: z.string().min(1).max(64).default("production"),
+    rawSecret: z.string().min(1).max(8192),
+    encryptionKeyVersion: z.string().default("v1"),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+export type CreateProviderCredentialRequest = z.input<
+  typeof createProviderCredentialRequestSchema
+>;
 
-export const rotateProviderCredentialRequestSchema = z.object({
-  newRawSecret: z.string().min(1).max(8192),
-  encryptionKeyVersion: z.string().default("v1"),
-  reason: z.string().max(500).optional(),
-}).strict();
-export type RotateProviderCredentialRequest = z.input<typeof rotateProviderCredentialRequestSchema>;
+export const rotateProviderCredentialRequestSchema = z
+  .object({
+    newRawSecret: z.string().min(1).max(8192),
+    encryptionKeyVersion: z.string().default("v1"),
+    reason: z.string().max(500).optional(),
+  })
+  .strict();
+export type RotateProviderCredentialRequest = z.input<
+  typeof rotateProviderCredentialRequestSchema
+>;
 
 export const providerCredentialMetadataSchema = z.object({
   id: z.string(),
@@ -827,7 +979,9 @@ export const providerCredentialMetadataSchema = z.object({
   disabledAt: z.coerce.date().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()),
 });
-export type ProviderCredentialMetadata = z.infer<typeof providerCredentialMetadataSchema>;
+export type ProviderCredentialMetadata = z.infer<
+  typeof providerCredentialMetadataSchema
+>;
 
 export const providerRecordSchema = z.object({
   id: z.string(),
@@ -852,85 +1006,114 @@ export type ProviderRecord = z.infer<typeof providerRecordSchema>;
 
 export const openAIChatMessageSchema = z.object({
   role: z.enum(["system", "user", "assistant", "tool"]),
-  content: z.union([z.string(), z.array(contentPartSchema)]).nullable().optional(),
+  content: z
+    .union([z.string(), z.array(contentPartSchema)])
+    .nullable()
+    .optional(),
   name: z.string().optional(),
   tool_call_id: z.string().optional(),
-  tool_calls: z.array(
-    z.object({
-      id: z.string(),
-      type: z.literal("function").default("function"),
-      function: z.object({
-        name: z.string(),
-        arguments: z.string(),
+  tool_calls: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.literal("function").default("function"),
+        function: z.object({
+          name: z.string(),
+          arguments: z.string(),
+        }),
       }),
-    })
-  ).optional(),
+    )
+    .optional(),
 });
 export type OpenAIChatMessage = z.infer<typeof openAIChatMessageSchema>;
 
 export const openAIResponseFormatSchema = z.object({
   type: z.enum(["text", "json_object", "json_schema"]).default("text"),
-  json_schema: z.object({
-    name: z.string().optional(),
-    description: z.string().optional(),
-    schema: z.record(z.string(), z.unknown()).optional(),
-    strict: z.boolean().optional(),
-  }).optional(),
+  json_schema: z
+    .object({
+      name: z.string().optional(),
+      description: z.string().optional(),
+      schema: z.record(z.string(), z.unknown()).optional(),
+      strict: z.boolean().optional(),
+    })
+    .optional(),
 });
 export type OpenAIResponseFormat = z.infer<typeof openAIResponseFormatSchema>;
 
-export const openAIChatCompletionRequestSchema = z.object({
-  model: z.string().default("gpt-4o"),
-  messages: z.array(openAIChatMessageSchema).default([]),
-  prompt: promptExecutionBindingSchema.optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  top_p: z.number().min(0).max(1).optional(),
-  max_tokens: z.number().int().positive().optional(),
-  max_completion_tokens: z.number().int().positive().optional(),
-  stream: z.boolean().optional().default(false),
-  stop: z.union([z.string(), z.array(z.string())]).optional(),
-  tools: z.array(toolDefinitionSchema).optional(),
-  tool_choice: z.union([
-    z.literal("auto"),
-    z.literal("none"),
-    z.literal("required"),
-    z.object({ type: z.literal("function"), function: z.object({ name: z.string() }) }),
-  ]).optional(),
-  response_format: openAIResponseFormatSchema.optional(),
-  reasoning_effort: z.enum(["low", "medium", "high"]).optional(),
-  stream_options: z.object({
-    include_usage: z.boolean().optional(),
-  }).optional(),
-  user: z.string().max(256).optional(),
-}).refine(
-  (data) => (data.messages && data.messages.length > 0) || !!data.prompt,
-  {
-    message: "Either 'messages' with at least one message or 'prompt' must be provided",
-    path: ["messages"],
-  }
-);
-export type OpenAIChatCompletionRequest = z.infer<typeof openAIChatCompletionRequestSchema>;
+export const openAIChatCompletionRequestSchema = z
+  .object({
+    model: z.string().default("gpt-4o"),
+    messages: z.array(openAIChatMessageSchema).default([]),
+    prompt: promptExecutionBindingSchema.optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    top_p: z.number().min(0).max(1).optional(),
+    max_tokens: z.number().int().positive().optional(),
+    max_completion_tokens: z.number().int().positive().optional(),
+    stream: z.boolean().optional().default(false),
+    stop: z.union([z.string(), z.array(z.string())]).optional(),
+    tools: z.array(toolDefinitionSchema).optional(),
+    tool_choice: z
+      .union([
+        z.literal("auto"),
+        z.literal("none"),
+        z.literal("required"),
+        z.object({
+          type: z.literal("function"),
+          function: z.object({ name: z.string() }),
+        }),
+      ])
+      .optional(),
+    response_format: openAIResponseFormatSchema.optional(),
+    reasoning_effort: z.enum(["low", "medium", "high"]).optional(),
+    stream_options: z
+      .object({
+        include_usage: z.boolean().optional(),
+      })
+      .optional(),
+    user: z.string().max(256).optional(),
+  })
+  .refine(
+    (data) => (data.messages && data.messages.length > 0) || !!data.prompt,
+    {
+      message:
+        "Either 'messages' with at least one message or 'prompt' must be provided",
+      path: ["messages"],
+    },
+  );
+export type OpenAIChatCompletionRequest = z.infer<
+  typeof openAIChatCompletionRequestSchema
+>;
 
 export const openAIChatCompletionChoiceSchema = z.object({
   index: z.number().int().nonnegative(),
   message: openAIChatMessageSchema,
-  finish_reason: z.enum(["stop", "length", "tool_calls", "content_filter"]).nullable(),
+  finish_reason: z
+    .enum(["stop", "length", "tool_calls", "content_filter"])
+    .nullable(),
   logprobs: z.null().optional(),
 });
-export type OpenAIChatCompletionChoice = z.infer<typeof openAIChatCompletionChoiceSchema>;
+export type OpenAIChatCompletionChoice = z.infer<
+  typeof openAIChatCompletionChoiceSchema
+>;
 
 export const openAIChatCompletionUsageSchema = z.object({
   prompt_tokens: z.number().int().nonnegative(),
   completion_tokens: z.number().int().nonnegative(),
   total_tokens: z.number().int().nonnegative(),
-  prompt_tokens_details: z.object({
-    cached_tokens: z.number().int().nonnegative().optional(),
-  }).optional(),
-  completion_tokens_details: z.object({
-    reasoning_tokens: z.number().int().nonnegative().optional(),
-  }).optional(),
+  prompt_tokens_details: z
+    .object({
+      cached_tokens: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
+  completion_tokens_details: z
+    .object({
+      reasoning_tokens: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
 });
-export type OpenAIChatCompletionUsage = z.infer<typeof openAIChatCompletionUsageSchema>;
+export type OpenAIChatCompletionUsage = z.infer<
+  typeof openAIChatCompletionUsageSchema
+>;
 
 export const openAIChatCompletionResponseSchema = z.object({
   id: z.string(),
@@ -941,32 +1124,45 @@ export const openAIChatCompletionResponseSchema = z.object({
   usage: openAIChatCompletionUsageSchema,
   system_fingerprint: z.string().optional(),
 });
-export type OpenAIChatCompletionResponse = z.infer<typeof openAIChatCompletionResponseSchema>;
+export type OpenAIChatCompletionResponse = z.infer<
+  typeof openAIChatCompletionResponseSchema
+>;
 
 export const openAIChatCompletionChunkDeltaSchema = z.object({
   role: z.enum(["system", "user", "assistant", "tool"]).optional(),
   content: z.string().nullable().optional(),
-  tool_calls: z.array(
-    z.object({
-      index: z.number().int().nonnegative(),
-      id: z.string().optional(),
-      type: z.literal("function").optional(),
-      function: z.object({
-        name: z.string().optional(),
-        arguments: z.string().optional(),
-      }).optional(),
-    })
-  ).optional(),
+  tool_calls: z
+    .array(
+      z.object({
+        index: z.number().int().nonnegative(),
+        id: z.string().optional(),
+        type: z.literal("function").optional(),
+        function: z
+          .object({
+            name: z.string().optional(),
+            arguments: z.string().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .optional(),
 });
-export type OpenAIChatCompletionChunkDelta = z.infer<typeof openAIChatCompletionChunkDeltaSchema>;
+export type OpenAIChatCompletionChunkDelta = z.infer<
+  typeof openAIChatCompletionChunkDeltaSchema
+>;
 
 export const openAIChatCompletionChunkChoiceSchema = z.object({
   index: z.number().int().nonnegative(),
   delta: openAIChatCompletionChunkDeltaSchema,
-  finish_reason: z.enum(["stop", "length", "tool_calls", "content_filter"]).nullable().optional(),
+  finish_reason: z
+    .enum(["stop", "length", "tool_calls", "content_filter"])
+    .nullable()
+    .optional(),
   logprobs: z.null().optional(),
 });
-export type OpenAIChatCompletionChunkChoice = z.infer<typeof openAIChatCompletionChunkChoiceSchema>;
+export type OpenAIChatCompletionChunkChoice = z.infer<
+  typeof openAIChatCompletionChunkChoiceSchema
+>;
 
 export const openAIChatCompletionChunkSchema = z.object({
   id: z.string(),
@@ -977,7 +1173,6 @@ export const openAIChatCompletionChunkSchema = z.object({
   usage: openAIChatCompletionUsageSchema.optional(),
   system_fingerprint: z.string().optional(),
 });
-export type OpenAIChatCompletionChunk = z.infer<typeof openAIChatCompletionChunkSchema>;
-
-
-
+export type OpenAIChatCompletionChunk = z.infer<
+  typeof openAIChatCompletionChunkSchema
+>;

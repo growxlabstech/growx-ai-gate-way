@@ -15,7 +15,9 @@ describe("Prompt Service HTTP API Routes", () => {
   const server = http.createServer(handler);
 
   it("executes full prompt management HTTP lifecycle (create, version, release, render, validate, diff)", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -46,7 +48,12 @@ describe("Prompt Service HTTP API Routes", () => {
           "x-organization-id": "org_http",
         },
         body: JSON.stringify({
-          messages: [{ role: "user", contentTemplate: "Review this code for {{language}}: {{code}}" }],
+          messages: [
+            {
+              role: "user",
+              contentTemplate: "Review this code for {{language}}: {{code}}",
+            },
+          ],
           variableSchema: [
             { name: "language", type: "string", required: true },
             { name: "code", type: "string", required: true },
@@ -58,37 +65,45 @@ describe("Prompt Service HTTP API Routes", () => {
       expect(v1.version).toBe(1);
 
       // 3. POST /v1/prompts/:id/releases
-      const relRes = await fetch(`${baseUrl}/v1/prompts/${prompt.id}/releases`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-organization-id": "org_http",
+      const relRes = await fetch(
+        `${baseUrl}/v1/prompts/${prompt.id}/releases`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-organization-id": "org_http",
+          },
+          body: JSON.stringify({
+            promptVersionId: v1.id,
+            environment: "production",
+            notes: "Initial release",
+          }),
         },
-        body: JSON.stringify({
-          promptVersionId: v1.id,
-          environment: "production",
-          notes: "Initial release",
-        }),
-      });
+      );
       expect(relRes.status).toBe(201);
 
       // 4. POST /v1/prompts/:id/render (Preview)
-      const renderRes = await fetch(`${baseUrl}/v1/prompts/${prompt.id}/render`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-organization-id": "org_http",
-        },
-        body: JSON.stringify({
-          variables: {
-            language: "typescript",
-            code: "const x: number = 1;",
+      const renderRes = await fetch(
+        `${baseUrl}/v1/prompts/${prompt.id}/render`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-organization-id": "org_http",
           },
-        }),
-      });
+          body: JSON.stringify({
+            variables: {
+              language: "typescript",
+              code: "const x: number = 1;",
+            },
+          }),
+        },
+      );
       expect(renderRes.status).toBe(200);
       const rendered = (await renderRes.json()) as any;
-      expect(rendered.renderedMessages[0].content).toBe("Review this code for typescript: const x: number = 1;");
+      expect(rendered.renderedMessages[0].content).toBe(
+        "Review this code for typescript: const x: number = 1;",
+      );
 
       // 5. POST /v1/prompts/validate
       const valRes = await fetch(`${baseUrl}/v1/prompts/validate`, {
@@ -102,7 +117,9 @@ describe("Prompt Service HTTP API Routes", () => {
       expect(valRes.status).toBe(200);
       const valJson = (await valRes.json()) as any;
       expect(valJson.valid).toBe(false);
-      expect(valJson.issues.some((i: any) => i.code === "UNDEFINED_VARIABLE")).toBe(true);
+      expect(
+        valJson.issues.some((i: any) => i.code === "UNDEFINED_VARIABLE"),
+      ).toBe(true);
     } finally {
       server.close();
     }

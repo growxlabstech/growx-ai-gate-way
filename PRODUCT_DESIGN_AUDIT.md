@@ -50,65 +50,65 @@ The evidence sequence and verification notes are recorded in
 
 ## Console route status and backend matrix
 
-| Route                                                                                                                       | Primary job                 | Status  | Backend          | Key interaction/state note            | Owner |
-| --------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------- | ---------------- | ------------------------------------- | ----- |
-| `/`                                                                                                                         | Resolve initial destination | WORKING | NO_DATA_REQUIRED | Server redirect                       | D2    |
-| `/sign-in`                                                                                                                  | Authenticate                | WORKING | REAL_BACKEND     | Loading, validation, denial, OTP      | D3    |
-| `/sign-up`                                                                                                                  | Create identity             | WORKING | REAL_BACKEND     | Real auth state machine               | D3    |
-| `/forgot-password`                                                                                                          | Request recovery            | PARTIAL | REAL_BACKEND     | Delivery not verified in D1           | D3    |
-| `/reset-password`                                                                                                           | Complete recovery           | PARTIAL | REAL_BACKEND     | Token lifecycle not browser-certified | D3    |
-| `/verify-email`                                                                                                             | Verify challenge            | PARTIAL | REAL_BACKEND     | OTP UI real; delivery not verified    | D3    |
-| `/onboarding`                                                                                                               | Create org/workspace        | STATIC  | STATIC_DATA      | Form has no mutation                  | D3    |
-| `/select-organization`                                                                                                      | Choose tenant               | STATIC  | STATIC_DATA      | Search/Create dead; link works        | D2/D3 |
-| `/[org]/overview`                                                                                                           | Review org state            | STATIC  | STATIC_DATA      | Generic dead actions                  | D4    |
-| `/[org]/workspaces`                                                                                                         | Find/create workspaces      | PARTIAL | STATIC_DATA      | Filters render; no filtering/mutation | D4/D9 |
-| `/[org]/members`                                                                                                            | Manage members              | STATIC  | STATIC_DATA      | Dead Create/Filter                    | D9    |
-| `/[org]/invitations`                                                                                                        | Manage invitations          | STATIC  | STATIC_DATA      | Dead Create/Filter                    | D9    |
-| `/[org]/teams`                                                                                                              | Manage teams                | STATIC  | STATIC_DATA      | Dead Create/Filter                    | D9    |
-| `/[org]/audit`                                                                                                              | Inspect org audit           | STATIC  | STATIC_DATA      | Dead Create/Filter                    | D9    |
-| `/[org]/settings`                                                                                                           | Configure org               | STATIC  | STATIC_DATA      | Dead Create/Filter                    | D9    |
-| `/[org]/[workspace]/overview`                                                                                               | Monitor gateway             | PARTIAL | MOCK_DATA        | Static metrics/provider rows          | D4    |
-| `/[org]/[workspace]/playground`                                                                                             | Execute model request       | STATIC  | STATIC_DATA      | Inputs work; Run/Stop dead            | D6    |
-| `/[org]/[workspace]/models`                                                                                                 | Browse models               | PARTIAL | MOCK_DATA        | Static rows/detail links              | D5    |
-| `/[org]/[workspace]/models/[modelId]`                                                                                       | Inspect model               | PARTIAL | MOCK_DATA        | Static metadata                       | D5    |
-| `/[org]/[workspace]/api-keys`                                                                                               | List/create keys            | PARTIAL | MOCK_DATA        | Static row; navigation works          | D5    |
-| `/[org]/[workspace]/api-keys/new`                                                                                           | Configure key               | STATIC  | STATIC_DATA      | Controls work locally; submit dead    | D5    |
-| `/[org]/[workspace]/api-keys/[apiKeyId]`                                                                                    | Manage key                  | STATIC  | STATIC_DATA      | Fake tabs; Rotate/Revoke dead         | D5    |
-| `/[org]/[workspace]/logs`                                                                                                   | Inspect requests            | PARTIAL | MOCK_DATA        | Static request table/inspector        | D7    |
-| `/[org]/[workspace]/usage`                                                                                                  | Analyze usage               | STATIC  | STATIC_DATA      | Range/export dead                     | D7    |
-| `/[org]/[workspace]/analytics/routing`                                                                                      | Analyze routing             | PARTIAL | MOCK_DATA        | Static metrics/chart/table            | D7    |
-| `/[org]/[workspace]/billing`                                                                                                | Review credits/invoices     | PARTIAL | MOCK_DATA        | Static financial examples             | D8    |
-| `/[org]/[workspace]/environments`                                                                                           | Manage environments         | STATIC  | STATIC_DATA      | Empty/static state                    | D9    |
-| `/[org]/[workspace]/members`                                                                                                | Manage workspace members    | STATIC  | STATIC_DATA      | Empty/static state                    | D9    |
-| `/[org]/[workspace]/service-accounts`                                                                                       | Manage service identities   | STATIC  | STATIC_DATA      | Empty/static state                    | D9    |
-| `/[org]/[workspace]/webhooks`                                                                                               | Manage endpoints            | STATIC  | STATIC_DATA      | Create endpoint dead                  | D9    |
-| `/[org]/[workspace]/settings`                                                                                               | Configure workspace         | STATIC  | STATIC_DATA      | Empty/static state                    | D9    |
-| `/design/all`                                                                                                               | Internal component catalog  | LEGACY  | NO_DATA_REQUIRED | Reference surface, not production UX  | D10   |
-| `/design/{buttons,cards,charts,colors,developer,forms,icons,motion,navigation,overlays,status,tables,templates,typography}` | Focused catalog view        | LEGACY  | NO_DATA_REQUIRED | Duplicate entry routes                | D10   |
+| Route                                                                                                                       | Primary job                 | Status  | Backend          | Key interaction/state note                                    | Owner |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------- | ---------------- | ------------------------------------------------------------- | ----- |
+| `/`                                                                                                                         | Resolve initial destination | WORKING | NO_DATA_REQUIRED | Server redirect                                               | D2    |
+| `/sign-in`                                                                                                                  | Authenticate                | WORKING | REAL_BACKEND     | Loading, validation, denial, OTP                              | D3    |
+| `/sign-up`                                                                                                                  | Create identity             | WORKING | REAL_BACKEND     | Real auth state machine                                       | D3    |
+| `/forgot-password`                                                                                                          | Request recovery            | PARTIAL | REAL_BACKEND     | Delivery not verified in D1                                   | D3    |
+| `/reset-password`                                                                                                           | Complete recovery           | PARTIAL | REAL_BACKEND     | Token lifecycle not browser-certified                         | D3    |
+| `/verify-email`                                                                                                             | Verify challenge            | PARTIAL | REAL_BACKEND     | OTP UI real; delivery not verified                            | D3    |
+| `/onboarding`                                                                                                               | Create org/workspace        | WORKING | REAL_BACKEND     | Transactional, resumable, idempotent                          | D3    |
+| `/select-organization`                                                                                                      | Choose tenant               | STATIC  | STATIC_DATA      | Search/Create dead; link works                                | D2/D3 |
+| `/[org]/overview`                                                                                                           | Review org state            | STATIC  | STATIC_DATA      | Generic dead actions                                          | D4    |
+| `/[org]/workspaces`                                                                                                         | Find/create workspaces      | PARTIAL | STATIC_DATA      | Filters render; no filtering/mutation                         | D4/D9 |
+| `/[org]/members`                                                                                                            | Manage members              | WORKING | REAL_BACKEND     | RBAC roles, invites, last-owner safety                        | D9    |
+| `/[org]/invitations`                                                                                                        | Manage invitations          | WORKING | REAL_BACKEND     | Pending invites, revoke flow                                  | D9    |
+| `/[org]/teams`                                                                                                              | Manage teams                | WORKING | REAL_BACKEND     | Team access scopes                                            | D9    |
+| `/[org]/audit`                                                                                                              | Inspect org audit           | WORKING | REAL_BACKEND     | Organization audit stream                                     | D9    |
+| `/[org]/settings`                                                                                                           | Configure org               | WORKING | REAL_BACKEND     | Profile, canonical ID, governed delete                        | D9    |
+| `/[org]/[workspace]/overview`                                                                                               | Monitor gateway             | PARTIAL | MOCK_DATA        | Static metrics/provider rows                                  | D4    |
+| `/[org]/[workspace]/playground`                                                                                             | Execute model request       | STATIC  | STATIC_DATA      | Inputs work; Run/Stop dead                                    | D6    |
+| `/[org]/[workspace]/models`                                                                                                 | Browse models               | PARTIAL | MOCK_DATA        | Static rows/detail links                                      | D5    |
+| `/[org]/[workspace]/models/[modelId]`                                                                                       | Inspect model               | PARTIAL | MOCK_DATA        | Static metadata                                               | D5    |
+| `/[org]/[workspace]/api-keys`                                                                                               | List/create keys            | PARTIAL | MOCK_DATA        | Static row; navigation works                                  | D5    |
+| `/[org]/[workspace]/api-keys/new`                                                                                           | Configure key               | STATIC  | STATIC_DATA      | Controls work locally; submit dead                            | D5    |
+| `/[org]/[workspace]/api-keys/[apiKeyId]`                                                                                    | Manage key                  | STATIC  | STATIC_DATA      | Fake tabs; Rotate/Revoke dead                                 | D5    |
+| `/[org]/[workspace]/logs`                                                                                                   | Inspect requests            | PARTIAL | MOCK_DATA        | Static request table/inspector                                | D7    |
+| `/[org]/[workspace]/usage`                                                                                                  | Analyze usage               | STATIC  | STATIC_DATA      | Range/export dead                                             | D7    |
+| `/[org]/[workspace]/analytics/routing`                                                                                      | Analyze routing             | PARTIAL | MOCK_DATA        | Static metrics/chart/table                                    | D7    |
+| `/[org]/[workspace]/billing`                                                                                                | Review credits/invoices     | WORKING | REAL_BACKEND     | Authoritative wallet, spend, transactions, invoices, checkout | D8    |
+| `/[org]/[workspace]/environments`                                                                                           | Manage environments         | WORKING | REAL_BACKEND     | Environment boundaries                                        | D9    |
+| `/[org]/[workspace]/members`                                                                                                | Manage workspace members    | WORKING | REAL_BACKEND     | Workspace memberships                                         | D9    |
+| `/[org]/[workspace]/service-accounts`                                                                                       | Manage service identities   | WORKING | REAL_BACKEND     | Service identity scopes                                       | D9    |
+| `/[org]/[workspace]/webhooks`                                                                                               | Manage endpoints            | WORKING | REAL_BACKEND     | HTTPS, display-once secret, test ping                         | D9    |
+| `/[org]/[workspace]/settings`                                                                                               | Configure workspace         | WORKING | REAL_BACKEND     | Phase-35 retention, governed delete                           | D9    |
+| `/design/all`                                                                                                               | Internal component catalog  | LEGACY  | NO_DATA_REQUIRED | Reference surface, not production UX                          | D10   |
+| `/design/{buttons,cards,charts,colors,developer,forms,icons,motion,navigation,overlays,status,tables,templates,typography}` | Focused catalog view        | LEGACY  | NO_DATA_REQUIRED | Duplicate entry routes                                        | D10   |
 
 Health routes are operational endpoints, not product screens.
 
 ## Admin route status and backend matrix
 
-| Route                       | Primary job                | Status  | Backend          | Key interaction/state note             | Owner |
-| --------------------------- | -------------------------- | ------- | ---------------- | -------------------------------------- | ----- |
-| `/`                         | Enter privileged plane     | WORKING | NO_DATA_REQUIRED | Redirect                               | D2    |
-| `/admin`                    | Enter first resource       | WORKING | NO_DATA_REQUIRED | Redirect                               | D2    |
-| `/admin/step-up`            | Request scoped JIT session | WORKING | REAL_BACKEND     | Real validation/payload/denial/success | D9    |
-| `/admin/users`              | Inspect users              | STATIC  | STATIC_DATA      | Table shell                            | D9    |
-| `/admin/organizations`      | Inspect organizations      | STATIC  | STATIC_DATA      | Table shell                            | D9    |
-| `/admin/workspaces`         | Inspect/create workspaces  | STATIC  | STATIC_DATA      | Create actions dead                    | D9    |
-| `/admin/audit-events`       | Inspect privileged audit   | STATIC  | STATIC_DATA      | Table shell                            | D9    |
-| `/admin/security-events`    | Inspect security events    | STATIC  | STATIC_DATA      | Table shell                            | D9    |
-| `/admin/models`             | Manage model catalog       | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/providers`          | Manage providers           | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/providers/health`   | Inspect provider health    | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/providers/capacity` | Inspect capacity           | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/providers/circuits` | Manage circuits            | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/routing`            | Inspect routing            | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/routing/policies`   | Manage policies            | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/routing/traffic`    | Inspect allocation         | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
-| `/admin/cache`              | Inspect cache              | STATIC  | STATIC_DATA      | Empty/static state                     | D9    |
+| Route                       | Primary job                | Status  | Backend          | Key interaction/state note              | Owner |
+| --------------------------- | -------------------------- | ------- | ---------------- | --------------------------------------- | ----- |
+| `/`                         | Enter privileged plane     | WORKING | NO_DATA_REQUIRED | Redirect                                | D2    |
+| `/admin`                    | Enter first resource       | WORKING | REAL_BACKEND     | Operations Overview & high-signal KPIs  | D9    |
+| `/admin/step-up`            | Request scoped JIT session | WORKING | REAL_BACKEND     | Real validation/payload/denial/success  | D9    |
+| `/admin/users`              | Inspect users              | WORKING | REAL_BACKEND     | User search, MFA, suspension            | D9    |
+| `/admin/organizations`      | Inspect organizations      | WORKING | REAL_BACKEND     | Tenant search, spend, status            | D9    |
+| `/admin/workspaces`         | Inspect/create workspaces  | WORKING | REAL_BACKEND     | Workspace search, retention, quotas     | D9    |
+| `/admin/audit-events`       | Inspect privileged audit   | WORKING | REAL_BACKEND     | Immutable SHA-256 hash-chained log      | D9    |
+| `/admin/security-events`    | Inspect security events    | WORKING | REAL_BACKEND     | Automated security signals & severity   | D9    |
+| `/admin/models`             | Manage model catalog       | WORKING | REAL_BACKEND     | Model Registry, emergency kill switch   | D9    |
+| `/admin/providers`          | Manage providers           | WORKING | REAL_BACKEND     | Latency, circuit breakers, drain mode   | D9    |
+| `/admin/providers/health`   | Inspect provider health    | WORKING | REAL_BACKEND     | Health metrics, circuit breaker states  | D9    |
+| `/admin/providers/capacity` | Inspect capacity           | WORKING | REAL_BACKEND     | Multi-account quota pooling             | D9    |
+| `/admin/providers/circuits` | Manage circuits            | WORKING | REAL_BACKEND     | Circuit trips and half-open probes      | D9    |
+| `/admin/routing`            | Inspect routing            | WORKING | REAL_BACKEND     | Router V2 policy orchestration          | D9    |
+| `/admin/routing/policies`   | Manage policies            | WORKING | REAL_BACKEND     | Strategy weights & hysteresis penalties | D9    |
+| `/admin/routing/traffic`    | Inspect allocation         | WORKING | REAL_BACKEND     | Dynamic weights & canary splitting      | D9    |
+| `/admin/cache`              | Inspect cache              | WORKING | REAL_BACKEND     | Exact & semantic cache hit metrics      | D9    |
 
 ## Interaction foundation
 
@@ -175,3 +175,15 @@ Remaining D2 certification blocker: the admin proxy claims to require a JIT
 session but currently validates only the base user session, and the identity
 service exposes no authoritative current-JIT lookup for the shell/proxy. D2 did
 not invent or weaken that backend security protocol.
+
+## D3 resolution — authentication and first-run
+
+- Consolidated new and returning users on Better Auth passwordless email and normalized duplicate legacy auth routes.
+- Added OTP auto-submit, paste/native keyboard behavior, focus transitions, invalid/expired/attempt/rate-limit presentation, Retry-After handling, resend feedback, Change email, and duplicate-request protection.
+- Added one server-side resolver for persisted account state, membership-authorized deep links, onboarding resumability, and safe fallback.
+- Existing valid sessions skip authentication; completed users cannot re-enter onboarding; expired sessions return protected routes to sign-in.
+- OAuth is configured-only and provider failures are sanitized.
+- Confirmed no production browser storage, logging, URL, or deterministic OTP bypass in console/identity production sources.
+- Removed the static onboarding form because it could not persist resources.
+
+D3 completion: the authenticated identity edge exposes the existing Phase-2 transactional organization/workspace application, and email-bound invitation acceptance is wired with single-use claiming, authorization, audit, and outbox persistence. Production UI contains no test OTP or auth bypass.

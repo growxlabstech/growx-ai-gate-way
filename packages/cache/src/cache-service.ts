@@ -34,15 +34,19 @@ export class CacheService {
 
   public async executeCoalesced<T>(
     key: string,
-    fn: () => Promise<T>
+    fn: () => Promise<T>,
   ): Promise<{ value: T; coalesced: boolean }> {
-    const res = await this.executionFlight.run(key, this.config.singleFlightLeaseTtlMs, fn);
+    const res = await this.executionFlight.run(
+      key,
+      this.config.singleFlightLeaseTtlMs,
+      fn,
+    );
     return { value: res.value, coalesced: res.deduplicated };
   }
 
   public evaluateEligibility(
     request: OpenAIChatCompletionRequest,
-    modelContext?: { supportsStreaming?: boolean; category?: string }
+    modelContext?: { supportsStreaming?: boolean; category?: string },
   ) {
     return evaluateCacheEligibility(request, this.config, modelContext);
   }
@@ -101,7 +105,7 @@ export class CacheService {
         this.config.singleFlightLeaseTtlMs,
         async () => {
           return await this.store.get(cacheKey);
-        }
+        },
       );
 
       const durationMs = Date.now() - startMs;
@@ -117,7 +121,10 @@ export class CacheService {
       }
 
       // Check schema version and validity
-      if (entry.cacheVersion !== CACHE_SCHEMA_VERSION || !entry.responsePayload) {
+      if (
+        entry.cacheVersion !== CACHE_SCHEMA_VERSION ||
+        !entry.responsePayload
+      ) {
         await this.store.delete(cacheKey);
         return {
           status: "MISS",
@@ -172,7 +179,7 @@ export class CacheService {
 
     const ttlSeconds = Math.min(
       this.config.maxTtlSeconds,
-      Math.max(1, params.ttlSeconds ?? this.config.defaultTtlSeconds)
+      Math.max(1, params.ttlSeconds ?? this.config.defaultTtlSeconds),
     );
 
     const logicalUsage = params.response.usage ?? {
@@ -194,8 +201,10 @@ export class CacheService {
           inputTokens: logicalUsage.prompt_tokens,
           outputTokens: logicalUsage.completion_tokens,
           totalTokens: logicalUsage.total_tokens,
-          cachedInputTokens: (logicalUsage as any).prompt_tokens_details?.cached_tokens,
-          reasoningTokens: (logicalUsage as any).completion_tokens_details?.reasoning_tokens,
+          cachedInputTokens: (logicalUsage as any).prompt_tokens_details
+            ?.cached_tokens,
+          reasoningTokens: (logicalUsage as any).completion_tokens_details
+            ?.reasoning_tokens,
         },
         finishReason: params.response.choices[0]?.finish_reason ?? "stop",
         model: params.response.model,

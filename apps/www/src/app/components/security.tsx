@@ -13,15 +13,22 @@ export function Security() {
     "Fail-closed security pipeline on uncertainty",
     "Structured audit events for privileged operations",
     "Provider credential isolation and redaction",
-    "Enterprise SSO via SAML and OIDC (coming)"
+    "Enterprise SSO via SAML and OIDC (coming)",
   ];
 
   return (
     <section className="www-section" id="enterprise">
-      <h2 className="www-heading">Control access without losing developer velocity</h2>
-      <p className="www-body">The gateway enforces a fail-closed security pipeline. Every request passes through authentication, authorization, IP validation, rate limiting, concurrency control, and budget enforcement before reaching any AI provider.</p>
+      <h2 className="www-heading">
+        Control access without losing developer velocity
+      </h2>
+      <p className="www-body">
+        The gateway enforces a fail-closed security pipeline. Every request
+        passes through authentication, authorization, IP validation, rate
+        limiting, concurrency control, and budget enforcement before reaching
+        any AI provider.
+      </p>
       <div className="www-caps">
-        {capabilities.map(c => (
+        {capabilities.map((c) => (
           <div key={c} className="www-cap">
             <span className="www-cap-marker" />
             <span>{c}</span>

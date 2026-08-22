@@ -4,7 +4,8 @@ export type Currency = "USD" | "GBP" | "EUR" | "INR" | (string & {});
 
 export type PriceScheduleStatus = "draft" | "active" | "retired" | "scheduled";
 
-export type PriceSource = "manual" | "provider_api" | "contract" | "import" | "sync";
+export type PriceSource =
+  "manual" | "provider_api" | "contract" | "import" | "sync";
 
 export type UsageType =
   | "input_tokens"
@@ -71,11 +72,7 @@ export interface ProviderScheduleWithRates {
 }
 
 export type ProviderCostStatus =
-  | "exact"
-  | "estimated"
-  | "incomplete"
-  | "unpriced"
-  | "reconciled";
+  "exact" | "estimated" | "incomplete" | "unpriced" | "reconciled";
 
 export interface ProviderCostLine {
   id: string;
@@ -126,24 +123,17 @@ export interface ProviderCostResult {
   successfulAttemptCost: Decimal;
 }
 
-export type CustomerPolicyScope = "global" | "organization" | "workspace" | "plan";
+export type CustomerPolicyScope =
+  "global" | "organization" | "workspace" | "plan";
 
 export type CustomerPricingModel =
-  | "fixed_model_rate"
-  | "markup_over_provider_cost"
-  | "usage_rate"
-  | "hybrid";
+  "fixed_model_rate" | "markup_over_provider_cost" | "usage_rate" | "hybrid";
 
 export type CachePricingMode =
-  | "normal"
-  | "discount_percentage"
-  | "separate_rate"
-  | "free";
+  "normal" | "discount_percentage" | "separate_rate" | "free";
 
 export type RetryOverheadPolicy =
-  | "absorbed_by_growx"
-  | "passed_through"
-  | "partially_passed";
+  "absorbed_by_growx" | "passed_through" | "partially_passed";
 
 export interface CustomerPricingPolicy {
   id: string;
@@ -199,11 +189,7 @@ export interface CustomerPolicyWithRates {
 }
 
 export type CustomerPriceStatus =
-  | "final"
-  | "estimated"
-  | "reconciled"
-  | "unpriced"
-  | "free";
+  "final" | "estimated" | "reconciled" | "unpriced" | "free";
 
 export interface CustomerPriceLine {
   id: string;

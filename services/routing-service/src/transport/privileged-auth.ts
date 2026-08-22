@@ -10,7 +10,7 @@ export interface PrivilegedAuthContext {
 
 export interface IPrivilegedAuthResolver {
   resolvePrivilegedSession(
-    req: IncomingMessage
+    req: IncomingMessage,
   ): Promise<PrivilegedAuthContext | null>;
 }
 
@@ -24,16 +24,19 @@ export class InMemoryPrivilegedAuthResolver implements IPrivilegedAuthResolver {
   }
 
   async resolvePrivilegedSession(
-    req: IncomingMessage
+    req: IncomingMessage,
   ): Promise<PrivilegedAuthContext | null> {
     const authHeader = req.headers["authorization"];
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       // Reject spoofed x-actor-id without session token
       if (req.headers["x-actor-id"]) {
-        await this.events?.emitSecurityEvent("security.privileged.forged_actor_id_attempt", {
-          headerActorId: req.headers["x-actor-id"],
-          ip: req.socket?.remoteAddress,
-        });
+        await this.events?.emitSecurityEvent(
+          "security.privileged.forged_actor_id_attempt",
+          {
+            headerActorId: req.headers["x-actor-id"],
+            ip: req.socket?.remoteAddress,
+          },
+        );
       }
       return null;
     }

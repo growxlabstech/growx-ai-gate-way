@@ -53,12 +53,17 @@ export class ProviderCostCalculator {
     this.priceResolver = priceResolver;
   }
 
-  public calculateRequestCost(params: CalculateProviderCostParams): ProviderCostResult {
+  public calculateRequestCost(
+    params: CalculateProviderCostParams,
+  ): ProviderCostResult {
     const currency = params.currency ?? "USD";
     const targetDate = params.targetDate ?? new Date();
 
     // 1. Exact Cache Hit: zero provider calls made -> exactly $0 cost, 0 cost lines
-    if (params.executionSource === "cache_exact" || params.attempts.length === 0) {
+    if (
+      params.executionSource === "cache_exact" ||
+      params.attempts.length === 0
+    ) {
       return {
         requestId: params.requestId,
         currency,
@@ -84,7 +89,9 @@ export class ProviderCostCalculator {
       const attempt = params.attempts[i]!;
       const prevAttempt = i > 0 ? params.attempts[i - 1] : undefined;
 
-      const isFallback = prevAttempt !== undefined && prevAttempt.providerId !== attempt.providerId;
+      const isFallback =
+        prevAttempt !== undefined &&
+        prevAttempt.providerId !== attempt.providerId;
 
       // Resolve price schedule for this attempt
       const resolved = this.priceResolver.resolveSchedule({
@@ -118,9 +125,15 @@ export class ProviderCostCalculator {
       priceVersionSet.add(`${schedule.id}:v${schedule.version}`);
 
       // Track attempt usage quality
-      if (attempt.usageSource === "estimated" && overallCostStatus === "exact") {
+      if (
+        attempt.usageSource === "estimated" &&
+        overallCostStatus === "exact"
+      ) {
         overallCostStatus = "estimated";
-      } else if (attempt.usageSource === "unavailable" && overallCostStatus !== "unpriced") {
+      } else if (
+        attempt.usageSource === "unavailable" &&
+        overallCostStatus !== "unpriced"
+      ) {
         overallCostStatus = "incomplete";
       }
 
@@ -134,7 +147,11 @@ export class ProviderCostCalculator {
       if (inputQty > 0n) {
         const inputRate = ratesMap.get("input_tokens");
         if (inputRate) {
-          const lineCost = Decimal.fromUnits(inputQty, inputRate.price, inputRate.perUnits);
+          const lineCost = Decimal.fromUnits(
+            inputQty,
+            inputRate.price,
+            inputRate.perUnits,
+          );
           attemptCost = attemptCost.add(lineCost);
           lines.push(
             this.createCostLine({
@@ -153,7 +170,7 @@ export class ProviderCostCalculator {
               amount: lineCost,
               currency,
               source: schedule.source,
-            })
+            }),
           );
         } else {
           overallCostStatus = "unpriced";
@@ -165,7 +182,11 @@ export class ProviderCostCalculator {
       if (outputQty > 0n) {
         const outputRate = ratesMap.get("output_tokens");
         if (outputRate) {
-          const lineCost = Decimal.fromUnits(outputQty, outputRate.price, outputRate.perUnits);
+          const lineCost = Decimal.fromUnits(
+            outputQty,
+            outputRate.price,
+            outputRate.perUnits,
+          );
           attemptCost = attemptCost.add(lineCost);
           lines.push(
             this.createCostLine({
@@ -184,7 +205,7 @@ export class ProviderCostCalculator {
               amount: lineCost,
               currency,
               source: schedule.source,
-            })
+            }),
           );
         } else {
           overallCostStatus = "unpriced";
@@ -192,11 +213,19 @@ export class ProviderCostCalculator {
       }
 
       // Calculate Cached Input Tokens Cost
-      const cachedQty = attempt.usage.cachedInputTokens !== undefined ? BigInt(attempt.usage.cachedInputTokens) : 0n;
+      const cachedQty =
+        attempt.usage.cachedInputTokens !== undefined
+          ? BigInt(attempt.usage.cachedInputTokens)
+          : 0n;
       if (cachedQty > 0n) {
-        const cachedRate = ratesMap.get("cached_input_tokens") ?? ratesMap.get("input_tokens");
+        const cachedRate =
+          ratesMap.get("cached_input_tokens") ?? ratesMap.get("input_tokens");
         if (cachedRate) {
-          const lineCost = Decimal.fromUnits(cachedQty, cachedRate.price, cachedRate.perUnits);
+          const lineCost = Decimal.fromUnits(
+            cachedQty,
+            cachedRate.price,
+            cachedRate.perUnits,
+          );
           attemptCost = attemptCost.add(lineCost);
           lines.push(
             this.createCostLine({
@@ -215,17 +244,25 @@ export class ProviderCostCalculator {
               amount: lineCost,
               currency,
               source: schedule.source,
-            })
+            }),
           );
         }
       }
 
       // Calculate Reasoning Tokens Cost
-      const reasoningQty = attempt.usage.reasoningTokens !== undefined ? BigInt(attempt.usage.reasoningTokens) : 0n;
+      const reasoningQty =
+        attempt.usage.reasoningTokens !== undefined
+          ? BigInt(attempt.usage.reasoningTokens)
+          : 0n;
       if (reasoningQty > 0n) {
-        const reasoningRate = ratesMap.get("reasoning_tokens") ?? ratesMap.get("output_tokens");
+        const reasoningRate =
+          ratesMap.get("reasoning_tokens") ?? ratesMap.get("output_tokens");
         if (reasoningRate) {
-          const lineCost = Decimal.fromUnits(reasoningQty, reasoningRate.price, reasoningRate.perUnits);
+          const lineCost = Decimal.fromUnits(
+            reasoningQty,
+            reasoningRate.price,
+            reasoningRate.perUnits,
+          );
           attemptCost = attemptCost.add(lineCost);
           lines.push(
             this.createCostLine({
@@ -244,17 +281,24 @@ export class ProviderCostCalculator {
               amount: lineCost,
               currency,
               source: schedule.source,
-            })
+            }),
           );
         }
       }
 
       // Calculate Search Calls Cost
-      const searchQty = attempt.usage.searchCalls !== undefined ? BigInt(attempt.usage.searchCalls) : 0n;
+      const searchQty =
+        attempt.usage.searchCalls !== undefined
+          ? BigInt(attempt.usage.searchCalls)
+          : 0n;
       if (searchQty > 0n) {
         const searchRate = ratesMap.get("search_calls");
         if (searchRate) {
-          const lineCost = Decimal.fromUnits(searchQty, searchRate.price, searchRate.perUnits);
+          const lineCost = Decimal.fromUnits(
+            searchQty,
+            searchRate.price,
+            searchRate.perUnits,
+          );
           attemptCost = attemptCost.add(lineCost);
           lines.push(
             this.createCostLine({
@@ -273,7 +317,7 @@ export class ProviderCostCalculator {
               amount: lineCost,
               currency,
               source: schedule.source,
-            })
+            }),
           );
         }
       }
@@ -294,7 +338,10 @@ export class ProviderCostCalculator {
       }
     }
 
-    const subtotal = lines.reduce((acc, line) => acc.add(line.amount), Decimal.ZERO);
+    const subtotal = lines.reduce(
+      (acc, line) => acc.add(line.amount),
+      Decimal.ZERO,
+    );
 
     return {
       requestId: params.requestId,

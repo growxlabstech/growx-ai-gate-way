@@ -14,7 +14,10 @@ export class InMemoryInvoiceRepository implements IInvoiceRepository {
   public readonly creditNotes = new Map<string, CreditNote>();
   public readonly documents = new Map<string, InvoiceDocument>(); // key: `${invoiceId}:${version}`
 
-  async getNextSequence(legalEntityId: string, fiscalYear: string): Promise<bigint> {
+  async getNextSequence(
+    legalEntityId: string,
+    fiscalYear: string,
+  ): Promise<bigint> {
     const key = `${legalEntityId}:${fiscalYear}`;
     const current = this.sequences.get(key) ?? 0n;
     const next = current + 1n;
@@ -31,13 +34,17 @@ export class InMemoryInvoiceRepository implements IInvoiceRepository {
     return this.invoices.get(id);
   }
 
-  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
-    return Array.from(this.invoices.values()).find((i) => i.invoiceNumber === invoiceNumber);
+  async getInvoiceByNumber(
+    invoiceNumber: string,
+  ): Promise<Invoice | undefined> {
+    return Array.from(this.invoices.values()).find(
+      (i) => i.invoiceNumber === invoiceNumber,
+    );
   }
 
   async listInvoices(
     organizationId: string,
-    filters?: { status?: InvoiceStatus }
+    filters?: { status?: InvoiceStatus },
   ): Promise<Invoice[]> {
     return Array.from(this.invoices.values())
       .filter((i) => i.organizationId === organizationId)
@@ -53,20 +60,26 @@ export class InMemoryInvoiceRepository implements IInvoiceRepository {
   }
 
   async createPaymentAllocation(
-    allocation: InvoicePaymentAllocation
+    allocation: InvoicePaymentAllocation,
   ): Promise<InvoicePaymentAllocation> {
     this.allocations.set(allocation.id, allocation);
     return allocation;
   }
 
-  async listPaymentAllocations(invoiceId: string): Promise<InvoicePaymentAllocation[]> {
-    return Array.from(this.allocations.values()).filter((a) => a.invoiceId === invoiceId);
+  async listPaymentAllocations(
+    invoiceId: string,
+  ): Promise<InvoicePaymentAllocation[]> {
+    return Array.from(this.allocations.values()).filter(
+      (a) => a.invoiceId === invoiceId,
+    );
   }
 
   async getPaymentAllocationByIdempotencyKey(
-    key: string
+    key: string,
   ): Promise<InvoicePaymentAllocation | undefined> {
-    return Array.from(this.allocations.values()).find((a) => a.idempotencyKey === key);
+    return Array.from(this.allocations.values()).find(
+      (a) => a.idempotencyKey === key,
+    );
   }
 
   async createCreditNote(creditNote: CreditNote): Promise<CreditNote> {
@@ -80,11 +93,14 @@ export class InMemoryInvoiceRepository implements IInvoiceRepository {
 
   async listCreditNotes(organizationId: string): Promise<CreditNote[]> {
     return Array.from(this.creditNotes.values()).filter(
-      (c) => c.organizationId === organizationId
+      (c) => c.organizationId === organizationId,
     );
   }
 
-  async updateCreditNote(id: string, updates: Partial<CreditNote>): Promise<CreditNote> {
+  async updateCreditNote(
+    id: string,
+    updates: Partial<CreditNote>,
+  ): Promise<CreditNote> {
     const existing = this.creditNotes.get(id);
     if (!existing) throw new Error(`Credit note not found: ${id}`);
     const updated = { ...existing, ...updates };
@@ -99,7 +115,7 @@ export class InMemoryInvoiceRepository implements IInvoiceRepository {
 
   async getInvoiceDocument(
     invoiceId: string,
-    version: number = 1
+    version: number = 1,
   ): Promise<InvoiceDocument | undefined> {
     return this.documents.get(`${invoiceId}:${version}`);
   }

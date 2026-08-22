@@ -41,6 +41,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -56,4 +57,10 @@ dist/
 .runtime/
 .codex-runtime/
 .turbo/
+test-results/
+**/test-results/
+.last-run.json
+**/.last-run.json
+.next-*/
+**/.next-*/
 

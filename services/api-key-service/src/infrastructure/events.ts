@@ -18,33 +18,47 @@ export interface LifecycleEvents {
     action: AuditAction,
     record: ApiKeyRecord,
     actorId: string,
-    metadata?: Record<string, unknown> | undefined
+    metadata?: Record<string, unknown> | undefined,
   ): Promise<void>;
   publish(
     eventType: string,
     record: ApiKeyRecord,
     actorId: string,
-    payload?: Record<string, unknown> | undefined
+    payload?: Record<string, unknown> | undefined,
   ): Promise<void>;
   invalidate(apiKeyId: string): Promise<void>;
   securityEvent(
     eventType: string,
     severity: SecuritySeverity,
-    details: Record<string, unknown>
+    details: Record<string, unknown>,
   ): Promise<void>;
 }
 
 export class InMemoryLifecycleEvents implements LifecycleEvents {
-  readonly auditEvents: Array<{ action: AuditAction; record: ApiKeyRecord; actorId: string; metadata?: Record<string, unknown> | undefined }> = [];
-  readonly publishedEvents: Array<{ eventType: string; record: ApiKeyRecord; actorId: string; payload?: Record<string, unknown> | undefined }> = [];
+  readonly auditEvents: Array<{
+    action: AuditAction;
+    record: ApiKeyRecord;
+    actorId: string;
+    metadata?: Record<string, unknown> | undefined;
+  }> = [];
+  readonly publishedEvents: Array<{
+    eventType: string;
+    record: ApiKeyRecord;
+    actorId: string;
+    payload?: Record<string, unknown> | undefined;
+  }> = [];
   readonly invalidatedKeys: string[] = [];
-  readonly securityEvents: Array<{ eventType: string; severity: SecuritySeverity; details: Record<string, unknown> }> = [];
+  readonly securityEvents: Array<{
+    eventType: string;
+    severity: SecuritySeverity;
+    details: Record<string, unknown>;
+  }> = [];
 
   async audit(
     action: AuditAction,
     record: ApiKeyRecord,
     actorId: string,
-    metadata?: Record<string, unknown> | undefined
+    metadata?: Record<string, unknown> | undefined,
   ): Promise<void> {
     this.auditEvents.push({ action, record, actorId, metadata });
   }
@@ -53,7 +67,7 @@ export class InMemoryLifecycleEvents implements LifecycleEvents {
     eventType: string,
     record: ApiKeyRecord,
     actorId: string,
-    payload?: Record<string, unknown> | undefined
+    payload?: Record<string, unknown> | undefined,
   ): Promise<void> {
     this.publishedEvents.push({ eventType, record, actorId, payload });
   }
@@ -65,7 +79,7 @@ export class InMemoryLifecycleEvents implements LifecycleEvents {
   async securityEvent(
     eventType: string,
     severity: SecuritySeverity,
-    details: Record<string, unknown>
+    details: Record<string, unknown>,
   ): Promise<void> {
     this.securityEvents.push({ eventType, severity, details });
   }

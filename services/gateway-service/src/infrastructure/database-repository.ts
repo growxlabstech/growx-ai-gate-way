@@ -38,16 +38,24 @@ export class DatabaseGatewayRepository implements IGatewayRepository {
     });
   }
 
-  async updateRequest(id: string, updates: Partial<GatewayRequestEntity>): Promise<void> {
+  async updateRequest(
+    id: string,
+    updates: Partial<GatewayRequestEntity>,
+  ): Promise<void> {
     const values: Record<string, unknown> = {};
     if (updates.status !== undefined) values.status = updates.status;
-    if (updates.completedAt !== undefined) values.completedAt = updates.completedAt;
+    if (updates.completedAt !== undefined)
+      values.completedAt = updates.completedAt;
     if (updates.latencyMs !== undefined) values.latencyMs = updates.latencyMs;
     if (updates.errorCode !== undefined) values.errorCode = updates.errorCode;
-    if (updates.resolvedModel !== undefined) values.resolvedModel = updates.resolvedModel;
+    if (updates.resolvedModel !== undefined)
+      values.resolvedModel = updates.resolvedModel;
 
     if (Object.keys(values).length > 0) {
-      await this.db.update(gatewayRequests).set(values).where(eq(gatewayRequests.id, id));
+      await this.db
+        .update(gatewayRequests)
+        .set(values)
+        .where(eq(gatewayRequests.id, id));
     }
   }
 
@@ -131,7 +139,12 @@ export class DatabaseGatewayRepository implements IGatewayRepository {
       providerId: attempt.providerId,
       providerModelId: attempt.providerModelId,
       attemptNumber: attempt.attemptNumber,
-      status: attempt.status === "succeeded" ? "completed" : attempt.status === "executing" ? "started" : attempt.status,
+      status:
+        attempt.status === "succeeded"
+          ? "completed"
+          : attempt.status === "executing"
+            ? "started"
+            : attempt.status,
       startedAt: attempt.startedAt,
       firstTokenAt: attempt.firstTokenAt ?? null,
       completedAt: attempt.completedAt,
@@ -141,23 +154,39 @@ export class DatabaseGatewayRepository implements IGatewayRepository {
     });
   }
 
-  async updateAttempt(id: string, updates: Partial<GatewayAttemptEntity>): Promise<void> {
+  async updateAttempt(
+    id: string,
+    updates: Partial<GatewayAttemptEntity>,
+  ): Promise<void> {
     const values: Record<string, unknown> = {};
     if (updates.status !== undefined) {
-      values.status = updates.status === "succeeded" ? "completed" : updates.status === "executing" ? "started" : updates.status;
+      values.status =
+        updates.status === "succeeded"
+          ? "completed"
+          : updates.status === "executing"
+            ? "started"
+            : updates.status;
     }
-    if (updates.firstTokenAt !== undefined) values.firstTokenAt = updates.firstTokenAt;
-    if (updates.completedAt !== undefined) values.completedAt = updates.completedAt;
+    if (updates.firstTokenAt !== undefined)
+      values.firstTokenAt = updates.firstTokenAt;
+    if (updates.completedAt !== undefined)
+      values.completedAt = updates.completedAt;
     if (updates.latencyMs !== undefined) values.latencyMs = updates.latencyMs;
     if (updates.errorCode !== undefined) values.errorCode = updates.errorCode;
-    if (updates.providerRequestId !== undefined) values.providerRequestId = updates.providerRequestId;
+    if (updates.providerRequestId !== undefined)
+      values.providerRequestId = updates.providerRequestId;
 
     if (Object.keys(values).length > 0) {
-      await this.db.update(providerAttempts).set(values).where(eq(providerAttempts.id, id));
+      await this.db
+        .update(providerAttempts)
+        .set(values)
+        .where(eq(providerAttempts.id, id));
     }
   }
 
-  async listAttemptsByRequestId(requestId: string): Promise<GatewayAttemptEntity[]> {
+  async listAttemptsByRequestId(
+    requestId: string,
+  ): Promise<GatewayAttemptEntity[]> {
     const rows = await this.db
       .select()
       .from(providerAttempts)
@@ -171,7 +200,12 @@ export class DatabaseGatewayRepository implements IGatewayRepository {
       routeId: "",
       providerId: r.providerId,
       providerModelId: r.providerModelId,
-      status: r.status === "completed" ? "succeeded" : r.status === "started" ? "executing" : r.status,
+      status:
+        r.status === "completed"
+          ? "succeeded"
+          : r.status === "started"
+            ? "executing"
+            : r.status,
       startedAt: r.startedAt,
       firstTokenAt: r.firstTokenAt,
       completedAt: r.completedAt,
@@ -203,7 +237,12 @@ export class DatabaseGatewayRepository implements IGatewayRepository {
       routeId: "",
       providerId: r.providerId,
       providerModelId: r.providerModelId,
-      status: r.status === "completed" ? "succeeded" : r.status === "started" ? "executing" : r.status,
+      status:
+        r.status === "completed"
+          ? "succeeded"
+          : r.status === "started"
+            ? "executing"
+            : r.status,
       startedAt: r.startedAt,
       firstTokenAt: r.firstTokenAt,
       completedAt: r.completedAt,

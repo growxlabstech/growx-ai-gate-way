@@ -33,18 +33,25 @@ describe("Concurrency & Race Condition Tests", () => {
             completion_tokens: 5,
             total_tokens: 15,
           },
-        })
+        }),
       );
     });
 
-    await new Promise<void>((resolve) => mockServer.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      mockServer.listen(0, "127.0.0.1", resolve),
+    );
     const port = (mockServer.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
     const repository = new InMemoryProviderRepository();
     const events = new InMemoryProviderEvents();
     const crypto = new ProviderCredentialCrypto();
-    const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+    const service = new ProviderService(
+      repository,
+      events,
+      crypto,
+      defaultAdapterRegistry,
+    );
 
     const provider = await service.createProvider(
       {
@@ -53,7 +60,7 @@ describe("Concurrency & Race Condition Tests", () => {
         adapterType: "openai",
         baseUrl,
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const credential = await service.createCredential(
@@ -63,7 +70,7 @@ describe("Concurrency & Race Condition Tests", () => {
         environment: "production",
         rawSecret: "sk-concurrent-test-key",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const route: ResolvedExecutionRoute = {
@@ -101,7 +108,12 @@ describe("Concurrency & Race Condition Tests", () => {
     const repository = new InMemoryProviderRepository();
     const events = new InMemoryProviderEvents();
     const crypto = new ProviderCredentialCrypto();
-    const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+    const service = new ProviderService(
+      repository,
+      events,
+      crypto,
+      defaultAdapterRegistry,
+    );
 
     const provider = await service.createProvider(
       {
@@ -110,7 +122,7 @@ describe("Concurrency & Race Condition Tests", () => {
         adapterType: "anthropic",
         baseUrl: "https://api.anthropic.com",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const credential = await service.createCredential(
@@ -120,7 +132,7 @@ describe("Concurrency & Race Condition Tests", () => {
         environment: "production",
         rawSecret: "sk-ant-rot-init",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const rotations = Array.from({ length: 5 }).map((_, idx) =>
@@ -130,8 +142,8 @@ describe("Concurrency & Race Condition Tests", () => {
           newRawSecret: `sk-ant-rot-${idx}`,
           reason: `Concurrent rotation ${idx}`,
         },
-        `usr_operator_${idx}`
-      )
+        `usr_operator_${idx}`,
+      ),
     );
 
     const results = await Promise.all(rotations);
@@ -139,7 +151,10 @@ describe("Concurrency & Race Condition Tests", () => {
 
     const finalCred = await repository.getCredentialById(credential.id);
     expect(finalCred).not.toBeNull();
-    const decrypted = crypto.decrypt(finalCred!.encryptedPayload, finalCred!.encryptionKeyVersion);
+    const decrypted = crypto.decrypt(
+      finalCred!.encryptedPayload,
+      finalCred!.encryptionKeyVersion,
+    );
     expect(decrypted).toMatch(/^sk-ant-rot-\d$/);
   });
 });

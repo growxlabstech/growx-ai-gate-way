@@ -1,4 +1,8 @@
-import type { CanonicalModelStatus, ProviderRouteStatus, AliasStatus } from "@growx/contracts";
+import type {
+  CanonicalModelStatus,
+  ProviderRouteStatus,
+  AliasStatus,
+} from "@growx/contracts";
 
 export class InvalidStatusTransitionError extends Error {
   constructor(entity: string, from: string, to: string) {
@@ -7,7 +11,10 @@ export class InvalidStatusTransitionError extends Error {
   }
 }
 
-const ALLOWED_MODEL_TRANSITIONS: Record<CanonicalModelStatus, readonly CanonicalModelStatus[]> = {
+const ALLOWED_MODEL_TRANSITIONS: Record<
+  CanonicalModelStatus,
+  readonly CanonicalModelStatus[]
+> = {
   draft: ["active", "disabled", "retired"],
   active: ["deprecated", "disabled", "retired"],
   deprecated: ["active", "retired", "disabled"],
@@ -17,7 +24,7 @@ const ALLOWED_MODEL_TRANSITIONS: Record<CanonicalModelStatus, readonly Canonical
 
 export function validateModelStatusTransition(
   current: CanonicalModelStatus,
-  next: CanonicalModelStatus
+  next: CanonicalModelStatus,
 ): void {
   if (current === next) return;
   const allowed = ALLOWED_MODEL_TRANSITIONS[current] ?? [];
@@ -26,7 +33,10 @@ export function validateModelStatusTransition(
   }
 }
 
-const ALLOWED_ROUTE_TRANSITIONS: Record<ProviderRouteStatus, readonly ProviderRouteStatus[]> = {
+const ALLOWED_ROUTE_TRANSITIONS: Record<
+  ProviderRouteStatus,
+  readonly ProviderRouteStatus[]
+> = {
   active: ["degraded", "disabled", "deprecated", "retired"],
   degraded: ["active", "disabled", "deprecated", "retired"],
   disabled: ["active", "degraded", "retired"],
@@ -36,7 +46,7 @@ const ALLOWED_ROUTE_TRANSITIONS: Record<ProviderRouteStatus, readonly ProviderRo
 
 export function validateRouteStatusTransition(
   current: ProviderRouteStatus,
-  next: ProviderRouteStatus
+  next: ProviderRouteStatus,
 ): void {
   if (current === next) return;
   const allowed = ALLOWED_ROUTE_TRANSITIONS[current] ?? [];
@@ -53,7 +63,7 @@ const ALLOWED_ALIAS_TRANSITIONS: Record<AliasStatus, readonly AliasStatus[]> = {
 
 export function validateAliasStatusTransition(
   current: AliasStatus,
-  next: AliasStatus
+  next: AliasStatus,
 ): void {
   if (current === next) return;
   const allowed = ALLOWED_ALIAS_TRANSITIONS[current] ?? [];

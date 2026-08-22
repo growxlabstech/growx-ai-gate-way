@@ -1,14 +1,42 @@
 import type { UsageAggregate, UsageEvent } from "./types.js";
 
-export function getHourlyBucketRange(date: Date): { start: Date; end: Date; key: string } {
-  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), 0, 0, 0));
+export function getHourlyBucketRange(date: Date): {
+  start: Date;
+  end: Date;
+  key: string;
+} {
+  const start = new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      0,
+      0,
+      0,
+    ),
+  );
   const end = new Date(start.getTime() + 60 * 60 * 1000 - 1);
   const key = `h_${start.toISOString()}`;
   return { start, end, key };
 }
 
-export function getDailyBucketRange(date: Date): { start: Date; end: Date; key: string } {
-  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+export function getDailyBucketRange(date: Date): {
+  start: Date;
+  end: Date;
+  key: string;
+} {
+  const start = new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      0,
+      0,
+      0,
+      0,
+    ),
+  );
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
   const key = `d_${start.toISOString()}`;
   return { start, end, key };
@@ -21,7 +49,7 @@ export function computeAggregateKey(
   workspaceId: string,
   apiKeyId?: string,
   modelId?: string,
-  providerId?: string
+  providerId?: string,
 ): string {
   return `${bucket}:${bucketStart.toISOString()}:${orgId}:${workspaceId}:${apiKeyId ?? "all"}:${modelId ?? "all"}:${providerId ?? "all"}`;
 }
@@ -30,7 +58,10 @@ export class UsageAggregateProjector {
   /**
    * Applies an immutable UsageEvent to an existing or new aggregate.
    */
-  public projectEvent(aggregate: UsageAggregate, event: UsageEvent): UsageAggregate {
+  public projectEvent(
+    aggregate: UsageAggregate,
+    event: UsageEvent,
+  ): UsageAggregate {
     const qty = event.quantity;
 
     let inputTokens = aggregate.inputTokens;
@@ -73,7 +104,9 @@ export class UsageAggregateProjector {
   /**
    * Rebuilds aggregate map in memory from a collection of raw immutable events.
    */
-  public rebuildAggregates(events: readonly UsageEvent[]): Map<string, UsageAggregate> {
+  public rebuildAggregates(
+    events: readonly UsageEvent[],
+  ): Map<string, UsageAggregate> {
     const aggregates = new Map<string, UsageAggregate>();
 
     for (const event of events) {
@@ -86,7 +119,7 @@ export class UsageAggregateProjector {
         event.workspaceId,
         event.apiKeyId,
         event.canonicalModelId,
-        event.providerId
+        event.providerId,
       );
 
       let hourlyAgg = aggregates.get(hourlyKey);
@@ -124,7 +157,7 @@ export class UsageAggregateProjector {
         event.workspaceId,
         event.apiKeyId,
         event.canonicalModelId,
-        event.providerId
+        event.providerId,
       );
 
       let dailyAgg = aggregates.get(dailyKey);

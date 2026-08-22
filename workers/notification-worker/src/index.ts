@@ -20,7 +20,11 @@ export class NotificationWorker {
 
   constructor(private readonly options: NotificationWorkerOptions) {}
 
-  async runOnce(): Promise<{ delivered: number; retried: number; failed: number }> {
+  async runOnce(): Promise<{
+    delivered: number;
+    retried: number;
+    failed: number;
+  }> {
     const deliveryResult = await this.options.deliveryService.processBatch({
       batchSize: this.options.batchSize ?? 10,
       leaseDurationMs: this.options.leaseDurationMs ?? 30_000,

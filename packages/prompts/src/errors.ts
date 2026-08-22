@@ -3,7 +3,7 @@ export class PromptError extends Error {
     public readonly code: string,
     message: string,
     public readonly statusCode = 400,
-    public readonly details?: Record<string, unknown> | undefined
+    public readonly details?: Record<string, unknown> | undefined,
   ) {
     super(message);
     this.name = "PromptError";

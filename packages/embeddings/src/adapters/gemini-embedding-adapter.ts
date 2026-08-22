@@ -36,12 +36,12 @@ export class GeminiEmbeddingAdapter implements ProviderEmbeddingAdapter {
   public parseResponse(
     rawResponse: unknown,
     request: NormalizedEmbeddingRequest,
-    dimensions: number
+    dimensions: number,
   ): NormalizedEmbeddingResponse {
     if (!rawResponse || typeof rawResponse !== "object") {
       throw new EmbeddingProviderInvalidResponseError(
         "GEMINI_MALFORMED_RESPONSE",
-        "Gemini response is not a valid object"
+        "Gemini response is not a valid object",
       );
     }
 
@@ -50,7 +50,7 @@ export class GeminiEmbeddingAdapter implements ProviderEmbeddingAdapter {
     if (!Array.isArray(embeddingsList)) {
       throw new EmbeddingProviderInvalidResponseError(
         "GEMINI_MISSING_EMBEDDINGS",
-        "Gemini response missing embeddings array"
+        "Gemini response missing embeddings array",
       );
     }
 
@@ -63,7 +63,13 @@ export class GeminiEmbeddingAdapter implements ProviderEmbeddingAdapter {
     });
 
     // Approximate tokens if not reported
-    const promptTokens = Math.max(request.inputs.reduce((acc: number, str: string) => acc + Math.ceil(str.length / 4), 0), 1);
+    const promptTokens = Math.max(
+      request.inputs.reduce(
+        (acc: number, str: string) => acc + Math.ceil(str.length / 4),
+        0,
+      ),
+      1,
+    );
 
     return {
       model: request.canonicalModelId,

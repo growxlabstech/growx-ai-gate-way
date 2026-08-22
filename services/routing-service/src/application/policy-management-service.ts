@@ -10,12 +10,12 @@ import type { RoutingStateSnapshotService } from "./routing-state-snapshot-servi
 export class PolicyManagementService {
   constructor(
     private readonly snapshotService: RoutingStateSnapshotService,
-    private readonly auditService?: any | undefined
+    private readonly auditService?: any | undefined,
   ) {}
 
   public async createPolicy(
     auth: MachineAuthContext,
-    request: CreateRoutingPolicyRequest
+    request: CreateRoutingPolicyRequest,
   ): Promise<RoutingPolicyV2> {
     const id = generateId("rpol");
     const now = new Date();
@@ -60,18 +60,23 @@ export class PolicyManagementService {
     return policy;
   }
 
-  public async getPolicy(_auth: MachineAuthContext, id: string): Promise<RoutingPolicyV2 | null> {
+  public async getPolicy(
+    _auth: MachineAuthContext,
+    id: string,
+  ): Promise<RoutingPolicyV2 | null> {
     return this.snapshotService.getPolicy(id) ?? null;
   }
 
-  public async listPolicies(_auth: MachineAuthContext): Promise<RoutingPolicyV2[]> {
+  public async listPolicies(
+    _auth: MachineAuthContext,
+  ): Promise<RoutingPolicyV2[]> {
     return this.snapshotService.listPolicies();
   }
 
   public async updatePolicy(
     auth: MachineAuthContext,
     id: string,
-    request: UpdateRoutingPolicyRequest
+    request: UpdateRoutingPolicyRequest,
   ): Promise<RoutingPolicyV2> {
     const existing = this.snapshotService.getPolicy(id);
     if (!existing) {
@@ -104,11 +109,17 @@ export class PolicyManagementService {
     return updated;
   }
 
-  public async activatePolicy(auth: MachineAuthContext, id: string): Promise<RoutingPolicyV2> {
+  public async activatePolicy(
+    auth: MachineAuthContext,
+    id: string,
+  ): Promise<RoutingPolicyV2> {
     return this.updatePolicy(auth, id, { status: "active" });
   }
 
-  public async retirePolicy(auth: MachineAuthContext, id: string): Promise<RoutingPolicyV2> {
+  public async retirePolicy(
+    auth: MachineAuthContext,
+    id: string,
+  ): Promise<RoutingPolicyV2> {
     return this.updatePolicy(auth, id, { status: "retired" });
   }
 }

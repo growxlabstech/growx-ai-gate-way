@@ -1,9 +1,9 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
 import {
-  CreditService,
-  InMemoryCreditRepository,
-} from "@growx/credit-service";
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
+import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
 import {
   CustomerPriceCalculator,
   CustomerPricingResolver,
@@ -22,9 +22,8 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
 
     // Replace the creditService and customerPriceCalculator on the fixture's gatewayEngine
     (fixture.gatewayEngine as any).creditService = creditService;
-    (fixture.gatewayEngine as any).customerPriceCalculator = new CustomerPriceCalculator(
-      new CustomerPricingResolver()
-    );
+    (fixture.gatewayEngine as any).customerPriceCalculator =
+      new CustomerPriceCalculator(new CustomerPricingResolver());
     (fixture.gatewayEngine as any).billingEnabled = true;
   });
 
@@ -57,12 +56,17 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
       sourceId: "ord_100",
     });
 
-    const response = await fixture.gatewayEngine.executeChatCompletion(auth as any, {
-      model: "openai/gpt-4o-mini",
-      messages: [{ role: "user", content: "Hello world" }],
-    } as any);
+    const response = await fixture.gatewayEngine.executeChatCompletion(
+      auth as any,
+      {
+        model: "openai/gpt-4o-mini",
+        messages: [{ role: "user", content: "Hello world" }],
+      } as any,
+    );
 
-    expect(response.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    expect(response.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
 
     const wallet = await creditService.getOrCreateWallet(apiKey.organizationId);
     const balance = await creditService.getWalletBalance(wallet.id);
@@ -95,10 +99,13 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
     };
 
     await expect(
-      fixture.gatewayEngine.executeChatCompletion(auth as any, {
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "Hello without money" }],
-      } as any)
+      fixture.gatewayEngine.executeChatCompletion(
+        auth as any,
+        {
+          model: "openai/gpt-4o-mini",
+          messages: [{ role: "user", content: "Hello without money" }],
+        } as any,
+      ),
     ).rejects.toMatchObject({
       status: 402,
       code: "insufficient_credits",
@@ -137,10 +144,13 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
     await creditService.freezeWallet(wallet.id);
 
     await expect(
-      fixture.gatewayEngine.executeChatCompletion(auth as any, {
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "Hello frozen" }],
-      } as any)
+      fixture.gatewayEngine.executeChatCompletion(
+        auth as any,
+        {
+          model: "openai/gpt-4o-mini",
+          messages: [{ role: "user", content: "Hello frozen" }],
+        } as any,
+      ),
     ).rejects.toMatchObject({
       status: 403,
       code: "wallet_frozen",
@@ -192,10 +202,13 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
     });
 
     await expect(
-      fixture.gatewayEngine.executeChatCompletion(auth as any, {
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "Hello budget" }],
-      } as any)
+      fixture.gatewayEngine.executeChatCompletion(
+        auth as any,
+        {
+          model: "openai/gpt-4o-mini",
+          messages: [{ role: "user", content: "Hello budget" }],
+        } as any,
+      ),
     ).rejects.toMatchObject({
       status: 402,
       code: "budget_exceeded",
@@ -235,10 +248,13 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
     };
 
     await expect(
-      fixture.gatewayEngine.executeChatCompletion(auth as any, {
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "Will fail" }],
-      } as any)
+      fixture.gatewayEngine.executeChatCompletion(
+        auth as any,
+        {
+          model: "openai/gpt-4o-mini",
+          messages: [{ role: "user", content: "Will fail" }],
+        } as any,
+      ),
     ).rejects.toThrow();
 
     const wallet = await creditService.getOrCreateWallet(apiKey.organizationId);
@@ -278,10 +294,13 @@ describe("Phase 17 — Billing Pre-Authorization & Credit Settlement Gateway Int
     });
 
     const chunks: any[] = [];
-    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(auth as any, {
-      model: "openai/gpt-4o-mini",
-      messages: [{ role: "user", content: "Stream me" }],
-    } as any)) {
+    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(
+      auth as any,
+      {
+        model: "openai/gpt-4o-mini",
+        messages: [{ role: "user", content: "Stream me" }],
+      } as any,
+    )) {
       chunks.push(chunk);
     }
 

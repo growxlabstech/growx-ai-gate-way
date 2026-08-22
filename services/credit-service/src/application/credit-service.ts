@@ -30,7 +30,9 @@ import type {
 export class CreditService {
   constructor(
     private readonly repository: ICreditRepository,
-    private readonly idGenerator: (prefix: string) => string = (p) => createPublicId(p as any) || `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    private readonly idGenerator: (prefix: string) => string = (p) =>
+      createPublicId(p as any) ||
+      `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   ) {}
 
   /**
@@ -39,9 +41,12 @@ export class CreditService {
   async getOrCreateWallet(
     organizationId: string,
     currency: string = "USD",
-    repo: ICreditRepository = this.repository
+    repo: ICreditRepository = this.repository,
   ): Promise<Wallet> {
-    const existing = await repo.getWalletByOrganization(organizationId, currency);
+    const existing = await repo.getWalletByOrganization(
+      organizationId,
+      currency,
+    );
     if (existing) {
       return existing;
     }
@@ -79,7 +84,7 @@ export class CreditService {
    */
   async getWalletBalance(
     walletId: string,
-    repo: ICreditRepository = this.repository
+    repo: ICreditRepository = this.repository,
   ): Promise<WalletBalance> {
     const b = await repo.getWalletBalance(walletId);
     if (!b) {
@@ -99,7 +104,13 @@ export class CreditService {
   /**
    * Grants credits to an organization's wallet.
    */
-  async grantCredits(params: GrantCreditsParams): Promise<{ lot: CreditLot; ledgerEntry: WalletLedgerEntry; balance: WalletBalance }> {
+  async grantCredits(
+    params: GrantCreditsParams,
+  ): Promise<{
+    lot: CreditLot;
+    ledgerEntry: WalletLedgerEntry;
+    balance: WalletBalance;
+  }> {
     const amount = Decimal.from(params.amount);
     if (amount.lte(Decimal.ZERO)) {
       throw new Error("Credit grant amount must be positive");
@@ -108,14 +119,21 @@ export class CreditService {
     const currency = params.currency ?? "USD";
 
     return this.repository.withTransaction(async (tx) => {
-      const wallet = await this.getOrCreateWallet(params.organizationId, currency, tx);
+      const wallet = await this.getOrCreateWallet(
+        params.organizationId,
+        currency,
+        tx,
+      );
       if (wallet.status === "closed") {
         throw new Error(`Cannot grant credits to closed wallet ${wallet.id}`);
       }
 
       // Check idempotency
       if (params.idempotencyKey) {
-        const existingEntry = await tx.getLedgerEntryByIdempotencyKey(wallet.id, params.idempotencyKey);
+        const existingEntry = await tx.getLedgerEntryByIdempotencyKey(
+          wallet.id,
+          params.idempotencyKey,
+        );
         if (existingEntry) {
           const lot = await tx.getCreditLotById(existingEntry.referenceId);
           const balance = (await tx.getWalletBalance(wallet.id))!;
@@ -199,7 +217,9 @@ export class CreditService {
   /**
    * Pre-authorizes and reserves credits before gateway execution.
    */
-  async authorizeBilling(params: AuthorizeBillingParams): Promise<BillingAuthorizationResult> {
+  async authorizeBilling(
+    params: AuthorizeBillingParams,
+  ): Promise<BillingAuthorizationResult> {
     const estimatedPrice = Decimal.from(params.estimatedPrice);
     const currency = params.currency ?? "USD";
     const now = new Date();
@@ -209,7 +229,8 @@ export class CreditService {
       const existingRes = await tx.getReservationByRequestId(params.requestId);
       if (existingRes) {
         return {
-          authorized: existingRes.status === "active" || existingRes.status === "settled",
+          authorized:
+            existingRes.status === "active" || existingRes.status === "settled",
           decision: "AUTHORIZED",
           reservationId: existingRes.id,
           estimatedPrice: existingRes.estimatedAmount,
@@ -218,7 +239,11 @@ export class CreditService {
         };
       }
 
-      const wallet = await this.getOrCreateWallet(params.organizationId, currency, tx);
+      const wallet = await this.getOrCreateWallet(
+        params.organizationId,
+        currency,
+        tx,
+      );
 
       // 2. Check Wallet Status
       if (wallet.status !== "active") {
@@ -250,7 +275,9 @@ export class CreditService {
       // 3. Check Workspace Budget
       const budget = await tx.getWorkspaceBudget(params.workspaceId, "monthly");
       if (budget && budget.enabled) {
-        const potentialSpend = budget.spentInPeriod.add(budget.reservedInPeriod).add(estimatedPrice);
+        const potentialSpend = budget.spentInPeriod
+          .add(budget.reservedInPeriod)
+          .add(estimatedPrice);
         if (potentialSpend.gt(budget.hardLimit)) {
           const record: BillingAuthorizationRecord = {
             id: this.idGenerator("auth"),
@@ -290,7 +317,8 @@ export class CreditService {
           reason: "Zero cost request authorized without reservation",
           estimatedPrice: Decimal.ZERO,
           requiredReservation: Decimal.ZERO,
-          availableAtDecision: (await tx.getWalletBalance(wallet.id))?.available ?? Decimal.ZERO,
+          availableAtDecision:
+            (await tx.getWalletBalance(wallet.id))?.available ?? Decimal.ZERO,
           currency,
           pricingPolicyVersion: params.pricingPolicyVersion,
           createdAt: now,
@@ -347,7 +375,12 @@ export class CreditService {
       // 6. Allocate Credit Lots
       const activeLots = await tx.getActiveCreditLots(wallet.id);
       const reservationId = this.idGenerator("res");
-      const allocationResult = allocateCreditLots(activeLots, estimatedPrice, reservationId, now);
+      const allocationResult = allocateCreditLots(
+        activeLots,
+        estimatedPrice,
+        reservationId,
+        now,
+      );
 
       await tx.saveCreditLots(allocationResult.updatedLots);
       await tx.saveReservationAllocations(allocationResult.allocations);
@@ -454,7 +487,9 @@ export class CreditService {
   /**
    * Settles a credit reservation after gateway execution with final customer cost.
    */
-  async settleReservation(params: SettleReservationParams): Promise<SettlementResult> {
+  async settleReservation(
+    params: SettleReservationParams,
+  ): Promise<SettlementResult> {
     const finalPrice = Decimal.from(params.finalCustomerPrice);
     const now = new Date();
 
@@ -498,7 +533,9 @@ export class CreditService {
           if (!lot) continue;
 
           const allocAmount = alloc.allocatedAmount;
-          const lotConsume = allocAmount.lt(remainingToConsume) ? allocAmount : remainingToConsume;
+          const lotConsume = allocAmount.lt(remainingToConsume)
+            ? allocAmount
+            : remainingToConsume;
           const lotRelease = allocAmount.sub(lotConsume);
 
           alloc.consumedAmount = lotConsume;
@@ -530,7 +567,10 @@ export class CreditService {
         await tx.saveWalletBalance(newBalance);
 
         // Update Workspace Budget
-        const budget = await tx.getWorkspaceBudget(reservation.workspaceId, "monthly");
+        const budget = await tx.getWorkspaceBudget(
+          reservation.workspaceId,
+          "monthly",
+        );
         if (budget && budget.enabled) {
           budget.reservedInPeriod = budget.reservedInPeriod.sub(reservedAmount);
           budget.spentInPeriod = budget.spentInPeriod.add(consumedAmount);
@@ -644,7 +684,10 @@ export class CreditService {
               reserved: newBalance.reserved,
               total: newBalance.total,
             },
-            metadata: { requestId: reservation.requestId, overage: overageAmount.toString() },
+            metadata: {
+              requestId: reservation.requestId,
+              overage: overageAmount.toString(),
+            },
             createdAt: now,
           });
         } else {
@@ -698,7 +741,10 @@ export class CreditService {
               reserved: newBalance.reserved,
               total: newBalance.total,
             },
-            metadata: { requestId: reservation.requestId, shortfall: shortfallAmount.toString() },
+            metadata: {
+              requestId: reservation.requestId,
+              shortfall: shortfallAmount.toString(),
+            },
             createdAt: now,
           });
         }
@@ -722,7 +768,9 @@ export class CreditService {
   /**
    * Releases an unconsumed reservation (e.g. on execution error, policy failure, or 0 billable usage).
    */
-  async releaseReservation(params: ReleaseReservationParams): Promise<CreditReservation> {
+  async releaseReservation(
+    params: ReleaseReservationParams,
+  ): Promise<CreditReservation> {
     const now = new Date();
 
     return this.repository.withTransaction(async (tx) => {
@@ -736,7 +784,9 @@ export class CreditService {
       }
 
       if (reservation.status !== "active") {
-        throw new Error(`Cannot release reservation with status ${reservation.status}`);
+        throw new Error(
+          `Cannot release reservation with status ${reservation.status}`,
+        );
       }
 
       const reservedAmount = reservation.reservedAmount;
@@ -774,7 +824,10 @@ export class CreditService {
       await tx.saveWalletBalance(newBalance);
 
       // Update Budget
-      const budget = await tx.getWorkspaceBudget(reservation.workspaceId, "monthly");
+      const budget = await tx.getWorkspaceBudget(
+        reservation.workspaceId,
+        "monthly",
+      );
       if (budget && budget.enabled) {
         budget.reservedInPeriod = budget.reservedInPeriod.sub(reservedAmount);
         budget.updatedAt = now;
@@ -820,7 +873,11 @@ export class CreditService {
     const currency = params.currency ?? "USD";
 
     return this.repository.withTransaction(async (tx) => {
-      const wallet = await this.getOrCreateWallet(params.organizationId, currency, tx);
+      const wallet = await this.getOrCreateWallet(
+        params.organizationId,
+        currency,
+        tx,
+      );
       const now = new Date();
 
       const lot: CreditLot = {
@@ -883,12 +940,18 @@ export class CreditService {
   /**
    * Applies an authoritative manual adjustment (requires JIT capability).
    */
-  async applyAdjustment(params: ApplyAdjustmentParams): Promise<WalletAdjustmentRecord> {
+  async applyAdjustment(
+    params: ApplyAdjustmentParams,
+  ): Promise<WalletAdjustmentRecord> {
     const amount = Decimal.from(params.amount);
     const currency = params.currency ?? "USD";
 
     return this.repository.withTransaction(async (tx) => {
-      const wallet = await this.getOrCreateWallet(params.organizationId, currency, tx);
+      const wallet = await this.getOrCreateWallet(
+        params.organizationId,
+        currency,
+        tx,
+      );
       const currentBalance = (await tx.getWalletBalance(wallet.id))!;
       const now = new Date();
 
@@ -917,7 +980,9 @@ export class CreditService {
         await tx.saveCreditLot(lot);
       } else {
         if (currentBalance.available.lt(amount) && !wallet.allowNegative) {
-          throw new Error(`Cannot debit adjustment: available balance ${currentBalance.available.toString()} is less than ${amount.toString()}`);
+          throw new Error(
+            `Cannot debit adjustment: available balance ${currentBalance.available.toString()} is less than ${amount.toString()}`,
+          );
         }
         newAvailable = newAvailable.sub(amount);
         newTotal = newTotal.sub(amount);
@@ -933,7 +998,10 @@ export class CreditService {
       };
       await tx.saveWalletBalance(newBalance);
 
-      const entryType = params.direction === "credit" ? "adjustment_credit" : "adjustment_debit";
+      const entryType =
+        params.direction === "credit"
+          ? "adjustment_credit"
+          : "adjustment_debit";
       const ledgerEntryId = this.idGenerator("led");
       const ledgerEntry: WalletLedgerEntry = {
         id: ledgerEntryId,
@@ -952,7 +1020,11 @@ export class CreditService {
           reserved: newBalance.reserved,
           total: newBalance.total,
         },
-        metadata: { reason: params.reason, createdBy: params.createdBy, jitGrantId: params.jitGrantId },
+        metadata: {
+          reason: params.reason,
+          createdBy: params.createdBy,
+          jitGrantId: params.jitGrantId,
+        },
         createdAt: now,
       };
       await tx.appendLedgerEntry(ledgerEntry);
@@ -994,7 +1066,9 @@ export class CreditService {
   /**
    * Rebuilds materialized balance from scratch by replaying immutable ledger entries.
    */
-  async rebuildBalance(walletId: string): Promise<{ balance: WalletBalance; discrepancies: string[] }> {
+  async rebuildBalance(
+    walletId: string,
+  ): Promise<{ balance: WalletBalance; discrepancies: string[] }> {
     const entries = await this.repository.listLedgerEntries(walletId, 100000);
     const rebuilt = calculateBalanceFromLedger(entries, walletId);
 
@@ -1024,7 +1098,10 @@ export class CreditService {
   /**
    * Retrieves workspace budget.
    */
-  async getWorkspaceBudget(workspaceId: string, period: WorkspaceBudget["period"] = "monthly"): Promise<WorkspaceBudget | null> {
+  async getWorkspaceBudget(
+    workspaceId: string,
+    period: WorkspaceBudget["period"] = "monthly",
+  ): Promise<WorkspaceBudget | null> {
     return this.repository.getWorkspaceBudget(workspaceId, period);
   }
 }

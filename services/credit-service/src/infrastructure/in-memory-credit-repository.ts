@@ -34,7 +34,10 @@ export class InMemoryCreditRepository implements ICreditRepository {
     return w ? { ...w } : null;
   }
 
-  async getWalletByOrganization(organizationId: string, currency: string = "USD"): Promise<Wallet | null> {
+  async getWalletByOrganization(
+    organizationId: string,
+    currency: string = "USD",
+  ): Promise<Wallet | null> {
     for (const w of this.wallets.values()) {
       if (w.organizationId === organizationId && w.currency === currency) {
         return { ...w };
@@ -49,7 +52,10 @@ export class InMemoryCreditRepository implements ICreditRepository {
     return { ...clone };
   }
 
-  async updateWalletStatus(walletId: string, status: WalletStatus): Promise<void> {
+  async updateWalletStatus(
+    walletId: string,
+    status: WalletStatus,
+  ): Promise<void> {
     const w = this.wallets.get(walletId);
     if (w) {
       w.status = status;
@@ -72,17 +78,26 @@ export class InMemoryCreditRepository implements ICreditRepository {
     this.ledgerEntries.set(entry.walletId, entries);
   }
 
-  async listLedgerEntries(walletId: string, limit: number = 50, beforeSequence?: bigint): Promise<WalletLedgerEntry[]> {
+  async listLedgerEntries(
+    walletId: string,
+    limit: number = 50,
+    beforeSequence?: bigint,
+  ): Promise<WalletLedgerEntry[]> {
     const entries = this.ledgerEntries.get(walletId) ?? [];
     let filtered = entries;
     if (beforeSequence !== undefined) {
       filtered = entries.filter((e) => e.sequence < beforeSequence);
     }
-    const sorted = [...filtered].sort((a, b) => (a.sequence > b.sequence ? -1 : 1));
+    const sorted = [...filtered].sort((a, b) =>
+      a.sequence > b.sequence ? -1 : 1,
+    );
     return sorted.slice(0, limit).map((e) => ({ ...e }));
   }
 
-  async getLedgerEntryByIdempotencyKey(walletId: string, idempotencyKey: string): Promise<WalletLedgerEntry | null> {
+  async getLedgerEntryByIdempotencyKey(
+    walletId: string,
+    idempotencyKey: string,
+  ): Promise<WalletLedgerEntry | null> {
     const entries = this.ledgerEntries.get(walletId) ?? [];
     const found = entries.find((e) => e.idempotencyKey === idempotencyKey);
     return found ? { ...found } : null;
@@ -93,7 +108,10 @@ export class InMemoryCreditRepository implements ICreditRepository {
     const now = Date.now();
     for (const lot of this.creditLots.values()) {
       if (lot.walletId === walletId) {
-        const isUnexpired = lot.expiresAt === null || lot.expiresAt === undefined || lot.expiresAt.getTime() > now;
+        const isUnexpired =
+          lot.expiresAt === null ||
+          lot.expiresAt === undefined ||
+          lot.expiresAt.getTime() > now;
         const hasRemaining = lot.remainingAmount.gt(Decimal.ZERO);
         if (isUnexpired && hasRemaining) {
           results.push({ ...lot });
@@ -118,12 +136,16 @@ export class InMemoryCreditRepository implements ICreditRepository {
     }
   }
 
-  async getReservationById(reservationId: string): Promise<CreditReservation | null> {
+  async getReservationById(
+    reservationId: string,
+  ): Promise<CreditReservation | null> {
     const r = this.reservations.get(reservationId);
     return r ? { ...r } : null;
   }
 
-  async getReservationByRequestId(requestId: string): Promise<CreditReservation | null> {
+  async getReservationByRequestId(
+    requestId: string,
+  ): Promise<CreditReservation | null> {
     for (const r of this.reservations.values()) {
       if (r.requestId === requestId) {
         return { ...r };
@@ -136,7 +158,9 @@ export class InMemoryCreditRepository implements ICreditRepository {
     this.reservations.set(reservation.id, { ...reservation });
   }
 
-  async saveReservationAllocations(allocations: ReservationAllocation[]): Promise<void> {
+  async saveReservationAllocations(
+    allocations: ReservationAllocation[],
+  ): Promise<void> {
     for (const alloc of allocations) {
       const existing = this.allocations.get(alloc.reservationId) ?? [];
       const idx = existing.findIndex((a) => a.id === alloc.id);
@@ -149,12 +173,17 @@ export class InMemoryCreditRepository implements ICreditRepository {
     }
   }
 
-  async getReservationAllocations(reservationId: string): Promise<ReservationAllocation[]> {
+  async getReservationAllocations(
+    reservationId: string,
+  ): Promise<ReservationAllocation[]> {
     const allocs = this.allocations.get(reservationId) ?? [];
     return allocs.map((a) => ({ ...a }));
   }
 
-  async getWorkspaceBudget(workspaceId: string, period: BudgetPeriod = "monthly"): Promise<WorkspaceBudget | null> {
+  async getWorkspaceBudget(
+    workspaceId: string,
+    period: BudgetPeriod = "monthly",
+  ): Promise<WorkspaceBudget | null> {
     const key = `${workspaceId}:${period}`;
     const b = this.workspaceBudgets.get(key);
     return b ? { ...b } : null;
@@ -165,16 +194,22 @@ export class InMemoryCreditRepository implements ICreditRepository {
     this.workspaceBudgets.set(key, { ...budget });
   }
 
-  async saveBillingAuthorizationRecord(record: BillingAuthorizationRecord): Promise<void> {
+  async saveBillingAuthorizationRecord(
+    record: BillingAuthorizationRecord,
+  ): Promise<void> {
     this.billingAuthRecords.set(record.requestId, { ...record });
   }
 
-  async getBillingAuthorizationByRequestId(requestId: string): Promise<BillingAuthorizationRecord | null> {
+  async getBillingAuthorizationByRequestId(
+    requestId: string,
+  ): Promise<BillingAuthorizationRecord | null> {
     const r = this.billingAuthRecords.get(requestId);
     return r ? { ...r } : null;
   }
 
-  async saveSettlementShortfall(record: SettlementShortfallRecord): Promise<void> {
+  async saveSettlementShortfall(
+    record: SettlementShortfallRecord,
+  ): Promise<void> {
     this.settlementShortfalls.set(record.id, { ...record });
   }
 
@@ -187,7 +222,11 @@ export class InMemoryCreditRepository implements ICreditRepository {
   async listExpiredCreditLots(now: Date = new Date()): Promise<CreditLot[]> {
     const results: CreditLot[] = [];
     for (const lot of this.creditLots.values()) {
-      if (lot.expiresAt && lot.expiresAt.getTime() <= now.getTime() && lot.remainingAmount.gt(Decimal.ZERO)) {
+      if (
+        lot.expiresAt &&
+        lot.expiresAt.getTime() <= now.getTime() &&
+        lot.remainingAmount.gt(Decimal.ZERO)
+      ) {
         results.push({ ...lot });
       }
     }
@@ -207,7 +246,9 @@ export class InMemoryCreditRepository implements ICreditRepository {
   /**
    * Executes a transaction block for in-memory testing.
    */
-  async withTransaction<T>(fn: (txRepo: ICreditRepository) => Promise<T>): Promise<T> {
+  async withTransaction<T>(
+    fn: (txRepo: ICreditRepository) => Promise<T>,
+  ): Promise<T> {
     return fn(this);
   }
 }

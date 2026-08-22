@@ -18,11 +18,13 @@ import type {
 export class InMemoryAuditRepository implements IAuditRepository {
   public readonly auditEvents: Map<string, AuditEvent> = new Map();
   public readonly chainHeads: Map<string, AuditChainHead> = new Map();
-  public readonly checkpoints: Map<string, AuditIntegrityCheckpoint[]> = new Map();
+  public readonly checkpoints: Map<string, AuditIntegrityCheckpoint[]> =
+    new Map();
 
   public readonly securityEvents: Map<string, SecurityEvent> = new Map();
   public readonly securitySignals: Map<string, SecuritySignal> = new Map();
-  public readonly detectionRules: Map<string, SecurityDetectionRule> = new Map();
+  public readonly detectionRules: Map<string, SecurityDetectionRule> =
+    new Map();
   public readonly securityCases: Map<string, SecurityCase> = new Map();
 
   constructor() {
@@ -48,7 +50,9 @@ export class InMemoryAuditRepository implements IAuditRepository {
       results = results.filter((e) => e.chainScope === params.chainScope);
     }
     if (params.organizationId) {
-      results = results.filter((e) => e.organizationId === params.organizationId);
+      results = results.filter(
+        (e) => e.organizationId === params.organizationId,
+      );
     }
     if (params.workspaceId) {
       results = results.filter((e) => e.workspaceId === params.workspaceId);
@@ -104,7 +108,7 @@ export class InMemoryAuditRepository implements IAuditRepository {
   }
 
   async createCheckpoint(
-    checkpoint: AuditIntegrityCheckpoint
+    checkpoint: AuditIntegrityCheckpoint,
   ): Promise<AuditIntegrityCheckpoint> {
     const list = this.checkpoints.get(checkpoint.chainScope) ?? [];
     list.push(checkpoint);
@@ -112,7 +116,9 @@ export class InMemoryAuditRepository implements IAuditRepository {
     return checkpoint;
   }
 
-  async listCheckpoints(chainScope: string): Promise<AuditIntegrityCheckpoint[]> {
+  async listCheckpoints(
+    chainScope: string,
+  ): Promise<AuditIntegrityCheckpoint[]> {
     return this.checkpoints.get(chainScope) ?? [];
   }
 
@@ -126,11 +132,15 @@ export class InMemoryAuditRepository implements IAuditRepository {
     return this.securityEvents.get(id);
   }
 
-  async listSecurityEvents(params: ListSecurityEventsParams): Promise<SecurityEvent[]> {
+  async listSecurityEvents(
+    params: ListSecurityEventsParams,
+  ): Promise<SecurityEvent[]> {
     let results = Array.from(this.securityEvents.values());
 
     if (params.organizationId) {
-      results = results.filter((e) => e.organizationId === params.organizationId);
+      results = results.filter(
+        (e) => e.organizationId === params.organizationId,
+      );
     }
     if (params.workspaceId) {
       results = results.filter((e) => e.workspaceId === params.workspaceId);
@@ -180,7 +190,7 @@ export class InMemoryAuditRepository implements IAuditRepository {
   }
 
   async getSecuritySignalByFingerprint(
-    fingerprint: string
+    fingerprint: string,
   ): Promise<SecuritySignal | undefined> {
     for (const s of this.securitySignals.values()) {
       if (s.fingerprint === fingerprint) return s;
@@ -190,7 +200,7 @@ export class InMemoryAuditRepository implements IAuditRepository {
 
   async updateSecuritySignal(
     id: string,
-    updates: Partial<SecuritySignal>
+    updates: Partial<SecuritySignal>,
   ): Promise<SecuritySignal> {
     const existing = this.securitySignals.get(id);
     if (!existing) throw new Error(`Security signal not found: ${id}`);
@@ -199,11 +209,15 @@ export class InMemoryAuditRepository implements IAuditRepository {
     return updated;
   }
 
-  async listSecuritySignals(params: ListSecuritySignalsParams): Promise<SecuritySignal[]> {
+  async listSecuritySignals(
+    params: ListSecuritySignalsParams,
+  ): Promise<SecuritySignal[]> {
     let results = Array.from(this.securitySignals.values());
 
     if (params.organizationId) {
-      results = results.filter((s) => s.organizationId === params.organizationId);
+      results = results.filter(
+        (s) => s.organizationId === params.organizationId,
+      );
     }
     if (params.severity) {
       results = results.filter((s) => s.severity === params.severity);
@@ -248,7 +262,9 @@ export class InMemoryAuditRepository implements IAuditRepository {
   }): Promise<SecurityCase[]> {
     let results = Array.from(this.securityCases.values());
     if (params.organizationId) {
-      results = results.filter((c) => c.organizationId === params.organizationId);
+      results = results.filter(
+        (c) => c.organizationId === params.organizationId,
+      );
     }
     if (params.status) {
       results = results.filter((c) => c.status === params.status);

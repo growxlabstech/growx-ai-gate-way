@@ -17,11 +17,12 @@ function makeRequest(
     method?: string;
     headers?: Record<string, string>;
     body?: unknown;
-  } = {}
+  } = {},
 ): Promise<ApiResponse> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
-    const bodyStr = options.body !== undefined ? JSON.stringify(options.body) : undefined;
+    const bodyStr =
+      options.body !== undefined ? JSON.stringify(options.body) : undefined;
     const req = httpRequest(
       {
         hostname: parsed.hostname,
@@ -29,13 +30,20 @@ function makeRequest(
         path: parsed.pathname + parsed.search,
         method: options.method ?? "GET",
         headers: {
-          ...(bodyStr ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(bodyStr) } : {}),
+          ...(bodyStr
+            ? {
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(bodyStr),
+              }
+            : {}),
           ...options.headers,
         },
       },
       (res) => {
         const chunks: Buffer[] = [];
-        res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+        res.on("data", (chunk) =>
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)),
+        );
         res.on("end", () => {
           const raw = Buffer.concat(chunks).toString("utf-8");
           let body = null;
@@ -46,7 +54,7 @@ function makeRequest(
           }
           resolve({ status: res.statusCode ?? 0, body });
         });
-      }
+      },
     );
     req.on("error", reject);
     if (bodyStr) req.write(bodyStr);
@@ -88,7 +96,7 @@ describe("Customer Model Catalog Visibility & Serializer Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Seed: 1 hidden / internal model (customerVisible: false)
@@ -111,7 +119,7 @@ describe("Customer Model Catalog Visibility & Serializer Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Seed: 1 draft model
@@ -134,7 +142,7 @@ describe("Customer Model Catalog Visibility & Serializer Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const handler = createModelRegistryHttpApp({ service, privilegedAuth });
@@ -163,7 +171,9 @@ describe("Customer Model Catalog Visibility & Serializer Tests", () => {
   });
 
   it("denies direct access to hidden model on GET /v1/models/:modelId with 404", async () => {
-    const res = await makeRequest(`${baseUrl}/v1/models/internal%2Fguardrail-eval-v1`);
+    const res = await makeRequest(
+      `${baseUrl}/v1/models/internal%2Fguardrail-eval-v1`,
+    );
     expect(res.status).toBe(404);
   });
 

@@ -20,17 +20,22 @@ describe("PromptResolver High-Speed Resolution & Caching", () => {
         key: "chat.welcome",
         name: "Welcome Bot",
       },
-      "usr_1"
+      "usr_1",
     );
 
     const v1 = await service.createVersion(
       "org_res",
       prompt.id,
       {
-        messages: [{ role: "system", contentTemplate: "Welcome {{user_name}} to GrowX!" }],
+        messages: [
+          {
+            role: "system",
+            contentTemplate: "Welcome {{user_name}} to GrowX!",
+          },
+        ],
         variableSchema: [{ name: "user_name", type: "string", required: true }],
       },
-      "usr_1"
+      "usr_1",
     );
 
     await service.createRelease(
@@ -41,11 +46,15 @@ describe("PromptResolver High-Speed Resolution & Caching", () => {
         environment: "production",
       },
       "usr_1",
-      true
+      true,
     );
 
     // 1. Initial Resolution: hits DB and populates cache
-    const ctx1 = await resolver.resolve("org_res", "chat.welcome", "production");
+    const ctx1 = await resolver.resolve(
+      "org_res",
+      "chat.welcome",
+      "production",
+    );
     expect(ctx1.version.id).toBe(v1.id);
     expect(ctx1.version.version).toBe(1);
     expect(ctx1.isPinnedVersion).toBe(false);
@@ -55,10 +64,16 @@ describe("PromptResolver High-Speed Resolution & Caching", () => {
       "org_res",
       prompt.id,
       {
-        messages: [{ role: "system", contentTemplate: "Hello and welcome {{user_name}} to GrowX AI Gateway!" }],
+        messages: [
+          {
+            role: "system",
+            contentTemplate:
+              "Hello and welcome {{user_name}} to GrowX AI Gateway!",
+          },
+        ],
         variableSchema: [{ name: "user_name", type: "string", required: true }],
       },
-      "usr_1"
+      "usr_1",
     );
 
     await service.createRelease(
@@ -69,21 +84,33 @@ describe("PromptResolver High-Speed Resolution & Caching", () => {
         environment: "production",
       },
       "usr_1",
-      true
+      true,
     );
 
     // 3. New Resolution: resolves new V2 release immediately
-    const ctx2 = await resolver.resolve("org_res", "chat.welcome", "production");
+    const ctx2 = await resolver.resolve(
+      "org_res",
+      "chat.welcome",
+      "production",
+    );
     expect(ctx2.version.id).toBe(v2.id);
     expect(ctx2.version.version).toBe(2);
 
     // 4. Pinned Version Resolution: loads explicit historical version
-    const pinned = await resolver.resolve("org_res", "chat.welcome", "production", undefined, 1);
+    const pinned = await resolver.resolve(
+      "org_res",
+      "chat.welcome",
+      "production",
+      undefined,
+      1,
+    );
     expect(pinned.version.id).toBe(v1.id);
     expect(pinned.isPinnedVersion).toBe(true);
   });
 
   it("fails closed on non-existent prompt or unreleased environment", async () => {
-    await expect(resolver.resolve("org_res", "non_existent_key", "production")).rejects.toThrowError(PromptNotFoundError);
+    await expect(
+      resolver.resolve("org_res", "non_existent_key", "production"),
+    ).rejects.toThrowError(PromptNotFoundError);
   });
 });

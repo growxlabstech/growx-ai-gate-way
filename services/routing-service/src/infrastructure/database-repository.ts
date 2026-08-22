@@ -12,10 +12,7 @@ import type {
   IRoutingRepository,
   RoutingDecisionListFilter,
 } from "../application/repository.js";
-import type {
-  RoutingDecision,
-  RoutingPolicy,
-} from "../domain/types.js";
+import type { RoutingDecision, RoutingPolicy } from "../domain/types.js";
 
 export class DatabaseRoutingRepository implements IRoutingRepository {
   constructor(private readonly db: PostgresJsDatabase<typeof schema>) {}
@@ -38,7 +35,9 @@ export class DatabaseRoutingRepository implements IRoutingRepository {
       .onConflictDoNothing();
   }
 
-  async getDecisionByRequestId(requestId: string): Promise<RoutingDecision | null> {
+  async getDecisionByRequestId(
+    requestId: string,
+  ): Promise<RoutingDecision | null> {
     const records = await this.db
       .select()
       .from(routingDecisions)
@@ -92,12 +91,11 @@ export class DatabaseRoutingRepository implements IRoutingRepository {
     };
   }
 
-  async listDecisions(filter?: RoutingDecisionListFilter | undefined): Promise<RoutingDecision[]> {
+  async listDecisions(
+    filter?: RoutingDecisionListFilter | undefined,
+  ): Promise<RoutingDecision[]> {
     const limit = filter?.limit ?? 50;
-    const records = await this.db
-      .select()
-      .from(routingDecisions)
-      .limit(limit);
+    const records = await this.db.select().from(routingDecisions).limit(limit);
 
     return records.map((record) => ({
       id: record.id,
@@ -118,7 +116,7 @@ export class DatabaseRoutingRepository implements IRoutingRepository {
 
   async getPolicy(
     organizationId?: string | null | undefined,
-    workspaceId?: string | null | undefined
+    workspaceId?: string | null | undefined,
   ): Promise<RoutingPolicy | null> {
     const conditions = [];
     if (organizationId) {
@@ -258,7 +256,10 @@ export class DatabaseRoutingRepository implements IRoutingRepository {
     });
   }
 
-  async updatePolicy(id: string, updates: Partial<RoutingPolicy>): Promise<void> {
+  async updatePolicy(
+    id: string,
+    updates: Partial<RoutingPolicy>,
+  ): Promise<void> {
     const existing = await this.getPolicyById(id);
     if (!existing) return;
 
@@ -330,7 +331,12 @@ export class DatabaseRoutingRepository implements IRoutingRepository {
     const records = await this.db
       .select()
       .from(routingPolicies)
-      .where(and(isNull(routingPolicies.organizationId), isNull(routingPolicies.workspaceId)))
+      .where(
+        and(
+          isNull(routingPolicies.organizationId),
+          isNull(routingPolicies.workspaceId),
+        ),
+      )
       .limit(1);
 
     if (records.length === 0) {

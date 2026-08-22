@@ -1,8 +1,14 @@
-import { secureRandom, hashApiKey, verifyApiKey, constantTimeEqual } from "@growx/cryptography";
+import {
+  secureRandom,
+  hashApiKey,
+  verifyApiKey,
+  constantTimeEqual,
+} from "@growx/cryptography";
 import type { ApiKeyEnvironment } from "./types.js";
 
 const keyIdPattern = /^key_[a-f0-9]{32}$/;
-const encodedPattern = /^gx_(live|test)_((?:key_)[a-f0-9]{32})_([A-Za-z0-9_-]{20,256})$/;
+const encodedPattern =
+  /^gx_(live|test)_((?:key_)[a-f0-9]{32})_([A-Za-z0-9_-]{20,256})$/;
 
 export interface ParsedApiKey {
   environment: "production" | "development";
@@ -14,7 +20,12 @@ export interface ParsedApiKey {
 export function parseApiKey(value: string): ParsedApiKey | null {
   if (typeof value !== "string" || value.length > 320) return null;
   const trimmed = value.trim();
-  if (trimmed !== value || value.includes("\r") || value.includes("\n") || value.includes(" ")) {
+  if (
+    trimmed !== value ||
+    value.includes("\r") ||
+    value.includes("\n") ||
+    value.includes(" ")
+  ) {
     return null;
   }
   const match = encodedPattern.exec(value);
@@ -28,7 +39,10 @@ export function parseApiKey(value: string): ParsedApiKey | null {
 }
 
 export function generateApiKeyIdentifier(): string {
-  const randomHex = secureRandom(16).replace(/[-_]/g, "").slice(0, 32).toLowerCase();
+  const randomHex = secureRandom(16)
+    .replace(/[-_]/g, "")
+    .slice(0, 32)
+    .toLowerCase();
   const id = `key_${randomHex}`;
   if (!keyIdPattern.test(id)) {
     throw new Error("Failed to generate valid key identifier");
@@ -50,7 +64,10 @@ export function generateApiKeyCredentials(environment: ApiKeyEnvironment): {
   return { id, prefix, secretPart, fullSecret };
 }
 
-export function publicPrefix(record: { environment: ApiKeyEnvironment; id: string }): string {
+export function publicPrefix(record: {
+  environment: ApiKeyEnvironment;
+  id: string;
+}): string {
   const envPrefix = record.environment === "production" ? "gx_live" : "gx_test";
   return `${envPrefix}_${record.id}_••••••••••••`;
 }

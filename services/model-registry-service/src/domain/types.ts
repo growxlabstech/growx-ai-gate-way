@@ -97,10 +97,12 @@ export interface ModelPricingEntity {
 export interface ResolvedModelContext {
   requestedModelId: string;
   canonicalModelId: string;
-  aliasUsed?: {
-    alias: string;
-    type: AliasType;
-  } | undefined;
+  aliasUsed?:
+    | {
+        alias: string;
+        type: AliasType;
+      }
+    | undefined;
   model: CanonicalModelEntity;
   capabilities: CanonicalCapability[];
   limits: {
@@ -110,10 +112,12 @@ export interface ResolvedModelContext {
   };
   eligibleConfiguredRoutes: ProviderRouteEntity[];
   isExecutable: boolean;
-  deprecation?: {
-    deprecatedAt: string | null;
-    sunsetAt: string | null;
-    replacementModelId: string | null;
-    message: string | null;
-  } | undefined;
+  deprecation?:
+    | {
+        deprecatedAt: string | null;
+        sunsetAt: string | null;
+        replacementModelId: string | null;
+        message: string | null;
+      }
+    | undefined;
 }

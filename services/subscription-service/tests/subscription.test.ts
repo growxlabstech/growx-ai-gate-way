@@ -3,7 +3,12 @@ import { Decimal } from "@growx/money";
 import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
 import { SubscriptionService } from "../src/application/subscription-service.js";
 import { InMemorySubscriptionRepository } from "../src/infrastructure/in-memory-repository.js";
-import type { PlanVersion, EntitlementDefinition, ModelAccessRule, PlanLimit } from "@growx/subscriptions";
+import type {
+  PlanVersion,
+  EntitlementDefinition,
+  ModelAccessRule,
+  PlanLimit,
+} from "@growx/subscriptions";
 
 function makeEntitlements(): EntitlementDefinition[] {
   return [
@@ -37,7 +42,10 @@ describe("Phase 18 — Subscription Lifecycle", () => {
   });
 
   async function createProPlan() {
-    const plan = await service.createPlan({ slug: "pro", displayName: "Pro Plan" });
+    const plan = await service.createPlan({
+      slug: "pro",
+      displayName: "Pro Plan",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -84,10 +92,16 @@ describe("Phase 18 — Subscription Lifecycle", () => {
   it("prevents duplicate active subscriptions for same organization", async () => {
     const { plan } = await createProPlan();
 
-    await service.createSubscription({ organizationId: "org_dup", planId: plan.id });
+    await service.createSubscription({
+      organizationId: "org_dup",
+      planId: plan.id,
+    });
 
     await expect(
-      service.createSubscription({ organizationId: "org_dup", planId: plan.id }),
+      service.createSubscription({
+        organizationId: "org_dup",
+        planId: plan.id,
+      }),
     ).rejects.toThrow("already has an active subscription");
   });
 
@@ -98,7 +112,11 @@ describe("Phase 18 — Subscription Lifecycle", () => {
       planId: plan.id,
     });
 
-    const cancelled = await service.cancelSubscription("org_cancel", subscription.id, { immediate: true });
+    const cancelled = await service.cancelSubscription(
+      "org_cancel",
+      subscription.id,
+      { immediate: true },
+    );
     expect(cancelled.status).toBe("cancelled");
     expect(cancelled.cancelledAt).toBeDefined();
   });
@@ -110,7 +128,10 @@ describe("Phase 18 — Subscription Lifecycle", () => {
       planId: plan.id,
     });
 
-    const updated = await service.cancelSubscription("org_cancel_end", subscription.id);
+    const updated = await service.cancelSubscription(
+      "org_cancel_end",
+      subscription.id,
+    );
     expect(updated.status).toBe("active"); // Still active until period end
     expect(updated.cancelAtPeriodEnd).toBe(true);
   });
@@ -122,11 +143,17 @@ describe("Phase 18 — Subscription Lifecycle", () => {
       planId: plan.id,
     });
 
-    const paused = await service.pauseSubscription("org_pause", subscription.id);
+    const paused = await service.pauseSubscription(
+      "org_pause",
+      subscription.id,
+    );
     expect(paused.status).toBe("paused");
     expect(paused.pausedAt).toBeDefined();
 
-    const resumed = await service.resumeSubscription("org_pause", subscription.id);
+    const resumed = await service.resumeSubscription(
+      "org_pause",
+      subscription.id,
+    );
     expect(resumed.status).toBe("active");
     expect(resumed.resumedAt).toBeDefined();
   });
@@ -139,7 +166,9 @@ describe("Phase 18 — Subscription Lifecycle", () => {
     });
 
     // Cancel, then try to pause (cancelled is terminal)
-    await service.cancelSubscription("org_invalid", subscription.id, { immediate: true });
+    await service.cancelSubscription("org_invalid", subscription.id, {
+      immediate: true,
+    });
 
     await expect(
       service.pauseSubscription("org_invalid", subscription.id),
@@ -169,7 +198,10 @@ describe("Phase 18 — Plan Versioning", () => {
   });
 
   it("creates sequential version numbers", async () => {
-    const plan = await service.createPlan({ slug: "test", displayName: "Test" });
+    const plan = await service.createPlan({
+      slug: "test",
+      displayName: "Test",
+    });
 
     const v1 = await service.createPlanVersion({
       planId: plan.id,
@@ -191,7 +223,10 @@ describe("Phase 18 — Plan Versioning", () => {
   });
 
   it("archives old active version when activating new one", async () => {
-    const plan = await service.createPlan({ slug: "test2", displayName: "Test2" });
+    const plan = await service.createPlan({
+      slug: "test2",
+      displayName: "Test2",
+    });
 
     const v1 = await service.createPlanVersion({
       planId: plan.id,
@@ -216,7 +251,10 @@ describe("Phase 18 — Plan Versioning", () => {
   });
 
   it("rejects activating non-draft version", async () => {
-    const plan = await service.createPlan({ slug: "test3", displayName: "Test3" });
+    const plan = await service.createPlan({
+      slug: "test3",
+      displayName: "Test3",
+    });
     const v1 = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -226,7 +264,9 @@ describe("Phase 18 — Plan Versioning", () => {
     await service.activatePlanVersion(v1.id);
 
     // Try to activate again
-    await expect(service.activatePlanVersion(v1.id)).rejects.toThrow("must be 'draft'");
+    await expect(service.activatePlanVersion(v1.id)).rejects.toThrow(
+      "must be 'draft'",
+    );
   });
 
   it("prevents duplicate plan slugs", async () => {
@@ -248,7 +288,10 @@ describe("Phase 18 — Entitlement Resolution", () => {
   });
 
   it("resolves entitlements from active subscription", async () => {
-    const plan = await service.createPlan({ slug: "ent-test", displayName: "Ent Test" });
+    const plan = await service.createPlan({
+      slug: "ent-test",
+      displayName: "Ent Test",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -258,7 +301,10 @@ describe("Phase 18 — Entitlement Resolution", () => {
       modelAccessRules: makeModelRules(),
     });
     await service.activatePlanVersion(version.id);
-    await service.createSubscription({ organizationId: "org_ent", planId: plan.id });
+    await service.createSubscription({
+      organizationId: "org_ent",
+      planId: plan.id,
+    });
 
     const resolved = await service.resolveEntitlements("org_ent");
     expect(resolved.getInteger("max_workspaces")).toBe(5);
@@ -273,7 +319,10 @@ describe("Phase 18 — Entitlement Resolution", () => {
   });
 
   it("applies entitlement overrides", async () => {
-    const plan = await service.createPlan({ slug: "override-test", displayName: "Override Test" });
+    const plan = await service.createPlan({
+      slug: "override-test",
+      displayName: "Override Test",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -282,7 +331,10 @@ describe("Phase 18 — Entitlement Resolution", () => {
       entitlements: makeEntitlements(),
     });
     await service.activatePlanVersion(version.id);
-    await service.createSubscription({ organizationId: "org_override", planId: plan.id });
+    await service.createSubscription({
+      organizationId: "org_override",
+      planId: plan.id,
+    });
 
     // Override max_workspaces from 5 to 100
     await service.setEntitlementOverride({
@@ -314,7 +366,10 @@ describe("Phase 18 — Renewal Worker", () => {
   });
 
   it("processes renewal: advances period, grants credits, idempotent", async () => {
-    const plan = await service.createPlan({ slug: "renew", displayName: "Renew Plan" });
+    const plan = await service.createPlan({
+      slug: "renew",
+      displayName: "Renew Plan",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -352,7 +407,10 @@ describe("Phase 18 — Renewal Worker", () => {
   });
 
   it("idempotent: credit grant idempotency key prevents duplicate grants per period", async () => {
-    const plan = await service.createPlan({ slug: "idemp", displayName: "Idemp" });
+    const plan = await service.createPlan({
+      slug: "idemp",
+      displayName: "Idemp",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -392,7 +450,10 @@ describe("Phase 18 — Renewal Worker", () => {
   });
 
   it("cancel-at-period-end: terminates subscription on renewal", async () => {
-    const plan = await service.createPlan({ slug: "cancel-end", displayName: "Cancel End" });
+    const plan = await service.createPlan({
+      slug: "cancel-end",
+      displayName: "Cancel End",
+    });
     const version = await service.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -428,7 +489,10 @@ describe("Phase 18 — Plan Change", () => {
   });
 
   it("upgrades plan immediately with new credit grant", async () => {
-    const starterPlan = await service.createPlan({ slug: "starter", displayName: "Starter" });
+    const starterPlan = await service.createPlan({
+      slug: "starter",
+      displayName: "Starter",
+    });
     const starterV = await service.createPlanVersion({
       planId: starterPlan.id,
       billingInterval: "monthly",
@@ -437,7 +501,10 @@ describe("Phase 18 — Plan Change", () => {
     });
     await service.activatePlanVersion(starterV.id);
 
-    const proPlan = await service.createPlan({ slug: "pro-up", displayName: "Pro" });
+    const proPlan = await service.createPlan({
+      slug: "pro-up",
+      displayName: "Pro",
+    });
     const proV = await service.createPlanVersion({
       planId: proPlan.id,
       billingInterval: "monthly",

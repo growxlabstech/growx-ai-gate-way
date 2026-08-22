@@ -46,7 +46,11 @@ export class InMemoryPolicyCache implements IPolicyCache {
     return entry.policy;
   }
 
-  async set(key: string, policy: EffectivePolicy, ttlSeconds?: number): Promise<void> {
+  async set(
+    key: string,
+    policy: EffectivePolicy,
+    ttlSeconds?: number,
+  ): Promise<void> {
     const ttlMs = ttlSeconds ? ttlSeconds * 1000 : this.defaultTtlMs;
     const [organizationId, workspaceId, apiKeyId] = key.split(":");
 

@@ -13,7 +13,7 @@ import { isRegionAllowed } from "./region-groups.js";
  */
 export function evaluateRequestPolicy(
   context: PolicyEvaluationContext,
-  policy: EffectivePolicy
+  policy: EffectivePolicy,
 ): PolicyDecision {
   const reasons: string[] = [];
   const c = policy.constraints;
@@ -24,35 +24,47 @@ export function evaluateRequestPolicy(
   // 1. Explicit Model Denylist (Deny overrides allow)
   if (c.deniedModels && c.deniedModels.length > 0) {
     const isDenied = c.deniedModels.some(
-      (m) => m.toLowerCase() === canonicalId || canonicalId.startsWith(m.toLowerCase())
+      (m) =>
+        m.toLowerCase() === canonicalId ||
+        canonicalId.startsWith(m.toLowerCase()),
     );
     if (isDenied) {
       return makeDenial(
         "MODEL_DENIED",
         `Model '${context.canonicalModel.canonicalId}' is explicitly denied by governance policy`,
-        policy
+        policy,
       );
     }
   }
 
   // 2. Model Family Denylist
-  if (modelFamily && c.deniedModelFamilies && c.deniedModelFamilies.length > 0) {
+  if (
+    modelFamily &&
+    c.deniedModelFamilies &&
+    c.deniedModelFamilies.length > 0
+  ) {
     if (c.deniedModelFamilies.some((f) => f.toLowerCase() === modelFamily)) {
       return makeDenial(
         "MODEL_FAMILY_DENIED",
         `Model family '${modelFamily}' is denied by governance policy`,
-        policy
+        policy,
       );
     }
   }
 
   // 3. Model Category Denylist
-  if (modelCategory && c.deniedModelCategories && c.deniedModelCategories.length > 0) {
-    if (c.deniedModelCategories.some((cat) => cat.toLowerCase() === modelCategory)) {
+  if (
+    modelCategory &&
+    c.deniedModelCategories &&
+    c.deniedModelCategories.length > 0
+  ) {
+    if (
+      c.deniedModelCategories.some((cat) => cat.toLowerCase() === modelCategory)
+    ) {
       return makeDenial(
         "MODEL_CATEGORY_DENIED",
         `Model category '${modelCategory}' is denied by governance policy`,
-        policy
+        policy,
       );
     }
   }
@@ -60,35 +72,49 @@ export function evaluateRequestPolicy(
   // 4. Model Allowlist (if set, canonicalId must match)
   if (c.allowedModels && c.allowedModels.length > 0) {
     const isAllowed = c.allowedModels.some(
-      (m) => m.toLowerCase() === canonicalId || canonicalId.startsWith(m.toLowerCase())
+      (m) =>
+        m.toLowerCase() === canonicalId ||
+        canonicalId.startsWith(m.toLowerCase()),
     );
     if (!isAllowed) {
       return makeDenial(
         "MODEL_DENIED",
         `Model '${context.canonicalModel.canonicalId}' is not in the approved model allowlist [${c.allowedModels.join(", ")}]`,
-        policy
+        policy,
       );
     }
   }
 
   // 5. Model Family Allowlist
-  if (modelFamily && c.allowedModelFamilies && c.allowedModelFamilies.length > 0) {
+  if (
+    modelFamily &&
+    c.allowedModelFamilies &&
+    c.allowedModelFamilies.length > 0
+  ) {
     if (!c.allowedModelFamilies.some((f) => f.toLowerCase() === modelFamily)) {
       return makeDenial(
         "MODEL_FAMILY_DENIED",
         `Model family '${modelFamily}' is not in the approved model family allowlist`,
-        policy
+        policy,
       );
     }
   }
 
   // 6. Model Category Allowlist
-  if (modelCategory && c.allowedModelCategories && c.allowedModelCategories.length > 0) {
-    if (!c.allowedModelCategories.some((cat) => cat.toLowerCase() === modelCategory)) {
+  if (
+    modelCategory &&
+    c.allowedModelCategories &&
+    c.allowedModelCategories.length > 0
+  ) {
+    if (
+      !c.allowedModelCategories.some(
+        (cat) => cat.toLowerCase() === modelCategory,
+      )
+    ) {
       return makeDenial(
         "MODEL_CATEGORY_DENIED",
         `Model category '${modelCategory}' is not in the approved category allowlist`,
-        policy
+        policy,
       );
     }
   }
@@ -97,22 +123,30 @@ export function evaluateRequestPolicy(
   const inputMods = context.inputModalities ?? ["text"];
   if (c.deniedInputModalities && c.deniedInputModalities.length > 0) {
     for (const mod of inputMods) {
-      if (c.deniedInputModalities.some((dm) => dm.toLowerCase() === mod.toLowerCase())) {
+      if (
+        c.deniedInputModalities.some(
+          (dm) => dm.toLowerCase() === mod.toLowerCase(),
+        )
+      ) {
         return makeDenial(
           "MODALITY_DENIED",
           `Input modality '${mod}' is prohibited by governance policy`,
-          policy
+          policy,
         );
       }
     }
   }
   if (c.allowedInputModalities && c.allowedInputModalities.length > 0) {
     for (const mod of inputMods) {
-      if (!c.allowedInputModalities.some((am) => am.toLowerCase() === mod.toLowerCase())) {
+      if (
+        !c.allowedInputModalities.some(
+          (am) => am.toLowerCase() === mod.toLowerCase(),
+        )
+      ) {
         return makeDenial(
           "MODALITY_DENIED",
           `Input modality '${mod}' is not in approved input modalities [${c.allowedInputModalities.join(", ")}]`,
-          policy
+          policy,
         );
       }
     }
@@ -121,11 +155,15 @@ export function evaluateRequestPolicy(
   const outputMods = context.outputModalities ?? ["text"];
   if (c.deniedOutputModalities && c.deniedOutputModalities.length > 0) {
     for (const mod of outputMods) {
-      if (c.deniedOutputModalities.some((dm) => dm.toLowerCase() === mod.toLowerCase())) {
+      if (
+        c.deniedOutputModalities.some(
+          (dm) => dm.toLowerCase() === mod.toLowerCase(),
+        )
+      ) {
         return makeDenial(
           "MODALITY_DENIED",
           `Output modality '${mod}' is prohibited by governance policy`,
-          policy
+          policy,
         );
       }
     }
@@ -138,7 +176,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "TOOLS_DENIED",
         "Function/tool calling is disabled by governance policy for this workspace",
-        policy
+        policy,
       );
     }
 
@@ -146,7 +184,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "REQUEST_LIMIT_DENIED",
         `Request contains ${tools.length} tools which exceeds the maximum allowed tool count of ${c.maxToolCount}`,
-        policy
+        policy,
       );
     }
 
@@ -154,7 +192,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "TOOLS_DENIED",
         "Parallel tool calls are prohibited by governance policy",
-        policy
+        policy,
       );
     }
 
@@ -164,11 +202,14 @@ export function evaluateRequestPolicy(
       const toolName = String(rawName).trim().toLowerCase();
       if (!toolName) continue;
 
-      if (c.deniedToolNames && c.deniedToolNames.some((dn) => dn.toLowerCase() === toolName)) {
+      if (
+        c.deniedToolNames &&
+        c.deniedToolNames.some((dn) => dn.toLowerCase() === toolName)
+      ) {
         return makeDenial(
           "TOOL_DENIED",
           `Tool '${rawName}' is explicitly denied by tool policy`,
-          policy
+          policy,
         );
       }
 
@@ -180,7 +221,7 @@ export function evaluateRequestPolicy(
         return makeDenial(
           "TOOL_DENIED",
           `Tool '${rawName}' is not in the approved tool allowlist [${c.allowedToolNames.join(", ")}]`,
-          policy
+          policy,
         );
       }
     }
@@ -192,7 +233,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "STRUCTURED_OUTPUT_DENIED",
         "Structured outputs / JSON schemas are prohibited by governance policy",
-        policy
+        policy,
       );
     }
   }
@@ -203,7 +244,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "REASONING_DENIED",
         "Extended reasoning / chain-of-thought is prohibited by governance policy",
-        policy
+        policy,
       );
     }
 
@@ -215,7 +256,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "REQUEST_LIMIT_DENIED",
         `Requested reasoning token budget (${context.reasoning.maxTokens}) exceeds policy limit (${c.maxReasoningTokens})`,
-        policy
+        policy,
       );
     }
   }
@@ -229,23 +270,29 @@ export function evaluateRequestPolicy(
     return makeDenial(
       "REQUEST_LIMIT_DENIED",
       `Requested max_tokens (${context.maxTokens}) exceeds workspace policy ceiling of ${c.maxOutputTokens}`,
-      policy
+      policy,
     );
   }
 
   if (context.temperature !== undefined) {
-    if (c.temperatureMin !== undefined && context.temperature < c.temperatureMin) {
+    if (
+      c.temperatureMin !== undefined &&
+      context.temperature < c.temperatureMin
+    ) {
       return makeDenial(
         "REQUEST_LIMIT_DENIED",
         `Requested temperature ${context.temperature} is below policy minimum ${c.temperatureMin}`,
-        policy
+        policy,
       );
     }
-    if (c.temperatureMax !== undefined && context.temperature > c.temperatureMax) {
+    if (
+      c.temperatureMax !== undefined &&
+      context.temperature > c.temperatureMax
+    ) {
       return makeDenial(
         "REQUEST_LIMIT_DENIED",
         `Requested temperature ${context.temperature} exceeds policy maximum ${c.temperatureMax}`,
-        policy
+        policy,
       );
     }
   }
@@ -259,7 +306,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "DATA_POLICY_DENIED",
         `Data classification '${context.dataClassification}' is prohibited by data handling policy`,
-        policy
+        policy,
       );
     }
 
@@ -271,7 +318,7 @@ export function evaluateRequestPolicy(
       return makeDenial(
         "DATA_POLICY_DENIED",
         `Data classification '${context.dataClassification}' is not permitted under allowed classifications [${c.allowedDataClassifications.join(", ")}]`,
-        policy
+        policy,
       );
     }
   }
@@ -293,7 +340,7 @@ export function evaluateRequestPolicy(
 export function evaluateRoutePolicy(
   candidate: RouteCandidateForPolicy,
   context: PolicyEvaluationContext,
-  policy: EffectivePolicy
+  policy: EffectivePolicy,
 ): { allowed: boolean; reason?: string; code?: PolicyDenialCode } {
   const c = policy.constraints;
   const providerId = candidate.providerId.toLowerCase();
@@ -382,7 +429,7 @@ export function evaluateRoutePolicy(
 export function evaluateRoutesBatch(
   candidates: RouteCandidateForPolicy[],
   context: PolicyEvaluationContext,
-  policy: EffectivePolicy
+  policy: EffectivePolicy,
 ): BatchRoutePolicyEvaluationResult {
   const eligible: RouteCandidateForPolicy[] = [];
   const excluded: Array<{
@@ -410,7 +457,7 @@ export function evaluateRoutesBatch(
 function makeDenial(
   code: PolicyDenialCode,
   reason: string,
-  policy: EffectivePolicy
+  policy: EffectivePolicy,
 ): PolicyDecision {
   return {
     allowed: false,

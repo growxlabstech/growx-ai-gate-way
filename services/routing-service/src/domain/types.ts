@@ -1,7 +1,4 @@
-import type {
-  CanonicalCapability,
-  MachineAuthContext,
-} from "@growx/contracts";
+import type { CanonicalCapability, MachineAuthContext } from "@growx/contracts";
 import type {
   CanonicalModelEntity,
   ProviderRouteEntity,
@@ -48,11 +45,13 @@ export interface RoutingEngineContext {
   estimatedInputTokens?: number | undefined;
   estimatedOutputTokens?: number | undefined;
   constraints?: RoutingConstraints | undefined;
-  hints?: {
-    preferLowCost?: boolean | undefined;
-    preferLowLatency?: boolean | undefined;
-    preferredProvider?: string | undefined;
-  } | undefined;
+  hints?:
+    | {
+        preferLowCost?: boolean | undefined;
+        preferLowLatency?: boolean | undefined;
+        preferredProvider?: string | undefined;
+      }
+    | undefined;
   stableKey?: string | undefined;
 }
 

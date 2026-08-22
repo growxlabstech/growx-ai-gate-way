@@ -31,21 +31,33 @@ describe("Phase 23 — Queue Resilience, Worker Leases, and Crash Recovery", () 
     }
 
     // Worker 1 claims 3
-    const claimed1 = await repository.claimPendingDeliveries(3, 30_000, "wrk_1");
+    const claimed1 = await repository.claimPendingDeliveries(
+      3,
+      30_000,
+      "wrk_1",
+    );
     expect(claimed1.length).toBe(3);
     for (const c of claimed1) {
       expect(c.leaseOwner).toBe("wrk_1");
     }
 
     // Worker 2 claims remaining 2
-    const claimed2 = await repository.claimPendingDeliveries(3, 30_000, "wrk_2");
+    const claimed2 = await repository.claimPendingDeliveries(
+      3,
+      30_000,
+      "wrk_2",
+    );
     expect(claimed2.length).toBe(2);
     for (const c of claimed2) {
       expect(c.leaseOwner).toBe("wrk_2");
     }
 
     // Worker 3 has nothing left to claim
-    const claimed3 = await repository.claimPendingDeliveries(3, 30_000, "wrk_3");
+    const claimed3 = await repository.claimPendingDeliveries(
+      3,
+      30_000,
+      "wrk_3",
+    );
     expect(claimed3.length).toBe(0);
   });
 
@@ -67,7 +79,11 @@ describe("Phase 23 — Queue Resilience, Worker Leases, and Crash Recovery", () 
     await new Promise((r) => setTimeout(r, 20));
 
     // Worker 2 successfully recovers and claims the job
-    const recovered = await repository.claimPendingDeliveries(1, 30_000, "wrk_recovered");
+    const recovered = await repository.claimPendingDeliveries(
+      1,
+      30_000,
+      "wrk_recovered",
+    );
     expect(recovered.length).toBe(1);
     expect(recovered[0]!.leaseOwner).toBe("wrk_recovered");
   });

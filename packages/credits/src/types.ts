@@ -56,22 +56,19 @@ export interface WalletLedgerEntry {
   referenceType: WalletReferenceType;
   referenceId: string;
   idempotencyKey?: string | undefined;
-  balanceAfter?: {
-    available: Decimal;
-    reserved: Decimal;
-    total: Decimal;
-  } | undefined;
+  balanceAfter?:
+    | {
+        available: Decimal;
+        reserved: Decimal;
+        total: Decimal;
+      }
+    | undefined;
   metadata?: Record<string, unknown> | undefined;
   createdAt: Date;
 }
 
 export type CreditLotType =
-  | "promotional"
-  | "trial"
-  | "subscription"
-  | "purchased"
-  | "refund"
-  | "manual";
+  "promotional" | "trial" | "subscription" | "purchased" | "refund" | "manual";
 
 export interface CreditLot {
   id: string;
@@ -90,12 +87,7 @@ export interface CreditLot {
 }
 
 export type ReservationStatus =
-  | "pending"
-  | "active"
-  | "settled"
-  | "released"
-  | "expired"
-  | "cancelled";
+  "pending" | "active" | "settled" | "released" | "expired" | "cancelled";
 
 export interface ReservationAllocation {
   id: string;

@@ -1,1 +1,9 @@
-export const radiusTokens = { xs: "4px", sm: "6px", md: "8px", lg: "10px", xl: "12px", "2xl": "14px", pill: "999px" } as const;
+export const radiusTokens = {
+  xs: "4px",
+  sm: "6px",
+  md: "8px",
+  lg: "10px",
+  xl: "12px",
+  "2xl": "14px",
+  pill: "999px",
+} as const;

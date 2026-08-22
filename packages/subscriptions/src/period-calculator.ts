@@ -10,7 +10,10 @@ import type { BillingInterval, SubscriptionPeriod } from "./types.js";
  * - Timezone-aware using UTC for consistency
  */
 export function calculateNextPeriod(
-  currentPeriod: Pick<SubscriptionPeriod, "periodStart" | "periodEnd" | "periodNumber">,
+  currentPeriod: Pick<
+    SubscriptionPeriod,
+    "periodStart" | "periodEnd" | "periodNumber"
+  >,
   billingInterval: BillingInterval,
   anchorDate: Date,
 ): { periodStart: Date; periodEnd: Date; periodNumber: number } {
@@ -21,10 +24,18 @@ export function calculateNextPeriod(
 
   switch (billingInterval) {
     case "monthly":
-      periodEnd = addMonthsWithClamping(nextPeriodStart, 1, anchorDate.getUTCDate());
+      periodEnd = addMonthsWithClamping(
+        nextPeriodStart,
+        1,
+        anchorDate.getUTCDate(),
+      );
       break;
     case "annual":
-      periodEnd = addMonthsWithClamping(nextPeriodStart, 12, anchorDate.getUTCDate());
+      periodEnd = addMonthsWithClamping(
+        nextPeriodStart,
+        12,
+        anchorDate.getUTCDate(),
+      );
       break;
     case "custom":
       // For custom intervals, default to 30 days
@@ -71,7 +82,11 @@ export function calculateInitialPeriod(
  * Handles end-of-month: if anchor is 31 but target month has fewer days,
  * clamp to last day (e.g., Jan 31 + 1 month = Feb 28).
  */
-function addMonthsWithClamping(date: Date, months: number, anchorDay: number): Date {
+function addMonthsWithClamping(
+  date: Date,
+  months: number,
+  anchorDay: number,
+): Date {
   const result = new Date(date);
 
   // Set day to 1 first to prevent month overflow (e.g., Jan 31 + 1 month → Mar 3)
@@ -79,12 +94,20 @@ function addMonthsWithClamping(date: Date, months: number, anchorDay: number): D
   result.setUTCMonth(result.getUTCMonth() + months);
 
   // Clamp to anchor day or last day of month, whichever is smaller
-  const lastDayOfMonth = getLastDayOfMonth(result.getUTCFullYear(), result.getUTCMonth());
+  const lastDayOfMonth = getLastDayOfMonth(
+    result.getUTCFullYear(),
+    result.getUTCMonth(),
+  );
   const targetDay = Math.min(anchorDay, lastDayOfMonth);
   result.setUTCDate(targetDay);
 
   // Preserve time components
-  result.setUTCHours(date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(), date.getUTCMilliseconds());
+  result.setUTCHours(
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds(),
+    date.getUTCMilliseconds(),
+  );
 
   return result;
 }
@@ -100,7 +123,10 @@ function getLastDayOfMonth(year: number, month: number): number {
 /**
  * Checks if a subscription period has expired (periodEnd <= now).
  */
-export function isPeriodExpired(period: Pick<SubscriptionPeriod, "periodEnd">, now: Date = new Date()): boolean {
+export function isPeriodExpired(
+  period: Pick<SubscriptionPeriod, "periodEnd">,
+  now: Date = new Date(),
+): boolean {
   return period.periodEnd <= now;
 }
 

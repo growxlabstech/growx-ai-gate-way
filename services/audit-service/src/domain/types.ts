@@ -64,20 +64,31 @@ export interface IAuditRepository {
   listAuditEvents(params: ListAuditEventsParams): Promise<AuditEvent[]>;
   getChainHead(chainScope: string): Promise<AuditChainHead | undefined>;
   updateChainHead(head: AuditChainHead): Promise<void>;
-  createCheckpoint(checkpoint: AuditIntegrityCheckpoint): Promise<AuditIntegrityCheckpoint>;
+  createCheckpoint(
+    checkpoint: AuditIntegrityCheckpoint,
+  ): Promise<AuditIntegrityCheckpoint>;
   listCheckpoints(chainScope: string): Promise<AuditIntegrityCheckpoint[]>;
 
   // ─── Security Events ─────────────────────────────────────────
   createSecurityEvent(event: SecurityEvent): Promise<SecurityEvent>;
   getSecurityEvent(id: string): Promise<SecurityEvent | undefined>;
-  listSecurityEvents(params: ListSecurityEventsParams): Promise<SecurityEvent[]>;
+  listSecurityEvents(
+    params: ListSecurityEventsParams,
+  ): Promise<SecurityEvent[]>;
 
   // ─── Security Signals ────────────────────────────────────────
   createSecuritySignal(signal: SecuritySignal): Promise<SecuritySignal>;
   getSecuritySignal(id: string): Promise<SecuritySignal | undefined>;
-  getSecuritySignalByFingerprint(fingerprint: string): Promise<SecuritySignal | undefined>;
-  updateSecuritySignal(id: string, updates: Partial<SecuritySignal>): Promise<SecuritySignal>;
-  listSecuritySignals(params: ListSecuritySignalsParams): Promise<SecuritySignal[]>;
+  getSecuritySignalByFingerprint(
+    fingerprint: string,
+  ): Promise<SecuritySignal | undefined>;
+  updateSecuritySignal(
+    id: string,
+    updates: Partial<SecuritySignal>,
+  ): Promise<SecuritySignal>;
+  listSecuritySignals(
+    params: ListSecuritySignalsParams,
+  ): Promise<SecuritySignal[]>;
 
   // ─── Detection Rules ─────────────────────────────────────────
   listDetectionRules(): Promise<SecurityDetectionRule[]>;
@@ -85,5 +96,8 @@ export interface IAuditRepository {
   // ─── Security Cases ──────────────────────────────────────────
   createSecurityCase(securityCase: SecurityCase): Promise<SecurityCase>;
   getSecurityCase(id: string): Promise<SecurityCase | undefined>;
-  listSecurityCases(params: { organizationId?: string; status?: string }): Promise<SecurityCase[]>;
+  listSecurityCases(params: {
+    organizationId?: string;
+    status?: string;
+  }): Promise<SecurityCase[]>;
 }

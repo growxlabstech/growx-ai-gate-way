@@ -1,4 +1,8 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import type { NotificationDeliveryService } from "../application/notification-delivery-service.js";
 import type { INotificationRepository } from "../domain/types.js";
 
@@ -7,11 +11,16 @@ export interface NotificationHttpServerOptions {
   repository: INotificationRepository;
 }
 
-export function createNotificationHttpServer(options: NotificationHttpServerOptions) {
+export function createNotificationHttpServer(
+  options: NotificationHttpServerOptions,
+) {
   const { deliveryService, repository } = options;
 
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
@@ -36,7 +45,11 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
 
     try {
       // ─── Health Checks ───────────────────────────────────────────
-      if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
+      if (
+        pathname === "/health" ||
+        pathname === "/live" ||
+        pathname === "/ready"
+      ) {
         return sendJson(200, { status: "ok", service: "notification-service" });
       }
 
@@ -54,7 +67,7 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
             workspaceId: body.workspaceId,
             data: body.data ?? body.variables ?? {},
           },
-          body.recipients
+          body.recipients,
         );
         return sendJson(202, {
           data: {
@@ -83,7 +96,9 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
         return sendJson(200, { unreadCount: unread.length });
       }
 
-      const readSingleMatch = pathname.match(/^\/v1\/notifications\/([^/]+)\/read$/);
+      const readSingleMatch = pathname.match(
+        /^\/v1\/notifications\/([^/]+)\/read$/,
+      );
       if (readSingleMatch && method === "POST") {
         if (!userId) return sendJson(401, { error: "Missing user identity" });
         const notifId = readSingleMatch[1] ?? "";
@@ -112,7 +127,8 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
           // Validation: Cannot disable mandatory categories
           if (body.category === "authentication" && body.enabled === false) {
             return sendJson(400, {
-              error: "Mandatory authentication notifications cannot be disabled",
+              error:
+                "Mandatory authentication notifications cannot be disabled",
             });
           }
 
@@ -130,7 +146,10 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
       }
 
       // ─── Resend Provider Callback ─────────────────────────────────
-      if (pathname === "/v1/notifications/provider-callbacks/resend" && method === "POST") {
+      if (
+        pathname === "/v1/notifications/provider-callbacks/resend" &&
+        method === "POST"
+      ) {
         const body = await parseBody();
         if (body.type === "email.bounced" && body.data?.to) {
           for (const email of body.data.to) {
@@ -147,14 +166,17 @@ export function createNotificationHttpServer(options: NotificationHttpServerOpti
       }
 
       // ─── Internal Delivery Operations ─────────────────────────────
-      if (pathname === "/internal/notifications/deliveries" && method === "GET") {
+      if (
+        pathname === "/internal/notifications/deliveries" &&
+        method === "GET"
+      ) {
         const status = url.searchParams.get("status") ?? undefined;
         const deliveries = await repository.listDeliveries({ status });
         return sendJson(200, { deliveries });
       }
 
       const retryDeliveryMatch = pathname.match(
-        /^\/internal\/notifications\/deliveries\/([^/]+)\/retry$/
+        /^\/internal\/notifications\/deliveries\/([^/]+)\/retry$/,
       );
       if (retryDeliveryMatch && method === "POST") {
         const delId = retryDeliveryMatch[1] ?? "";

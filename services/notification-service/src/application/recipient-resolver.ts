@@ -9,7 +9,7 @@ export class RecipientResolver {
    */
   static resolveRecipients(
     intent: NotificationIntent,
-    explicitRecipients?: readonly NotificationRecipient[] | undefined
+    explicitRecipients?: readonly NotificationRecipient[] | undefined,
   ): NotificationRecipient[] {
     if (explicitRecipients && explicitRecipients.length > 0) {
       return [...explicitRecipients];

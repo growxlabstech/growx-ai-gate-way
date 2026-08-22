@@ -22,7 +22,12 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
     environmentId: "env_prod",
     environment: "production",
     name: "Key A",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -40,7 +45,12 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
     environmentId: "env_prod",
     environment: "production",
     name: "Key B",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -59,14 +69,20 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
         executedTenants.push(auth.organizationId);
         return {
           id: "chatcmpl_fair",
-          choices: [{ index: 0, message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
+          choices: [
+            {
+              index: 0,
+              message: { role: "assistant", content: "ok" },
+              finish_reason: "stop",
+            },
+          ],
         };
       },
     };
 
     const finalizer = new BatchFinalizer({ batchRepository: batchRepo });
     batchService = new BatchService({ batchRepository: batchRepo, finalizer });
-    
+
     // Worker with concurrency=4 and maxPerTenant=2
     worker = new BatchWorker(
       {
@@ -74,7 +90,12 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
         gatewayEngine: mockGatewayEngine,
         finalizer,
       },
-      { workerId: "worker-fair", concurrency: 4, leaseDurationMs: 10000, maxPerTenant: 2 }
+      {
+        workerId: "worker-fair",
+        concurrency: 4,
+        leaseDurationMs: 10000,
+        maxPerTenant: 2,
+      },
     );
 
     scheduler = new BatchScheduler({ batchRepository: batchRepo, finalizer });
@@ -84,15 +105,30 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
     // Tenant A creates batch with 20 items
     const heavyItems = Array.from({ length: 20 }).map((_, i) => ({
       custom_id: `heavy-${i}`,
-      body: { model: "gpt-4o", messages: [{ role: "user", content: `msg ${i}` }] },
+      body: {
+        model: "gpt-4o",
+        messages: [{ role: "user", content: `msg ${i}` }],
+      },
     }));
     await batchService.createBatch(authTenantA, { items: heavyItems });
 
     // Tenant B creates batch with 2 items
     await batchService.createBatch(authTenantB, {
       items: [
-        { custom_id: "light-1", body: { model: "gpt-4o", messages: [{ role: "user", content: "b1" }] } },
-        { custom_id: "light-2", body: { model: "gpt-4o", messages: [{ role: "user", content: "b2" }] } },
+        {
+          custom_id: "light-1",
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "b1" }],
+          },
+        },
+        {
+          custom_id: "light-2",
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "b2" }],
+          },
+        },
       ],
     });
 
@@ -102,8 +138,12 @@ describe("Batch Fairness and Capacity Protection Integration", () => {
     const claimedFirstStep = await worker.step();
     expect(claimedFirstStep).toBe(4);
 
-    const firstStepTenantsA = executedTenants.filter(t => t === "org_heavy").length;
-    const firstStepTenantsB = executedTenants.filter(t => t === "org_light").length;
+    const firstStepTenantsA = executedTenants.filter(
+      (t) => t === "org_heavy",
+    ).length;
+    const firstStepTenantsB = executedTenants.filter(
+      (t) => t === "org_light",
+    ).length;
 
     expect(firstStepTenantsA).toBe(2);
     expect(firstStepTenantsB).toBe(2);

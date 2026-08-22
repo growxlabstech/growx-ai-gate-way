@@ -31,7 +31,10 @@ describe("Provider Tool Adapters (OpenAI, Anthropic, Gemini)", () => {
               {
                 id: "call_123",
                 type: "function",
-                function: { name: "calculator", arguments: '{"expression":"2+2"}' },
+                function: {
+                  name: "calculator",
+                  arguments: '{"expression":"2+2"}',
+                },
               },
             ],
           },

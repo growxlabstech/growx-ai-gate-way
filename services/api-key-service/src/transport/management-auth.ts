@@ -1,6 +1,9 @@
 import type { IncomingMessage } from "node:http";
 import type { BuiltInRole, Permission } from "@growx/contracts";
-import { hasPermission, type AuthorizationContext } from "@growx/authorization-service";
+import {
+  hasPermission,
+  type AuthorizationContext,
+} from "@growx/authorization-service";
 import { hashToken } from "@growx/cryptography";
 import { and, eq, gt, isNull, schema } from "@growx/database";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
@@ -39,11 +42,15 @@ export interface ManagementAuthResolver {
       organizationId: string;
       workspaceId: string;
       permission: Permission;
-    }
+    },
   ): Promise<ManagementAuthResult>;
 }
 
-export function extractSessionToken(req: IncomingMessage): { token?: string; isApiKey?: boolean; inQuery?: boolean } {
+export function extractSessionToken(req: IncomingMessage): {
+  token?: string;
+  isApiKey?: boolean;
+  inQuery?: boolean;
+} {
   const url = req.url ?? "";
   const queryIndex = url.indexOf("?");
   if (queryIndex !== -1) {
@@ -65,7 +72,11 @@ export function extractSessionToken(req: IncomingMessage): { token?: string; isA
     const parts = authHeader.trim().split(/\s+/);
     if (parts.length === 2 && /^bearer$/i.test(parts[0]!)) {
       const token = parts[1]!;
-      if (token.startsWith("gx_live_") || token.startsWith("gx_test_") || token.startsWith("gx_")) {
+      if (
+        token.startsWith("gx_live_") ||
+        token.startsWith("gx_test_") ||
+        token.startsWith("gx_")
+      ) {
         return { isApiKey: true };
       }
       return { token };
@@ -109,7 +120,7 @@ export function extractSessionToken(req: IncomingMessage): { token?: string; isA
 export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
   constructor(
     private readonly db: PostgresJsDatabase<typeof schema>,
-    private readonly sessionPepper: string
+    private readonly sessionPepper: string,
   ) {}
 
   async authenticateAndAuthorize(
@@ -118,7 +129,7 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
       organizationId: string;
       workspaceId: string;
       permission: Permission;
-    }
+    },
   ): Promise<ManagementAuthResult> {
     const extraction = extractSessionToken(req);
 
@@ -136,7 +147,8 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
         allowed: false,
         status: 401,
         code: "INVALID_PRINCIPAL",
-        message: "API keys cannot be used to manage API keys. Human authentication required.",
+        message:
+          "API keys cannot be used to manage API keys. Human authentication required.",
       };
     }
 
@@ -167,8 +179,8 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
         and(
           eq(schema.sessions.tokenHash, tokenHash),
           isNull(schema.sessions.revokedAt),
-          gt(schema.sessions.expiresAt, now)
-        )
+          gt(schema.sessions.expiresAt, now),
+        ),
       )
       .limit(1);
 
@@ -232,8 +244,8 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
       .where(
         and(
           eq(schema.workspaces.id, context.workspaceId),
-          eq(schema.workspaces.organizationId, context.organizationId)
-        )
+          eq(schema.workspaces.organizationId, context.organizationId),
+        ),
       )
       .limit(1);
 
@@ -269,10 +281,13 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
         .from(schema.organizationMembers)
         .where(
           and(
-            eq(schema.organizationMembers.organizationId, context.organizationId),
+            eq(
+              schema.organizationMembers.organizationId,
+              context.organizationId,
+            ),
             eq(schema.organizationMembers.userId, userSession.userId),
-            eq(schema.organizationMembers.status, "active")
-          )
+            eq(schema.organizationMembers.status, "active"),
+          ),
         )
         .limit(1);
 
@@ -296,8 +311,8 @@ export class DrizzleManagementAuthResolver implements ManagementAuthResolver {
         .where(
           and(
             eq(schema.memberRoles.organizationId, context.organizationId),
-            eq(schema.memberRoles.memberId, member.memberId)
-          )
+            eq(schema.memberRoles.memberId, member.memberId),
+          ),
         );
 
       for (const ra of roleAssignments) {
@@ -411,7 +426,7 @@ export class InMemoryManagementAuthResolver implements ManagementAuthResolver {
       organizationId: string;
       workspaceId: string;
       permission: Permission;
-    }
+    },
   ): Promise<ManagementAuthResult> {
     const extraction = extractSessionToken(req);
 
@@ -429,7 +444,8 @@ export class InMemoryManagementAuthResolver implements ManagementAuthResolver {
         allowed: false,
         status: 401,
         code: "INVALID_PRINCIPAL",
-        message: "API keys cannot be used to manage API keys. Human authentication required.",
+        message:
+          "API keys cannot be used to manage API keys. Human authentication required.",
       };
     }
 
@@ -443,7 +459,11 @@ export class InMemoryManagementAuthResolver implements ManagementAuthResolver {
     }
 
     const session = this.sessions.get(extraction.token);
-    if (!session || session.revokedAt !== null || session.expiresAt.getTime() <= Date.now()) {
+    if (
+      !session ||
+      session.revokedAt !== null ||
+      session.expiresAt.getTime() <= Date.now()
+    ) {
       return {
         allowed: false,
         status: 401,
@@ -513,7 +533,10 @@ export class InMemoryManagementAuthResolver implements ManagementAuthResolver {
           message: "User is not an active member of this organization",
         };
       }
-      if (membership.workspaceIds && !membership.workspaceIds.includes(context.workspaceId)) {
+      if (
+        membership.workspaceIds &&
+        !membership.workspaceIds.includes(context.workspaceId)
+      ) {
         return {
           allowed: false,
           status: 403,

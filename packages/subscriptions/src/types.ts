@@ -16,7 +16,8 @@ export interface Plan {
   updatedAt: Date;
 }
 
-export type PlanVersionStatus = "draft" | "active" | "archived" | "grandfathered";
+export type PlanVersionStatus =
+  "draft" | "active" | "archived" | "grandfathered";
 export type BillingInterval = "monthly" | "annual" | "custom";
 
 export interface PlanVersion {
@@ -43,7 +44,8 @@ export interface PlanVersion {
 
 // ─── Entitlement Types ───────────────────────────────────────
 
-export type EntitlementValueType = "boolean" | "integer" | "decimal" | "string" | "set";
+export type EntitlementValueType =
+  "boolean" | "integer" | "decimal" | "string" | "set";
 
 export interface EntitlementDefinition {
   key: string;
@@ -68,18 +70,10 @@ export interface PlanLimit {
 // ─── Subscription Types ──────────────────────────────────────
 
 export type SubscriptionStatus =
-  | "trialing"
-  | "active"
-  | "past_due"
-  | "paused"
-  | "cancelled"
-  | "expired";
+  "trialing" | "active" | "past_due" | "paused" | "cancelled" | "expired";
 
 export type FundingMode =
-  | "manual"
-  | "free"
-  | "external_payment_future"
-  | "enterprise_contract";
+  "manual" | "free" | "external_payment_future" | "enterprise_contract";
 
 export interface OrganizationSubscription {
   id: string;
@@ -100,7 +94,8 @@ export interface OrganizationSubscription {
   updatedAt: Date;
 }
 
-export type SubscriptionPeriodStatus = "pending" | "active" | "renewed" | "expired";
+export type SubscriptionPeriodStatus =
+  "pending" | "active" | "renewed" | "expired";
 
 export interface SubscriptionPeriod {
   id: string;
@@ -181,11 +176,19 @@ export class ResolvedEntitlements {
   getSet(key: string): ReadonlySet<string> {
     const entry = this.entries.get(key);
     if (!entry || entry.type !== "set") return new Set();
-    return new Set(entry.value.split(",").map((s) => s.trim()).filter(Boolean));
+    return new Set(
+      entry.value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
   }
 
   /** Check whether a specific model is allowed by this plan's model access rules. */
-  checkModelAccess(canonicalModelId: string): { allowed: boolean; reason?: string } {
+  checkModelAccess(canonicalModelId: string): {
+    allowed: boolean;
+    reason?: string;
+  } {
     if (this.modelRules.length === 0) {
       // No rules = all models allowed
       return { allowed: true };

@@ -1,7 +1,4 @@
-import {
-  type CanonicalCapability,
-  GrowXProviderError,
-} from "@growx/contracts";
+import { type CanonicalCapability, GrowXProviderError } from "@growx/contracts";
 import type { MachineAuthContext } from "@growx/api-key-service";
 import type {
   CanonicalModelEntity,
@@ -13,7 +10,7 @@ import type { ResolvedGatewayRoute } from "./types.js";
 
 export function validateModelCapabilities(
   model: CanonicalModelEntity,
-  requiredCapabilities: readonly CanonicalCapability[]
+  requiredCapabilities: readonly CanonicalCapability[],
 ): void {
   for (const cap of requiredCapabilities) {
     if (cap === "streaming" && !model.supportsStreaming) {
@@ -21,7 +18,7 @@ export function validateModelCapabilities(
         "model_capability_not_supported",
         `Model '${model.canonicalId}' does not support streaming`,
         false,
-        400
+        400,
       );
     }
     if (cap === "tools.call" && !model.supportsTools) {
@@ -29,7 +26,7 @@ export function validateModelCapabilities(
         "model_capability_not_supported",
         `Model '${model.canonicalId}' does not support tool calling`,
         false,
-        400
+        400,
       );
     }
     if (cap === "structured_output" && !model.supportsStructuredOutput) {
@@ -37,7 +34,7 @@ export function validateModelCapabilities(
         "model_capability_not_supported",
         `Model '${model.canonicalId}' does not support structured output`,
         false,
-        400
+        400,
       );
     }
     if (cap === "text.reason" && !model.supportsReasoning) {
@@ -45,7 +42,7 @@ export function validateModelCapabilities(
         "model_capability_not_supported",
         `Model '${model.canonicalId}' does not support reasoning effort`,
         false,
-        400
+        400,
       );
     }
     if (cap === "vision.input" && !model.inputModalities?.includes("image")) {
@@ -53,16 +50,24 @@ export function validateModelCapabilities(
         "model_capability_not_supported",
         `Model '${model.canonicalId}' does not support image/vision inputs`,
         false,
-        400
+        400,
       );
     }
-    if (!["streaming", "tools.call", "structured_output", "text.reason", "vision.input"].includes(cap)) {
+    if (
+      ![
+        "streaming",
+        "tools.call",
+        "structured_output",
+        "text.reason",
+        "vision.input",
+      ].includes(cap)
+    ) {
       if (!model.capabilities?.includes(cap)) {
         throw new GrowXProviderError(
           "model_capability_not_supported",
           `Model '${model.canonicalId}' does not support ${cap}`,
           false,
-          400
+          400,
         );
       }
     }
@@ -72,7 +77,7 @@ export function validateModelCapabilities(
 export function routeSupportsCapability(
   route: ProviderRouteEntity,
   model: CanonicalModelEntity,
-  capability: CanonicalCapability
+  capability: CanonicalCapability,
 ): boolean {
   if (route.capabilitiesOverrides && route.capabilitiesOverrides.length > 0) {
     return route.capabilitiesOverrides.includes(capability);
@@ -94,7 +99,7 @@ export interface IRouteResolver {
   resolveRoute(
     resolvedModel: ResolvedModelContext,
     requiredCapabilities: CanonicalCapability[],
-    context?: RouteResolutionContext | undefined
+    context?: RouteResolutionContext | undefined,
   ): Promise<ResolvedGatewayRoute> | ResolvedGatewayRoute;
 }
 
@@ -102,7 +107,7 @@ export class DeterministicRouteResolver implements IRouteResolver {
   resolveRoute(
     resolvedModel: ResolvedModelContext,
     requiredCapabilities: CanonicalCapability[],
-    _context?: RouteResolutionContext
+    _context?: RouteResolutionContext,
   ): ResolvedGatewayRoute {
     const { model, eligibleConfiguredRoutes, requestedModelId, activeAlias } =
       resolvedModel as ResolvedModelContext & { activeAlias?: any };
@@ -116,7 +121,7 @@ export class DeterministicRouteResolver implements IRouteResolver {
         return false;
       }
       return requiredCapabilities.every((cap) =>
-        routeSupportsCapability(r, model, cap)
+        routeSupportsCapability(r, model, cap),
       );
     });
 
@@ -125,12 +130,14 @@ export class DeterministicRouteResolver implements IRouteResolver {
         "model_unavailable",
         `No eligible provider routes available for model '${model.canonicalId}' matching requested capabilities [${requiredCapabilities.join(", ")}]`,
         false,
-        503
+        503,
       );
     }
 
     // 3. Deterministic Selection: First stable eligible route
-    const primaryRoute = (candidates as ProviderRouteEntity[]).find((r) => (r as any).isPrimary);
+    const primaryRoute = (candidates as ProviderRouteEntity[]).find(
+      (r) => (r as any).isPrimary,
+    );
     const selectedRoute = primaryRoute ?? candidates[0]!;
 
     return {
@@ -150,13 +157,13 @@ export class RoutingEngineRouteResolver implements IRouteResolver {
   async resolveRoute(
     resolvedModel: ResolvedModelContext,
     requiredCapabilities: CanonicalCapability[],
-    context?: RouteResolutionContext
+    context?: RouteResolutionContext,
   ): Promise<ResolvedGatewayRoute> {
     if (!context?.auth) {
       return new DeterministicRouteResolver().resolveRoute(
         resolvedModel,
         requiredCapabilities,
-        context
+        context,
       );
     }
 

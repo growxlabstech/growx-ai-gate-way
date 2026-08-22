@@ -12,14 +12,16 @@ export interface ProjectedBalance {
  */
 export function calculateBalanceFromLots(
   lots: readonly CreditLot[],
-  now: Date = new Date()
+  now: Date = new Date(),
 ): ProjectedBalance {
   let total = Decimal.ZERO;
   let reserved = Decimal.ZERO;
 
   for (const lot of lots) {
     const isUnexpired =
-      lot.expiresAt === null || lot.expiresAt === undefined || lot.expiresAt.getTime() > now.getTime();
+      lot.expiresAt === null ||
+      lot.expiresAt === undefined ||
+      lot.expiresAt.getTime() > now.getTime();
 
     if (isUnexpired) {
       total = total.add(lot.remainingAmount);
@@ -41,7 +43,7 @@ export function calculateBalanceFromLots(
  */
 export function calculateBalanceFromLedger(
   entries: readonly WalletLedgerEntry[],
-  walletId: string
+  walletId: string,
 ): WalletBalance {
   // Sort entries strictly by monotonic sequence
   const sorted = [...entries].sort((a, b) => {
@@ -97,7 +99,8 @@ export function calculateBalanceFromLedger(
     reserved: reserved.lt(Decimal.ZERO) ? Decimal.ZERO : reserved,
     available: available.lt(Decimal.ZERO) ? Decimal.ZERO : available,
     version: sorted.length,
-    updatedAt: sorted.length > 0 ? sorted[sorted.length - 1]!.createdAt : new Date(),
+    updatedAt:
+      sorted.length > 0 ? sorted[sorted.length - 1]!.createdAt : new Date(),
   };
 }
 
@@ -111,25 +114,25 @@ export interface BalanceIntegrityCheck {
  */
 export function verifyBalanceIntegrity(
   materialized: WalletBalance,
-  calculated: ProjectedBalance
+  calculated: ProjectedBalance,
 ): BalanceIntegrityCheck {
   const discrepancies: string[] = [];
 
   if (!materialized.total.eq(calculated.total)) {
     discrepancies.push(
-      `Total balance mismatch: materialized=${materialized.total.toString()}, calculated=${calculated.total.toString()}`
+      `Total balance mismatch: materialized=${materialized.total.toString()}, calculated=${calculated.total.toString()}`,
     );
   }
 
   if (!materialized.reserved.eq(calculated.reserved)) {
     discrepancies.push(
-      `Reserved balance mismatch: materialized=${materialized.reserved.toString()}, calculated=${calculated.reserved.toString()}`
+      `Reserved balance mismatch: materialized=${materialized.reserved.toString()}, calculated=${calculated.reserved.toString()}`,
     );
   }
 
   if (!materialized.available.eq(calculated.available)) {
     discrepancies.push(
-      `Available balance mismatch: materialized=${materialized.available.toString()}, calculated=${calculated.available.toString()}`
+      `Available balance mismatch: materialized=${materialized.available.toString()}, calculated=${calculated.available.toString()}`,
     );
   }
 

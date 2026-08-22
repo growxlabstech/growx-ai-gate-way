@@ -156,3 +156,37 @@ The D2 shell rules below extend this authority without replacing D1.
 - Never display, log, or persist raw API/provider keys, session tokens, or sensitive payloads.
 - Privileged actions show scope, reason, expiration, approval, and break-glass risk while backend enforcement remains authoritative.
 - Destructive/financial actions fail closed when authorization or audit durability is uncertain.
+
+## D3 authentication and first-run
+
+- Use `/sign-in` as the canonical passwordless entry for new and returning identities; do not duplicate it behind a separate sign-up form.
+- Render OAuth only when deployment configuration explicitly enables the matching provider.
+- Use one accessible native OTP input with numeric keyboard, paste, one-time-code autocomplete, decorative cells, associated errors, and de-duplicated auto-submit.
+- Distinguish invalid, expired, attempt-limited, rate-limited, network, and service failures. Show only safe request IDs.
+- Derive onboarding from active memberships on every request; never persist a browser `onboardingComplete` flag.
+- Validate `returnTo` as an internal path and authorize its tenant segments against current context.
+- Never store OTPs or session values in browser storage, URLs, telemetry, or frontend logs.
+- Tenant creation must use the authenticated transactional onboarding transport; never create optimistic or browser-only tenant records.
+- Invitation continuation is the only non-workspace `returnTo` exception and must remain bounded, internal, email-bound, and single-use.
+
+## D8 Billing, credits, checkout, and invoices
+
+- Use Phase-17 authoritative wallet as the sole balance source; never calculate balance client-side.
+- Preserve distinct concepts: Order, Payment Intent, Payment Attempt, Payment, Wallet, Subscription, Entitlement, Invoice.
+- GrowX owns the checkout UI; keep payment providers behind canonical interfaces without generic popup walls.
+- Dynamic UPI QR codes must render dynamic server-bound payloads and respect session expiry timers.
+- Never trust client-side callbacks, query parameters, or manual functions to mark payments paid. Server verification is mandatory.
+- Replaying duplicate webhooks or multiple polling calls must be idempotent with zero duplicate credits or invoice records.
+- Workspaces within the same organization share the organizational credit pool; cross-tenant financial access fails closed.
+
+## D9 Customer settings, team, and operator administration
+
+- Settings follow a clean, high-density form pattern; do not use oversized decorative cards.
+- Organization and workspace deletions require exact-name confirmation and execute Phase-35 governed workflows.
+- Team governance enforces last-owner protection; organizations cannot be left without an active Owner.
+- Webhook signing secrets are display-once; once dismissed, raw secrets are never shown again.
+- Admin operator plane is desktop-first, highly dense, and strictly separated from customer navigation.
+- High-risk operator actions require active JIT capabilities, ticket reference, and emit immutable audit events.
+- Upstream provider credentials in Admin are strictly write-only and envelope-encrypted; never decrypted to the DOM.
+- Emergency model kill-switches immediately update Router V2 without manual gateway restarts.
+- Audit logs are strictly append-only; edit and delete buttons are forbidden.

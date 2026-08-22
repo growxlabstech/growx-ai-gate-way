@@ -7,8 +7,9 @@ import { Button, Checkbox, Radio } from "./controls";
 import { Tab, Tabs } from "./navigation";
 import { Modal } from "./overlays";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;

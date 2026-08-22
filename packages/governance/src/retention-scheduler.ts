@@ -5,7 +5,7 @@ import { generateId } from "@growx/ids";
 export class RetentionScheduler {
   constructor(
     private repository: IGovernanceRepository,
-    private orchestrator?: GovernanceDeletionOrchestrator
+    private orchestrator?: GovernanceDeletionOrchestrator,
   ) {}
 
   public async scanAndPurgeExpired(limit: number = 100): Promise<number> {

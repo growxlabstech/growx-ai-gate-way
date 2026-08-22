@@ -34,7 +34,7 @@ describe("Phase 21 — Load & Failure-Storm Resilience", () => {
           eventType: "request.completed",
           organizationId: orgId,
           data: { requestId: `req_${i}`, model: "openai/gpt-4o" },
-        })
+        }),
       );
     }
 

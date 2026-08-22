@@ -27,7 +27,8 @@ export function CodeExample() {
     <section className="www-section">
       <h2 className="www-heading">One API for every model</h2>
       <p className="www-body">
-        Use the OpenAI-compatible chat completions endpoint. Swap models by changing a single parameter.
+        Use the OpenAI-compatible chat completions endpoint. Swap models by
+        changing a single parameter.
       </p>
       <p className="www-code-label">POST /v1/chat/completions</p>
       <div className="www-code">
@@ -36,19 +37,34 @@ export function CodeExample() {
         </button>
         <pre>
           <code>
-            <span className="kw">curl</span> <span className="str">https://gateway.growx.ai/v1/chat/completions</span> \
+            <span className="kw">curl</span>{" "}
+            <span className="str">
+              https://gateway.growx.ai/v1/chat/completions
+            </span>{" "}
+            \
             <br />
-            {"  "}<span className="kw">-H</span> <span className="str">"Authorization: Bearer gx_live_k_xxxxx"</span> \
+            {"  "}
+            <span className="kw">-H</span>{" "}
+            <span className="str">"Authorization: Bearer gx_live_k_xxxxx"</span>{" "}
+            \
             <br />
-            {"  "}<span className="kw">-H</span> <span className="str">"Content-Type: application/json"</span> \
+            {"  "}
+            <span className="kw">-H</span>{" "}
+            <span className="str">"Content-Type: application/json"</span> \
             <br />
-            {"  "}<span className="kw">-d</span> <span className="str">'{`{
+            {"  "}
+            <span className="kw">-d</span>{" "}
+            <span className="str">
+              '
+              {`{
     "model": "gpt-4o",
     "messages": [
       { "role": "user", "content": "Hello" }
     ],
     "stream": true
-  }`}'</span>
+  }`}
+              '
+            </span>
           </code>
         </pre>
       </div>

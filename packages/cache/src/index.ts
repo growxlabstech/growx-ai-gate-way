@@ -25,21 +25,33 @@ export * from "./semantic/request-optimization-service.js";
 export const LocalInFlightStore = SingleFlightGroup;
 export type InFlightStore<T> = SingleFlightGroup<T>;
 
-export function cacheEligible(request: any, explicitlyAllowed: boolean): boolean {
+export function cacheEligible(
+  request: any,
+  explicitlyAllowed: boolean,
+): boolean {
   return (
     explicitlyAllowed &&
     !request.stream &&
-    (request.generation ? request.generation.temperature === 0 : (request.temperature ?? 0) === 0) &&
+    (request.generation
+      ? request.generation.temperature === 0
+      : (request.temperature ?? 0) === 0) &&
     !request.tools?.length &&
     !request.metadata &&
     !request.reasoning
   );
 }
 
-export function requestFingerprint(request: any, tenantScope: string, modelVersion: string): string {
+export function requestFingerprint(
+  request: any,
+  tenantScope: string,
+  modelVersion: string,
+): string {
   const { requestDigest } = canonicalizeRequest({
     model: request.model,
-    messages: typeof request.input === "string" ? [{ role: "user", content: request.input }] : request.messages ?? [],
+    messages:
+      typeof request.input === "string"
+        ? [{ role: "user", content: request.input }]
+        : (request.messages ?? []),
     temperature: request.generation?.temperature ?? request.temperature ?? 0,
     tools: request.tools,
   } as any);

@@ -16,7 +16,9 @@ describe("Phase 22 — @growx/audit Domain & Tamper Chain", () => {
     const obj2 = { a: 1, nested: { y: 8, z: 9 }, b: 2 };
 
     expect(canonicalJsonStringify(obj1)).toBe(canonicalJsonStringify(obj2));
-    expect(canonicalJsonStringify(obj1)).toBe('{"a":1,"b":2,"nested":{"y":8,"z":9}}');
+    expect(canonicalJsonStringify(obj1)).toBe(
+      '{"a":1,"b":2,"nested":{"y":8,"z":9}}',
+    );
   });
 
   it("builds an unbroken tamper-evident audit chain of 100 events", () => {

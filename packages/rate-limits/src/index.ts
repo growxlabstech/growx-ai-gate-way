@@ -9,7 +9,14 @@ export * from "./quota-engine.js";
 // Legacy rate-limit exports for backward compatibility
 export type LimitWindow = "minute" | "hour" | "day";
 export interface RateLimit {
-  dimension: "platform" | "plan" | "organization" | "workspace" | "apiKey" | "ip" | "endpoint";
+  dimension:
+    | "platform"
+    | "plan"
+    | "organization"
+    | "workspace"
+    | "apiKey"
+    | "ip"
+    | "endpoint";
   window: LimitWindow;
   limit: number;
 }
@@ -20,24 +27,28 @@ export interface RateLimitDecision {
   resetAt: Date;
   retryAfterSeconds?: number | undefined;
 }
-const windows: Record<LimitWindow, number> = { minute: 60, hour: 3600, day: 86400 };
+const windows: Record<LimitWindow, number> = {
+  minute: 60,
+  hour: 3600,
+  day: 86400,
+};
 
 export function strictestLimit(
   policies: readonly RateLimit[],
-  window: LimitWindow
+  window: LimitWindow,
 ): RateLimit | undefined {
   return policies
     .filter((p) => p.window === window && p.limit > 0)
     .reduce<RateLimit | undefined>(
       (best, value) => (!best || value.limit < best.limit ? value : best),
-      undefined
+      undefined,
     );
 }
 
 export function evaluateFixedWindow(
   count: number,
   policy: RateLimit,
-  now = new Date()
+  now = new Date(),
 ): RateLimitDecision {
   const seconds = windows[policy.window];
   const epoch = Math.floor(now.getTime() / 1000);
@@ -60,6 +71,6 @@ export interface ConcurrencyStore {
   acquire(
     key: string,
     limit: number,
-    ttlSeconds: number
+    ttlSeconds: number,
   ): Promise<ConcurrencyLease | null>;
 }

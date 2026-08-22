@@ -18,7 +18,9 @@ describe("CreditHttpServer", () => {
     repo = new InMemoryCreditRepository();
     service = new CreditService(repo);
 
-    const mockAuth = async (req: http.IncomingMessage): Promise<MachineAuthContext | null> => {
+    const mockAuth = async (
+      req: http.IncomingMessage,
+    ): Promise<MachineAuthContext | null> => {
       const authHeader = req.headers.authorization;
       if (authHeader === "Bearer test_key_123") {
         return {
@@ -44,7 +46,11 @@ describe("CreditHttpServer", () => {
     await server.close();
   });
 
-  async function postJson(path: string, body: unknown, headers: Record<string, string> = {}): Promise<{ status: number; data: any }> {
+  async function postJson(
+    path: string,
+    body: unknown,
+    headers: Record<string, string> = {},
+  ): Promise<{ status: number; data: any }> {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
@@ -54,7 +60,10 @@ describe("CreditHttpServer", () => {
     return { status: res.status, data };
   }
 
-  async function getJson(path: string, headers: Record<string, string> = {}): Promise<{ status: number; data: any }> {
+  async function getJson(
+    path: string,
+    headers: Record<string, string> = {},
+  ): Promise<{ status: number; data: any }> {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "GET",
       headers,

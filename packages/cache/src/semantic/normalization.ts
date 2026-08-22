@@ -18,10 +18,7 @@ export function sha256(content: string): string {
 
 export function normalizeSemanticText(text: string): string {
   if (!text) return "";
-  return text
-    .normalize("NFKC")
-    .trim()
-    .replace(/\s+/g, " ");
+  return text.normalize("NFKC").trim().replace(/\s+/g, " ");
 }
 
 export function extractSemanticInput(params: {
@@ -40,10 +37,16 @@ export function extractSemanticInput(params: {
 
   for (const m of messages) {
     if (m.role === "system" || m.role === "developer") {
-      const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? "");
+      const content =
+        typeof m.content === "string"
+          ? m.content
+          : JSON.stringify(m.content ?? "");
       systemPrompt += (systemPrompt ? "\n" : "") + content;
     } else if (m.role === "user") {
-      const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? "");
+      const content =
+        typeof m.content === "string"
+          ? m.content
+          : JSON.stringify(m.content ?? "");
       userMessages.push(content);
     }
   }

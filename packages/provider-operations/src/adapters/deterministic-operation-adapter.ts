@@ -16,14 +16,14 @@ export class DeterministicOperationAdapter implements ProviderOperationAdapter {
 
   public async getOperationStatus(
     _providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationStatusResult> {
     return { ...this.mockStatus };
   }
 
   public async cancelOperation(
     _providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationCancelResult> {
     return {
       cancelled: true,
@@ -33,7 +33,7 @@ export class DeterministicOperationAdapter implements ProviderOperationAdapter {
 
   public async fetchResult(
     resultReference: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationResultData> {
     return {
       data: {
@@ -47,10 +47,11 @@ export class DeterministicOperationAdapter implements ProviderOperationAdapter {
 
   public parseCallback(
     payload: Record<string, unknown>,
-    _headers: Record<string, string>
+    _headers: Record<string, string>,
   ) {
     return {
-      providerOperationId: (payload.providerOperationId as string) || "mock_pop_123",
+      providerOperationId:
+        (payload.providerOperationId as string) || "mock_pop_123",
       status: (payload.status as any) || "completed",
       resultReference: "mock_callback_result_ref",
     };

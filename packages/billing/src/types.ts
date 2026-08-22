@@ -6,24 +6,13 @@ import type {
 } from "@growx/tax";
 
 export type InvoiceStatus =
-  | "draft"
-  | "issued"
-  | "partially_paid"
-  | "paid"
-  | "void"
-  | "uncollectible";
+  "draft" | "issued" | "partially_paid" | "paid" | "void" | "uncollectible";
 
 export type InvoiceType =
-  | "invoice"
-  | "tax_invoice"
-  | "proforma"
-  | "credit_note";
+  "invoice" | "tax_invoice" | "proforma" | "credit_note";
 
 export type InvoiceLineSourceType =
-  | "subscription_fee"
-  | "usage_charge"
-  | "credit_purchase"
-  | "manual_adjustment";
+  "subscription_fee" | "usage_charge" | "credit_purchase" | "manual_adjustment";
 
 export interface InvoiceLine {
   id: string;

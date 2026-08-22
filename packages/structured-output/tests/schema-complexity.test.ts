@@ -1,24 +1,27 @@
-import { describe, it, expect } from 'vitest';
-import { validateSchemaComplexity, SchemaComplexityError } from '../src/schema-complexity.js';
+import { describe, it, expect } from "vitest";
+import {
+  validateSchemaComplexity,
+  SchemaComplexityError,
+} from "../src/schema-complexity.js";
 
-describe('Schema Complexity Limits', () => {
-  it('passes schemas within reasonable limits', () => {
+describe("Schema Complexity Limits", () => {
+  it("passes schemas within reasonable limits", () => {
     const schema = {
-      type: 'object',
+      type: "object",
       properties: {
-        a: { type: 'string' },
-        b: { type: 'number' },
+        a: { type: "string" },
+        b: { type: "number" },
       },
     };
     expect(() => validateSchemaComplexity(schema)).not.toThrow();
   });
 
-  it('throws SchemaComplexityError when property limit is exceeded', () => {
+  it("throws SchemaComplexityError when property limit is exceeded", () => {
     const properties: Record<string, any> = {};
     for (let i = 0; i < 20; i++) {
-      properties['prop_' + i] = { type: 'string' };
+      properties["prop_" + i] = { type: "string" };
     }
-    const wideSchema = { type: 'object', properties };
+    const wideSchema = { type: "object", properties };
 
     expect(() =>
       validateSchemaComplexity(wideSchema, {
@@ -31,7 +34,7 @@ describe('Schema Complexity Limits', () => {
         maxUnionBranches: 5,
         maxPatternLength: 100,
         maxOutputBytes: 100000,
-      })
+      }),
     ).toThrow(SchemaComplexityError);
   });
 });

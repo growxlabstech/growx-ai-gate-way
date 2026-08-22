@@ -38,12 +38,15 @@ export class FileService {
     public readonly storageProvider: ObjectStorageProvider,
     public readonly repository: FileRepository,
     public readonly scanner: FileScanner = new TruthfulFileScanner(),
-    config: FileServiceConfig = {}
+    config: FileServiceConfig = {},
   ) {
-    this.maxSingleSizeBytes = config.maxSingleUploadSizeBytes ?? 100 * 1024 * 1024; // 100MB
-    this.maxMultipartSizeBytes = config.maxMultipartUploadSizeBytes ?? 5 * 1024 * 1024 * 1024; // 5GB
+    this.maxSingleSizeBytes =
+      config.maxSingleUploadSizeBytes ?? 100 * 1024 * 1024; // 100MB
+    this.maxMultipartSizeBytes =
+      config.maxMultipartUploadSizeBytes ?? 5 * 1024 * 1024 * 1024; // 5GB
     this.defaultSignedTtl = config.defaultSignedUrlTtlSeconds ?? 900; // 15 mins
-    this.maxOrgStorageBytes = config.maxStorageBytesPerOrg ?? 500n * 1024n * 1024n * 1024n; // 500GB
+    this.maxOrgStorageBytes =
+      config.maxStorageBytesPerOrg ?? 500n * 1024n * 1024n * 1024n; // 500GB
   }
 
   public setKillSwitch(active: boolean): void {
@@ -54,14 +57,23 @@ export class FileService {
     return this.killSwitchActive;
   }
 
-  async createFile(tenant: TenantContext, request: CreateFileRequest): Promise<CreateFileResponse> {
+  async createFile(
+    tenant: TenantContext,
+    request: CreateFileRequest,
+  ): Promise<CreateFileResponse> {
     if (this.killSwitchActive) {
-      throw new StorageError("STORAGE_PROVIDER_ERROR", "File uploads are temporarily disabled by platform kill switch");
+      throw new StorageError(
+        "STORAGE_PROVIDER_ERROR",
+        "File uploads are temporarily disabled by platform kill switch",
+      );
     }
 
     const { organizationId, workspaceId, userId } = tenant;
     if (!organizationId) {
-      throw new StorageError("UNAUTHORIZED_TENANT", "Organization ID is required");
+      throw new StorageError(
+        "UNAUTHORIZED_TENANT",
+        "Organization ID is required",
+      );
     }
 
     const fileId = `file_${crypto.randomBytes(16).toString("hex")}`;
@@ -73,27 +85,37 @@ export class FileService {
     if (!FileTypeDetector.validatePurposeMime(purpose, declaredMime)) {
       throw new StorageError(
         "UNSUPPORTED_MIME_TYPE",
-        `Declared MIME type ${declaredMime} is not allowed for purpose ${purpose}`
+        `Declared MIME type ${declaredMime} is not allowed for purpose ${purpose}`,
       );
     }
 
-    const maxAllowedSize = request.uploadType === "multipart" ? this.maxMultipartSizeBytes : this.maxSingleSizeBytes;
+    const maxAllowedSize =
+      request.uploadType === "multipart"
+        ? this.maxMultipartSizeBytes
+        : this.maxSingleSizeBytes;
     const requestedSize = request.sizeBytes || maxAllowedSize;
 
     if (requestedSize > maxAllowedSize) {
       throw new StorageError(
         "FILE_SIZE_EXCEEDED",
-        `Requested file size ${requestedSize} exceeds limit ${maxAllowedSize}`
+        `Requested file size ${requestedSize} exceeds limit ${maxAllowedSize}`,
       );
     }
 
     // Storage quota check including active reservations
     const currentUsage = await this.repository.getStorageUsage(organizationId);
-    const activeRes = await this.repository.getActiveReservations(organizationId);
+    const activeRes =
+      await this.repository.getActiveReservations(organizationId);
     const reservedSum = activeRes.reduce((acc, r) => acc + r.reservedBytes, 0n);
 
-    if (currentUsage.totalBytes + reservedSum + BigInt(requestedSize) > this.maxOrgStorageBytes) {
-      throw new StorageError("STORAGE_QUOTA_EXCEEDED", "Organization storage quota exceeded");
+    if (
+      currentUsage.totalBytes + reservedSum + BigInt(requestedSize) >
+      this.maxOrgStorageBytes
+    ) {
+      throw new StorageError(
+        "STORAGE_QUOTA_EXCEEDED",
+        "Organization storage quota exceeded",
+      );
     }
 
     const storageKey = generateStorageKey({
@@ -104,15 +126,23 @@ export class FileService {
     });
 
     const now = new Date();
-    const sessionTtlSeconds = Math.min(request.expiresInSeconds || this.defaultSignedTtl, 86400);
+    const sessionTtlSeconds = Math.min(
+      request.expiresInSeconds || this.defaultSignedTtl,
+      86400,
+    );
     const sessionExpiresAt = new Date(now.getTime() + sessionTtlSeconds * 1000);
 
     // Calculate file expiration based on retention
     let fileExpiresAt: Date | undefined;
-    const retention = await this.repository.getRetentionPolicy(organizationId, purpose);
+    const retention = await this.repository.getRetentionPolicy(
+      organizationId,
+      purpose,
+    );
     if (retention && !retention.permanent && retention.retentionSeconds) {
-      fileExpiresAt = new Date(now.getTime() + retention.retentionSeconds * 1000);
-    } else if (purpose === "ai_input" || purpose === "temporary" as any) {
+      fileExpiresAt = new Date(
+        now.getTime() + retention.retentionSeconds * 1000,
+      );
+    } else if (purpose === "ai_input" || purpose === ("temporary" as any)) {
       fileExpiresAt = new Date(now.getTime() + 7 * 86400 * 1000); // 7 days default for AI input
     } else if (purpose === "invoice_document") {
       fileExpiresAt = undefined; // Permanent
@@ -176,7 +206,7 @@ export class FileService {
           storageKey,
           mp.uploadId,
           i,
-          { expiresInSeconds: sessionTtlSeconds }
+          { expiresInSeconds: sessionTtlSeconds },
         );
         uploadParts.push({
           partNumber: i,
@@ -185,11 +215,14 @@ export class FileService {
         });
       }
     } else {
-      const signed = await this.storageProvider.createSignedUploadUrl(storageKey, {
-        expiresInSeconds: sessionTtlSeconds,
-        contentType: declaredMime,
-        maxSizeBytes: maxAllowedSize,
-      });
+      const signed = await this.storageProvider.createSignedUploadUrl(
+        storageKey,
+        {
+          expiresInSeconds: sessionTtlSeconds,
+          contentType: declaredMime,
+          maxSizeBytes: maxAllowedSize,
+        },
+      );
       uploadUrl = signed.uploadUrl;
     }
 
@@ -222,7 +255,7 @@ export class FileService {
   async completeUpload(
     tenant: TenantContext,
     fileId: string,
-    request: CompleteFileUploadRequest
+    request: CompleteFileUploadRequest,
   ): Promise<CompleteFileUploadResponse> {
     const file = await this.repository.getFile(tenant.organizationId, fileId);
     if (!file) {
@@ -230,7 +263,10 @@ export class FileService {
     }
 
     if (file.organizationId !== tenant.organizationId) {
-      throw new StorageError("UNAUTHORIZED_TENANT", "Unauthorized cross-tenant file completion attempt");
+      throw new StorageError(
+        "UNAUTHORIZED_TENANT",
+        "Unauthorized cross-tenant file completion attempt",
+      );
     }
 
     if (file.status === "ready") {
@@ -238,9 +274,15 @@ export class FileService {
       return { file };
     }
 
-    const session = await this.repository.getUploadSession(tenant.organizationId, request.uploadSessionId);
+    const session = await this.repository.getUploadSession(
+      tenant.organizationId,
+      request.uploadSessionId,
+    );
     if (!session || session.fileId !== fileId) {
-      throw new StorageError("UPLOAD_SESSION_INVALID", "Invalid upload session for file");
+      throw new StorageError(
+        "UPLOAD_SESSION_INVALID",
+        "Invalid upload session for file",
+      );
     }
 
     if (session.status === "completed") {
@@ -253,45 +295,67 @@ export class FileService {
       await this.repository.updateUploadSession(session);
       file.status = "expired";
       await this.repository.updateFile(file);
-      throw new StorageError("UPLOAD_SESSION_EXPIRED", "Upload session has expired");
+      throw new StorageError(
+        "UPLOAD_SESSION_EXPIRED",
+        "Upload session has expired",
+      );
     }
 
     // Finalize multipart if needed
     if (session.uploadType === "multipart") {
-      if (!session.multipartUploadId || !request.parts || request.parts.length === 0) {
-        throw new StorageError("UPLOAD_SESSION_INVALID", "Multipart upload completion requires valid parts and uploadId");
+      if (
+        !session.multipartUploadId ||
+        !request.parts ||
+        request.parts.length === 0
+      ) {
+        throw new StorageError(
+          "UPLOAD_SESSION_INVALID",
+          "Multipart upload completion requires valid parts and uploadId",
+        );
       }
       await this.storageProvider.completeMultipartUpload(
         file.storageKey,
         session.multipartUploadId,
-        request.parts
+        request.parts,
       );
     }
 
     // Verify object existence and retrieve metadata from storage provider
     const head = await this.storageProvider.headObject(file.storageKey);
     if (!head) {
-      throw new StorageError("FILE_NOT_READY", "Object payload not found in storage provider");
+      throw new StorageError(
+        "FILE_NOT_READY",
+        "Object payload not found in storage provider",
+      );
     }
 
     const actualSize = head.contentLength;
     if (request.actualSizeBytes && request.actualSizeBytes !== actualSize) {
       throw new StorageError(
         "FILE_SIZE_MISMATCH",
-        `Declared actual size ${request.actualSizeBytes} differs from storage payload ${actualSize}`
+        `Declared actual size ${request.actualSizeBytes} differs from storage payload ${actualSize}`,
       );
     }
 
-    const maxLimit = session.uploadType === "multipart" ? this.maxMultipartSizeBytes : this.maxSingleSizeBytes;
+    const maxLimit =
+      session.uploadType === "multipart"
+        ? this.maxMultipartSizeBytes
+        : this.maxSingleSizeBytes;
     if (actualSize > maxLimit) {
       await this.storageProvider.deleteObject(file.storageKey);
       file.status = "rejected";
       await this.repository.updateFile(file);
-      throw new StorageError("FILE_SIZE_EXCEEDED", `Uploaded file size ${actualSize} exceeds max limit ${maxLimit}`);
+      throw new StorageError(
+        "FILE_SIZE_EXCEEDED",
+        `Uploaded file size ${actualSize} exceeds max limit ${maxLimit}`,
+      );
     }
 
     // Read initial slice for magic byte sniffing
-    const sliceResult = await this.storageProvider.getObject(file.storageKey, { start: 0, end: 4096 });
+    const sliceResult = await this.storageProvider.getObject(file.storageKey, {
+      start: 0,
+      end: 4096,
+    });
     let headerBuf: Buffer;
     if (Buffer.isBuffer(sliceResult.body)) {
       headerBuf = sliceResult.body;
@@ -354,30 +418,46 @@ export class FileService {
       throw new StorageError("FILE_NOT_FOUND", `File ${fileId} not found`);
     }
     if (file.organizationId !== tenant.organizationId) {
-      throw new StorageError("UNAUTHORIZED_TENANT", "Unauthorized cross-tenant file access attempt");
+      throw new StorageError(
+        "UNAUTHORIZED_TENANT",
+        "Unauthorized cross-tenant file access attempt",
+      );
     }
     return file;
   }
 
-  async getDownloadUrl(tenant: TenantContext, fileId: string, options: { expiresInSeconds?: number } = {}): Promise<FileDownloadResponse> {
+  async getDownloadUrl(
+    tenant: TenantContext,
+    fileId: string,
+    options: { expiresInSeconds?: number } = {},
+  ): Promise<FileDownloadResponse> {
     const file = await this.getFile(tenant, fileId);
 
     if (file.status === "quarantined") {
-      throw new StorageError("FILE_QUARANTINED", "File is quarantined and cannot be downloaded");
+      throw new StorageError(
+        "FILE_QUARANTINED",
+        "File is quarantined and cannot be downloaded",
+      );
     }
     if (file.status === "deleted") {
       throw new StorageError("FILE_DELETED", "File has been deleted");
     }
     if (file.status !== "ready") {
-      throw new StorageError("FILE_NOT_READY", "File is not ready for download");
+      throw new StorageError(
+        "FILE_NOT_READY",
+        "File is not ready for download",
+      );
     }
 
     const safeDisposition = `attachment; filename="${file.safeFileName}"`;
-    const signed = await this.storageProvider.createSignedDownloadUrl(file.storageKey, {
-      expiresInSeconds: options.expiresInSeconds || this.defaultSignedTtl,
-      contentType: file.detectedMimeType || file.mimeType,
-      contentDisposition: safeDisposition,
-    });
+    const signed = await this.storageProvider.createSignedDownloadUrl(
+      file.storageKey,
+      {
+        expiresInSeconds: options.expiresInSeconds || this.defaultSignedTtl,
+        contentType: file.detectedMimeType || file.mimeType,
+        contentDisposition: safeDisposition,
+      },
+    );
 
     return {
       file,
@@ -387,7 +467,11 @@ export class FileService {
     };
   }
 
-  async getFileContentStream(tenant: TenantContext, fileId: string, range?: { start: number; end?: number }): Promise<{ body: Buffer | Readable; file: FileObject }> {
+  async getFileContentStream(
+    tenant: TenantContext,
+    fileId: string,
+    range?: { start: number; end?: number },
+  ): Promise<{ body: Buffer | Readable; file: FileObject }> {
     const file = await this.getFile(tenant, fileId);
     if (file.status === "quarantined") {
       throw new StorageError("FILE_QUARANTINED", "File is quarantined");
@@ -407,7 +491,10 @@ export class FileService {
     const file = await this.repository.getFile(tenant.organizationId, fileId);
     if (!file) return true; // Idempotent
     if (file.organizationId !== tenant.organizationId) {
-      throw new StorageError("UNAUTHORIZED_TENANT", "Unauthorized cross-tenant file deletion attempt");
+      throw new StorageError(
+        "UNAUTHORIZED_TENANT",
+        "Unauthorized cross-tenant file deletion attempt",
+      );
     }
 
     if (file.status === "deleted") {
@@ -436,7 +523,10 @@ export class FileService {
     return true;
   }
 
-  async listFiles(tenant: TenantContext, query: FileListQuery): Promise<FileListResponse> {
+  async listFiles(
+    tenant: TenantContext,
+    query: FileListQuery,
+  ): Promise<FileListResponse> {
     return this.repository.listFiles({
       organizationId: tenant.organizationId,
       workspaceId: query.workspaceId || tenant.workspaceId,
@@ -447,7 +537,11 @@ export class FileService {
     });
   }
 
-  async quarantineFile(organizationId: string, fileId: string, reason: string): Promise<FileObject> {
+  async quarantineFile(
+    organizationId: string,
+    fileId: string,
+    reason: string,
+  ): Promise<FileObject> {
     const file = await this.repository.getFile(organizationId, fileId);
     if (!file) {
       throw new StorageError("FILE_NOT_FOUND", `File ${fileId} not found`);
@@ -458,7 +552,10 @@ export class FileService {
     return this.repository.updateFile(file);
   }
 
-  async restoreFile(organizationId: string, fileId: string): Promise<FileObject> {
+  async restoreFile(
+    organizationId: string,
+    fileId: string,
+  ): Promise<FileObject> {
     const file = await this.repository.getFile(organizationId, fileId);
     if (!file) {
       throw new StorageError("FILE_NOT_FOUND", `File ${fileId} not found`);

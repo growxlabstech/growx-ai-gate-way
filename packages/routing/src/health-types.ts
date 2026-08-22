@@ -1,11 +1,7 @@
 export type RouteHealthState = "healthy" | "degraded" | "unhealthy" | "unknown";
 
 export type CircuitState =
-  | "CLOSED"
-  | "OPEN"
-  | "HALF_OPEN"
-  | "FORCED_OPEN"
-  | "FORCED_CLOSED";
+  "CLOSED" | "OPEN" | "HALF_OPEN" | "FORCED_OPEN" | "FORCED_CLOSED";
 
 export interface CircuitConfiguration {
   /**

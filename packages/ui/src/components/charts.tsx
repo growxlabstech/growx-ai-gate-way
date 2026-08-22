@@ -1,12 +1,155 @@
-import type { CSSProperties, ReactNode } from "react"; import { cx } from "./primitives";
-export type ChartTone="ice"|"frost"|"health"|"warning"|"critical"|"information";
-export function ChartContainer({title,description,legend,children}: {title:string;description?:string;legend?:ReactNode;children:ReactNode}){return <figure className="gx-chart"><figcaption><div><strong>{title}</strong>{description?<span>{description}</span>:null}</div>{legend}</figcaption><div className="gx-chart__plot">{children}</div></figure>}
-export function ChartLegend({items}: {items:Array<{label:string;tone:ChartTone}>}){return <div className="gx-chart-legend">{items.map(item=><span key={item.label}><i className={`gx-chart-tone--${item.tone}`}/>{item.label}</span>)}</div>}
-export function ChartTooltip({label,items}: {label:string;items:Array<{name:string;value:string}>}){return <div className="gx-chart-tooltip"><strong>{label}</strong>{items.map(item=><span key={item.name}>{item.name}<b>{item.value}</b></span>)}</div>}
-export function BarChart({values,tone="ice"}: {values:number[];tone?:ChartTone}){return <div className="gx-bars" aria-label="Bar chart">{values.map((value,index)=><i className={`gx-chart-tone--${tone}`} style={{height:`${value}%`}} key={`${value}-${index}`}/>)}</div>}
-export function StackedBar({segments}: {segments:Array<{value:number;tone:ChartTone}>}){return <div className="gx-stacked-bar">{segments.map((segment,index)=><i className={`gx-chart-tone--${segment.tone}`} style={{width:`${segment.value}%`}} key={`${segment.tone}-${index}`}/>)}</div>}
-export function Sparkline({values,tone="ice"}: {values:number[];tone?:ChartTone}){return <div className={cx("gx-sparkline",`gx-sparkline--${tone}`)}>{values.map((value,index)=><i style={{height:`${value}%`}} key={`${value}-${index}`}/>)}</div>}
-export function LineChart({values}: {values:number[]}){return <div className="gx-line-chart">{values.map((value,index)=><i style={{"--gx-point-y":`${100-value}%`} as CSSProperties} key={`${value}-${index}`}/>)}</div>}
-export function AreaChart({values}: {values:number[]}){return <div className="gx-area-chart"><LineChart values={values}/></div>}
-export function DonutChart({value,label}: {value:number;label:string}){return <div className="gx-donut" style={{"--gx-donut-value":`${value*3.6}deg`} as CSSProperties} role="img" aria-label={`${label}: ${value}%`}><strong>{value}%</strong><span>{label}</span></div>}
-export function Heatmap({values}: {values:number[]}){return <div className="gx-heatmap">{values.map((value,index)=><i style={{opacity:.15+value/120}} key={`${value}-${index}`}/>)}</div>}
+import type { CSSProperties, ReactNode } from "react";
+import { cx } from "./primitives";
+export type ChartTone =
+  "ice" | "frost" | "health" | "warning" | "critical" | "information";
+export function ChartContainer({
+  title,
+  description,
+  legend,
+  children,
+}: {
+  title: string;
+  description?: string;
+  legend?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <figure className="gx-chart">
+      <figcaption>
+        <div>
+          <strong>{title}</strong>
+          {description ? <span>{description}</span> : null}
+        </div>
+        {legend}
+      </figcaption>
+      <div className="gx-chart__plot">{children}</div>
+    </figure>
+  );
+}
+export function ChartLegend({
+  items,
+}: {
+  items: Array<{ label: string; tone: ChartTone }>;
+}) {
+  return (
+    <div className="gx-chart-legend">
+      {items.map((item) => (
+        <span key={item.label}>
+          <i className={`gx-chart-tone--${item.tone}`} />
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+export function ChartTooltip({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ name: string; value: string }>;
+}) {
+  return (
+    <div className="gx-chart-tooltip">
+      <strong>{label}</strong>
+      {items.map((item) => (
+        <span key={item.name}>
+          {item.name}
+          <b>{item.value}</b>
+        </span>
+      ))}
+    </div>
+  );
+}
+export function BarChart({
+  values,
+  tone = "ice",
+}: {
+  values: number[];
+  tone?: ChartTone;
+}) {
+  return (
+    <div className="gx-bars" aria-label="Bar chart">
+      {values.map((value, index) => (
+        <i
+          className={`gx-chart-tone--${tone}`}
+          style={{ height: `${value}%` }}
+          key={`${value}-${index}`}
+        />
+      ))}
+    </div>
+  );
+}
+export function StackedBar({
+  segments,
+}: {
+  segments: Array<{ value: number; tone: ChartTone }>;
+}) {
+  return (
+    <div className="gx-stacked-bar">
+      {segments.map((segment, index) => (
+        <i
+          className={`gx-chart-tone--${segment.tone}`}
+          style={{ width: `${segment.value}%` }}
+          key={`${segment.tone}-${index}`}
+        />
+      ))}
+    </div>
+  );
+}
+export function Sparkline({
+  values,
+  tone = "ice",
+}: {
+  values: number[];
+  tone?: ChartTone;
+}) {
+  return (
+    <div className={cx("gx-sparkline", `gx-sparkline--${tone}`)}>
+      {values.map((value, index) => (
+        <i style={{ height: `${value}%` }} key={`${value}-${index}`} />
+      ))}
+    </div>
+  );
+}
+export function LineChart({ values }: { values: number[] }) {
+  return (
+    <div className="gx-line-chart">
+      {values.map((value, index) => (
+        <i
+          style={{ "--gx-point-y": `${100 - value}%` } as CSSProperties}
+          key={`${value}-${index}`}
+        />
+      ))}
+    </div>
+  );
+}
+export function AreaChart({ values }: { values: number[] }) {
+  return (
+    <div className="gx-area-chart">
+      <LineChart values={values} />
+    </div>
+  );
+}
+export function DonutChart({ value, label }: { value: number; label: string }) {
+  return (
+    <div
+      className="gx-donut"
+      style={{ "--gx-donut-value": `${value * 3.6}deg` } as CSSProperties}
+      role="img"
+      aria-label={`${label}: ${value}%`}
+    >
+      <strong>{value}%</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+export function Heatmap({ values }: { values: number[] }) {
+  return (
+    <div className="gx-heatmap">
+      {values.map((value, index) => (
+        <i style={{ opacity: 0.15 + value / 120 }} key={`${value}-${index}`} />
+      ))}
+    </div>
+  );
+}

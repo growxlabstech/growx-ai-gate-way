@@ -35,7 +35,10 @@ export class InvoiceNumberService {
     fiscalYearStartMonth?: number | undefined;
   }): string {
     const prefix = params.prefix?.trim() || "GXL";
-    const fiscalYear = getFiscalYear(params.date ?? new Date(), params.fiscalYearStartMonth ?? 4);
+    const fiscalYear = getFiscalYear(
+      params.date ?? new Date(),
+      params.fiscalYearStartMonth ?? 4,
+    );
     const seqStr = params.sequence.toString().padStart(6, "0");
     return `${prefix}/${fiscalYear}/${seqStr}`;
   }
@@ -51,7 +54,10 @@ export class InvoiceNumberService {
     fiscalYearStartMonth?: number | undefined;
   }): string {
     const prefix = params.prefix?.trim() || "GXL";
-    const fiscalYear = getFiscalYear(params.date ?? new Date(), params.fiscalYearStartMonth ?? 4);
+    const fiscalYear = getFiscalYear(
+      params.date ?? new Date(),
+      params.fiscalYearStartMonth ?? 4,
+    );
     const seqStr = params.sequence.toString().padStart(6, "0");
     return `CN-${prefix}/${fiscalYear}/${seqStr}`;
   }

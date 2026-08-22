@@ -19,6 +19,7 @@ Phase 6 adds billing accounts/profiles, plans and immutable plan versions, subsc
 Phase 3 adds `api_keys`, `api_key_permissions`, `api_key_model_rules`, `api_key_rate_limits`, `api_key_spending_limits`, `api_key_ip_allowlists`, and `api_key_usage_snapshots`. Every child is keyed through `api_keys`; lifecycle records restrict tenant deletion, policy rows cascade with a key, and usage snapshots are retained when a key is revoked. Prefixes are unique. Tenant, environment, status/expiry, last-use, and period lookup indexes are declared in schema.
 
 Raw authentication, reset, verification, and invitation tokens are never columns. Only token hashes or encrypted provider credentials are persisted. Tenant parent deletion cascades only through subordinate membership/configuration data; user ownership and audit references are restricted.
+
 # Authentication migration baseline
 
 `0000_bitter_azazel.sql` is the reproducible schema baseline. `0001_auth_compat_expand.sql` adds the Better Auth verification model and OAuth compatibility fields without removing existing identity schema. Historical sessions are deleted during this major migration because their token representation cannot be proven compatible; users must sign in again. Contract/removal work is intentionally deferred to a later verified deployment.

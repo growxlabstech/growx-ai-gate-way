@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { AddressInfo } from "node:net";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
-import type { NormalizedStreamEvent, NormalizedGenerationRequest, ProviderExecutionContext } from "@growx/contracts";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
+import type {
+  NormalizedStreamEvent,
+  NormalizedGenerationRequest,
+  ProviderExecutionContext,
+} from "@growx/contracts";
 
 let fixture: TestGatewayFixture;
 let baseUrl: string;
@@ -22,7 +29,7 @@ describe("Stream Concurrency Tests", () => {
     // Use a slightly delayed stream to ensure concurrency
     fixture.mockAdapter.streamMock = async function* (
       req: NormalizedGenerationRequest,
-      ctx: ProviderExecutionContext
+      ctx: ProviderExecutionContext,
     ): AsyncIterable<NormalizedStreamEvent> {
       const now = new Date().toISOString();
       yield {
@@ -57,7 +64,9 @@ describe("Stream Concurrency Tests", () => {
           canonicalModelId: req.canonicalModelId,
           providerId: ctx.providerId,
           providerModelId: req.providerModelId,
-          output: [{ role: "assistant", content: `Response for ${req.requestId}` }],
+          output: [
+            { role: "assistant", content: `Response for ${req.requestId}` },
+          ],
           finishReason: "stop",
           usage: {
             inputTokens: 5,
@@ -80,8 +89,8 @@ describe("Stream Concurrency Tests", () => {
         fixture.createTestApiKey({
           organizationId: `org_concurrent_${i}`,
           workspaceId: `ws_concurrent_${i}`,
-        })
-      )
+        }),
+      ),
     );
 
     // Fire all requests concurrently
@@ -98,8 +107,8 @@ describe("Stream Concurrency Tests", () => {
             messages: [{ role: "user", content: "Concurrent test" }],
             stream: true,
           }),
-        })
-      )
+        }),
+      ),
     );
 
     // All should succeed
@@ -118,7 +127,7 @@ describe("Stream Concurrency Tests", () => {
 
     // Verify all unique request IDs
     const requestIds = new Set(
-      responses.map((r) => r.headers.get("x-growx-request-id"))
+      responses.map((r) => r.headers.get("x-growx-request-id")),
     );
     expect(requestIds.size).toBe(concurrency);
 
@@ -138,7 +147,7 @@ describe("Stream Concurrency Tests", () => {
     // Use a slow stream so we can cancel mid-stream
     fixture.mockAdapter.streamMock = async function* (
       req: NormalizedGenerationRequest,
-      ctx: ProviderExecutionContext
+      ctx: ProviderExecutionContext,
     ): AsyncIterable<NormalizedStreamEvent> {
       const now = new Date().toISOString();
       yield {

@@ -39,7 +39,11 @@ export class AnthropicToolAdapter implements ProviderToolAdapter {
       requestId,
       providerCallId: b.id,
       name: b.name,
-      arguments: (b.input && typeof b.input === "object" && !Array.isArray(b.input) ? b.input : {}) as Record<string, unknown>,
+      arguments: (b.input &&
+      typeof b.input === "object" &&
+      !Array.isArray(b.input)
+        ? b.input
+        : {}) as Record<string, unknown>,
       rawArguments: JSON.stringify(b.input),
       index: idx,
       status: "validated",

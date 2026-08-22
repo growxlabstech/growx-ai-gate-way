@@ -31,7 +31,11 @@ import { GatewayResilienceController } from "../../src/application/resilience-co
 import { InMemoryGatewayRepository } from "../../src/infrastructure/in-memory-repository.js";
 import { InMemoryGatewayEvents } from "../../src/infrastructure/events.js";
 import { createGatewayServer } from "../../src/transport/http-server.js";
-import { MockAdapter, TEST_ENCRYPTION_KEY, TEST_PEPPER } from "../helpers/test-fixture.js";
+import {
+  MockAdapter,
+  TEST_ENCRYPTION_KEY,
+  TEST_PEPPER,
+} from "../helpers/test-fixture.js";
 import { GrowXProviderError } from "@growx/contracts";
 
 class CircuitTestMockAdapter extends MockAdapter {
@@ -145,7 +149,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
       providerRepo,
       providerEvents,
       crypto,
-      adapterRegistry
+      adapterRegistry,
     );
 
     // 4. Shared Health Store & Routing Engine
@@ -161,7 +165,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
       routingEvents,
       {
         routeHealthStore: healthStore,
-      }
+      },
     );
 
     const routeResolver = new RoutingEngineRouteResolver(routingEngine);
@@ -177,8 +181,12 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
       gatewayEvents,
       {
         routeHealthStore: healthStore,
-        retryPolicy: { maxAttempts: 3, maxSameRouteRetries: 0, baseBackoffMs: 5 },
-      }
+        retryPolicy: {
+          maxAttempts: 3,
+          maxSameRouteRetries: 0,
+          baseBackoffMs: 5,
+        },
+      },
     );
 
     gatewayEngine = new GatewayEngine(
@@ -188,7 +196,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
       gatewayEvents,
       routeResolver,
       undefined,
-      resilienceController
+      resilienceController,
     );
 
     // 6. HTTP Transport Server
@@ -218,7 +226,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     await providerService.createCredential(
@@ -228,7 +236,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         rawSecret: "sk-ant-test-key",
         environment: "development",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const openAIProvider = await providerService.createProvider(
@@ -242,7 +250,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     await providerService.createCredential(
@@ -252,7 +260,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         rawSecret: "sk-proj-test-key",
         environment: "development",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const canonicalModel = await modelService.createModel(
@@ -274,7 +282,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming", "tools.call"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Primary: Anthropic (Priority 10)
@@ -288,7 +296,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         routingEligible: true,
         priority: 10,
       },
-      "usr_admin"
+      "usr_admin",
     );
     anthropicRouteId = anthropicRoute.id;
 
@@ -303,7 +311,7 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
         routingEligible: true,
         priority: 20,
       },
-      "usr_admin"
+      "usr_admin",
     );
     openAIRouteId = openAIRoute.id;
 
@@ -320,7 +328,11 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
       prefix: creds.prefix,
       secretHash,
       status: "active",
-      permissions: ["chat.completions.create", "responses.create", "models.read"],
+      permissions: [
+        "chat.completions.create",
+        "responses.create",
+        "models.read",
+      ],
       modelRules: [],
       ipAllowlist: [],
       rateLimits: [],
@@ -351,7 +363,12 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
   it("trips circuit to OPEN after consecutive 5xx failures, and routes fall back to secondary provider", async () => {
     // Make Anthropic fail with 500
     mockAnthropic.setNextError(
-      new GrowXProviderError("provider_server_error", "Anthropic 500 internal error", true, 500)
+      new GrowXProviderError(
+        "provider_server_error",
+        "Anthropic 500 internal error",
+        true,
+        500,
+      ),
     );
 
     // Request 1: Anthropic fails -> fallbacks to OpenAI
@@ -370,7 +387,12 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
 
     // Make Anthropic fail 2 more times to breach consecutiveFailureThreshold (3 failures)
     mockAnthropic.setNextError(
-      new GrowXProviderError("provider_server_error", "Anthropic 500 internal error", true, 500)
+      new GrowXProviderError(
+        "provider_server_error",
+        "Anthropic 500 internal error",
+        true,
+        500,
+      ),
     );
     await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
@@ -385,7 +407,12 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
     });
 
     mockAnthropic.setNextError(
-      new GrowXProviderError("provider_server_error", "Anthropic 500 internal error", true, 500)
+      new GrowXProviderError(
+        "provider_server_error",
+        "Anthropic 500 internal error",
+        true,
+        500,
+      ),
     );
     await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
@@ -400,7 +427,9 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
     });
 
     // Check circuit state for anthropic route
-    const healthRes = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit`);
+    const healthRes = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit`,
+    );
     const healthJson = (await healthRes.json()) as any;
     expect(healthJson.circuitState).toBe("OPEN");
 
@@ -435,13 +464,21 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
     await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit/open`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reason: "Outage simulation", setBy: "ops", providerId: "anthropic" }),
+      body: JSON.stringify({
+        reason: "Outage simulation",
+        setBy: "ops",
+        providerId: "anthropic",
+      }),
     });
 
     await fetch(`${baseUrl}/internal/routes/${openAIRouteId}/circuit/open`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reason: "Outage simulation", setBy: "ops", providerId: "openai" }),
+      body: JSON.stringify({
+        reason: "Outage simulation",
+        setBy: "ops",
+        providerId: "openai",
+      }),
     });
 
     const anthropicCalls = mockAnthropic.callCount;
@@ -485,7 +522,9 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
     expect(resBad.status).toBe(400);
 
     // Check circuit remains CLOSED
-    const circuitRes = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit`);
+    const circuitRes = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit`,
+    );
     const circuitJson = (await circuitRes.json()) as any;
     expect(circuitJson.circuitState).toBe("CLOSED");
   });
@@ -495,30 +534,47 @@ describe("Phase 10 — Provider Health & Circuit Breakers End-to-End Tests", () 
     await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit/open`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reason: "Testing recovery", setBy: "ops", providerId: "anthropic" }),
+      body: JSON.stringify({
+        reason: "Testing recovery",
+        setBy: "ops",
+        providerId: "anthropic",
+      }),
     });
 
     // 2. Initiate recovery -> HALF_OPEN
-    const recRes = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit/recover`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ setBy: "ops_recovery", providerId: "anthropic" }),
-    });
+    const recRes = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit/recover`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          setBy: "ops_recovery",
+          providerId: "anthropic",
+        }),
+      },
+    );
     expect(recRes.status).toBe(200);
 
-    const circuitRes = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit`);
+    const circuitRes = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit`,
+    );
     const circuitJson = (await circuitRes.json()) as any;
     expect(circuitJson.circuitState).toBe("HALF_OPEN");
 
     // 3. Reset circuit directly
-    const resetRes = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit/reset`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-    });
+    const resetRes = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit/reset`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      },
+    );
     expect(resetRes.status).toBe(200);
 
-    const finalCircuit = await fetch(`${baseUrl}/internal/routes/${anthropicRouteId}/circuit`);
-    expect((await finalCircuit.json() as any).circuitState).toBe("CLOSED");
+    const finalCircuit = await fetch(
+      `${baseUrl}/internal/routes/${anthropicRouteId}/circuit`,
+    );
+    expect(((await finalCircuit.json()) as any).circuitState).toBe("CLOSED");
   });
 
   it("serves provider aggregate health summaries on GET /internal/providers/health", async () => {

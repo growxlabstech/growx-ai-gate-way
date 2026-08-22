@@ -143,7 +143,7 @@ export class StorageError extends Error {
   constructor(
     public readonly code: StorageErrorCode,
     message: string,
-    public readonly details?: Record<string, unknown> | undefined
+    public readonly details?: Record<string, unknown> | undefined,
   ) {
     super(message);
     this.name = "StorageError";

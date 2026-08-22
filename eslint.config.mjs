@@ -5,6 +5,13 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores(["**/.next/**", "**/dist/**", "**/coverage/**", ".pnpm-store/**", "next-env.d.ts"]),
+  globalIgnores([
+    "**/.next/**",
+    "**/.next-*/**",
+    "**/dist/**",
+    "**/coverage/**",
+    ".pnpm-store/**",
+    "next-env.d.ts",
+  ]),
   { files: ["**/*.{ts,tsx,mjs}"], rules: { "no-console": "error" } },
 ]);

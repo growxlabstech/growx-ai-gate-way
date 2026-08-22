@@ -4,7 +4,10 @@ import type {
   ModelPricingEntity,
   ProviderRouteEntity,
 } from "../domain/types.js";
-import type { IModelRegistryRepository, ModelListFilter } from "../application/repository.js";
+import type {
+  IModelRegistryRepository,
+  ModelListFilter,
+} from "../application/repository.js";
 
 export class InMemoryModelRegistryRepository implements IModelRegistryRepository {
   private readonly models = new Map<string, CanonicalModelEntity>();
@@ -16,7 +19,9 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
   // Models
   // -------------------------------------------------------------
 
-  async createModel(model: CanonicalModelEntity): Promise<CanonicalModelEntity> {
+  async createModel(
+    model: CanonicalModelEntity,
+  ): Promise<CanonicalModelEntity> {
     this.models.set(model.id, { ...model });
     return { ...model };
   }
@@ -26,7 +31,9 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return found ? { ...found } : null;
   }
 
-  async getModelByCanonicalId(canonicalId: string): Promise<CanonicalModelEntity | null> {
+  async getModelByCanonicalId(
+    canonicalId: string,
+  ): Promise<CanonicalModelEntity | null> {
     for (const model of this.models.values()) {
       if (model.canonicalId.toLowerCase() === canonicalId.toLowerCase()) {
         return { ...model };
@@ -35,7 +42,10 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return null;
   }
 
-  async updateModel(id: string, updates: Partial<CanonicalModelEntity>): Promise<CanonicalModelEntity> {
+  async updateModel(
+    id: string,
+    updates: Partial<CanonicalModelEntity>,
+  ): Promise<CanonicalModelEntity> {
     const existing = this.models.get(id);
     if (!existing) {
       throw new Error(`Model '${id}' not found`);
@@ -49,7 +59,9 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return { ...updated };
   }
 
-  async listModels(filter: ModelListFilter = {}): Promise<{ items: CanonicalModelEntity[]; hasMore: boolean }> {
+  async listModels(
+    filter: ModelListFilter = {},
+  ): Promise<{ items: CanonicalModelEntity[]; hasMore: boolean }> {
     let items = Array.from(this.models.values());
 
     if (filter.customerVisible !== undefined) {
@@ -62,10 +74,14 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
       items = items.filter((m) => filter.status!.includes(m.status));
     }
     if (filter.family) {
-      items = items.filter((m) => m.family.toLowerCase() === filter.family!.toLowerCase());
+      items = items.filter(
+        (m) => m.family.toLowerCase() === filter.family!.toLowerCase(),
+      );
     }
     if (filter.category) {
-      items = items.filter((m) => m.category.toLowerCase() === filter.category!.toLowerCase());
+      items = items.filter(
+        (m) => m.category.toLowerCase() === filter.category!.toLowerCase(),
+      );
     }
     if (filter.search) {
       const q = filter.search.toLowerCase();
@@ -73,7 +89,7 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
         (m) =>
           m.canonicalId.toLowerCase().includes(q) ||
           m.displayName.toLowerCase().includes(q) ||
-          m.family.toLowerCase().includes(q)
+          m.family.toLowerCase().includes(q),
       );
     }
 
@@ -108,7 +124,7 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
   async getRouteByProviderModel(
     providerId: string,
     providerModelId: string,
-    region: string
+    region: string,
   ): Promise<ProviderRouteEntity | null> {
     for (const route of this.routes.values()) {
       if (
@@ -132,7 +148,10 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return Array.from(this.routes.values()).map((r) => ({ ...r }));
   }
 
-  async updateRoute(id: string, updates: Partial<ProviderRouteEntity>): Promise<ProviderRouteEntity> {
+  async updateRoute(
+    id: string,
+    updates: Partial<ProviderRouteEntity>,
+  ): Promise<ProviderRouteEntity> {
     const existing = this.routes.get(id);
     if (!existing) {
       throw new Error(`Route '${id}' not found`);
@@ -173,7 +192,10 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return Array.from(this.aliases.values()).map((a) => ({ ...a }));
   }
 
-  async updateAlias(id: string, updates: Partial<ModelAliasEntity>): Promise<ModelAliasEntity> {
+  async updateAlias(
+    id: string,
+    updates: Partial<ModelAliasEntity>,
+  ): Promise<ModelAliasEntity> {
     const existing = this.aliases.get(id);
     if (!existing) {
       throw new Error(`Alias '${id}' not found`);
@@ -191,18 +213,21 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
   // Pricing
   // -------------------------------------------------------------
 
-  async createPricing(pricing: ModelPricingEntity): Promise<ModelPricingEntity> {
+  async createPricing(
+    pricing: ModelPricingEntity,
+  ): Promise<ModelPricingEntity> {
     this.pricing.set(pricing.id, { ...pricing });
     return { ...pricing };
   }
 
   async getEffectivePricing(
     modelIdOrRouteId: string,
-    timestamp = new Date()
+    timestamp = new Date(),
   ): Promise<ModelPricingEntity | null> {
     const matching = Array.from(this.pricing.values())
       .filter((p) => {
-        const matchesTarget = p.modelId === modelIdOrRouteId || p.routeId === modelIdOrRouteId;
+        const matchesTarget =
+          p.modelId === modelIdOrRouteId || p.routeId === modelIdOrRouteId;
         if (!matchesTarget) return false;
         const afterStart = p.effectiveFrom <= timestamp;
         const beforeEnd = !p.effectiveTo || p.effectiveTo > timestamp;
@@ -213,7 +238,10 @@ export class InMemoryModelRegistryRepository implements IModelRegistryRepository
     return matching[0] ? { ...matching[0] } : null;
   }
 
-  async listPricing(filter?: { modelId?: string; routeId?: string }): Promise<ModelPricingEntity[]> {
+  async listPricing(filter?: {
+    modelId?: string;
+    routeId?: string;
+  }): Promise<ModelPricingEntity[]> {
     let items = Array.from(this.pricing.values());
     if (filter?.modelId) {
       items = items.filter((p) => p.modelId === filter.modelId);

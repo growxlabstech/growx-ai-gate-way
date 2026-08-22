@@ -16,7 +16,11 @@ export class WebhookWorker {
 
   constructor(private readonly options: WebhookWorkerOptions) {}
 
-  async runOnce(): Promise<{ delivered: number; retried: number; deadLettered: number }> {
+  async runOnce(): Promise<{
+    delivered: number;
+    retried: number;
+    deadLettered: number;
+  }> {
     return this.options.deliveryService.processBatch({
       batchSize: this.options.batchSize ?? 10,
       leaseDurationMs: this.options.leaseDurationMs ?? 30_000,

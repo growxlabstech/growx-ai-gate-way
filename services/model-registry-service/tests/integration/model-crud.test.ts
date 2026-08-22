@@ -35,7 +35,7 @@ describe("Model Registry CRUD Integration Tests", () => {
         capabilities: ["text.generate", "streaming", "tools.call"],
       },
       "usr_admin123",
-      "req_test1"
+      "req_test1",
     );
 
     expect(created.id).toBeDefined();
@@ -69,7 +69,7 @@ describe("Model Registry CRUD Integration Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate"],
       },
-      "usr_admin123"
+      "usr_admin123",
     );
 
     await expect(
@@ -92,8 +92,8 @@ describe("Model Registry CRUD Integration Tests", () => {
           outputModalities: ["text"],
           capabilities: ["text.generate"],
         },
-        "usr_admin123"
-      )
+        "usr_admin123",
+      ),
     ).rejects.toThrow(/already exists/);
   });
 
@@ -117,7 +117,7 @@ describe("Model Registry CRUD Integration Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming"],
       },
-      "usr_admin123"
+      "usr_admin123",
     );
 
     const updated = await service.updateModel(
@@ -126,7 +126,7 @@ describe("Model Registry CRUD Integration Tests", () => {
         supportsReasoning: true,
         capabilities: ["text.generate", "streaming", "text.reason"],
       },
-      "usr_admin123"
+      "usr_admin123",
     );
 
     expect(updated.supportsReasoning).toBe(true);
@@ -154,16 +154,18 @@ describe("Model Registry CRUD Integration Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming"],
       },
-      "usr_admin123"
+      "usr_admin123",
     );
 
     const deprecated = await service.deprecateModel(
       created.id,
       { message: "Please migrate to gemini-2.0-pro" },
-      "usr_admin123"
+      "usr_admin123",
     );
     expect(deprecated.status).toBe("deprecated");
-    expect(deprecated.deprecationMessage).toBe("Please migrate to gemini-2.0-pro");
+    expect(deprecated.deprecationMessage).toBe(
+      "Please migrate to gemini-2.0-pro",
+    );
 
     const disabled = await service.disableModel(created.id, "usr_admin123");
     expect(disabled.status).toBe("disabled");

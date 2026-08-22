@@ -37,7 +37,10 @@ describe("Phase 10 — ActiveHealthProbeScheduler", () => {
 
     await scheduler.probeSingleRoute(target);
 
-    const snapshot = await healthStore.getRouteHealth("route_openai_gpt4o", "openai");
+    const snapshot = await healthStore.getRouteHealth(
+      "route_openai_gpt4o",
+      "openai",
+    );
     expect(snapshot.state).toBe("healthy");
     expect(snapshot.circuitState).toBe("CLOSED");
     expect(snapshot.successRate).toBe(1.0);
@@ -60,8 +63,12 @@ describe("Phase 10 — ActiveHealthProbeScheduler", () => {
       },
     };
 
-    const scheduler1 = new ActiveHealthProbeScheduler(healthStore, undefined, { lock: mockLock });
-    const scheduler2 = new ActiveHealthProbeScheduler(healthStore, undefined, { lock: mockLock });
+    const scheduler1 = new ActiveHealthProbeScheduler(healthStore, undefined, {
+      lock: mockLock,
+    });
+    const scheduler2 = new ActiveHealthProbeScheduler(healthStore, undefined, {
+      lock: mockLock,
+    });
 
     const target: RouteHealthTarget = {
       routeId: "route_anthropic_claude",

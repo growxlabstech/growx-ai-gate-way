@@ -27,12 +27,14 @@ export interface CalculateCustomerPriceParams {
     audioSeconds?: number | bigint | undefined;
     searchCalls?: number | bigint | undefined;
   };
-  totalProviderUsage?: {
-    inputTokens: number | bigint;
-    outputTokens: number | bigint;
-    cachedInputTokens?: number | bigint | undefined;
-    reasoningTokens?: number | bigint | undefined;
-  } | undefined;
+  totalProviderUsage?:
+    | {
+        inputTokens: number | bigint;
+        outputTokens: number | bigint;
+        cachedInputTokens?: number | bigint | undefined;
+        reasoningTokens?: number | bigint | undefined;
+      }
+    | undefined;
   providerCost?: Decimal | undefined;
   executionSource?: "live_provider" | "cache_exact" | "synthetic" | undefined;
   policyId?: string | undefined;
@@ -47,7 +49,9 @@ export class CustomerPriceCalculator {
     this.policyResolver = policyResolver;
   }
 
-  public calculateRequestPrice(params: CalculateCustomerPriceParams): CustomerPriceResult {
+  public calculateRequestPrice(
+    params: CalculateCustomerPriceParams,
+  ): CustomerPriceResult {
     const currency = params.currency ?? "USD";
     const targetDate = params.targetDate ?? new Date();
     const providerCost = params.providerCost ?? Decimal.ZERO;
@@ -100,7 +104,8 @@ export class CustomerPriceCalculator {
     // 2. Select Usage based on Retry Overhead Policy
     // Default is absorbed_by_growx: customer is billed only for the logical usage of the successful request!
     const effectiveUsage =
-      policy.retryOverheadPolicy === "passed_through" && params.totalProviderUsage
+      policy.retryOverheadPolicy === "passed_through" &&
+      params.totalProviderUsage
         ? params.totalProviderUsage
         : params.logicalUsage;
 
@@ -112,9 +117,14 @@ export class CustomerPriceCalculator {
     if (policy.pricingModel === "markup_over_provider_cost") {
       // Markup over provider cost
       let markupMultiplier = Decimal.ONE;
-      if (policy.markupBasisPoints !== undefined && policy.markupBasisPoints > 0n) {
+      if (
+        policy.markupBasisPoints !== undefined &&
+        policy.markupBasisPoints > 0n
+      ) {
         // e.g. 2000 bps = 20% -> 1 + (2000 / 10000) = 1.20
-        const markupFraction = Decimal.from(policy.markupBasisPoints).div(10000);
+        const markupFraction = Decimal.from(policy.markupBasisPoints).div(
+          10000,
+        );
         markupMultiplier = Decimal.ONE.add(markupFraction);
       } else if (policy.markupMultiplier !== undefined) {
         markupMultiplier = policy.markupMultiplier;
@@ -127,7 +137,11 @@ export class CustomerPriceCalculator {
       }
 
       // Apply cache discount if applicable
-      if (isCacheHit && policy.cachePricingMode === "discount_percentage" && policy.cacheDiscountPercentage) {
+      if (
+        isCacheHit &&
+        policy.cachePricingMode === "discount_percentage" &&
+        policy.cacheDiscountPercentage
+      ) {
         const discountFactor = Decimal.ONE.sub(policy.cacheDiscountPercentage);
         subtotal = subtotal.mul(discountFactor);
       }
@@ -136,7 +150,9 @@ export class CustomerPriceCalculator {
         id: generateId("prcln"),
         priceRecordId: generateId("prcrec"),
         usageType: "total_tokens",
-        quantity: BigInt(effectiveUsage.inputTokens) + BigInt(effectiveUsage.outputTokens),
+        quantity:
+          BigInt(effectiveUsage.inputTokens) +
+          BigInt(effectiveUsage.outputTokens),
         unit: "token",
         rate: markupMultiplier,
         perUnits: 1n,
@@ -148,7 +164,10 @@ export class CustomerPriceCalculator {
       // fixed_model_rate or usage_rate: bill based on rate schedule for canonical model
       const rateSchedule = resolvedPolicyWithRates.rateSchedules.find((rs) => {
         if (rs.schedule.canonicalModelId) {
-          return rs.schedule.canonicalModelId.toLowerCase() === params.canonicalModelId.toLowerCase();
+          return (
+            rs.schedule.canonicalModelId.toLowerCase() ===
+            params.canonicalModelId.toLowerCase()
+          );
         }
         return true; // Default schedule
       });
@@ -175,7 +194,9 @@ export class CustomerPriceCalculator {
       }
 
       const cacheDiscountFactor =
-        isCacheHit && policy.cachePricingMode === "discount_percentage" && policy.cacheDiscountPercentage
+        isCacheHit &&
+        policy.cachePricingMode === "discount_percentage" &&
+        policy.cacheDiscountPercentage
           ? Decimal.ONE.sub(policy.cacheDiscountPercentage)
           : Decimal.ONE;
 
@@ -207,7 +228,11 @@ export class CustomerPriceCalculator {
       if (outputQty > 0n) {
         const rate = ratesMap.get("output_tokens");
         if (rate) {
-          let lineCost = Decimal.fromUnits(outputQty, rate.price, rate.perUnits);
+          let lineCost = Decimal.fromUnits(
+            outputQty,
+            rate.price,
+            rate.perUnits,
+          );
           lineCost = lineCost.mul(cacheDiscountFactor);
           subtotal = subtotal.add(lineCost);
           lines.push({
@@ -226,11 +251,19 @@ export class CustomerPriceCalculator {
       }
 
       // Cached Input Tokens
-      const cachedQty = effectiveUsage.cachedInputTokens !== undefined ? BigInt(effectiveUsage.cachedInputTokens) : 0n;
+      const cachedQty =
+        effectiveUsage.cachedInputTokens !== undefined
+          ? BigInt(effectiveUsage.cachedInputTokens)
+          : 0n;
       if (cachedQty > 0n) {
-        const rate = ratesMap.get("cached_input_tokens") ?? ratesMap.get("input_tokens");
+        const rate =
+          ratesMap.get("cached_input_tokens") ?? ratesMap.get("input_tokens");
         if (rate) {
-          let lineCost = Decimal.fromUnits(cachedQty, rate.price, rate.perUnits);
+          let lineCost = Decimal.fromUnits(
+            cachedQty,
+            rate.price,
+            rate.perUnits,
+          );
           lineCost = lineCost.mul(cacheDiscountFactor);
           subtotal = subtotal.add(lineCost);
           lines.push({
@@ -249,11 +282,19 @@ export class CustomerPriceCalculator {
       }
 
       // Reasoning Tokens
-      const reasoningQty = effectiveUsage.reasoningTokens !== undefined ? BigInt(effectiveUsage.reasoningTokens) : 0n;
+      const reasoningQty =
+        effectiveUsage.reasoningTokens !== undefined
+          ? BigInt(effectiveUsage.reasoningTokens)
+          : 0n;
       if (reasoningQty > 0n) {
-        const rate = ratesMap.get("reasoning_tokens") ?? ratesMap.get("output_tokens");
+        const rate =
+          ratesMap.get("reasoning_tokens") ?? ratesMap.get("output_tokens");
         if (rate) {
-          let lineCost = Decimal.fromUnits(reasoningQty, rate.price, rate.perUnits);
+          let lineCost = Decimal.fromUnits(
+            reasoningQty,
+            rate.price,
+            rate.perUnits,
+          );
           lineCost = lineCost.mul(cacheDiscountFactor);
           subtotal = subtotal.add(lineCost);
           lines.push({

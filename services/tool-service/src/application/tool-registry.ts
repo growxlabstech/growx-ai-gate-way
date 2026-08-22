@@ -4,12 +4,22 @@ import type { RegisteredTool, RegisteredToolVersion } from "@growx/contracts";
 import type { ToolRegistryEntry } from "../domain/types.js";
 
 export interface IToolRepository {
-  findByKey(organizationId: string, key: string, workspaceId?: string): Promise<RegisteredTool | null>;
+  findByKey(
+    organizationId: string,
+    key: string,
+    workspaceId?: string,
+  ): Promise<RegisteredTool | null>;
   findById(id: string): Promise<RegisteredTool | null>;
-  listByOrganization(organizationId: string, status?: string): Promise<RegisteredTool[]>;
+  listByOrganization(
+    organizationId: string,
+    status?: string,
+  ): Promise<RegisteredTool[]>;
   create(tool: RegisteredTool): Promise<void>;
   update(id: string, updates: Partial<RegisteredTool>): Promise<void>;
-  findVersion(toolId: string, version: number): Promise<RegisteredToolVersion | null>;
+  findVersion(
+    toolId: string,
+    version: number,
+  ): Promise<RegisteredToolVersion | null>;
   findActiveVersion(toolId: string): Promise<RegisteredToolVersion | null>;
   createVersion(version: RegisteredToolVersion): Promise<void>;
   listVersions(toolId: string): Promise<RegisteredToolVersion[]>;
@@ -19,10 +29,15 @@ export class InMemoryToolRepository implements IToolRepository {
   private tools = new Map<string, RegisteredTool>();
   private versions = new Map<string, RegisteredToolVersion[]>();
 
-  async findByKey(organizationId: string, key: string, workspaceId?: string): Promise<RegisteredTool | null> {
+  async findByKey(
+    organizationId: string,
+    key: string,
+    workspaceId?: string,
+  ): Promise<RegisteredTool | null> {
     for (const t of this.tools.values()) {
       if (t.organizationId === organizationId && t.key === key) {
-        if (workspaceId && t.workspaceId && t.workspaceId !== workspaceId) continue;
+        if (workspaceId && t.workspaceId && t.workspaceId !== workspaceId)
+          continue;
         return t;
       }
     }
@@ -33,9 +48,13 @@ export class InMemoryToolRepository implements IToolRepository {
     return this.tools.get(id) ?? null;
   }
 
-  async listByOrganization(organizationId: string, status?: string): Promise<RegisteredTool[]> {
+  async listByOrganization(
+    organizationId: string,
+    status?: string,
+  ): Promise<RegisteredTool[]> {
     return Array.from(this.tools.values()).filter(
-      (t) => t.organizationId === organizationId && (!status || t.status === status)
+      (t) =>
+        t.organizationId === organizationId && (!status || t.status === status),
     );
   }
 
@@ -50,14 +69,26 @@ export class InMemoryToolRepository implements IToolRepository {
     }
   }
 
-  async findVersion(toolId: string, version: number): Promise<RegisteredToolVersion | null> {
-    return (this.versions.get(toolId) ?? []).find((v) => v.version === version) ?? null;
+  async findVersion(
+    toolId: string,
+    version: number,
+  ): Promise<RegisteredToolVersion | null> {
+    return (
+      (this.versions.get(toolId) ?? []).find((v) => v.version === version) ??
+      null
+    );
   }
 
-  async findActiveVersion(toolId: string): Promise<RegisteredToolVersion | null> {
+  async findActiveVersion(
+    toolId: string,
+  ): Promise<RegisteredToolVersion | null> {
     const tool = this.tools.get(toolId);
     if (!tool) return null;
-    return (this.versions.get(toolId) ?? []).find((v) => v.version === tool.activeVersion) ?? null;
+    return (
+      (this.versions.get(toolId) ?? []).find(
+        (v) => v.version === tool.activeVersion,
+      ) ?? null
+    );
   }
 
   async createVersion(version: RegisteredToolVersion): Promise<void> {
@@ -85,9 +116,15 @@ export class ToolRegistryService {
     outputSchema?: Record<string, unknown>;
     createdBy: string;
   }): Promise<ToolRegistryEntry> {
-    const existing = await this.repository.findByKey(params.organizationId, params.key, params.workspaceId);
+    const existing = await this.repository.findByKey(
+      params.organizationId,
+      params.key,
+      params.workspaceId,
+    );
     if (existing) {
-      throw new Error(`Tool with key '${params.key}' already exists in this scope`);
+      throw new Error(
+        `Tool with key '${params.key}' already exists in this scope`,
+      );
     }
 
     const toolId = createPublicId("tool");
@@ -110,11 +147,13 @@ export class ToolRegistryService {
       updatedAt: now,
     };
 
-    const contentHash = computeSha256(JSON.stringify({
-      inputSchema: params.inputSchema,
-      outputSchema: params.outputSchema,
-      executionMode: tool.executionMode,
-    }));
+    const contentHash = computeSha256(
+      JSON.stringify({
+        inputSchema: params.inputSchema,
+        outputSchema: params.outputSchema,
+        executionMode: tool.executionMode,
+      }),
+    );
 
     const version: RegisteredToolVersion = {
       id: createPublicId("toolv"),
@@ -143,7 +182,10 @@ export class ToolRegistryService {
     return { tool, activeVersion };
   }
 
-  async listTools(organizationId: string, status?: string): Promise<RegisteredTool[]> {
+  async listTools(
+    organizationId: string,
+    status?: string,
+  ): Promise<RegisteredTool[]> {
     return this.repository.listByOrganization(organizationId, status);
   }
 
@@ -153,23 +195,28 @@ export class ToolRegistryService {
     await this.repository.update(id, { status: "archived" });
   }
 
-  async createVersion(toolId: string, params: {
-    inputSchema: Record<string, unknown>;
-    outputSchema?: Record<string, unknown>;
-    description?: string;
-    createdBy: string;
-  }): Promise<RegisteredToolVersion> {
+  async createVersion(
+    toolId: string,
+    params: {
+      inputSchema: Record<string, unknown>;
+      outputSchema?: Record<string, unknown>;
+      description?: string;
+      createdBy: string;
+    },
+  ): Promise<RegisteredToolVersion> {
     const tool = await this.repository.findById(toolId);
     if (!tool) throw new Error(`Tool '${toolId}' not found`);
 
     const versions = await this.repository.listVersions(toolId);
     const nextVersion = versions.length + 1;
 
-    const contentHash = computeSha256(JSON.stringify({
-      inputSchema: params.inputSchema,
-      outputSchema: params.outputSchema,
-      executionMode: tool.executionMode,
-    }));
+    const contentHash = computeSha256(
+      JSON.stringify({
+        inputSchema: params.inputSchema,
+        outputSchema: params.outputSchema,
+        executionMode: tool.executionMode,
+      }),
+    );
 
     const version: RegisteredToolVersion = {
       id: createPublicId("toolv"),

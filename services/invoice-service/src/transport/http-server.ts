@@ -1,14 +1,21 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import { Decimal } from "@growx/money";
 import type { InvoiceService } from "../application/invoice-service.js";
 import type { TaxService } from "@growx/tax-service";
 
 export function createInvoiceHttpServer(
   invoiceService: InvoiceService,
-  taxService: TaxService
+  taxService: TaxService,
 ) {
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
@@ -40,7 +47,8 @@ export function createInvoiceHttpServer(
       // ─── Customer Billing Profile ──────────────────────────────
       if (pathname === "/v1/billing/profile") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         if (method === "GET") {
           const profile = await taxService.getBillingProfile(orgId);
@@ -57,7 +65,8 @@ export function createInvoiceHttpServer(
       // ─── Customer Invoices ──────────────────────────────────────
       if (pathname === "/v1/billing/invoices" && method === "GET") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const invoices = await invoiceService.listInvoices(orgId);
         return sendJson(200, { invoices });
@@ -66,7 +75,8 @@ export function createInvoiceHttpServer(
       const invoiceMatch = pathname.match(/^\/v1\/billing\/invoices\/([^/]+)$/);
       if (invoiceMatch && method === "GET") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const invoiceId = invoiceMatch[1]!;
         const invoice = await invoiceService.getInvoice(orgId, invoiceId);
@@ -74,21 +84,29 @@ export function createInvoiceHttpServer(
         return sendJson(200, { invoice });
       }
 
-      const docMatch = pathname.match(/^\/v1\/billing\/invoices\/([^/]+)\/document$/);
+      const docMatch = pathname.match(
+        /^\/v1\/billing\/invoices\/([^/]+)\/document$/,
+      );
       if (docMatch && method === "GET") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const invoiceId = docMatch[1]!;
-        const result = await invoiceService.getInvoiceDocument(orgId, invoiceId);
-        if (!result) return sendJson(404, { error: "Invoice document not found" });
+        const result = await invoiceService.getInvoiceDocument(
+          orgId,
+          invoiceId,
+        );
+        if (!result)
+          return sendJson(404, { error: "Invoice document not found" });
         return sendJson(200, result);
       }
 
       // ─── Customer Credit Notes ─────────────────────────────────
       if (pathname === "/v1/billing/credit-notes" && method === "GET") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const creditNotes = await invoiceService.listCreditNotes(orgId);
         return sendJson(200, { creditNotes });
@@ -97,11 +115,13 @@ export function createInvoiceHttpServer(
       const cnMatch = pathname.match(/^\/v1\/billing\/credit-notes\/([^/]+)$/);
       if (cnMatch && method === "GET") {
         const orgId = req.headers["x-organization-id"] as string;
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const cnId = cnMatch[1]!;
         const creditNote = await invoiceService.getCreditNote(orgId, cnId);
-        if (!creditNote) return sendJson(404, { error: "Credit note not found" });
+        if (!creditNote)
+          return sendJson(404, { error: "Credit note not found" });
         return sendJson(200, { creditNote });
       }
 
@@ -126,12 +146,14 @@ export function createInvoiceHttpServer(
         const invoice = await invoiceService.voidInvoice(
           body.organizationId,
           invoiceId,
-          body.reason
+          body.reason,
         );
         return sendJson(200, { invoice });
       }
 
-      const internalCnMatch = pathname.match(/^\/internal\/invoices\/([^/]+)\/credit-note$/);
+      const internalCnMatch = pathname.match(
+        /^\/internal\/invoices\/([^/]+)\/credit-note$/,
+      );
       if (internalCnMatch && method === "POST") {
         const body = await parseBody();
         const invoiceId = internalCnMatch[1]!;

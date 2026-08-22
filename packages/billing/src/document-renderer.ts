@@ -43,7 +43,7 @@ export class InvoiceDocumentRenderer {
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${l.quantity}</td>
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${escapeHtml(invoice.currency)} ${l.unitPrice.toFixed(2)}</td>
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${escapeHtml(invoice.currency)} ${l.subtotal.toFixed(2)}</td>
-      </tr>`
+      </tr>`,
       )
       .join("");
 
@@ -53,7 +53,7 @@ export class InvoiceDocumentRenderer {
       <tr>
         <td colspan="5" style="padding: 6px 8px; text-align: right; color: #4b5563;">${escapeHtml(t.description)}:</td>
         <td style="padding: 6px 8px; text-align: right;">${escapeHtml(invoice.currency)} ${t.taxAmount.toFixed(2)}</td>
-      </tr>`
+      </tr>`,
       )
       .join("");
 
@@ -159,7 +159,10 @@ export class InvoiceDocumentRenderer {
   /**
    * Renders a credit note document to HTML.
    */
-  static renderCreditNoteHtml(creditNote: CreditNote): { html: string; sha256Hash: string } {
+  static renderCreditNoteHtml(creditNote: CreditNote): {
+    html: string;
+    sha256Hash: string;
+  } {
     const lineRows = creditNote.lines
       .map(
         (l) => `
@@ -169,7 +172,7 @@ export class InvoiceDocumentRenderer {
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${l.quantity}</td>
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${escapeHtml(creditNote.currency)} ${l.unitPrice.toFixed(2)}</td>
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${escapeHtml(creditNote.currency)} ${l.subtotal.toFixed(2)}</td>
-      </tr>`
+      </tr>`,
       )
       .join("");
 

@@ -34,12 +34,15 @@ import type {
   ResolvedModelContext,
 } from "../domain/types.js";
 import type { IModelRegistryEvents } from "./events.js";
-import type { IModelRegistryRepository, ModelListFilter } from "./repository.js";
+import type {
+  IModelRegistryRepository,
+  ModelListFilter,
+} from "./repository.js";
 
 export class ModelRegistryService {
   constructor(
     private readonly repository: IModelRegistryRepository,
-    private readonly events: IModelRegistryEvents
+    private readonly events: IModelRegistryEvents,
   ) {}
 
   // -------------------------------------------------------------
@@ -47,7 +50,7 @@ export class ModelRegistryService {
   // -------------------------------------------------------------
 
   async listCustomerModels(
-    filter: Omit<ModelListFilter, "customerVisible"> = {}
+    filter: Omit<ModelListFilter, "customerVisible"> = {},
   ): Promise<{ items: ModelCatalogItem[]; hasMore: boolean }> {
     const result = await this.repository.listModels({
       ...filter,
@@ -59,9 +62,7 @@ export class ModelRegistryService {
 
     // Filter by capability if specified
     if (filter.capability) {
-      items = items.filter((m) =>
-        modelSupports(m, filter.capability as any)
-      );
+      items = items.filter((m) => modelSupports(m, filter.capability as any));
     }
 
     return {
@@ -70,7 +71,9 @@ export class ModelRegistryService {
     };
   }
 
-  async getCustomerModel(canonicalIdOrAlias: string): Promise<ModelCatalogItem> {
+  async getCustomerModel(
+    canonicalIdOrAlias: string,
+  ): Promise<ModelCatalogItem> {
     const allAliases = await this.repository.listAliases();
     const allModels = await this.repository.getAllModels();
     const allRoutes = await this.repository.listAllRoutes();
@@ -80,7 +83,7 @@ export class ModelRegistryService {
       allModels,
       allAliases,
       allRoutes,
-      { allowDraft: false, allowDisabled: false }
+      { allowDraft: false, allowDisabled: false },
     );
 
     if (!resolved.model.customerVisible) {
@@ -88,7 +91,7 @@ export class ModelRegistryService {
         "model_not_found",
         `Model '${canonicalIdOrAlias}' is not accessible in customer catalog`,
         false,
-        404
+        404,
       );
     }
 
@@ -97,7 +100,7 @@ export class ModelRegistryService {
 
   async resolve(
     requestedModelId: string,
-    options: ResolveOptions = {}
+    options: ResolveOptions = {},
   ): Promise<ResolvedModelContext> {
     const allAliases = await this.repository.listAliases();
     const allModels = await this.repository.getAllModels();
@@ -108,7 +111,7 @@ export class ModelRegistryService {
       allModels,
       allAliases,
       allRoutes,
-      options
+      options,
     );
   }
 
@@ -119,15 +122,17 @@ export class ModelRegistryService {
   async createModel(
     input: CreateCanonicalModelRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<CanonicalModelEntity> {
-    const existing = await this.repository.getModelByCanonicalId(input.canonicalId);
+    const existing = await this.repository.getModelByCanonicalId(
+      input.canonicalId,
+    );
     if (existing) {
       throw new GrowXProviderError(
         "model_invalid_request" as any,
         `Canonical model with ID '${input.canonicalId}' already exists`,
         false,
-        409
+        409,
       );
     }
 
@@ -169,33 +174,55 @@ export class ModelRegistryService {
     id: string,
     input: UpdateCanonicalModelRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<CanonicalModelEntity> {
     const current = await this.repository.getModelById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Model with ID '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Model with ID '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     const updates: Partial<CanonicalModelEntity> = {};
-    if (input.displayName !== undefined) updates.displayName = input.displayName;
+    if (input.displayName !== undefined)
+      updates.displayName = input.displayName;
     if (input.family !== undefined) updates.family = input.family;
     if (input.category !== undefined) updates.category = input.category;
-    if (input.customerVisible !== undefined) updates.customerVisible = input.customerVisible;
-    if (input.routingEligible !== undefined) updates.routingEligible = input.routingEligible;
-    if (input.description !== undefined) updates.description = input.description;
-    if (input.contextWindow !== undefined) updates.contextWindow = input.contextWindow;
-    if (input.maxInputTokens !== undefined) updates.maxInputTokens = input.maxInputTokens;
-    if (input.maxOutputTokens !== undefined) updates.maxOutputTokens = input.maxOutputTokens;
-    if (input.supportsStreaming !== undefined) updates.supportsStreaming = input.supportsStreaming;
-    if (input.supportsTools !== undefined) updates.supportsTools = input.supportsTools;
-    if (input.supportsStructuredOutput !== undefined) updates.supportsStructuredOutput = input.supportsStructuredOutput;
-    if (input.supportsReasoning !== undefined) updates.supportsReasoning = input.supportsReasoning;
-    if (input.inputModalities !== undefined) updates.inputModalities = input.inputModalities;
-    if (input.outputModalities !== undefined) updates.outputModalities = input.outputModalities;
-    if (input.capabilities !== undefined) updates.capabilities = input.capabilities;
-    if (input.reasoningMetadata !== undefined) updates.reasoningMetadata = input.reasoningMetadata;
-    if (input.toolMetadata !== undefined) updates.toolMetadata = input.toolMetadata;
-    if (input.structuredOutputMetadata !== undefined) updates.structuredOutputMetadata = input.structuredOutputMetadata;
+    if (input.customerVisible !== undefined)
+      updates.customerVisible = input.customerVisible;
+    if (input.routingEligible !== undefined)
+      updates.routingEligible = input.routingEligible;
+    if (input.description !== undefined)
+      updates.description = input.description;
+    if (input.contextWindow !== undefined)
+      updates.contextWindow = input.contextWindow;
+    if (input.maxInputTokens !== undefined)
+      updates.maxInputTokens = input.maxInputTokens;
+    if (input.maxOutputTokens !== undefined)
+      updates.maxOutputTokens = input.maxOutputTokens;
+    if (input.supportsStreaming !== undefined)
+      updates.supportsStreaming = input.supportsStreaming;
+    if (input.supportsTools !== undefined)
+      updates.supportsTools = input.supportsTools;
+    if (input.supportsStructuredOutput !== undefined)
+      updates.supportsStructuredOutput = input.supportsStructuredOutput;
+    if (input.supportsReasoning !== undefined)
+      updates.supportsReasoning = input.supportsReasoning;
+    if (input.inputModalities !== undefined)
+      updates.inputModalities = input.inputModalities;
+    if (input.outputModalities !== undefined)
+      updates.outputModalities = input.outputModalities;
+    if (input.capabilities !== undefined)
+      updates.capabilities = input.capabilities;
+    if (input.reasoningMetadata !== undefined)
+      updates.reasoningMetadata = input.reasoningMetadata;
+    if (input.toolMetadata !== undefined)
+      updates.toolMetadata = input.toolMetadata;
+    if (input.structuredOutputMetadata !== undefined)
+      updates.structuredOutputMetadata = input.structuredOutputMetadata;
     if (input.metadata !== undefined) updates.metadata = input.metadata;
     updates.updatedAt = new Date();
 
@@ -207,11 +234,16 @@ export class ModelRegistryService {
   async disableModel(
     id: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<CanonicalModelEntity> {
     const current = await this.repository.getModelById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Model with ID '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Model with ID '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     validateModelStatusTransition(current.status, "disabled");
@@ -222,7 +254,12 @@ export class ModelRegistryService {
       updatedAt: new Date(),
     });
 
-    await this.events.emitModelDisabled(updated.id, updated.canonicalId, operatorId, requestId);
+    await this.events.emitModelDisabled(
+      updated.id,
+      updated.canonicalId,
+      operatorId,
+      requestId,
+    );
     return updated;
   }
 
@@ -230,11 +267,16 @@ export class ModelRegistryService {
     id: string,
     input: DeprecateModelRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<CanonicalModelEntity> {
     const current = await this.repository.getModelById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Model with ID '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Model with ID '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     validateModelStatusTransition(current.status, "deprecated");
@@ -256,11 +298,16 @@ export class ModelRegistryService {
   async retireModel(
     id: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<CanonicalModelEntity> {
     const current = await this.repository.getModelById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Model with ID '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Model with ID '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     validateModelStatusTransition(current.status, "retired");
@@ -272,7 +319,12 @@ export class ModelRegistryService {
       updatedAt: new Date(),
     });
 
-    await this.events.emitModelRetired(updated.id, updated.canonicalId, operatorId, requestId);
+    await this.events.emitModelRetired(
+      updated.id,
+      updated.canonicalId,
+      operatorId,
+      requestId,
+    );
     return updated;
   }
 
@@ -283,7 +335,7 @@ export class ModelRegistryService {
   async addProviderRoute(
     input: CreateProviderRouteRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderRouteEntity> {
     const model = await this.repository.getModelById(input.modelId);
     if (!model) {
@@ -291,7 +343,7 @@ export class ModelRegistryService {
         "model_not_found",
         `Model '${input.modelId}' does not exist for route attachment`,
         false,
-        404
+        404,
       );
     }
 
@@ -299,14 +351,14 @@ export class ModelRegistryService {
     const existing = await this.repository.getRouteByProviderModel(
       input.providerId,
       input.providerModelId,
-      region
+      region,
     );
     if (existing) {
       throw new GrowXProviderError(
         "model_invalid_request" as any,
         `Provider route for provider '${input.providerId}' model '${input.providerModelId}' region '${region}' already exists`,
         false,
-        409
+        409,
       );
     }
 
@@ -339,11 +391,16 @@ export class ModelRegistryService {
     routeId: string,
     input: UpdateProviderRouteRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderRouteEntity> {
     const current = await this.repository.getRouteById(routeId);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Provider route '${routeId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Provider route '${routeId}' not found`,
+        false,
+        404,
+      );
     }
 
     if (input.status) {
@@ -351,15 +408,21 @@ export class ModelRegistryService {
     }
 
     const updates: Partial<ProviderRouteEntity> = {};
-    if (input.providerModelId !== undefined) updates.providerModelId = input.providerModelId;
+    if (input.providerModelId !== undefined)
+      updates.providerModelId = input.providerModelId;
     if (input.region !== undefined) updates.region = input.region;
     if (input.status !== undefined) updates.status = input.status;
-    if (input.routingEligible !== undefined) updates.routingEligible = input.routingEligible;
+    if (input.routingEligible !== undefined)
+      updates.routingEligible = input.routingEligible;
     if (input.priority !== undefined) updates.priority = input.priority;
-    if (input.contextWindowOverride !== undefined) updates.contextWindowOverride = input.contextWindowOverride;
-    if (input.maxOutputTokensOverride !== undefined) updates.maxOutputTokensOverride = input.maxOutputTokensOverride;
-    if (input.capabilitiesOverrides !== undefined) updates.capabilitiesOverrides = input.capabilitiesOverrides;
-    if (input.pricingReference !== undefined) updates.pricingReference = input.pricingReference;
+    if (input.contextWindowOverride !== undefined)
+      updates.contextWindowOverride = input.contextWindowOverride;
+    if (input.maxOutputTokensOverride !== undefined)
+      updates.maxOutputTokensOverride = input.maxOutputTokensOverride;
+    if (input.capabilitiesOverrides !== undefined)
+      updates.capabilitiesOverrides = input.capabilitiesOverrides;
+    if (input.pricingReference !== undefined)
+      updates.pricingReference = input.pricingReference;
     if (input.metadata !== undefined) updates.metadata = input.metadata;
     updates.updatedAt = new Date();
 
@@ -371,11 +434,16 @@ export class ModelRegistryService {
   async disableProviderRoute(
     routeId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderRouteEntity> {
     const current = await this.repository.getRouteById(routeId);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Provider route '${routeId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Provider route '${routeId}' not found`,
+        false,
+        404,
+      );
     }
 
     validateRouteStatusTransition(current.status, "disabled");
@@ -397,15 +465,17 @@ export class ModelRegistryService {
   async createAlias(
     input: CreateModelAliasRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ModelAliasEntity> {
-    const targetModel = await this.repository.getModelByCanonicalId(input.canonicalModelId);
+    const targetModel = await this.repository.getModelByCanonicalId(
+      input.canonicalModelId,
+    );
     if (!targetModel) {
       throw new GrowXProviderError(
         "model_not_found",
         `Target model '${input.canonicalModelId}' not found for alias creation`,
         false,
-        404
+        404,
       );
     }
 
@@ -415,7 +485,7 @@ export class ModelRegistryService {
         "model_invalid_request" as any,
         `Alias '${input.alias}' already exists`,
         false,
-        409
+        409,
       );
     }
 
@@ -425,7 +495,7 @@ export class ModelRegistryService {
         "model_invalid_request" as any,
         `Alias cannot point directly to itself: '${input.alias}'`,
         false,
-        400
+        400,
       );
     }
 
@@ -450,11 +520,16 @@ export class ModelRegistryService {
     id: string,
     input: UpdateModelAliasRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ModelAliasEntity> {
     const current = await this.repository.getAliasById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Alias '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Alias '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     if (input.status) {
@@ -462,22 +537,26 @@ export class ModelRegistryService {
     }
 
     if (input.canonicalModelId) {
-      const target = await this.repository.getModelByCanonicalId(input.canonicalModelId);
+      const target = await this.repository.getModelByCanonicalId(
+        input.canonicalModelId,
+      );
       if (!target) {
         throw new GrowXProviderError(
           "model_not_found",
           `Target model '${input.canonicalModelId}' does not exist`,
           false,
-          404
+          404,
         );
       }
     }
 
     const updates: Partial<ModelAliasEntity> = {};
-    if (input.canonicalModelId !== undefined) updates.canonicalModelId = input.canonicalModelId;
+    if (input.canonicalModelId !== undefined)
+      updates.canonicalModelId = input.canonicalModelId;
     if (input.status !== undefined) updates.status = input.status;
     if (input.type !== undefined) updates.type = input.type;
-    if (input.description !== undefined) updates.description = input.description;
+    if (input.description !== undefined)
+      updates.description = input.description;
     updates.updatedAt = new Date();
 
     const updated = await this.repository.updateAlias(id, updates);
@@ -488,11 +567,16 @@ export class ModelRegistryService {
   async retireAlias(
     id: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ModelAliasEntity> {
     const current = await this.repository.getAliasById(id);
     if (!current) {
-      throw new GrowXProviderError("model_not_found", `Alias '${id}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "model_not_found",
+        `Alias '${id}' not found`,
+        false,
+        404,
+      );
     }
 
     validateAliasStatusTransition(current.status, "retired");
@@ -504,7 +588,12 @@ export class ModelRegistryService {
       updatedAt: now,
     });
 
-    await this.events.emitAliasRetired(updated.id, updated.alias, operatorId, requestId);
+    await this.events.emitAliasRetired(
+      updated.id,
+      updated.alias,
+      operatorId,
+      requestId,
+    );
     return updated;
   }
 
@@ -515,18 +604,20 @@ export class ModelRegistryService {
   async addPricing(
     input: CreateModelPricingRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ModelPricingEntity> {
     if (!input.modelId && !input.routeId) {
       throw new GrowXProviderError(
         "model_invalid_request" as any,
         "Pricing record must attach to either a modelId or routeId",
         false,
-        400
+        400,
       );
     }
 
-    const effectiveFrom = input.effectiveFrom ? new Date(input.effectiveFrom) : new Date();
+    const effectiveFrom = input.effectiveFrom
+      ? new Date(input.effectiveFrom)
+      : new Date();
     const effectiveTo = input.effectiveTo ? new Date(input.effectiveTo) : null;
 
     const pricing: ModelPricingEntity = {
@@ -536,8 +627,10 @@ export class ModelRegistryService {
       pricingType: input.pricingType ?? "standard",
       inputPricePerMillionMinor: input.inputPricePerMillionMinor,
       outputPricePerMillionMinor: input.outputPricePerMillionMinor,
-      cachedInputPricePerMillionMinor: input.cachedInputPricePerMillionMinor ?? null,
-      reasoningPricePerMillionMinor: input.reasoningPricePerMillionMinor ?? null,
+      cachedInputPricePerMillionMinor:
+        input.cachedInputPricePerMillionMinor ?? null,
+      reasoningPricePerMillionMinor:
+        input.reasoningPricePerMillionMinor ?? null,
       currency: input.currency ?? "USD",
       effectiveFrom,
       effectiveTo,
@@ -553,7 +646,7 @@ export class ModelRegistryService {
 
   async getEffectivePricing(
     modelIdOrRouteId: string,
-    timestamp = new Date()
+    timestamp = new Date(),
   ): Promise<ModelPricingEntity | null> {
     return this.repository.getEffectivePricing(modelIdOrRouteId, timestamp);
   }
@@ -562,7 +655,9 @@ export class ModelRegistryService {
   // Privileged Inspection & Detail Queries
   // -------------------------------------------------------------
 
-  async getAdminModelDetail(idOrCanonicalId: string): Promise<AdminModelDetail> {
+  async getAdminModelDetail(
+    idOrCanonicalId: string,
+  ): Promise<AdminModelDetail> {
     let model = await this.repository.getModelById(idOrCanonicalId);
     if (!model) {
       model = await this.repository.getModelByCanonicalId(idOrCanonicalId);
@@ -572,14 +667,16 @@ export class ModelRegistryService {
         "model_not_found",
         `Model '${idOrCanonicalId}' not found`,
         false,
-        404
+        404,
       );
     }
 
     const routes = await this.repository.listRoutesByModelId(model.id);
     const allAliases = await this.repository.listAliases();
     const modelAliases = allAliases.filter(
-      (a) => a.canonicalModelId === model!.canonicalId || a.canonicalModelId === model!.id
+      (a) =>
+        a.canonicalModelId === model!.canonicalId ||
+        a.canonicalModelId === model!.id,
     );
     const pricing = await this.repository.listPricing({ modelId: model.id });
 
@@ -587,7 +684,7 @@ export class ModelRegistryService {
   }
 
   async listAdminModels(
-    filter: ModelListFilter = {}
+    filter: ModelListFilter = {},
   ): Promise<{ items: CanonicalModelEntity[]; hasMore: boolean }> {
     return this.repository.listModels(filter);
   }
@@ -600,7 +697,10 @@ export class ModelRegistryService {
     return this.repository.listAllRoutes();
   }
 
-  async listPricing(filter?: { modelId?: string | undefined; routeId?: string | undefined }): Promise<ModelPricingEntity[]> {
+  async listPricing(filter?: {
+    modelId?: string | undefined;
+    routeId?: string | undefined;
+  }): Promise<ModelPricingEntity[]> {
     return this.repository.listPricing(filter);
   }
 
@@ -616,13 +716,23 @@ export class ModelRegistryService {
       contextWindow: number;
       maxOutputTokens: number;
     }>,
-    existingRoutes: ProviderRouteEntity[]
-  ): Array<{ action: "create_route" | "noop"; providerModelId: string; reason: string }> {
-    const proposals: Array<{ action: "create_route" | "noop"; providerModelId: string; reason: string }> = [];
+    existingRoutes: ProviderRouteEntity[],
+  ): Array<{
+    action: "create_route" | "noop";
+    providerModelId: string;
+    reason: string;
+  }> {
+    const proposals: Array<{
+      action: "create_route" | "noop";
+      providerModelId: string;
+      reason: string;
+    }> = [];
 
     for (const remote of remoteModels) {
       const match = existingRoutes.find(
-        (r) => r.providerId === providerId && r.providerModelId === remote.providerModelId
+        (r) =>
+          r.providerId === providerId &&
+          r.providerModelId === remote.providerModelId,
       );
       if (!match) {
         proposals.push({

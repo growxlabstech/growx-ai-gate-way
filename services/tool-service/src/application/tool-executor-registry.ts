@@ -3,7 +3,10 @@ import type { ToolExecutionContext } from "@growx/contracts";
 export interface ToolExecutor {
   readonly name: string;
   supports(toolName: string): boolean;
-  execute(context: ToolExecutionContext, args: Record<string, unknown>): Promise<{
+  execute(
+    context: ToolExecutionContext,
+    args: Record<string, unknown>,
+  ): Promise<{
     status: "success" | "error";
     content: string;
     structuredData?: Record<string, unknown>;

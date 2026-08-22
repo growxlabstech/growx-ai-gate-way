@@ -3,7 +3,8 @@ import { SecretRedactor } from "../../src/vault/secret-redactor.js";
 
 describe("Secret Redactor Middleware & Utilities", () => {
   it("redacts API keys and Bearer tokens in raw strings", () => {
-    const raw = "Sending request with Bearer sk-12345678901234567890abcdef and gsk_98765432109876543210zyx";
+    const raw =
+      "Sending request with Bearer sk-12345678901234567890abcdef and gsk_98765432109876543210zyx";
     const sanitized = SecretRedactor.redactString(raw);
     expect(sanitized).not.toContain("sk-12345678901234567890abcdef");
     expect(sanitized).not.toContain("gsk_98765432109876543210zyx");

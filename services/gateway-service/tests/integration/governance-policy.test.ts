@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
   let fixture: TestGatewayFixture;
@@ -44,7 +47,7 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
           ],
         },
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -62,7 +65,9 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(response.status).toBe(403);
     const body = await response.json();
     expect(body.error.code).toBe("model_not_allowed");
-    expect(body.error.message).toContain("explicitly denied by governance policy");
+    expect(body.error.message).toContain(
+      "explicitly denied by governance policy",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(0);
   });
 
@@ -87,7 +92,7 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
           ],
         },
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -113,7 +118,9 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(response.status).toBe(403);
     const body = await response.json();
     expect(body.error.code).toBe("policy_denied");
-    expect(body.error.message).toContain("Tool 'execute_arbitrary_code' is explicitly denied by tool policy");
+    expect(body.error.message).toContain(
+      "Tool 'execute_arbitrary_code' is explicitly denied by tool policy",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(0);
   });
 
@@ -138,7 +145,7 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
           ],
         },
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -160,7 +167,9 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(response.status).toBe(403);
     const body = await response.json();
     expect(body.error.code).toBe("policy_denied");
-    expect(body.error.message).toContain("exceeds the maximum allowed tool count of 1");
+    expect(body.error.message).toContain(
+      "exceeds the maximum allowed tool count of 1",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(0);
   });
 
@@ -184,7 +193,7 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
           ],
         },
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -203,7 +212,9 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(response.status).toBe(403);
     const body = await response.json();
     expect(body.error.code).toBe("policy_denied");
-    expect(body.error.message).toContain("exceeds workspace policy ceiling of 500");
+    expect(body.error.message).toContain(
+      "exceeds workspace policy ceiling of 500",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(0);
   });
 
@@ -243,43 +254,52 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(getBody.activeVersion.version).toBe(1);
 
     // 3. Create new version via POST /internal/policies/:id/versions
-    const versionRes = await fetch(`${baseUrl}/internal/policies/${policyId}/versions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        definition: {
-          rules: [
-            {
-              target: "provider",
-              effect: "allow",
-              operator: "in",
-              value: ["openai", "anthropic"],
-            },
-          ],
-        },
-      }),
-    });
+    const versionRes = await fetch(
+      `${baseUrl}/internal/policies/${policyId}/versions`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          definition: {
+            rules: [
+              {
+                target: "provider",
+                effect: "allow",
+                operator: "in",
+                value: ["openai", "anthropic"],
+              },
+            ],
+          },
+        }),
+      },
+    );
     expect(versionRes.status).toBe(201);
     const versionBody = await versionRes.json();
     expect(versionBody.version.version).toBe(2);
 
     // 4. Activate version 2 via POST /internal/policies/:id/activate
-    const activateRes = await fetch(`${baseUrl}/internal/policies/${policyId}/activate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ versionNumber: 2 }),
-    });
+    const activateRes = await fetch(
+      `${baseUrl}/internal/policies/${policyId}/activate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ versionNumber: 2 }),
+      },
+    );
     expect(activateRes.status).toBe(200);
     const activateBody = await activateRes.json();
     expect(activateBody.policy.activeVersion).toBe(2);
 
     // 5. Inspect effective policy via GET /internal/policies/effective
     const effRes = await fetch(
-      `${baseUrl}/internal/policies/effective?organizationId=org_finance&workspaceId=ws_fin_1`
+      `${baseUrl}/internal/policies/effective?organizationId=org_finance&workspaceId=ws_fin_1`,
     );
     expect(effRes.status).toBe(200);
     const effBody = await effRes.json();
-    expect(effBody.effectivePolicy.constraints.allowedProviders).toEqual(["openai", "anthropic"]);
+    expect(effBody.effectivePolicy.constraints.allowedProviders).toEqual([
+      "openai",
+      "anthropic",
+    ]);
 
     // 6. Simulate policy via POST /internal/policies/simulate
     const simRes = await fetch(`${baseUrl}/internal/policies/simulate`, {
@@ -316,6 +336,8 @@ describe("Phase 12 — Policy Engine & Governance End-to-End Tests", () => {
     expect(simBody.routeEvaluation.eligible).toHaveLength(1);
     expect(simBody.routeEvaluation.eligible[0].providerId).toBe("openai");
     expect(simBody.routeEvaluation.excluded).toHaveLength(1);
-    expect(simBody.routeEvaluation.excluded[0].candidate.providerId).toBe("google");
+    expect(simBody.routeEvaluation.excluded[0].candidate.providerId).toBe(
+      "google",
+    );
   });
 });

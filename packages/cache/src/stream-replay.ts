@@ -7,11 +7,19 @@ import { createPublicId } from "@growx/ids";
 
 export async function* replayCachedResponseAsNormalizedEvents(
   cachedResponse: OpenAIChatCompletionResponse,
-  requestId: string
+  requestId: string,
 ): AsyncIterable<NormalizedStreamEvent> {
   const choice = cachedResponse.choices[0];
   const rawContent = choice?.message.content;
-  const content: string = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? (rawContent as any[]).filter((p) => p.type === "text").map((p) => p.text).join("") : "";
+  const content: string =
+    typeof rawContent === "string"
+      ? rawContent
+      : Array.isArray(rawContent)
+        ? (rawContent as any[])
+            .filter((p) => p.type === "text")
+            .map((p) => p.text)
+            .join("")
+        : "";
   const now = new Date().toISOString();
   const responseId = createPublicId("req");
 
@@ -47,7 +55,11 @@ export async function* replayCachedResponseAsNormalizedEvents(
   };
 
   // 4. Usage event
-  const usage = cachedResponse.usage ?? { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  const usage = cachedResponse.usage ?? {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+  };
   yield {
     requestId,
     responseId,
@@ -76,11 +88,19 @@ export async function* replayCachedResponseAsNormalizedEvents(
 export async function* replayCachedResponseAsStream(
   cachedResponse: OpenAIChatCompletionResponse,
   requestId: string,
-  createdTimestamp?: number
+  createdTimestamp?: number,
 ): AsyncIterable<OpenAIChatCompletionChunk> {
   const choice = cachedResponse.choices[0];
   const rawContent = choice?.message.content;
-  const content: string = typeof rawContent === "string" ? rawContent : Array.isArray(rawContent) ? (rawContent as any[]).filter((p) => p.type === "text").map((p) => p.text).join("") : "";
+  const content: string =
+    typeof rawContent === "string"
+      ? rawContent
+      : Array.isArray(rawContent)
+        ? (rawContent as any[])
+            .filter((p) => p.type === "text")
+            .map((p) => p.text)
+            .join("")
+        : "";
   const created = createdTimestamp ?? Math.floor(Date.now() / 1000);
   const streamId = `chatcmpl-${createPublicId("req").slice(4)}`;
 

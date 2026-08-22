@@ -32,27 +32,53 @@ export type {
 export interface IPaymentRepository {
   // ─── Customer ────────────────────────────────────────────────
   saveCustomer(customer: PaymentCustomer): Promise<void>;
-  getCustomerByOrgAndProvider(orgId: string, provider: string): Promise<PaymentCustomer | undefined>;
-  getCustomerByProviderId(provider: string, providerCustomerId: string): Promise<PaymentCustomer | undefined>;
+  getCustomerByOrgAndProvider(
+    orgId: string,
+    provider: string,
+  ): Promise<PaymentCustomer | undefined>;
+  getCustomerByProviderId(
+    provider: string,
+    providerCustomerId: string,
+  ): Promise<PaymentCustomer | undefined>;
 
   // ─── Payment Methods ─────────────────────────────────────────
   savePaymentMethod(method: PaymentMethodReference): Promise<void>;
   getPaymentMethods(orgId: string): Promise<PaymentMethodReference[]>;
-  getDefaultPaymentMethod(orgId: string): Promise<PaymentMethodReference | undefined>;
+  getDefaultPaymentMethod(
+    orgId: string,
+  ): Promise<PaymentMethodReference | undefined>;
 
   // ─── Checkout Sessions ───────────────────────────────────────
   saveCheckoutSession(session: CheckoutSession): Promise<void>;
   getCheckoutSessionById(id: string): Promise<CheckoutSession | undefined>;
-  getCheckoutSessionByIdempotency(orgId: string, idempotencyKey: string): Promise<CheckoutSession | undefined>;
-  getCheckoutSessionByProviderSession(provider: string, providerSessionId: string): Promise<CheckoutSession | undefined>;
-  updateCheckoutSession(id: string, updates: Partial<CheckoutSession>): Promise<void>;
+  getCheckoutSessionByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<CheckoutSession | undefined>;
+  getCheckoutSessionByProviderSession(
+    provider: string,
+    providerSessionId: string,
+  ): Promise<CheckoutSession | undefined>;
+  updateCheckoutSession(
+    id: string,
+    updates: Partial<CheckoutSession>,
+  ): Promise<void>;
 
   // ─── Payments ────────────────────────────────────────────────
   savePayment(payment: Payment): Promise<void>;
   getPaymentById(id: string): Promise<Payment | undefined>;
-  getPaymentByProviderPaymentId(provider: string, providerPaymentId: string): Promise<Payment | undefined>;
-  getPaymentByIdempotency(orgId: string, idempotencyKey: string): Promise<Payment | undefined>;
-  listPayments(orgId: string, filter?: { limit?: number; startingAfter?: string }): Promise<Payment[]>;
+  getPaymentByProviderPaymentId(
+    provider: string,
+    providerPaymentId: string,
+  ): Promise<Payment | undefined>;
+  getPaymentByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<Payment | undefined>;
+  listPayments(
+    orgId: string,
+    filter?: { limit?: number; startingAfter?: string },
+  ): Promise<Payment[]>;
   updatePayment(id: string, updates: Partial<Payment>): Promise<void>;
 
   // ─── Payment Attempts ────────────────────────────────────────
@@ -61,18 +87,30 @@ export interface IPaymentRepository {
 
   // ─── Provider Events (Webhooks) ──────────────────────────────
   saveProviderEvent(event: PaymentProviderEvent): Promise<void>;
-  getProviderEvent(provider: string, providerEventId: string): Promise<PaymentProviderEvent | undefined>;
-  updateProviderEvent(id: string, updates: Partial<PaymentProviderEvent>): Promise<void>;
+  getProviderEvent(
+    provider: string,
+    providerEventId: string,
+  ): Promise<PaymentProviderEvent | undefined>;
+  updateProviderEvent(
+    id: string,
+    updates: Partial<PaymentProviderEvent>,
+  ): Promise<void>;
 
   // ─── Refunds ─────────────────────────────────────────────────
   saveRefund(refund: PaymentRefund): Promise<void>;
   getRefundById(id: string): Promise<PaymentRefund | undefined>;
-  getRefundByIdempotency(orgId: string, idempotencyKey: string): Promise<PaymentRefund | undefined>;
+  getRefundByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<PaymentRefund | undefined>;
   listRefundsForPayment(paymentId: string): Promise<PaymentRefund[]>;
   updateRefund(id: string, updates: Partial<PaymentRefund>): Promise<void>;
 
   // ─── Reconciliation ──────────────────────────────────────────
-  listPendingPaymentsForReconciliation(before: Date, limit: number): Promise<Payment[]>;
+  listPendingPaymentsForReconciliation(
+    before: Date,
+    limit: number,
+  ): Promise<Payment[]>;
 
   // ─── Transaction ─────────────────────────────────────────────
   withTransaction<T>(fn: (tx: IPaymentRepository) => Promise<T>): Promise<T>;

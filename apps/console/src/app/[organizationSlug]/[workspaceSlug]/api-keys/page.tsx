@@ -1,2 +1,55 @@
-import Link from "next/link"; import { AppShell, EnvironmentBadge } from "../../../../components/app-shell";
-export default async function ApiKeysPage({ params }: { params: Promise<{ organizationSlug: string; workspaceSlug: string }> }) { const { organizationSlug, workspaceSlug } = await params; const base = `/${organizationSlug}/${workspaceSlug}/api-keys`; return <AppShell organizationSlug={organizationSlug} workspaceSlug={workspaceSlug} title="API keys"><div className="toolbar"><Link href={`${base}/new`}><button className="primary">Create API key</button></Link></div><table className="data-table"><thead><tr><th>Name</th><th>Prefix</th><th>Environment</th><th>Status</th><th>Last used</th></tr></thead><tbody><tr><td><Link href={`${base}/key_example`}>Production app</Link></td><td>gx_live_key_01…••••</td><td><EnvironmentBadge type="production" /></td><td>Active</td><td>Never</td></tr></tbody></table></AppShell>; }
+import { AppShell } from "../../../../components/app-shell";
+import { loadTenantContext } from "../../../../lib/load-tenant-context";
+import { loadWorkspaceApiKeys } from "../../../../lib/api-keys-data";
+import { ApiKeysManager } from "../../../../components/api-keys/api-keys-manager";
+
+interface ApiKeysPageProps {
+  params: Promise<{
+    organizationSlug: string;
+    workspaceSlug: string;
+  }>;
+}
+
+export default async function ApiKeysPage({ params }: ApiKeysPageProps) {
+  const { organizationSlug, workspaceSlug } = await params;
+  const contextResult = await loadTenantContext();
+
+  const organization =
+    contextResult.status === "ready"
+      ? contextResult.context.organizations.find(
+          (o) => o.organizationSlug === organizationSlug,
+        )
+      : undefined;
+  const workspace =
+    contextResult.status === "ready"
+      ? contextResult.context.workspaces.find(
+          (w) =>
+            w.workspaceSlug === workspaceSlug &&
+            (!organization || w.organizationId === organization.organizationId),
+        )
+      : undefined;
+
+  const workspaceId = workspace?.workspaceId ?? "ws_production";
+  const organizationId = organization?.organizationId ?? "org_northstar";
+
+  const keys = await loadWorkspaceApiKeys({
+    organizationId,
+    workspaceId,
+  });
+
+  return (
+    <AppShell
+      organizationSlug={organizationSlug}
+      workspaceSlug={workspaceSlug}
+      title="API keys"
+      description="Create, monitor, and revoke machine credentials for the GrowX AI Gateway."
+    >
+      <ApiKeysManager
+        initialKeys={keys}
+        organizationSlug={organizationSlug}
+        workspaceSlug={workspaceSlug}
+        workspaceId={workspaceId}
+      />
+    </AppShell>
+  );
+}

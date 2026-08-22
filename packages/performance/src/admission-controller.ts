@@ -89,7 +89,10 @@ export class AdmissionController {
     }
   }
 
-  public getActiveCounts(): { global: number; tenants: Record<string, number> } {
+  public getActiveCounts(): {
+    global: number;
+    tenants: Record<string, number>;
+  } {
     return {
       global: this.activeGlobalCount,
       tenants: Object.fromEntries(this.activeTenantCounts.entries()),

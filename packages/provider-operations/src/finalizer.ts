@@ -14,7 +14,7 @@ export class ProviderOperationFinalizer {
 
   constructor(
     private repository: IProviderOperationRepository,
-    private deps: FinalizerDependencies = {}
+    private deps: FinalizerDependencies = {},
   ) {}
 
   public registerAdapter(adapter: ProviderOperationAdapter): void {
@@ -29,7 +29,11 @@ export class ProviderOperationFinalizer {
     if (op.status === "completed") return;
 
     // Must be in finalizing (or completed provider)
-    if (op.status !== "finalizing" && op.status !== "running" && op.status !== "queued") {
+    if (
+      op.status !== "finalizing" &&
+      op.status !== "running" &&
+      op.status !== "queued"
+    ) {
       return;
     }
 
@@ -57,23 +61,29 @@ export class ProviderOperationFinalizer {
 
     // Record usage
     if (this.deps.usageMetering) {
-      await this.deps.usageMetering.recordRequestCompleted?.({
-        requestId: op.requestId,
-        status: "completed",
-        completedAt: new Date(),
-        durationMs: op.startedAt ? Date.now() - new Date(op.startedAt).getTime() : 1000,
-      }).catch(() => {});
+      await this.deps.usageMetering
+        .recordRequestCompleted?.({
+          requestId: op.requestId,
+          status: "completed",
+          completedAt: new Date(),
+          durationMs: op.startedAt
+            ? Date.now() - new Date(op.startedAt).getTime()
+            : 1000,
+        })
+        .catch(() => {});
     }
 
     // Settle wallet billing reservation if present
     const reservationId = (op.metadata as any)?.billingReservationId;
     if (this.deps.creditService && reservationId) {
-      await this.deps.creditService.settleReservation?.({
-        reservationId,
-        finalCustomerPrice: 100, // minor units
-        actualInputTokens: 100,
-        actualOutputTokens: 50,
-      }).catch(() => {});
+      await this.deps.creditService
+        .settleReservation?.({
+          reservationId,
+          finalCustomerPrice: 100, // minor units
+          actualInputTokens: 100,
+          actualOutputTokens: 50,
+        })
+        .catch(() => {});
     }
 
     ProviderOperationStateMachine.assertCanTransition(op.status, "completed");

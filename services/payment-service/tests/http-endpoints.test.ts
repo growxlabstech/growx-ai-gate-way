@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { Decimal } from "@growx/money";
 import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
-import { SubscriptionService, InMemorySubscriptionRepository } from "@growx/subscription-service";
+import {
+  SubscriptionService,
+  InMemorySubscriptionRepository,
+} from "@growx/subscription-service";
 import { PaymentService } from "../src/application/payment-service.js";
 import { createPaymentHttpServer } from "../src/transport/http-server.js";
 import { InMemoryPaymentRepository } from "../src/infrastructure/in-memory-repository.js";
@@ -32,7 +35,10 @@ describe("Phase 19 — HTTP Server Endpoints", () => {
       defaultProvider: "mock",
     });
 
-    const plan = await subscriptionService.createPlan({ slug: "starter-http", displayName: "Starter HTTP" });
+    const plan = await subscriptionService.createPlan({
+      slug: "starter-http",
+      displayName: "Starter HTTP",
+    });
     const version = await subscriptionService.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",

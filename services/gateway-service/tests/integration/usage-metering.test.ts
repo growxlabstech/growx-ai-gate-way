@@ -41,7 +41,11 @@ import { GatewayResilienceController } from "../../src/application/resilience-co
 import { InMemoryGatewayRepository } from "../../src/infrastructure/in-memory-repository.js";
 import { InMemoryGatewayEvents } from "../../src/infrastructure/events.js";
 import { createGatewayServer } from "../../src/transport/http-server.js";
-import { MockAdapter, TEST_ENCRYPTION_KEY, TEST_PEPPER } from "../helpers/test-fixture.js";
+import {
+  MockAdapter,
+  TEST_ENCRYPTION_KEY,
+  TEST_PEPPER,
+} from "../helpers/test-fixture.js";
 import { GrowXProviderError } from "@growx/contracts";
 
 class MeteringTestMockAdapter extends MockAdapter {
@@ -51,7 +55,7 @@ class MeteringTestMockAdapter extends MockAdapter {
   constructor(
     public override readonly providerId: string,
     private readonly defaultInputTokens = 20,
-    private readonly defaultOutputTokens = 15
+    private readonly defaultOutputTokens = 15,
   ) {
     super();
   }
@@ -63,7 +67,7 @@ class MeteringTestMockAdapter extends MockAdapter {
         "provider_server_error",
         `Simulated permanent route failure on ${this.providerId}`,
         true,
-        500
+        500,
       );
       (err as any).usage = {
         inputTokens: this.defaultInputTokens,
@@ -124,11 +128,9 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     // 1. Setup API Keys
     const apiKeyRepo = new InMemoryApiKeyRepository();
     const apiKeyEvents = new InMemoryLifecycleEvents();
-    const apiKeyService = new ApiKeyService(
-      apiKeyRepo,
-      apiKeyEvents,
-      { pepper: TEST_PEPPER }
-    );
+    const apiKeyService = new ApiKeyService(apiKeyRepo, apiKeyEvents, {
+      pepper: TEST_PEPPER,
+    });
 
     const credsA = generateApiKeyCredentials("production");
     rawApiKey = credsA.fullSecret;
@@ -195,20 +197,26 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     // 2. Setup Model Registry
     const modelRegistryRepo = new InMemoryModelRegistryRepository();
     const modelRegistryEvents = new InMemoryModelRegistryEvents();
-    const modelRegistry = new ModelRegistryService(modelRegistryRepo, modelRegistryEvents);
+    const modelRegistry = new ModelRegistryService(
+      modelRegistryRepo,
+      modelRegistryEvents,
+    );
 
-    const canonicalModel = await modelRegistry.createModel({
-      canonicalId: "meter-gpt-4o",
-      displayName: "Meter GPT-4o",
-      family: "gpt",
-      category: "chat",
-      inputModalities: ["text"],
-      outputModalities: ["text"],
-      capabilities: ["text.generate", "streaming"],
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      status: "active",
-    }, "usr_admin");
+    const canonicalModel = await modelRegistry.createModel(
+      {
+        canonicalId: "meter-gpt-4o",
+        displayName: "Meter GPT-4o",
+        family: "gpt",
+        category: "chat",
+        inputModalities: ["text"],
+        outputModalities: ["text"],
+        capabilities: ["text.generate", "streaming"],
+        contextWindow: 128000,
+        maxOutputTokens: 4096,
+        status: "active",
+      },
+      "usr_admin",
+    );
 
     // 3. Setup Adapters & Provider Service
     primaryAdapter = new MeteringTestMockAdapter("openai", 30, 20);
@@ -225,18 +233,21 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
       providerRepo,
       providerEvents,
       providerCrypto,
-      adapterRegistry
+      adapterRegistry,
     );
 
-    const openAIProvider = await providerService.createProvider({
-      code: "openai",
-      displayName: "OpenAI",
-      adapterType: "openai",
-      baseUrl: "https://api.openai.com",
-      status: "active",
-      enabled: true,
-      priority: 1,
-    }, "usr_admin");
+    const openAIProvider = await providerService.createProvider(
+      {
+        code: "openai",
+        displayName: "OpenAI",
+        adapterType: "openai",
+        baseUrl: "https://api.openai.com",
+        status: "active",
+        enabled: true,
+        priority: 1,
+      },
+      "usr_admin",
+    );
 
     await providerService.createCredential(
       openAIProvider.id,
@@ -246,18 +257,21 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
         rawSecret: "sk-openai-test-key",
         encryptionKeyVersion: "v1",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
-    const anthropicProvider = await providerService.createProvider({
-      code: "anthropic",
-      displayName: "Anthropic",
-      adapterType: "anthropic",
-      baseUrl: "https://api.anthropic.com",
-      status: "active",
-      enabled: true,
-      priority: 2,
-    }, "usr_admin");
+    const anthropicProvider = await providerService.createProvider(
+      {
+        code: "anthropic",
+        displayName: "Anthropic",
+        adapterType: "anthropic",
+        baseUrl: "https://api.anthropic.com",
+        status: "active",
+        enabled: true,
+        priority: 2,
+      },
+      "usr_admin",
+    );
 
     await providerService.createCredential(
       anthropicProvider.id,
@@ -267,36 +281,48 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
         rawSecret: "sk-ant-test-key",
         encryptionKeyVersion: "v1",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
-    await modelRegistry.addProviderRoute({
-      modelId: canonicalModel.id,
-      providerId: openAIProvider.id,
-      providerModelId: "gpt-4o-2024-08-06",
-      region: "global",
-      priority: 1,
-      routingEligible: true,
-      status: "active",
-    }, "usr_admin");
+    await modelRegistry.addProviderRoute(
+      {
+        modelId: canonicalModel.id,
+        providerId: openAIProvider.id,
+        providerModelId: "gpt-4o-2024-08-06",
+        region: "global",
+        priority: 1,
+        routingEligible: true,
+        status: "active",
+      },
+      "usr_admin",
+    );
 
-    await modelRegistry.addProviderRoute({
-      modelId: canonicalModel.id,
-      providerId: anthropicProvider.id,
-      providerModelId: "claude-3-5-sonnet",
-      region: "global",
-      priority: 2,
-      routingEligible: true,
-      status: "active",
-    }, "usr_admin");
+    await modelRegistry.addProviderRoute(
+      {
+        modelId: canonicalModel.id,
+        providerId: anthropicProvider.id,
+        providerModelId: "claude-3-5-sonnet",
+        region: "global",
+        priority: 2,
+        routingEligible: true,
+        status: "active",
+      },
+      "usr_admin",
+    );
 
     // 4. Setup Routing Service
     const routingRepo = new InMemoryRoutingRepository();
     const routingEvents = new InMemoryRoutingEvents();
     const healthStore = new InMemoryRouteHealthStore();
-    const routingEngine = new RoutingEngine(modelRegistry, providerService, routingRepo, routingEvents, {
-      routeHealthStore: healthStore,
-    });
+    const routingEngine = new RoutingEngine(
+      modelRegistry,
+      providerService,
+      routingRepo,
+      routingEvents,
+      {
+        routeHealthStore: healthStore,
+      },
+    );
     const routeResolver = new RoutingEngineRouteResolver(routingEngine);
 
     // 5. Setup Rate Limiting, Capacity & Quota
@@ -327,7 +353,7 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
         tokenEstimator,
         usageMetering,
         retryPolicy: { maxAttempts: 3 },
-      }
+      },
     );
 
     const gatewayEngine = new GatewayEngine(
@@ -341,7 +367,7 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
       quotaEngine,
       tokenEstimator,
       undefined,
-      usageMetering
+      usageMetering,
     );
 
     // 8. Start HTTP Server
@@ -349,7 +375,7 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
       apiKeyService,
       modelRegistry,
       gatewayEngine,
-      });
+    });
 
     await new Promise((resolve) => {
       server = app.listen(0, "127.0.0.1", () => {
@@ -382,7 +408,8 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     });
 
     expect(res.status).toBe(200);
-    const reqId = res.headers.get("x-growx-request-id") || res.headers.get("x-request-id");
+    const reqId =
+      res.headers.get("x-growx-request-id") || res.headers.get("x-request-id");
     expect(reqId).toBeDefined();
 
     // 1. Verify Gateway Request Record in Metering Store
@@ -453,7 +480,8 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     });
 
     expect(res.status).toBe(200);
-    const reqId = (res.headers.get("x-growx-request-id") || res.headers.get("x-request-id"))!;
+    const reqId = (res.headers.get("x-growx-request-id") ||
+      res.headers.get("x-request-id"))!;
 
     const reqRecord = await usageLedgerRepo.getRequestRecord(reqId);
     expect(reqRecord).toBeDefined();
@@ -493,7 +521,8 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     });
 
     expect(res.status).toBe(404);
-    const reqId = (res.headers.get("x-growx-request-id") || res.headers.get("x-request-id"))!;
+    const reqId = (res.headers.get("x-growx-request-id") ||
+      res.headers.get("x-request-id"))!;
     expect(reqId).toBeDefined();
 
     const reqRecord = await usageLedgerRepo.getRequestRecord(reqId);
@@ -520,7 +549,8 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
       }),
     });
     expect(resA.status).toBe(200);
-    const reqIdA = (resA.headers.get("x-growx-request-id") || resA.headers.get("x-request-id"))!;
+    const reqIdA = (resA.headers.get("x-growx-request-id") ||
+      resA.headers.get("x-request-id"))!;
 
     // Attempt to access Org A request usage with Org B API key -> must 404
     const resB = await fetch(`${serverUrl}/v1/usage/requests/${reqIdA}`, {
@@ -551,7 +581,8 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
       }),
     });
     expect(res.status).toBe(200);
-    const reqId = (res.headers.get("x-growx-request-id") || res.headers.get("x-request-id"))!;
+    const reqId = (res.headers.get("x-growx-request-id") ||
+      res.headers.get("x-request-id"))!;
 
     // 2. Perform manual correction via POST /internal/usage/correct
     const correctRes = await fetch(`${serverUrl}/internal/usage/correct`, {
@@ -569,12 +600,17 @@ describe("Phase 13 — Gateway Usage Metering & Authoritative Ledger End-to-End 
     });
     expect(correctRes.status).toBe(201);
     const corrData = await correctRes.json();
-    expect(corrData.reason).toBe("Provider audit confirmed 5 cached tokens were unbilled");
+    expect(corrData.reason).toBe(
+      "Provider audit confirmed 5 cached tokens were unbilled",
+    );
 
     // 3. Verify Aggregates Rebuild POST /internal/usage/aggregates/rebuild
-    const rebuildRes = await fetch(`${serverUrl}/internal/usage/aggregates/rebuild`, {
-      method: "POST",
-    });
+    const rebuildRes = await fetch(
+      `${serverUrl}/internal/usage/aggregates/rebuild`,
+      {
+        method: "POST",
+      },
+    );
     expect(rebuildRes.status).toBe(200);
     const rebuildData = await rebuildRes.json();
     expect(rebuildData.aggregateCount).toBeGreaterThan(0);

@@ -21,17 +21,28 @@ export function money(amountMinor: bigint, currency: Currency): Money {
   return { amountMinor, currency };
 }
 
-export function precise(value: string, currency: Currency, scale = MICRO_SCALE): PreciseMoney {
-  if (!/^-?\d+(?:\.\d+)?$/.test(value)) throw new Error("Invalid decimal amount");
+export function precise(
+  value: string,
+  currency: Currency,
+  scale = MICRO_SCALE,
+): PreciseMoney {
+  if (!/^-?\d+(?:\.\d+)?$/.test(value))
+    throw new Error("Invalid decimal amount");
   const negative = value.startsWith("-");
   const [whole, fraction = ""] = value.replace("-", "").split(".");
   const digits = scale.toString().length - 1;
-  const amount = BigInt(whole!) * scale + BigInt(fraction.padEnd(digits, "0").slice(0, digits) || "0");
+  const amount =
+    BigInt(whole!) * scale +
+    BigInt(fraction.padEnd(digits, "0").slice(0, digits) || "0");
   return { amount: negative ? -amount : amount, scale, currency };
 }
 
-export function assertSameCurrency(a: { currency: Currency }, b: { currency: Currency }) {
-  if (a.currency !== b.currency) throw new Error(`Currency mismatch: ${a.currency}/${b.currency}`);
+export function assertSameCurrency(
+  a: { currency: Currency },
+  b: { currency: Currency },
+) {
+  if (a.currency !== b.currency)
+    throw new Error(`Currency mismatch: ${a.currency}/${b.currency}`);
 }
 
 export function add(a: Money, b: Money): Money {
@@ -48,7 +59,7 @@ export function multiplyRatio(
   amount: bigint,
   numerator: bigint,
   denominator: bigint,
-  round: "up" | "down" = "up"
+  round: "up" | "down" = "up",
 ): bigint {
   if (denominator <= 0n || numerator < 0n) throw new Error("Invalid ratio");
   const product = amount * numerator;
@@ -67,9 +78,10 @@ export interface ExchangeRate {
 }
 
 export function convert(value: Money, rate: ExchangeRate): Money {
-  if (value.currency !== rate.sourceCurrency) throw new Error("Exchange-rate source mismatch");
+  if (value.currency !== rate.sourceCurrency)
+    throw new Error("Exchange-rate source mismatch");
   return money(
     multiplyRatio(value.amountMinor, rate.rateNumerator, rate.rateDenominator),
-    rate.targetCurrency
+    rate.targetCurrency,
   );
 }

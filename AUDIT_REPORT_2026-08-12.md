@@ -19,23 +19,23 @@ The system must not be represented as production-ready, private-beta-ready, or e
 
 ## 2. Status terminology
 
-| Status | Meaning |
-|---|---|
+| Status                     | Meaning                                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **Implemented foundation** | Real domain/contracts/infrastructure code exists and has local validation. It may still require deployment integration. |
-| **Partially implemented** | Important code exists, but persistence, adapters, UI integration, operational validation, or complete workflows remain. |
-| **UI template/scaffold** | Route and presentation exist, but data and actions are static, empty-state, or not connected end to end. |
-| **Validated locally** | A relevant local typecheck, lint, test, or build has passed. This is not production evidence. |
-| **Not validated** | Required deployed, security, load, recovery, financial, or operational evidence is absent. |
+| **Partially implemented**  | Important code exists, but persistence, adapters, UI integration, operational validation, or complete workflows remain. |
+| **UI template/scaffold**   | Route and presentation exist, but data and actions are static, empty-state, or not connected end to end.                |
+| **Validated locally**      | A relevant local typecheck, lint, test, or build has passed. This is not production evidence.                           |
+| **Not validated**          | Required deployed, security, load, recovery, financial, or operational evidence is absent.                              |
 
 ## 3. Repository scope delivered
 
 ### Applications
 
-| Application | Port | Current state |
-|---|---:|---|
-| Customer Console | 3000 | Routes and design/system shells exist; many product screens remain static or empty-state scaffolds. |
+| Application           | Port | Current state                                                                                                        |
+| --------------------- | ---: | -------------------------------------------------------------------------------------------------------------------- |
+| Customer Console      | 3000 | Routes and design/system shells exist; many product screens remain static or empty-state scaffolds.                  |
 | Privileged Operations | 3001 | Operations navigation and screen templates exist; most tables are generic empty states without live operations data. |
-| Documentation | 3002 | Basic application and health routes exist; full developer documentation experience remains incomplete. |
+| Documentation         | 3002 | Basic application and health routes exist; full developer documentation experience remains incomplete.               |
 
 ### Platform structure
 
@@ -54,16 +54,16 @@ The monorepo currently contains:
 
 ## 4. Phase-by-phase assessment
 
-| Phase | Scope | Audit status | Notes |
-|---:|---|---|---|
-| 1 | Monorepo and platform foundation | **Implemented foundation** | Workspace layout, applications, services, workers, shared packages, configuration, local infrastructure, health endpoints, quality scripts, CI and documentation exist. |
-| 2 | Identity, tenancy and authorization | **Partially implemented** | Identity/session, organization/workspace, RBAC, audit/security and tenant-isolation foundations exist. Complete deployed authentication, authorization and organization journeys are not certified end to end. |
-| 3 | API keys and gateway authentication | **Partially implemented** | Key lifecycle/security contracts, scopes, model/IP rules, limits, budget policy, audit events and related console forms exist. UI forms are not evidence of complete persisted workflows. |
-| 4 | Core AI gateway and model/provider execution | **Partially implemented** | Canonical contracts, gateway/provider boundaries, model/provider registries, routing, adapters, streaming/cancellation, errors and usage foundations exist. Full provider-backed production execution and UI journey certification remain open. |
-| 5 | Intelligent routing and reliability | **Partially implemented** | Policy/versioning, weighted routing, capacity, health, circuits, retries, cache/idempotency and routing analytics foundations exist. Live operational proof and reliability testing remain incomplete. |
-| 6 | Commercial engine | **In progress** | Money, credits, pricing, billing, payment verification, tax, ledger, settlement and reconciliation foundations exist. Live payment adapters, repositories/migrations, complete workers, billing UI and financial concurrency certification remain release gates. |
-| 7 | Developer platform and operational experience | **In progress** | Webhook and privileged-access primitives, SDK/OpenAPI foundations and initial customer surfaces exist. SDK/CLI parity, persistence, exports, alerts, status/incidents, documentation, accessibility, contract tests and complete developer E2E remain. |
-| 8 | Production hardening and private beta | **In progress / not approved** | Fail-closed configuration, security headers/redaction, policy checks and readiness documentation exist. Penetration, tenant-isolation, load/soak/chaos, restore, rollback, DR, alerts and production-candidate evidence remain blockers. |
+| Phase | Scope                                         | Audit status                   | Notes                                                                                                                                                                                                                                                            |
+| ----: | --------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|     1 | Monorepo and platform foundation              | **Implemented foundation**     | Workspace layout, applications, services, workers, shared packages, configuration, local infrastructure, health endpoints, quality scripts, CI and documentation exist.                                                                                          |
+|     2 | Identity, tenancy and authorization           | **Partially implemented**      | Identity/session, organization/workspace, RBAC, audit/security and tenant-isolation foundations exist. Complete deployed authentication, authorization and organization journeys are not certified end to end.                                                   |
+|     3 | API keys and gateway authentication           | **Partially implemented**      | Key lifecycle/security contracts, scopes, model/IP rules, limits, budget policy, audit events and related console forms exist. UI forms are not evidence of complete persisted workflows.                                                                        |
+|     4 | Core AI gateway and model/provider execution  | **Partially implemented**      | Canonical contracts, gateway/provider boundaries, model/provider registries, routing, adapters, streaming/cancellation, errors and usage foundations exist. Full provider-backed production execution and UI journey certification remain open.                  |
+|     5 | Intelligent routing and reliability           | **Partially implemented**      | Policy/versioning, weighted routing, capacity, health, circuits, retries, cache/idempotency and routing analytics foundations exist. Live operational proof and reliability testing remain incomplete.                                                           |
+|     6 | Commercial engine                             | **In progress**                | Money, credits, pricing, billing, payment verification, tax, ledger, settlement and reconciliation foundations exist. Live payment adapters, repositories/migrations, complete workers, billing UI and financial concurrency certification remain release gates. |
+|     7 | Developer platform and operational experience | **In progress**                | Webhook and privileged-access primitives, SDK/OpenAPI foundations and initial customer surfaces exist. SDK/CLI parity, persistence, exports, alerts, status/incidents, documentation, accessibility, contract tests and complete developer E2E remain.           |
+|     8 | Production hardening and private beta         | **In progress / not approved** | Fail-closed configuration, security headers/redaction, policy checks and readiness documentation exist. Penetration, tenant-isolation, load/soak/chaos, restore, rollback, DR, alerts and production-candidate evidence remain blockers.                         |
 
 ## 5. Backend and platform work completed to date
 
@@ -226,4 +226,3 @@ GrowX AI currently has a broad and serious engineering foundation, but it is **n
 The next milestone should not be described as “finish all screens.” It should be:
 
 > **Approve the design foundations, then prove a small number of complete, secure, tenant-scoped, audited end-to-end journeys before expanding UI breadth.**
-

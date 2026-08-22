@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { InMemoryGovernanceRepository } from '../src/repository.js';
-import { GovernancePolicyResolver } from '../src/policy-resolver.js';
-import type { RetentionPolicy } from '@growx/contracts';
+import { describe, it, expect, beforeEach } from "vitest";
+import { InMemoryGovernanceRepository } from "../src/repository.js";
+import { GovernancePolicyResolver } from "../src/policy-resolver.js";
+import type { RetentionPolicy } from "@growx/contracts";
 
-describe('GovernancePolicyResolver', () => {
+describe("GovernancePolicyResolver", () => {
   let repo: InMemoryGovernanceRepository;
   let resolver: GovernancePolicyResolver;
 
@@ -12,37 +12,37 @@ describe('GovernancePolicyResolver', () => {
     resolver = new GovernancePolicyResolver(repo);
   });
 
-  it('resolves policy by deterministic precedence (workspace > org > platform)', async () => {
+  it("resolves policy by deterministic precedence (workspace > org > platform)", async () => {
     const platformPolicy: RetentionPolicy = {
-      id: 'ret_plat',
-      scope: 'platform_default',
+      id: "ret_plat",
+      scope: "platform_default",
       durationDays: 30,
-      action: 'DELETE',
+      action: "DELETE",
       priority: 10,
       version: 1,
-      status: 'active',
+      status: "active",
       createdAt: new Date(),
     };
     const orgPolicy: RetentionPolicy = {
-      id: 'ret_org',
-      scope: 'organization',
-      scopeId: 'org_test',
+      id: "ret_org",
+      scope: "organization",
+      scopeId: "org_test",
       durationDays: 14,
-      action: 'DELETE',
+      action: "DELETE",
       priority: 50,
       version: 1,
-      status: 'active',
+      status: "active",
       createdAt: new Date(),
     };
     const wsPolicy: RetentionPolicy = {
-      id: 'ret_ws',
-      scope: 'workspace',
-      scopeId: 'ws_test',
+      id: "ret_ws",
+      scope: "workspace",
+      scopeId: "ws_test",
       durationDays: 7,
-      action: 'DELETE',
+      action: "DELETE",
       priority: 100,
       version: 1,
-      status: 'active',
+      status: "active",
       createdAt: new Date(),
     };
 
@@ -52,31 +52,31 @@ describe('GovernancePolicyResolver', () => {
 
     // Workspace context resolves to wsPolicy (7 days)
     const resolvedWs = await resolver.resolvePolicy({
-      organizationId: 'org_test',
-      workspaceId: 'ws_test',
-      category: 'prompt',
+      organizationId: "org_test",
+      workspaceId: "ws_test",
+      category: "prompt",
     });
-    expect(resolvedWs.id).toBe('ret_ws');
+    expect(resolvedWs.id).toBe("ret_ws");
     expect(resolvedWs.durationDays).toBe(7);
 
     // Organization context without workspace resolves to orgPolicy (14 days)
     const resolvedOrg = await resolver.resolvePolicy({
-      organizationId: 'org_test',
-      category: 'prompt',
+      organizationId: "org_test",
+      category: "prompt",
     });
-    expect(resolvedOrg.id).toBe('ret_org');
+    expect(resolvedOrg.id).toBe("ret_org");
     expect(resolvedOrg.durationDays).toBe(14);
   });
 
-  it('calculates zero-retention expiration correctly', () => {
+  it("calculates zero-retention expiration correctly", () => {
     const zeroPolicy: RetentionPolicy = {
-      id: 'ret_zero',
-      scope: 'organization',
+      id: "ret_zero",
+      scope: "organization",
       durationDays: 0,
-      action: 'DELETE',
+      action: "DELETE",
       priority: 100,
       version: 1,
-      status: 'active',
+      status: "active",
       createdAt: new Date(),
     };
     const now = new Date();

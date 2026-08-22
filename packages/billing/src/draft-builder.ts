@@ -7,7 +7,11 @@ import type {
   InvoiceLegalEntitySnapshot,
   LegalEntity,
 } from "@growx/tax";
-import type { InvoiceLine, InvoiceLineSourceType, InvoiceType } from "./types.js";
+import type {
+  InvoiceLine,
+  InvoiceLineSourceType,
+  InvoiceType,
+} from "./types.js";
 
 export interface InvoiceDraftLineInput {
   description: string;
@@ -107,9 +111,12 @@ export class InvoiceDraftBuilder {
     for (let i = 0; i < input.lines.length; i++) {
       const l = input.lines[i];
       if (!l) continue;
-      const q = typeof l.quantity === "bigint" ? Number(l.quantity) : l.quantity;
+      const q =
+        typeof l.quantity === "bigint" ? Number(l.quantity) : l.quantity;
       if (q <= 0) {
-        throw new Error(`Line ${i + 1} has invalid non-positive quantity: ${q}`);
+        throw new Error(
+          `Line ${i + 1} has invalid non-positive quantity: ${q}`,
+        );
       }
       if (l.unitPrice.isNegative()) {
         throw new Error(`Line ${i + 1} has negative unit price`);

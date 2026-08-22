@@ -20,8 +20,12 @@ describe("Provider Adapter Compliance Contract", () => {
       });
 
       it("validates configuration correctly", () => {
-        expect(() => adapter.validateConfiguration({ baseUrl: "https://api.example.com" })).not.toThrow();
-        expect(() => adapter.validateConfiguration({ baseUrl: "invalid-url" })).toThrow(GrowXProviderError);
+        expect(() =>
+          adapter.validateConfiguration({ baseUrl: "https://api.example.com" }),
+        ).not.toThrow();
+        expect(() =>
+          adapter.validateConfiguration({ baseUrl: "invalid-url" }),
+        ).toThrow(GrowXProviderError);
       });
 
       it("checks native capabilities correctly", () => {
@@ -31,21 +35,30 @@ describe("Provider Adapter Compliance Contract", () => {
       });
 
       it("normalizes authentication error", () => {
-        const err = adapter.normalizeError({ status: 401, message: "Invalid API key" });
+        const err = adapter.normalizeError({
+          status: 401,
+          message: "Invalid API key",
+        });
         expect(err).toBeInstanceOf(GrowXProviderError);
         expect(err.code).toBe("provider_authentication_error");
         expect(err.retryable).toBe(false);
       });
 
       it("normalizes rate limit error", () => {
-        const err = adapter.normalizeError({ status: 429, message: "Rate limit exceeded" });
+        const err = adapter.normalizeError({
+          status: 429,
+          message: "Rate limit exceeded",
+        });
         expect(err).toBeInstanceOf(GrowXProviderError);
         expect(err.code).toBe("provider_rate_limit");
         expect(err.retryable).toBe(true);
       });
 
       it("normalizes cancellation error", () => {
-        const domErr = new DOMException("The user aborted a request.", "AbortError");
+        const domErr = new DOMException(
+          "The user aborted a request.",
+          "AbortError",
+        );
         const err = adapter.normalizeError(domErr);
         expect(err).toBeInstanceOf(GrowXProviderError);
         expect(err.code).toBe("request_cancelled");

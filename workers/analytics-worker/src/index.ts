@@ -27,7 +27,9 @@ export class AnalyticsProjectionWorker {
   }
 
   public async runOnce(): Promise<{ processedCount: number }> {
-    const checkpoint = (await this.options.repository.getCheckpoint("analytics_main_projector")) ?? {
+    const checkpoint = (await this.options.repository.getCheckpoint(
+      "analytics_main_projector",
+    )) ?? {
       id: createPublicId("anlchk"),
       projectorName: "analytics_main_projector",
       lastProcessedEventId: null,
@@ -42,7 +44,10 @@ export class AnalyticsProjectionWorker {
 
     let processedCount = 0;
     for (const req of requests) {
-      if (checkpoint.lastProcessedTimestamp && req.createdAt <= checkpoint.lastProcessedTimestamp) {
+      if (
+        checkpoint.lastProcessedTimestamp &&
+        req.createdAt <= checkpoint.lastProcessedTimestamp
+      ) {
         continue;
       }
       const reqAttempts = attempts.filter((a) => a.requestId === req.requestId);
@@ -57,7 +62,8 @@ export class AnalyticsProjectionWorker {
         ...checkpoint,
         lastProcessedEventId: lastReq ? lastReq.id : null,
         lastProcessedTimestamp: lastReq ? lastReq.createdAt : new Date(),
-        processedEventsCount: checkpoint.processedEventsCount + BigInt(processedCount),
+        processedEventsCount:
+          checkpoint.processedEventsCount + BigInt(processedCount),
         updatedAt: new Date(),
       });
     }

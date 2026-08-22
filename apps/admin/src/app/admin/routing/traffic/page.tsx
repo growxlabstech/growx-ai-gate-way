@@ -1,1 +1,15 @@
-import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Traffic allocations"><p>Auditable weighted provider, model, regional, and canary allocations with stable assignment.</p><AdminTable subject="Traffic allocations" /></AdminShell>; }
+import { AdminShell } from "../../../../components/admin-shell";
+import { listAdminRoutingPolicies } from "../../../../lib/admin-data";
+import { AdminRoutingView } from "../../../../components/admin-routing-view";
+
+export default async function AdminRoutingTrafficPage() {
+  const policies = await listAdminRoutingPolicies();
+  return (
+    <AdminShell
+      title="Traffic Allocation & Canary Splitting"
+      description="Inspect active traffic allocation and dynamic route weights."
+    >
+      <AdminRoutingView initialPolicies={policies} />
+    </AdminShell>
+  );
+}

@@ -154,8 +154,18 @@ describe("Phase 3 Management Plane Security Hardening", () => {
     headers: Record<string, string | string[] | undefined>;
     body: {
       status?: string | undefined;
-      error?: { code: string; message: string; requestId?: string | undefined } | undefined;
-      apiKey?: { id: string; name: string; prefix: string; maskedKey: string; status: string } | undefined;
+      error?:
+        | { code: string; message: string; requestId?: string | undefined }
+        | undefined;
+      apiKey?:
+        | {
+            id: string;
+            name: string;
+            prefix: string;
+            maskedKey: string;
+            status: string;
+          }
+        | undefined;
       oldApiKey?: { status: string } | undefined;
       secret?: string | undefined;
       data?: { id?: string; name?: string; [key: string]: unknown } | undefined;
@@ -167,7 +177,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
     method: string,
     path: string,
     body?: Record<string, unknown> | undefined,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): Promise<ApiResponse> {
     return new Promise((resolve, reject) => {
       const url = new URL(path, baseUrl);
@@ -198,7 +208,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
               });
             }
           });
-        }
+        },
       );
       req.on("error", reject);
       if (body) {
@@ -210,16 +220,23 @@ describe("Phase 3 Management Plane Security Hardening", () => {
 
   // 1. Unauthenticated human -> cannot create key
   it("unauthenticated human cannot create API key (401)", async () => {
-    const res = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`, {
-      name: "Unauthenticated Key",
-    });
+    const res = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
+      {
+        name: "Unauthenticated Key",
+      },
+    );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
   });
 
   // 2. Unauthenticated human -> cannot list keys
   it("unauthenticated human cannot list API keys (401)", async () => {
-    const res = await apiCall("GET", `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`);
+    const res = await apiCall(
+      "GET",
+      `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
+    );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
   });
@@ -230,7 +247,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Forged Header Key" },
-      { "x-actor-id": ownerUserId }
+      { "x-actor-id": ownerUserId },
     );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
@@ -246,7 +263,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
         authorization: `Bearer ${devToken}`,
         "x-workspace-id": ws1Id,
         "x-organization-id": orgId,
-      }
+      },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("FORBIDDEN");
@@ -258,7 +275,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Viewer Creation Attempt" },
-      { authorization: `Bearer ${viewerToken}` }
+      { authorization: `Bearer ${viewerToken}` },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("FORBIDDEN");
@@ -270,7 +287,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws2Id}/api-keys`,
       { name: "Cross-Workspace Attempt" },
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("FORBIDDEN");
@@ -286,7 +303,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
         name: "Dev Key 1",
         permissions: ["models.read", "responses.create"],
       },
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(createRes.status).toBe(201);
     expect(createRes.body.apiKey?.name).toBe("Dev Key 1");
@@ -298,7 +315,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "GET",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys/${keyId}`,
       undefined,
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(getRes.status).toBe(200);
     expect(getRes.body.data?.id).toBe(keyId);
@@ -308,7 +325,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "PATCH",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys/${keyId}`,
       { name: "Renamed Dev Key" },
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(patchRes.status).toBe(200);
     expect(patchRes.body.data?.name).toBe("Renamed Dev Key");
@@ -318,7 +335,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "PUT",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys/${keyId}/models`,
       { modelRules: [{ effect: "allow", pattern: "gpt-4o" }] },
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(modelRuleRes.status).toBe(200);
     expect(modelRuleRes.body.success).toBe(true);
@@ -328,7 +345,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys/${keyId}/rotate`,
       { overlapMinutes: 10, reason: "Scheduled rotation" },
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(rotateRes.status).toBe(200);
     expect(rotateRes.body.apiKey?.id).not.toBe(keyId);
@@ -339,13 +356,15 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "DELETE",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys/${keyId}`,
       undefined,
-      { authorization: `Bearer ${devToken}` }
+      { authorization: `Bearer ${devToken}` },
     );
     expect(revokeRes.status).toBe(200);
     expect(revokeRes.body.success).toBe(true);
 
     // Verify Audit Event recorded canonical developer user ID, NOT 'system'
-    const auditCreated = events.auditEvents.find((e) => e.action === "api_key.created");
+    const auditCreated = events.auditEvents.find(
+      (e) => e.action === "api_key.created",
+    );
     expect(auditCreated).toBeDefined();
     expect(auditCreated?.actorId).toBe(devUserId);
   });
@@ -356,7 +375,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Revoked Session Key" },
-      { authorization: `Bearer ${revokedToken}` }
+      { authorization: `Bearer ${revokedToken}` },
     );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
@@ -368,7 +387,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Expired Session Key" },
-      { authorization: `Bearer ${expiredToken}` }
+      { authorization: `Bearer ${expiredToken}` },
     );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
@@ -380,7 +399,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Suspended User Key" },
-      { authorization: `Bearer ${suspendedUserToken}` }
+      { authorization: `Bearer ${suspendedUserToken}` },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("USER_SUSPENDED");
@@ -403,7 +422,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       "/v1/organizations/org_suspended/workspaces/ws_in_suspended_org/api-keys",
       { name: "Key in Suspended Org" },
-      { authorization: `Bearer ${ownerToken}` }
+      { authorization: `Bearer ${ownerToken}` },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("ORGANIZATION_SUSPENDED");
@@ -420,7 +439,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/ws_suspended/api-keys`,
       { name: "Key in Suspended Ws" },
-      { authorization: `Bearer ${ownerToken}` }
+      { authorization: `Bearer ${ownerToken}` },
     );
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe("WORKSPACE_SUSPENDED");
@@ -432,7 +451,10 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       "POST",
       `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys`,
       { name: "Nested Key" },
-      { authorization: "Bearer gx_live_key_0123456789abcdef0123456789abcdef_secretpart123456789" }
+      {
+        authorization:
+          "Bearer gx_live_key_0123456789abcdef0123456789abcdef_secretpart123456789",
+      },
     );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("INVALID_PRINCIPAL");
@@ -447,7 +469,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
       {
         "x-service-name": "internal-sync-worker",
         "x-service-auth": "secret-internal-signature",
-      }
+      },
     );
     expect(res.status).toBe(401);
     expect(res.body.error?.code).toBe("UNAUTHENTICATED");
@@ -457,7 +479,7 @@ describe("Phase 3 Management Plane Security Hardening", () => {
   it("rejects token transmitted in query parameters with 400 INVALID_CREDENTIAL_LOCATION", async () => {
     const res = await apiCall(
       "GET",
-      `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys?token=${devToken}`
+      `/v1/organizations/${orgId}/workspaces/${ws1Id}/api-keys?token=${devToken}`,
     );
     expect(res.status).toBe(400);
     expect(res.body.error?.code).toBe("INVALID_CREDENTIAL_LOCATION");
@@ -472,7 +494,9 @@ describe("Phase 3 Management Plane Security Hardening", () => {
         createApiKeyApplication({
           pepper: "production_secret_pepper_with_at_least_32_bytes!!",
         });
-      }).toThrow(/(Production API Key Service requires a valid database connection|Production configuration failure)/);
+      }).toThrow(
+        /(Production API Key Service requires a valid database connection|Production configuration failure)/,
+      );
     } finally {
       process.env.NODE_ENV = prevEnv;
     }
@@ -502,7 +526,9 @@ describe("Phase 3 Management Plane Security Hardening", () => {
         createApiKeyApplication({
           pepper: "short_pepper",
         });
-      }).toThrow(/API_KEY_PEPPER is mandatory and must contain at least 32 bytes/);
+      }).toThrow(
+        /API_KEY_PEPPER is mandatory and must contain at least 32 bytes/,
+      );
     } finally {
       process.env.NODE_ENV = prevEnv;
     }

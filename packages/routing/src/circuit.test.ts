@@ -1,3 +1,21 @@
-import { describe, expect, it } from "vitest"; import { allowCircuit, initialCircuit, recordCircuit } from "./circuit.js";
-const config = { failureRateThreshold: .5, minimumRequests: 2, openDurationMs: 100, halfOpenProbeCount: 2, recoverySuccesses: 2 };
-describe("circuit breaker", () => { it("opens, probes half-open, and closes after recovery", () => { let value = recordCircuit(initialCircuit(), false, config, 0).snapshot; value = recordCircuit(value, false, config, 0).snapshot; expect(value.state).toBe("OPEN"); value = allowCircuit(value, config, 101).snapshot; expect(value.state).toBe("HALF_OPEN"); value = recordCircuit(value, true, config).snapshot; value = recordCircuit(value, true, config).snapshot; expect(value.state).toBe("CLOSED"); }); });
+import { describe, expect, it } from "vitest";
+import { allowCircuit, initialCircuit, recordCircuit } from "./circuit.js";
+const config = {
+  failureRateThreshold: 0.5,
+  minimumRequests: 2,
+  openDurationMs: 100,
+  halfOpenProbeCount: 2,
+  recoverySuccesses: 2,
+};
+describe("circuit breaker", () => {
+  it("opens, probes half-open, and closes after recovery", () => {
+    let value = recordCircuit(initialCircuit(), false, config, 0).snapshot;
+    value = recordCircuit(value, false, config, 0).snapshot;
+    expect(value.state).toBe("OPEN");
+    value = allowCircuit(value, config, 101).snapshot;
+    expect(value.state).toBe("HALF_OPEN");
+    value = recordCircuit(value, true, config).snapshot;
+    value = recordCircuit(value, true, config).snapshot;
+    expect(value.state).toBe("CLOSED");
+  });
+});

@@ -27,11 +27,15 @@ export class BatchHttpRouter {
   public async handleCreateBatch(
     auth: MachineAuthContext,
     body: unknown,
-    idempotencyKey?: string
+    idempotencyKey?: string,
   ): Promise<{ status: number; body: unknown }> {
     try {
       const parsed = createBatchRequestSchema.parse(body);
-      const batch = await this.batchService.createBatch(auth, parsed, idempotencyKey);
+      const batch = await this.batchService.createBatch(
+        auth,
+        parsed,
+        idempotencyKey,
+      );
       return { status: 201, body: { batch } };
     } catch (err: any) {
       return this.handleError(err);
@@ -43,7 +47,7 @@ export class BatchHttpRouter {
    */
   public async handleGetBatch(
     auth: MachineAuthContext,
-    id: string
+    id: string,
   ): Promise<{ status: number; body: unknown }> {
     try {
       const batch = await this.batchService.getBatch(auth, id);
@@ -58,7 +62,7 @@ export class BatchHttpRouter {
    */
   public async handleListBatches(
     auth: MachineAuthContext,
-    query: unknown
+    query: unknown,
   ): Promise<{ status: number; body: unknown }> {
     try {
       const parsedQuery = batchListQuerySchema.parse(query);
@@ -74,7 +78,7 @@ export class BatchHttpRouter {
    */
   public async handleCancelBatch(
     auth: MachineAuthContext,
-    id: string
+    id: string,
   ): Promise<{ status: number; body: unknown }> {
     try {
       const batch = await this.batchService.cancelBatch(auth, id);
@@ -91,10 +95,15 @@ export class BatchHttpRouter {
     auth: MachineAuthContext,
     id: string,
     limit?: number,
-    cursor?: string
+    cursor?: string,
   ): Promise<{ status: number; body: unknown }> {
     try {
-      const items = await this.batchService.listBatchItems(auth, id, limit, cursor);
+      const items = await this.batchService.listBatchItems(
+        auth,
+        id,
+        limit,
+        cursor,
+      );
       return { status: 200, body: items };
     } catch (err: any) {
       return this.handleError(err);
@@ -104,7 +113,10 @@ export class BatchHttpRouter {
   /**
    * POST /internal/batches/reconcile
    */
-  public async handleInternalReconcile(): Promise<{ status: number; body: unknown }> {
+  public async handleInternalReconcile(): Promise<{
+    status: number;
+    body: unknown;
+  }> {
     if (!this.reconciler) {
       return { status: 501, body: { error: "Reconciler not enabled" } };
     }

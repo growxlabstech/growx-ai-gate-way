@@ -1,7 +1,10 @@
 import type { GatewayEngine } from "@growx/gateway-service";
 import type { MachineAuthContext } from "@growx/api-key-service";
 import type { BatchRepository } from "../infrastructure/batch-repository.js";
-import type { BatchItemRecord, BatchItemAttemptRecord } from "../domain/types.js";
+import type {
+  BatchItemRecord,
+  BatchItemAttemptRecord,
+} from "../domain/types.js";
 import { BatchFinalizer } from "./batch-finalizer.js";
 
 export interface BatchWorkerOptions {
@@ -26,7 +29,7 @@ export class BatchWorker {
       gatewayEngine: GatewayEngine;
       finalizer: BatchFinalizer;
     },
-    options: BatchWorkerOptions
+    options: BatchWorkerOptions,
   ) {
     this.repo = deps.batchRepository;
     this.gatewayEngine = deps.gatewayEngine;
@@ -45,7 +48,7 @@ export class BatchWorker {
       this.workerId,
       this.concurrency,
       this.leaseDurationMs,
-      this.maxPerTenant
+      this.maxPerTenant,
     );
 
     if (claimedItems.length === 0) {
@@ -53,7 +56,7 @@ export class BatchWorker {
     }
 
     // Process claimed items concurrently
-    await Promise.all(claimedItems.map(item => this.processItem(item)));
+    await Promise.all(claimedItems.map((item) => this.processItem(item)));
     return claimedItems.length;
   }
 
@@ -68,13 +71,20 @@ export class BatchWorker {
     }
 
     // If job was cancelled or expired, mark item cancelled
-    if (job.status === "cancelling" || job.status === "cancelled" || job.status === "expired") {
+    if (
+      job.status === "cancelling" ||
+      job.status === "cancelled" ||
+      job.status === "expired"
+    ) {
       await this.repo.updateBatchItem({
         ...item,
         status: "cancelled",
         completedAt: new Date(),
       });
-      await this.repo.updateBatchJobCounters(job.id, { cancelled: 1, running: -1 });
+      await this.repo.updateBatchJobCounters(job.id, {
+        cancelled: 1,
+        running: -1,
+      });
       await this.repo.releaseLease("batch_item", item.id, this.workerId);
       return;
     }
@@ -90,7 +100,10 @@ export class BatchWorker {
         errorCategory: "timeout",
         completedAt: now,
       });
-      await this.repo.updateBatchJobCounters(job.id, { failed: 1, running: -1 });
+      await this.repo.updateBatchJobCounters(job.id, {
+        failed: 1,
+        running: -1,
+      });
       await this.repo.releaseLease("batch_item", item.id, this.workerId);
       return;
     }
@@ -107,7 +120,11 @@ export class BatchWorker {
       environmentId: `env_${job.workspaceId}`,
       environment: "production",
       name: "Batch Execution Principal",
-      permissions: ["models.read", "responses.create", "chat.completions.create"],
+      permissions: [
+        "models.read",
+        "responses.create",
+        "chat.completions.create",
+      ],
       modelRules: [],
       ipAllowlist: [],
       rateLimits: [],
@@ -124,7 +141,7 @@ export class BatchWorker {
         {
           ...item.requestPayload,
           stream: false,
-        }
+        },
       );
 
       const latencyMs = Date.now() - attemptStart.getTime();
@@ -154,11 +171,16 @@ export class BatchWorker {
         completedAt: new Date(),
       });
 
-      await this.repo.updateBatchJobCounters(job.id, { succeeded: 1, running: -1 });
+      await this.repo.updateBatchJobCounters(job.id, {
+        succeeded: 1,
+        running: -1,
+      });
     } catch (err: any) {
       const latencyMs = Date.now() - attemptStart.getTime();
       const statusCode = err.statusCode ?? err.status ?? 500;
-      const isRetryable = (statusCode === 429 || statusCode >= 500) && item.attemptCount < item.maxAttempts;
+      const isRetryable =
+        (statusCode === 429 || statusCode >= 500) &&
+        item.attemptCount < item.maxAttempts;
 
       const attempt: BatchItemAttemptRecord = {
         id: executionId,
@@ -178,7 +200,9 @@ export class BatchWorker {
 
       if (isRetryable) {
         // Exponential backoff with jitter: 2^attempt * 1000ms + rand(500)
-        const backoffMs = Math.pow(2, item.attemptCount) * 1000 + Math.floor(Math.random() * 500);
+        const backoffMs =
+          Math.pow(2, item.attemptCount) * 1000 +
+          Math.floor(Math.random() * 500);
         await this.repo.updateBatchItem({
           ...item,
           status: "retry_wait",
@@ -193,10 +217,14 @@ export class BatchWorker {
           status: "failed",
           errorCode: err.code ?? "execution_failed",
           errorMessage: err.message ?? "Execution failed",
-          errorCategory: statusCode === 400 ? "validation_error" : "execution_error",
+          errorCategory:
+            statusCode === 400 ? "validation_error" : "execution_error",
           completedAt: new Date(),
         });
-        await this.repo.updateBatchJobCounters(job.id, { failed: 1, running: -1 });
+        await this.repo.updateBatchJobCounters(job.id, {
+          failed: 1,
+          running: -1,
+        });
       }
     } finally {
       await this.repo.releaseLease("batch_item", item.id, this.workerId);

@@ -11,13 +11,19 @@ describe("StreamingJsonlParser", () => {
         custom_id: "req-1",
         method: "POST",
         url: "/v1/chat/completions",
-        body: { model: "gpt-4o", messages: [{ role: "user", content: "hello 1" }] },
+        body: {
+          model: "gpt-4o",
+          messages: [{ role: "user", content: "hello 1" }],
+        },
       }),
       JSON.stringify({
         custom_id: "req-2",
         method: "POST",
         url: "/v1/chat/completions",
-        body: { model: "claude-3-5-sonnet", messages: [{ role: "user", content: "hello 2" }] },
+        body: {
+          model: "claude-3-5-sonnet",
+          messages: [{ role: "user", content: "hello 2" }],
+        },
       }),
     ].join("\n");
 
@@ -52,7 +58,9 @@ describe("StreamingJsonlParser", () => {
     ].join("\n");
 
     expect(() => parser.parse(jsonl)).toThrowError(BatchValidationError);
-    expect(() => parser.parse(jsonl)).toThrow(/Duplicate custom_id 'req-duplicate'/);
+    expect(() => parser.parse(jsonl)).toThrow(
+      /Duplicate custom_id 'req-duplicate'/,
+    );
   });
 
   it("rejects invalid JSON syntax", () => {
@@ -64,7 +72,12 @@ describe("StreamingJsonlParser", () => {
     const smallParser = new StreamingJsonlParser({ maxLineSizeBytes: 50 });
     const jsonl = JSON.stringify({
       custom_id: "req-1",
-      body: { model: "gpt-4o", messages: [{ role: "user", content: "some long content exceeding 50 bytes" }] },
+      body: {
+        model: "gpt-4o",
+        messages: [
+          { role: "user", content: "some long content exceeding 50 bytes" },
+        ],
+      },
     });
 
     expect(() => smallParser.parse(jsonl)).toThrowError(BatchValidationError);

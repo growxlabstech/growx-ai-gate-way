@@ -23,10 +23,12 @@ Phase 16 delivers the authoritative, high-precision Provider Cost and Customer P
 ## Architectural Components
 
 ### 1. High-Precision Money (`packages/money`)
+
 - `Decimal`: Class supporting exact addition, subtraction, multiplication, division, string serialization, minor unit conversions, and IEEE 754-compliant rounding modes (`HALF_UP`, `HALF_EVEN`, `UP`, `DOWN`, `CEIL`, `FLOOR`).
 - `fromUnits(quantity, price, perUnits)`: Authoritative rate-per-million unit calculation.
 
 ### 2. Pricing Domain Engine (`packages/pricing`)
+
 - `ProviderPriceResolver`: Evaluates temporal schedule validity and calculates route specificity scores.
 - `ProviderCostCalculator`: Computes detailed per-attempt and request provider costs, tracking failed attempt overhead, fallback costs, exact cache hits, and unpriced usage.
 - `ProviderCostEstimator`: Synchronous, high-throughput in-memory batch route cost estimation for the routing and governance engines.
@@ -36,6 +38,7 @@ Phase 16 delivers the authoritative, high-precision Provider Cost and Customer P
 - `PriceReconciliationEngine`: Compares estimated vs actual provider costs, audit-logs variances, and produces immutable `PricingAdjustmentRecord` entries.
 
 ### 3. Database Schema & Migrations (`packages/database`)
+
 - Migration `0004_pricing_engine.sql` adds 10 tables:
   - `provider_price_schedules` & `provider_rates`
   - `provider_cost_records` & `provider_cost_lines`
@@ -44,6 +47,7 @@ Phase 16 delivers the authoritative, high-precision Provider Cost and Customer P
   - `pricing_adjustments`
 
 ### 4. Pricing Service (`services/pricing-service`)
+
 - `PricingService`: Application service managing lifecycle, simulation, calculation, and retrieval.
 - `PricingWorker`: Asynchronous event worker consuming `usage.recorded.v1` events from the usage ledger to produce authoritative financial price records.
 - `createHttpHandler`: HTTP transport exposing privileged ops endpoints (`/internal/pricing/*`) and public pricing APIs (`/v1/pricing/simulate`, `/v1/requests/:requestId/pricing`).

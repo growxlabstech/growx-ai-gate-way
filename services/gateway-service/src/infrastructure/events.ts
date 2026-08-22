@@ -52,7 +52,9 @@ export class InMemoryGatewayEvents implements IGatewayEvents {
     this.startedEvents.push({ ...event });
   }
 
-  async emitRequestCompleted(event: GatewayRequestCompletedEvent): Promise<void> {
+  async emitRequestCompleted(
+    event: GatewayRequestCompletedEvent,
+  ): Promise<void> {
     this.completedEvents.push({ ...event });
   }
 
@@ -60,7 +62,9 @@ export class InMemoryGatewayEvents implements IGatewayEvents {
     this.failedEvents.push({ ...event });
   }
 
-  async emitRequestCancelled(event: GatewayRequestCancelledEvent): Promise<void> {
+  async emitRequestCancelled(
+    event: GatewayRequestCancelledEvent,
+  ): Promise<void> {
     this.cancelledEvents.push({ ...event });
   }
 
@@ -113,7 +117,7 @@ export class InMemoryGatewayEvents implements IGatewayEvents {
   async emitSecurityEvent(
     type: string,
     data: Record<string, unknown>,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.securityEvents.push({ type, data, requestId });
   }
@@ -142,17 +146,19 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
-  async emitRequestCompleted(event: GatewayRequestCompletedEvent): Promise<void> {
+  async emitRequestCompleted(
+    event: GatewayRequestCompletedEvent,
+  ): Promise<void> {
     await this.emitOutboxEvent(
       "gateway.request.completed",
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -162,17 +168,19 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
-  async emitRequestCancelled(event: GatewayRequestCancelledEvent): Promise<void> {
+  async emitRequestCancelled(
+    event: GatewayRequestCancelledEvent,
+  ): Promise<void> {
     await this.emitOutboxEvent(
       "gateway.request.cancelled",
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -182,7 +190,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -192,7 +200,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -202,7 +210,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event as unknown as Record<string, unknown>,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -221,7 +229,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -238,7 +246,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
@@ -254,14 +262,14 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
       event,
       event.requestId,
       event.organizationId,
-      event.workspaceId
+      event.workspaceId,
     );
   }
 
   async emitSecurityEvent(
     type: string,
     data: Record<string, unknown>,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     const id = createPublicId("sec");
     await this.db.insert(securityEvents).values({
@@ -279,7 +287,7 @@ export class DrizzleGatewayEvents implements IGatewayEvents {
     payload: Record<string, unknown>,
     requestId?: string,
     organizationId?: string,
-    workspaceId?: string
+    workspaceId?: string,
   ): Promise<void> {
     const id = createPublicId("evt");
     await this.db.insert(outbox).values({

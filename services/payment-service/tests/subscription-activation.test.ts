@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { Decimal } from "@growx/money";
 import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
-import { SubscriptionService, InMemorySubscriptionRepository } from "@growx/subscription-service";
+import {
+  SubscriptionService,
+  InMemorySubscriptionRepository,
+} from "@growx/subscription-service";
 import { PaymentService } from "../src/application/payment-service.js";
 import { SubscriptionPaymentCoordinator } from "../src/application/subscription-payment-coordinator.js";
 import { InMemoryPaymentRepository } from "../src/infrastructure/in-memory-repository.js";
@@ -34,10 +37,16 @@ describe("Phase 19 — Subscription Activation via Payments", () => {
       defaultProvider: "mock",
     });
 
-    coordinator = new SubscriptionPaymentCoordinator(paymentService, subscriptionService);
+    coordinator = new SubscriptionPaymentCoordinator(
+      paymentService,
+      subscriptionService,
+    );
 
     // Seed plan
-    const plan = await subscriptionService.createPlan({ slug: "starter", displayName: "Starter Plan" });
+    const plan = await subscriptionService.createPlan({
+      slug: "starter",
+      displayName: "Starter Plan",
+    });
     const version = await subscriptionService.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -58,7 +67,8 @@ describe("Phase 19 — Subscription Activation via Payments", () => {
     });
 
     // Customer simply returned to /success without webhook
-    const activeSub = await subscriptionService.getActiveSubscription("org_redirect_only");
+    const activeSub =
+      await subscriptionService.getActiveSubscription("org_redirect_only");
     expect(activeSub).toBeUndefined();
   });
 
@@ -93,7 +103,8 @@ describe("Phase 19 — Subscription Activation via Payments", () => {
     });
 
     // Verify subscription is active
-    const activeSub = await subscriptionService.getActiveSubscription("org_webhook_act");
+    const activeSub =
+      await subscriptionService.getActiveSubscription("org_webhook_act");
     expect(activeSub).toBeDefined();
     expect(activeSub!.status).toBe("active");
     expect(activeSub!.planId).toBe(seededPlan.id);
@@ -132,7 +143,8 @@ describe("Phase 19 — Subscription Activation via Payments", () => {
       signature,
     });
 
-    const activeSub = await subscriptionService.getActiveSubscription("org_failed_act");
+    const activeSub =
+      await subscriptionService.getActiveSubscription("org_failed_act");
     expect(activeSub).toBeUndefined();
   });
 });

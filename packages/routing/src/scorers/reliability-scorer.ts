@@ -4,7 +4,10 @@ export class ReliabilityScorer {
   /**
    * Computes a reliability score (0 - 100) based on health, circuit state, and success rate.
    */
-  public static score(candidate: RouteCandidate): { score: number; health: string } {
+  public static score(candidate: RouteCandidate): {
+    score: number;
+    health: string;
+  } {
     let score = 90;
 
     // Health factor
@@ -25,7 +28,10 @@ export class ReliabilityScorer {
     }
 
     // Telemetry success rate
-    if (candidate.availabilitySignal && typeof candidate.availabilitySignal.successRate === "number") {
+    if (
+      candidate.availabilitySignal &&
+      typeof candidate.availabilitySignal.successRate === "number"
+    ) {
       const sr = candidate.availabilitySignal.successRate; // 0..1
       score = score * 0.5 + sr * 100 * 0.5;
     }

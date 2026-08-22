@@ -10,8 +10,16 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
   let scanner: TruthfulFileScanner;
   let fileService: FileService;
 
-  const tenantA = { organizationId: "org_tenant_a", workspaceId: "ws_a", userId: "usr_a" };
-  const tenantB = { organizationId: "org_tenant_b", workspaceId: "ws_b", userId: "usr_b" };
+  const tenantA = {
+    organizationId: "org_tenant_a",
+    workspaceId: "ws_a",
+    userId: "usr_a",
+  };
+  const tenantB = {
+    organizationId: "org_tenant_b",
+    workspaceId: "ws_b",
+    userId: "usr_b",
+  };
 
   beforeEach(() => {
     storageProvider = new InMemoryObjectStorageProvider();
@@ -47,8 +55,12 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
     const fileId = createRes.file.id;
     const storageKey = createRes.file.storageKey;
 
-    const pdfData = Buffer.from("%PDF-1.7 test document content with sufficient bytes");
-    await storageProvider.putObject(storageKey, pdfData, { contentType: "application/pdf" });
+    const pdfData = Buffer.from(
+      "%PDF-1.7 test document content with sufficient bytes",
+    );
+    await storageProvider.putObject(storageKey, pdfData, {
+      contentType: "application/pdf",
+    });
 
     const completeRes = await fileService.completeUpload(tenantA, fileId, {
       uploadSessionId: createRes.uploadSessionId,
@@ -75,13 +87,20 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
     });
 
     const fileId = createRes.file.id;
-    await storageProvider.putObject(createRes.file.storageKey, Buffer.from("Confidential data"));
+    await storageProvider.putObject(
+      createRes.file.storageKey,
+      Buffer.from("Confidential data"),
+    );
     await fileService.completeUpload(tenantA, fileId, {
       uploadSessionId: createRes.uploadSessionId,
     });
 
-    await expect(fileService.getFile(tenantB, fileId)).rejects.toThrowError(/not found/);
-    await expect(fileService.getDownloadUrl(tenantB, fileId)).rejects.toThrowError(/not found/);
+    await expect(fileService.getFile(tenantB, fileId)).rejects.toThrowError(
+      /not found/,
+    );
+    await expect(
+      fileService.getDownloadUrl(tenantB, fileId),
+    ).rejects.toThrowError(/not found/);
 
     // Org B delete attempt does not affect Org A's file
     await fileService.deleteFile(tenantB, fileId);
@@ -100,7 +119,7 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
     await expect(
       fileService.completeUpload(tenantA, createRes.file.id, {
         uploadSessionId: createRes.uploadSessionId,
-      })
+      }),
     ).rejects.toThrowError(/Object payload not found/);
   });
 
@@ -122,7 +141,7 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
         purpose: "ai_input",
         mimeType: "text/plain",
         sizeBytes: 500,
-      })
+      }),
     ).rejects.toThrowError(/Organization storage quota exceeded/);
   });
 
@@ -136,19 +155,38 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
     });
 
     expect(createRes.uploadParts?.length).toBe(2);
-    const session = await repository.getUploadSession(tenantA.organizationId, createRes.uploadSessionId);
+    const session = await repository.getUploadSession(
+      tenantA.organizationId,
+      createRes.uploadSessionId,
+    );
     expect(session?.multipartUploadId).toBeDefined();
 
-    const part1 = await storageProvider.uploadPart(createRes.file.storageKey, session!.multipartUploadId!, 1, Buffer.from('{"part1":'));
-    const part2 = await storageProvider.uploadPart(createRes.file.storageKey, session!.multipartUploadId!, 2, Buffer.from('"value"}'));
+    const part1 = await storageProvider.uploadPart(
+      createRes.file.storageKey,
+      session!.multipartUploadId!,
+      1,
+      Buffer.from('{"part1":'),
+    );
+    const part2 = await storageProvider.uploadPart(
+      createRes.file.storageKey,
+      session!.multipartUploadId!,
+      2,
+      Buffer.from('"value"}'),
+    );
 
-    const completeRes = await fileService.completeUpload(tenantA, createRes.file.id, {
-      uploadSessionId: createRes.uploadSessionId,
-      parts: [part1, part2],
-    });
+    const completeRes = await fileService.completeUpload(
+      tenantA,
+      createRes.file.id,
+      {
+        uploadSessionId: createRes.uploadSessionId,
+        parts: [part1, part2],
+      },
+    );
 
     expect(completeRes.file.status).toBe("ready");
-    expect(completeRes.file.sizeBytes).toBe(Buffer.from('{"part1":"value"}').length);
+    expect(completeRes.file.sizeBytes).toBe(
+      Buffer.from('{"part1":"value"}').length,
+    );
   });
 
   it("7. Platform kill switch immediately blocks new file creation", async () => {
@@ -159,7 +197,7 @@ describe("Phase 25: File Service & Tenant Isolation", () => {
         fileName: "test.txt",
         purpose: "ai_input",
         mimeType: "text/plain",
-      })
+      }),
     ).rejects.toThrowError(/temporarily disabled by platform kill switch/);
   });
 });

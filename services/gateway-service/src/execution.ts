@@ -29,7 +29,7 @@ export class GatewayExecutionEngine {
     private readonly routing: RoutingService,
     private readonly providers: ProviderRegistry,
     private readonly events: ExecutionEvents,
-    private readonly options: ExecutionOptions
+    private readonly options: ExecutionOptions,
   ) {
     if (options.maxAttempts < 1 || options.maxAttempts > 5) {
       throw new Error("maxAttempts must be between 1 and 5");
@@ -39,7 +39,7 @@ export class GatewayExecutionEngine {
   async execute(
     request: GrowXModelRequest,
     required: readonly ModelCapability[],
-    signal = new AbortController().signal
+    signal = new AbortController().signal,
   ): Promise<GrowXModelResponse> {
     const decision = this.decide(request, required);
     await this.events.emit("gateway.routing.completed", {
@@ -66,7 +66,7 @@ export class GatewayExecutionEngine {
       try {
         const runtime = await this.providers.runtime(
           target.providerId,
-          request.environmentId
+          request.environmentId,
         );
 
         await this.events.emit("gateway.provider.attempted", {
@@ -80,7 +80,7 @@ export class GatewayExecutionEngine {
             "provider_unavailable",
             "Provider does not implement generate.",
             false,
-            500
+            500,
           );
         }
 
@@ -102,7 +102,7 @@ export class GatewayExecutionEngine {
                 "Provider unavailable.",
                 true,
                 503,
-                { cause: error }
+                { cause: error },
               );
 
         await this.events.emit("gateway.provider.failed", {
@@ -126,29 +126,40 @@ export class GatewayExecutionEngine {
       }
     }
 
-    throw last ?? new GrowXProviderError("model_unavailable", "No route available.", false, 503);
+    throw (
+      last ??
+      new GrowXProviderError(
+        "model_unavailable",
+        "No route available.",
+        false,
+        503,
+      )
+    );
   }
 
   async *stream(
     request: GrowXModelRequest,
     required: readonly ModelCapability[],
-    signal = new AbortController().signal
+    signal = new AbortController().signal,
   ): AsyncIterable<GrowXStreamEvent> {
     const decision = this.decide(request, [...required, "streaming"]);
     const runtime = await this.providers.runtime(
       decision.providerId,
-      request.environmentId
+      request.environmentId,
     );
 
     let emitted = false;
     try {
-      for await (const event of runtime.adapter.stream(request as any, {
-        providerModelId: decision.providerModelId,
-        baseUrl: runtime.record.baseUrl,
-        credential: runtime.credential,
-        signal,
-        requestTimeoutMs: this.options.requestTimeoutMs,
-      } as any) as any) {
+      for await (const event of runtime.adapter.stream(
+        request as any,
+        {
+          providerModelId: decision.providerModelId,
+          baseUrl: runtime.record.baseUrl,
+          credential: runtime.credential,
+          signal,
+          requestTimeoutMs: this.options.requestTimeoutMs,
+        } as any,
+      ) as any) {
         emitted ||= event.type === "output_text.delta";
         yield event as GrowXStreamEvent;
       }
@@ -160,7 +171,7 @@ export class GatewayExecutionEngine {
 
   async embed(
     request: GrowXEmbeddingRequest,
-    signal = new AbortController().signal
+    signal = new AbortController().signal,
   ): Promise<GrowXEmbeddingResponse> {
     const decision = this.routing.decide({
       organizationId: request.organizationId,
@@ -172,7 +183,7 @@ export class GatewayExecutionEngine {
 
     const runtime = await this.providers.runtime(
       decision.providerId,
-      request.environmentId
+      request.environmentId,
     );
 
     if (!runtime.adapter.embed) {
@@ -180,7 +191,7 @@ export class GatewayExecutionEngine {
         "model_capability_not_supported",
         "The selected provider does not support embeddings.",
         false,
-        400
+        400,
       );
     }
 
@@ -195,7 +206,7 @@ export class GatewayExecutionEngine {
 
   private decide(
     request: GrowXModelRequest,
-    required: readonly ModelCapability[]
+    required: readonly ModelCapability[],
   ): RoutingDecision {
     return this.routing.decide({
       organizationId: request.organizationId,
@@ -214,10 +225,15 @@ export class GatewayExecutionEngine {
         () => {
           clearTimeout(timer);
           reject(
-            new GrowXProviderError("request_cancelled", "Request cancelled.", false, 499)
+            new GrowXProviderError(
+              "request_cancelled",
+              "Request cancelled.",
+              false,
+              499,
+            ),
           );
         },
-        { once: true }
+        { once: true },
       );
     });
   }

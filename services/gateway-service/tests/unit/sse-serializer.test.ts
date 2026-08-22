@@ -129,7 +129,11 @@ describe("SSE Serializer", () => {
 
   describe("serializeStreamError", () => {
     it("returns a JSON error event followed by [DONE]", () => {
-      const result = serializeStreamError("provider_timeout", "Request timed out", "req_abc123");
+      const result = serializeStreamError(
+        "provider_timeout",
+        "Request timed out",
+        "req_abc123",
+      );
       expect(result).toContain("data: ");
       expect(result).toContain("data: [DONE]");
       expect(result).toContain('"provider_timeout"');
@@ -137,7 +141,11 @@ describe("SSE Serializer", () => {
     });
 
     it("produces valid JSON in the error data frame", () => {
-      const result = serializeStreamError("internal_error", "Something went wrong", "req_xyz");
+      const result = serializeStreamError(
+        "internal_error",
+        "Something went wrong",
+        "req_xyz",
+      );
       const lines = result.split("\n\n").filter((l) => l.startsWith("data: "));
       const errorLine = lines[0]!;
       const jsonStr = errorLine.replace("data: ", "");

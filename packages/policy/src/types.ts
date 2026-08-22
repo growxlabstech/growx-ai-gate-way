@@ -30,7 +30,9 @@ export const dataClassificationSourceSchema = z.enum([
   "api_key_default",
   "trusted_metadata",
 ]);
-export type DataClassificationSource = z.infer<typeof dataClassificationSourceSchema>;
+export type DataClassificationSource = z.infer<
+  typeof dataClassificationSourceSchema
+>;
 
 export const policyRuleOperatorSchema = z.enum([
   "equals",
@@ -211,15 +213,19 @@ export interface PolicyEvaluationContext {
   tools?: Array<{ type: string; function?: { name: string } }> | undefined;
   toolChoice?: unknown | undefined;
   parallelToolCalls?: boolean | undefined;
-  structuredOutput?: {
-    type: "json_object" | "json_schema";
-    strict?: boolean | undefined;
-    schemaName?: string | undefined;
-  } | undefined;
-  reasoning?: {
-    effort?: string | undefined;
-    maxTokens?: number | undefined;
-  } | undefined;
+  structuredOutput?:
+    | {
+        type: "json_object" | "json_schema";
+        strict?: boolean | undefined;
+        schemaName?: string | undefined;
+      }
+    | undefined;
+  reasoning?:
+    | {
+        effort?: string | undefined;
+        maxTokens?: number | undefined;
+      }
+    | undefined;
   temperature?: number | undefined;
   maxTokens?: number | undefined;
   estimatedInputTokens?: number | undefined;

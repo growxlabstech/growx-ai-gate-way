@@ -1,7 +1,4 @@
-import {
-  GrowXProviderError,
-  type CanonicalCapability,
-} from "@growx/contracts";
+import { GrowXProviderError, type CanonicalCapability } from "@growx/contracts";
 import { createPublicId } from "@growx/ids";
 import type {
   CanonicalModelEntity,
@@ -51,7 +48,8 @@ export interface RoutingEngineOptions {
 export class RoutingEngine {
   private readonly healthStore?: IRouteHealthStore | undefined;
   private readonly latencyProvider?: ILatencySignalProvider | undefined;
-  private readonly availabilityProvider?: IAvailabilitySignalProvider | undefined;
+  private readonly availabilityProvider?:
+    IAvailabilitySignalProvider | undefined;
   private readonly capacityProvider?: ICapacitySignalProvider | undefined;
   public readonly policyEngine?: PolicyEngine | undefined;
   private readonly idGenerator: () => string;
@@ -61,7 +59,7 @@ export class RoutingEngine {
     private readonly providerService: ProviderService,
     private readonly repository: IRoutingRepository,
     private readonly events: IRoutingEvents,
-    options: RoutingEngineOptions = {}
+    options: RoutingEngineOptions = {},
   ) {
     this.healthStore = options.routeHealthStore;
     this.latencyProvider = options.latencySignalProvider;
@@ -95,47 +93,63 @@ export class RoutingEngine {
     const effectivePolicy = await this.resolveEffectivePolicy(
       context.auth.organizationId,
       context.auth.workspaceId,
-      context.constraints
+      context.constraints,
     );
 
     // 2. Fetch Providers Metadata
-    const allProviders: any[] = await this.providerService.listProviders().catch(() => []);
+    const allProviders: any[] = await this.providerService
+      .listProviders()
+      .catch(() => []);
 
     const activeEnv = context.auth.environment || "development";
 
     // Batch fetch health snapshots for all eligible routes
-    const routeIds = (eligibleConfiguredRoutes as ProviderRouteEntity[]).map((r) => r.id);
+    const routeIds = (eligibleConfiguredRoutes as ProviderRouteEntity[]).map(
+      (r) => r.id,
+    );
     const healthSnapshots = this.healthStore
-      ? await this.healthStore.getRouteHealthBatch(routeIds).catch(() => new Map())
+      ? await this.healthStore
+          .getRouteHealthBatch(routeIds)
+          .catch(() => new Map())
       : new Map();
 
     // Batch fetch capacity signals for all eligible routes
-    const capacitySignals: Map<string, any> =
-      (this.capacityProvider as any)?.getCapacitySignals
-        ? await (this.capacityProvider as any)
-            .getCapacitySignals(
-              (eligibleConfiguredRoutes as ProviderRouteEntity[]).map((r) => ({
-                routeId: r.id,
-                providerId: r.providerId,
-              }))
-            )
-            .catch(() => new Map())
-        : new Map();
+    const capacitySignals: Map<string, any> = (this.capacityProvider as any)
+      ?.getCapacitySignals
+      ? await (this.capacityProvider as any)
+          .getCapacitySignals(
+            (eligibleConfiguredRoutes as ProviderRouteEntity[]).map((r) => ({
+              routeId: r.id,
+              providerId: r.providerId,
+            })),
+          )
+          .catch(() => new Map())
+      : new Map();
 
     // 3. Build RouteCandidate[]
     const candidates: RouteCandidate[] = await Promise.all(
       (eligibleConfiguredRoutes as ProviderRouteEntity[]).map(async (route) => {
-        const provider = allProviders.find((p: any) => p.id === route.providerId);
-        const providerStatus = provider ? (provider.enabled ? provider.status : "disabled") : "disabled";
+        const provider = allProviders.find(
+          (p: any) => p.id === route.providerId,
+        );
+        const providerStatus = provider
+          ? provider.enabled
+            ? provider.status
+            : "disabled"
+          : "disabled";
 
         // Check if provider has active credentials for this environment
         let hasCred = true;
         try {
-          const creds = await this.providerService.listCredentials(route.providerId);
+          const creds = await this.providerService.listCredentials(
+            route.providerId,
+          );
           hasCred = creds.some(
             (c: any) =>
               c.status === "active" &&
-              (c.environment === activeEnv || c.environment === "production" || !c.environment)
+              (c.environment === activeEnv ||
+                c.environment === "production" ||
+                !c.environment),
           );
         } catch {
           hasCred = false;
@@ -143,9 +157,15 @@ export class RoutingEngine {
 
         // Fetch pricing for this route or model
         const routePrice =
-          (await this.modelRegistry.getEffectivePricing(route.id).catch(() => null)) ||
-          (await this.modelRegistry.getEffectivePricing(model.id).catch(() => null)) ||
-          (await this.modelRegistry.getEffectivePricing(model.canonicalId).catch(() => null));
+          (await this.modelRegistry
+            .getEffectivePricing(route.id)
+            .catch(() => null)) ||
+          (await this.modelRegistry
+            .getEffectivePricing(model.id)
+            .catch(() => null)) ||
+          (await this.modelRegistry
+            .getEffectivePricing(model.canonicalId)
+            .catch(() => null));
 
         // Fetch signals
         const [latencySignal, availabilitySignal] = await Promise.all([
@@ -153,13 +173,13 @@ export class RoutingEngine {
             ? this.latencyProvider.getLatencySignal(
                 route.providerId,
                 route.providerModelId,
-                route.region
+                route.region,
               )
             : null,
           this.availabilityProvider
             ? this.availabilityProvider.getAvailabilitySignal(
                 route.providerId,
-                route.providerModelId
+                route.providerModelId,
               )
             : null,
         ]);
@@ -180,7 +200,8 @@ export class RoutingEngine {
 
         const limits = {
           contextWindow: route.contextWindowOverride ?? model.contextWindow,
-          maxOutputTokens: route.maxOutputTokensOverride ?? model.maxOutputTokens,
+          maxOutputTokens:
+            route.maxOutputTokensOverride ?? model.maxOutputTokens,
           maxInputTokens: model.maxInputTokens ?? null,
         };
 
@@ -188,8 +209,10 @@ export class RoutingEngine {
           ? {
               inputPricePerMillionMinor: routePrice.inputPricePerMillionMinor,
               outputPricePerMillionMinor: routePrice.outputPricePerMillionMinor,
-              cachedInputPricePerMillionMinor: routePrice.cachedInputPricePerMillionMinor,
-              reasoningPricePerMillionMinor: routePrice.reasoningPricePerMillionMinor,
+              cachedInputPricePerMillionMinor:
+                routePrice.cachedInputPricePerMillionMinor,
+              reasoningPricePerMillionMinor:
+                routePrice.reasoningPricePerMillionMinor,
               currency: routePrice.currency,
             }
           : undefined;
@@ -202,8 +225,8 @@ export class RoutingEngine {
           capacitySignal?.utilization !== undefined
             ? capacitySignal.utilization
             : capacitySignal?.headroom !== undefined
-            ? Math.max(0, 1 - capacitySignal.headroom)
-            : undefined;
+              ? Math.max(0, 1 - capacitySignal.headroom)
+              : undefined;
 
         const candidate: RouteCandidate = {
           routeId: route.id,
@@ -233,12 +256,12 @@ export class RoutingEngine {
                 sampledAt: latencySignal.sampledAt,
               }
             : health?.latency.p95LatencyMs
-            ? {
-                p95LatencyMs: health.latency.p95LatencyMs,
-                p50LatencyMs: health.latency.p50LatencyMs,
-                source: "telemetry",
-              }
-            : undefined,
+              ? {
+                  p95LatencyMs: health.latency.p95LatencyMs,
+                  p50LatencyMs: health.latency.p50LatencyMs,
+                  source: "telemetry",
+                }
+              : undefined,
           availabilitySignal: availabilitySignal
             ? {
                 available: availabilitySignal.available,
@@ -246,12 +269,13 @@ export class RoutingEngine {
                 source: availabilitySignal.source,
               }
             : health
-            ? {
-                available: circuitState === "CLOSED" || circuitState === "HALF_OPEN",
-                successRate: health.successRate,
-                source: "telemetry",
-              }
-            : undefined,
+              ? {
+                  available:
+                    circuitState === "CLOSED" || circuitState === "HALF_OPEN",
+                  successRate: health.successRate,
+                  source: "telemetry",
+                }
+              : undefined,
           capacitySignal: capacitySignal
             ? {
                 utilization: capUtil ?? 0,
@@ -261,7 +285,7 @@ export class RoutingEngine {
         };
 
         return candidate;
-      })
+      }),
     );
 
     // 4. Create RoutingRequest DTO
@@ -286,7 +310,10 @@ export class RoutingEngine {
     const consideredRoutes: ConsideredRoute[] = [];
     const eligibleCandidates: RouteCandidate[] = [];
 
-    const policyExcludedMap = new Map<string, { reason: string; code: ExclusionReasonCode }>();
+    const policyExcludedMap = new Map<
+      string,
+      { reason: string; code: ExclusionReasonCode }
+    >();
     if (this.policyEngine) {
       try {
         const policyBatchRes = await this.policyEngine.evaluateRoutes(
@@ -315,21 +342,25 @@ export class RoutingEngine {
             estimatedCost: calculateEstimatedCost(
               c,
               routingRequest.estimatedInputTokens,
-              routingRequest.estimatedOutputTokens
+              routingRequest.estimatedOutputTokens,
             ),
-          }))
+          })),
         );
 
         for (const exc of policyBatchRes.excluded) {
           const code: ExclusionReasonCode =
             exc.denialCode === "PROVIDER_DENIED"
               ? "PROVIDER_DENIED"
-              : exc.denialCode === "REGION_DENIED" || exc.denialCode === "DATA_RESIDENCY_DENIED"
-              ? "REGION_DENIED"
-              : exc.denialCode === "COST_POLICY_DENIED"
-              ? "COST_LIMIT"
-              : "PROVIDER_DENIED";
-          policyExcludedMap.set(exc.candidate.routeId, { reason: exc.reason, code });
+              : exc.denialCode === "REGION_DENIED" ||
+                  exc.denialCode === "DATA_RESIDENCY_DENIED"
+                ? "REGION_DENIED"
+                : exc.denialCode === "COST_POLICY_DENIED"
+                  ? "COST_LIMIT"
+                  : "PROVIDER_DENIED";
+          policyExcludedMap.set(exc.candidate.routeId, {
+            reason: exc.reason,
+            code,
+          });
         }
       } catch {
         // Fail safe
@@ -340,7 +371,7 @@ export class RoutingEngine {
       const estimatedCost = calculateEstimatedCost(
         candidate,
         routingRequest.estimatedInputTokens,
-        routingRequest.estimatedOutputTokens
+        routingRequest.estimatedOutputTokens,
       );
 
       const policyExclusion = policyExcludedMap.get(candidate.routeId);
@@ -351,7 +382,7 @@ export class RoutingEngine {
             candidate,
             routingRequest,
             effectivePolicy,
-            estimatedCost
+            estimatedCost,
           );
 
       if (eligibility.eligible) {
@@ -391,7 +422,7 @@ export class RoutingEngine {
         "model_unavailable",
         `No eligible provider routes available for model '${model.canonicalId}' matching requested capabilities [${context.requiredCapabilities.join(", ")}]. Exclusions: [${reasons.join(", ")}]`,
         false,
-        503
+        503,
       );
     }
 
@@ -402,21 +433,21 @@ export class RoutingEngine {
       eligibleCandidates,
       routingRequest,
       effectivePolicy,
-      { stableKey: routingRequest.stableKey }
+      { stableKey: routingRequest.stableKey },
     );
 
     const primaryRanked = ranked[0]!;
     const primaryCandidate = primaryRanked.candidate;
 
     // Find the original ProviderRouteEntity
-    const selectedRoute = (eligibleConfiguredRoutes as ProviderRouteEntity[]).find(
-      (r) => r.id === primaryCandidate.routeId
-    )!;
+    const selectedRoute = (
+      eligibleConfiguredRoutes as ProviderRouteEntity[]
+    ).find((r) => r.id === primaryCandidate.routeId)!;
 
     // Annotate considered routes with score
     for (const r of ranked) {
       const considered = consideredRoutes.find(
-        (c) => c.routeId === r.candidate.routeId
+        (c) => c.routeId === r.candidate.routeId,
       );
       if (considered) {
         considered.score = r.score;
@@ -500,17 +531,19 @@ export class RoutingEngine {
   async resolveEffectivePolicy(
     organizationId?: string | undefined,
     workspaceId?: string | undefined,
-    constraints?: any
+    constraints?: any,
   ): Promise<RoutingPolicy> {
     const [globalPolicy, orgPolicy, wsPolicy] = await Promise.all([
       this.repository.getGlobalPolicy(),
       organizationId ? this.repository.getPolicy(organizationId, null) : null,
-      organizationId && workspaceId ? this.repository.getPolicy(organizationId, workspaceId) : null,
+      organizationId && workspaceId
+        ? this.repository.getPolicy(organizationId, workspaceId)
+        : null,
     ]);
 
     return mergeRoutingPolicies(
       [globalPolicy, orgPolicy, wsPolicy],
-      constraints
+      constraints,
     );
   }
 

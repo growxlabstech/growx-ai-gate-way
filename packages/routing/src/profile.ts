@@ -49,7 +49,11 @@ export function buildRequestCapabilityProfile(options: {
 
   const latencyClass =
     options.latencyClass ||
-    (options.batch ? "throughput" : options.streaming ? "interactive" : "standard");
+    (options.batch
+      ? "throughput"
+      : options.streaming
+        ? "interactive"
+        : "standard");
 
   return {
     canonicalModelId: options.canonicalModelId,
@@ -98,12 +102,18 @@ export function classifyWorkload(options: {
   if (options.structuredOutput) return "structured_generation";
   if (options.inputModalities?.includes("image")) return "image";
   if (options.inputModalities?.includes("audio")) return "audio";
-  if (options.inputModalities?.includes("file") || options.inputModalities?.includes("document")) return "document";
+  if (
+    options.inputModalities?.includes("file") ||
+    options.inputModalities?.includes("document")
+  )
+    return "document";
   if (options.streaming === false) return "realtime_background";
   return "realtime_interactive";
 }
 
-export function hashRequestCapabilityProfile(profile: RequestCapabilityProfile): string {
+export function hashRequestCapabilityProfile(
+  profile: RequestCapabilityProfile,
+): string {
   const canonicalData = {
     canonicalModelId: profile.canonicalModelId,
     workloadType: profile.workloadType,

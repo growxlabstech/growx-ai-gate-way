@@ -23,7 +23,12 @@ describe("Batch Wallet & Credit Reservation Integration", () => {
     environmentId: "env_dev",
     environment: "development",
     name: "Wallet Test Key",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -38,7 +43,13 @@ describe("Batch Wallet & Credit Reservation Integration", () => {
     mockGatewayEngine = {
       executeChatCompletion: async () => ({
         id: "chatcmpl_123",
-        choices: [{ index: 0, message: { role: "assistant", content: "pong" }, finish_reason: "stop" }],
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content: "pong" },
+            finish_reason: "stop",
+          },
+        ],
         usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
       }),
     };
@@ -65,7 +76,12 @@ describe("Batch Wallet & Credit Reservation Integration", () => {
         gatewayEngine: mockGatewayEngine,
         finalizer,
       },
-      { workerId: "worker-wallet", concurrency: 5, leaseDurationMs: 10000, maxPerTenant: 10 }
+      {
+        workerId: "worker-wallet",
+        concurrency: 5,
+        leaseDurationMs: 10000,
+        maxPerTenant: 10,
+      },
     );
 
     scheduler = new BatchScheduler({
@@ -77,8 +93,14 @@ describe("Batch Wallet & Credit Reservation Integration", () => {
   it("creates credit reservation upon batch creation and releases it upon finalization", async () => {
     const batch = await batchService.createBatch(authContext, {
       items: [
-        { custom_id: "w-1", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } },
-        { custom_id: "w-2", body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] } },
+        {
+          custom_id: "w-1",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] },
+        },
+        {
+          custom_id: "w-2",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] },
+        },
       ],
     });
 

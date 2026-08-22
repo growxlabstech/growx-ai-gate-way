@@ -15,14 +15,20 @@ export class WebhookReplayService {
    */
   async replayDelivery(
     organizationId: string,
-    deliveryId: string
+    deliveryId: string,
   ): Promise<WebhookDelivery> {
-    const original = await this.repository.getDelivery(organizationId, deliveryId);
+    const original = await this.repository.getDelivery(
+      organizationId,
+      deliveryId,
+    );
     if (!original) {
       throw new Error(`Webhook delivery not found: ${deliveryId}`);
     }
 
-    const endpoint = await this.repository.getEndpoint(organizationId, original.endpointId);
+    const endpoint = await this.repository.getEndpoint(
+      organizationId,
+      original.endpointId,
+    );
     const now = new Date();
 
     const newDelivery: WebhookDelivery = {
@@ -32,7 +38,8 @@ export class WebhookReplayService {
       organizationId,
       workspaceId: original.workspaceId,
       destinationUrlSnapshot: endpoint?.url ?? original.destinationUrlSnapshot,
-      signingSecretVersion: endpoint?.secretVersion ?? original.signingSecretVersion,
+      signingSecretVersion:
+        endpoint?.secretVersion ?? original.signingSecretVersion,
       status: "pending",
       attemptCount: 0,
       maxAttempts: DEFAULT_WEBHOOK_RETRY_POLICY.maxAttempts,
@@ -50,9 +57,12 @@ export class WebhookReplayService {
   async replayEvent(
     organizationId: string,
     eventId: string,
-    endpointId?: string | undefined
+    endpointId?: string | undefined,
   ): Promise<WebhookDelivery[]> {
-    const event = await this.repository.getOutboundEvent(organizationId, eventId);
+    const event = await this.repository.getOutboundEvent(
+      organizationId,
+      eventId,
+    );
     if (!event) {
       throw new Error(`Outbound webhook event not found: ${eventId}`);
     }
@@ -66,7 +76,7 @@ export class WebhookReplayService {
       targetEndpoints = await this.repository.findMatchingEndpoints(
         organizationId,
         `${event.eventType}.${event.eventVersion}`,
-        event.workspaceId
+        event.workspaceId,
       );
     }
 
@@ -105,16 +115,22 @@ export class WebhookReplayService {
       endpointId?: string | undefined;
     };
   }): Promise<{ job: WebhookReplayJob; createdDeliveriesCount: number }> {
-    const events = await this.repository.listOutboundEvents(params.organizationId, {
-      fromDate: params.filterConfig.fromDate,
-      toDate: params.filterConfig.toDate,
-    });
+    const events = await this.repository.listOutboundEvents(
+      params.organizationId,
+      {
+        fromDate: params.filterConfig.fromDate,
+        toDate: params.filterConfig.toDate,
+      },
+    );
 
     const filteredEvents = events.filter((e) =>
-      params.filterConfig.eventTypes && params.filterConfig.eventTypes.length > 0
+      params.filterConfig.eventTypes &&
+      params.filterConfig.eventTypes.length > 0
         ? params.filterConfig.eventTypes.includes(e.eventType) ||
-          params.filterConfig.eventTypes.includes(`${e.eventType}.${e.eventVersion}`)
-        : true
+          params.filterConfig.eventTypes.includes(
+            `${e.eventType}.${e.eventVersion}`,
+          )
+        : true,
     );
 
     const now = new Date();
@@ -135,7 +151,7 @@ export class WebhookReplayService {
       const deliveries = await this.replayEvent(
         params.organizationId,
         evt.id,
-        params.filterConfig.endpointId
+        params.filterConfig.endpointId,
       );
       totalDeliveries += deliveries.length;
     }

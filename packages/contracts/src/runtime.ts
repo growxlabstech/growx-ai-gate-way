@@ -68,7 +68,9 @@ export const shadowComparisonResultSchema = z.object({
   shadowTokenCount: z.number().int().nonnegative().optional(),
   evaluatedAt: z.coerce.date(),
 });
-export type ShadowComparisonResult = z.infer<typeof shadowComparisonResultSchema>;
+export type ShadowComparisonResult = z.infer<
+  typeof shadowComparisonResultSchema
+>;
 
 // ==========================================
 // 4. Runtime Execution Result Model
@@ -86,4 +88,6 @@ export const runtimeExecutionResultSchema = z.object({
   errorCode: z.string().optional(),
   errorMessage: z.string().optional(),
 });
-export type RuntimeExecutionResult = z.infer<typeof runtimeExecutionResultSchema>;
+export type RuntimeExecutionResult = z.infer<
+  typeof runtimeExecutionResultSchema
+>;

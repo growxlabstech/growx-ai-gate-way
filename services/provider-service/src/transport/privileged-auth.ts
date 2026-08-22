@@ -20,7 +20,9 @@ export class InMemoryPrivilegedSessionResolver implements IPrivilegedSessionReso
     this.sessions.set(token, session);
   }
 
-  async resolveSession(token: string): Promise<PrivilegedOperatorSession | null> {
+  async resolveSession(
+    token: string,
+  ): Promise<PrivilegedOperatorSession | null> {
     const s = this.sessions.get(token);
     if (!s) return null;
     if (s.expiresAt.getTime() <= Date.now()) return null;
@@ -28,14 +30,26 @@ export class InMemoryPrivilegedSessionResolver implements IPrivilegedSessionReso
   }
 }
 
-function hasCapability(session: PrivilegedOperatorSession, requiredCapability: string): boolean {
-  if (session.capabilities.includes("*") || session.capabilities.includes(requiredCapability)) {
+function hasCapability(
+  session: PrivilegedOperatorSession,
+  requiredCapability: string,
+): boolean {
+  if (
+    session.capabilities.includes("*") ||
+    session.capabilities.includes(requiredCapability)
+  ) {
     return true;
   }
 
   // Capability aliases
-  if (requiredCapability === "ops.providers.manage" || requiredCapability === "ops.providers.write") {
-    return session.capabilities.includes("ops.providers.manage") || session.capabilities.includes("ops.providers.write");
+  if (
+    requiredCapability === "ops.providers.manage" ||
+    requiredCapability === "ops.providers.write"
+  ) {
+    return (
+      session.capabilities.includes("ops.providers.manage") ||
+      session.capabilities.includes("ops.providers.write")
+    );
   }
 
   if (
@@ -77,20 +91,25 @@ export async function requirePrivilegedCapability(
   res: ServerResponse,
   requiredCapability: string,
   sessionResolver: IPrivilegedSessionResolver,
-  events?: IProviderEvents
+  events?: IProviderEvents,
 ): Promise<{ operatorId: string; session: PrivilegedOperatorSession } | null> {
   const urlObj = new URL(req.url ?? "/", "http://localhost");
 
   // Reject credential in query params
-  if (urlObj.searchParams.has("jit_token") || urlObj.searchParams.has("token") || urlObj.searchParams.has("api_key")) {
+  if (
+    urlObj.searchParams.has("jit_token") ||
+    urlObj.searchParams.has("token") ||
+    urlObj.searchParams.has("api_key")
+  ) {
     res.writeHead(400, { "content-type": "application/json" });
     res.end(
       JSON.stringify({
         error: {
           code: "INVALID_CREDENTIAL_LOCATION",
-          message: "Privileged credentials must only be transmitted in Authorization header",
+          message:
+            "Privileged credentials must only be transmitted in Authorization header",
         },
-      })
+      }),
     );
     return null;
   }
@@ -98,15 +117,19 @@ export async function requirePrivilegedCapability(
   const authHeader = req.headers["authorization"] ?? "";
 
   // Reject customer API keys attempting to access /internal/ops plane
-  if (authHeader.startsWith("Bearer gx_live_") || authHeader.startsWith("Bearer gx_test_")) {
+  if (
+    authHeader.startsWith("Bearer gx_live_") ||
+    authHeader.startsWith("Bearer gx_test_")
+  ) {
     res.writeHead(401, { "content-type": "application/json" });
     res.end(
       JSON.stringify({
         error: {
           code: "INVALID_PRINCIPAL",
-          message: "Customer API keys cannot access privileged provider control plane",
+          message:
+            "Customer API keys cannot access privileged provider control plane",
         },
-      })
+      }),
     );
     return null;
   }
@@ -119,7 +142,7 @@ export async function requirePrivilegedCapability(
           code: "UNAUTHORIZED",
           message: "Missing or invalid privileged authorization token",
         },
-      })
+      }),
     );
     return null;
   }
@@ -135,19 +158,22 @@ export async function requirePrivilegedCapability(
           code: "UNAUTHORIZED",
           message: "Invalid, expired, or revoked privileged session",
         },
-      })
+      }),
     );
     return null;
   }
 
   if (!hasCapability(session, requiredCapability)) {
     if (events) {
-      await events.emitSecurityEvent("security.privileged.unauthorized_provider_access", {
-        operatorId: session.operatorId,
-        operatorEmail: session.operatorEmail,
-        attemptedCapability: requiredCapability,
-        availableCapabilities: session.capabilities,
-      });
+      await events.emitSecurityEvent(
+        "security.privileged.unauthorized_provider_access",
+        {
+          operatorId: session.operatorId,
+          operatorEmail: session.operatorEmail,
+          attemptedCapability: requiredCapability,
+          availableCapabilities: session.capabilities,
+        },
+      );
     }
 
     res.writeHead(403, { "content-type": "application/json" });
@@ -157,7 +183,7 @@ export async function requirePrivilegedCapability(
           code: "FORBIDDEN",
           message: `Required capability '${requiredCapability}' is not granted to session`,
         },
-      })
+      }),
     );
     return null;
   }

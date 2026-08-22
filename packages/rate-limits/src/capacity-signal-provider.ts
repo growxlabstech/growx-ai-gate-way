@@ -10,15 +10,18 @@ export interface IRouteCapacitySignalProvider {
   getCapacitySignal(
     routeId: string,
     providerId: string,
-    now?: Date
+    now?: Date,
   ): Promise<RouteCapacitySignal>;
 
   getCapacitySignals(
     routes: Array<{ routeId: string; providerId: string }>,
-    now?: Date
+    now?: Date,
   ): Promise<Map<string, RouteCapacitySignal>>;
 
-  recordProviderFeedback(feedback: CapacitySignalFeedback, now?: Date): Promise<void>;
+  recordProviderFeedback(
+    feedback: CapacitySignalFeedback,
+    now?: Date,
+  ): Promise<void>;
 }
 
 export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider {
@@ -26,7 +29,7 @@ export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider
 
   constructor(
     private readonly counterStore: IRuntimeCounterStore,
-    private readonly policyRepo?: IQuotaPolicyRepository
+    private readonly policyRepo?: IQuotaPolicyRepository,
   ) {}
 
   private getThrottleKey(routeId: string): string {
@@ -35,7 +38,7 @@ export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider
 
   async recordProviderFeedback(
     feedback: CapacitySignalFeedback,
-    now = new Date()
+    now = new Date(),
   ): Promise<void> {
     const key = this.getThrottleKey(feedback.routeId);
     const nowMs = now.getTime();
@@ -49,15 +52,18 @@ export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider
   async getCapacitySignal(
     routeId: string,
     providerId: string,
-    now = new Date()
+    now = new Date(),
   ): Promise<RouteCapacitySignal> {
-    const signals = await this.getCapacitySignals([{ routeId, providerId }], now);
+    const signals = await this.getCapacitySignals(
+      [{ routeId, providerId }],
+      now,
+    );
     return signals.get(routeId)!;
   }
 
   async getCapacitySignals(
     routes: Array<{ routeId: string; providerId: string }>,
-    now = new Date()
+    now = new Date(),
   ): Promise<Map<string, RouteCapacitySignal>> {
     const nowMs = now.getTime();
     const result = new Map<string, RouteCapacitySignal>();
@@ -82,11 +88,15 @@ export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider
       let concurrencyLimit = 50;
 
       if (this.policyRepo) {
-        const limits = await this.policyRepo.getLimitsForScope("provider_route", r.routeId);
+        const limits = await this.policyRepo.getLimitsForScope(
+          "provider_route",
+          r.routeId,
+        );
         for (const l of limits) {
           if (l.dimension === "requests" && l.limit > 0) rpmLimit = l.limit;
           if (l.dimension === "total_tokens" && l.limit > 0) tpmLimit = l.limit;
-          if (l.dimension === "concurrent_requests" && l.limit > 0) concurrencyLimit = l.limit;
+          if (l.dimension === "concurrent_requests" && l.limit > 0)
+            concurrencyLimit = l.limit;
         }
       }
 
@@ -104,7 +114,8 @@ export class RouteCapacitySignalProvider implements IRouteCapacitySignalProvider
 
       const rpmUtil = rpmLimit > 0 ? currentRPM / rpmLimit : 0;
       const tpmUtil = tpmLimit > 0 ? currentTPM / tpmLimit : 0;
-      const concUtil = concurrencyLimit > 0 ? currentConc / concurrencyLimit : 0;
+      const concUtil =
+        concurrencyLimit > 0 ? currentConc / concurrencyLimit : 0;
 
       const maxUtil = Math.max(rpmUtil, tpmUtil, concUtil);
       const saturation = Math.min(1.0, maxUtil);

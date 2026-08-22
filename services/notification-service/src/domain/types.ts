@@ -27,53 +27,83 @@ export interface INotificationRepository {
   // ─── Intents ────────────────────────────────────────────────
   createIntent(intent: NotificationIntent): Promise<NotificationIntent>;
   getIntent(id: string): Promise<NotificationIntent | undefined>;
-  findIntentBySource(sourceEventId: string, type: string): Promise<NotificationIntent | undefined>;
-  listIntents(params: { organizationId?: string; type?: string; limit?: number }): Promise<NotificationIntent[]>;
+  findIntentBySource(
+    sourceEventId: string,
+    type: string,
+  ): Promise<NotificationIntent | undefined>;
+  listIntents(params: {
+    organizationId?: string;
+    type?: string;
+    limit?: number;
+  }): Promise<NotificationIntent[]>;
 
   // ─── Deliveries & Queue ─────────────────────────────────────
-  createDeliveries(deliveries: readonly NotificationDelivery[]): Promise<NotificationDelivery[]>;
+  createDeliveries(
+    deliveries: readonly NotificationDelivery[],
+  ): Promise<NotificationDelivery[]>;
   getDelivery(id: string): Promise<NotificationDelivery | undefined>;
   listDeliveries(params: ListDeliveriesParams): Promise<NotificationDelivery[]>;
   claimPendingDeliveries(
     batchSize: number,
     leaseDurationMs: number,
-    workerId: string
+    workerId: string,
   ): Promise<NotificationDelivery[]>;
   updateDelivery(
     id: string,
-    updates: Partial<NotificationDelivery>
+    updates: Partial<NotificationDelivery>,
   ): Promise<NotificationDelivery>;
 
   // ─── Delivery Attempts ──────────────────────────────────────
-  createAttempt(attempt: NotificationDeliveryAttempt): Promise<NotificationDeliveryAttempt>;
+  createAttempt(
+    attempt: NotificationDeliveryAttempt,
+  ): Promise<NotificationDeliveryAttempt>;
   listAttempts(deliveryId: string): Promise<NotificationDeliveryAttempt[]>;
 
   // ─── In-App Notifications ───────────────────────────────────
-  createInAppNotification(notification: InAppNotification): Promise<InAppNotification>;
+  createInAppNotification(
+    notification: InAppNotification,
+  ): Promise<InAppNotification>;
   getInAppNotification(id: string): Promise<InAppNotification | undefined>;
-  listInAppNotifications(userId: string, params?: ListInAppParams): Promise<InAppNotification[]>;
-  markInAppRead(userId: string, id: string): Promise<InAppNotification | undefined>;
+  listInAppNotifications(
+    userId: string,
+    params?: ListInAppParams,
+  ): Promise<InAppNotification[]>;
+  markInAppRead(
+    userId: string,
+    id: string,
+  ): Promise<InAppNotification | undefined>;
   markAllInAppRead(userId: string): Promise<number>;
 
   // ─── Suppressions ───────────────────────────────────────────
-  getSuppression(destination: string): Promise<NotificationSuppression | undefined>;
-  createSuppression(suppression: NotificationSuppression): Promise<NotificationSuppression>;
+  getSuppression(
+    destination: string,
+  ): Promise<NotificationSuppression | undefined>;
+  createSuppression(
+    suppression: NotificationSuppression,
+  ): Promise<NotificationSuppression>;
 
   // ─── Preferences & Settings ─────────────────────────────────
-  getPreferences(userId: string, organizationId?: string): Promise<NotificationPreference[]>;
-  updatePreference(preference: NotificationPreference): Promise<NotificationPreference>;
+  getPreferences(
+    userId: string,
+    organizationId?: string,
+  ): Promise<NotificationPreference[]>;
+  updatePreference(
+    preference: NotificationPreference,
+  ): Promise<NotificationPreference>;
   getOrganizationSettings(
-    organizationId: string
+    organizationId: string,
   ): Promise<OrganizationNotificationSettings | undefined>;
   updateOrganizationSettings(
-    settings: OrganizationNotificationSettings
+    settings: OrganizationNotificationSettings,
   ): Promise<OrganizationNotificationSettings>;
 
   // ─── Escalations ────────────────────────────────────────────
-  createEscalation(escalation: NotificationEscalationState): Promise<NotificationEscalationState>;
+  createEscalation(
+    escalation: NotificationEscalationState,
+  ): Promise<NotificationEscalationState>;
   getPendingEscalations(now: Date): Promise<NotificationEscalationState[]>;
   updateEscalation(
     id: string,
-    updates: Partial<NotificationEscalationState>
+    updates: Partial<NotificationEscalationState>,
   ): Promise<NotificationEscalationState>;
 }

@@ -28,7 +28,11 @@ import { RoutingEngineRouteResolver } from "../../src/domain/route-resolver.js";
 import { InMemoryGatewayRepository } from "../../src/infrastructure/in-memory-repository.js";
 import { InMemoryGatewayEvents } from "../../src/infrastructure/events.js";
 import { createGatewayServer } from "../../src/transport/http-server.js";
-import { MockAdapter, TEST_ENCRYPTION_KEY, TEST_PEPPER } from "../helpers/test-fixture.js";
+import {
+  MockAdapter,
+  TEST_ENCRYPTION_KEY,
+  TEST_PEPPER,
+} from "../helpers/test-fixture.js";
 import type { Server } from "node:http";
 
 class MultiProviderMockAdapter extends MockAdapter {
@@ -107,7 +111,12 @@ class MultiProviderMockAdapter extends MockAdapter {
         canonicalModelId: request.canonicalModelId,
         providerId: context.providerId,
         providerModelId: request.providerModelId,
-        output: [{ role: "assistant", content: `Hello from ${this.providerId} stream!` }],
+        output: [
+          {
+            role: "assistant",
+            content: `Hello from ${this.providerId} stream!`,
+          },
+        ],
         finishReason: "stop",
         usage: {
           inputTokens: 15,
@@ -181,7 +190,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
       providerRepo,
       providerEvents,
       crypto,
-      adapterRegistry
+      adapterRegistry,
     );
 
     // 4. Routing Engine & Resolver
@@ -198,7 +207,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
       {
         latencySignalProvider: latencyStore,
         availabilitySignalProvider: availabilityStore,
-      }
+      },
     );
     const routeResolver = new RoutingEngineRouteResolver(routingEngine);
 
@@ -210,7 +219,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
       providerService,
       gatewayRepo,
       gatewayEvents,
-      routeResolver
+      routeResolver,
     );
 
     // 6. HTTP Server
@@ -239,7 +248,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
     openAIProviderId = provOpenAI.id;
 
@@ -254,7 +263,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
     anthropicProviderId = provAnthropic.id;
 
@@ -262,12 +271,12 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
     await providerService.createCredential(
       provOpenAI.id,
       { name: "default", environment: "production", rawSecret: "sk-openai" },
-      "usr_admin"
+      "usr_admin",
     );
     await providerService.createCredential(
       provAnthropic.id,
       { name: "default", environment: "production", rawSecret: "sk-anthropic" },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 8. Seed Model: growx/smart with 2 routes
@@ -290,7 +299,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming", "tools.call"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Route 1: OpenAI (priority 20)
@@ -304,7 +313,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         routingEligible: true,
         priority: 20,
       },
-      "usr_admin"
+      "usr_admin",
     );
     openAIRouteId = r1.id;
 
@@ -319,7 +328,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         routingEligible: true,
         priority: 10,
       },
-      "usr_admin"
+      "usr_admin",
     );
     anthropicRouteId = r2.id;
 
@@ -332,7 +341,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         currency: "USD",
         source: "manual",
       },
-      "usr_admin"
+      "usr_admin",
     );
     await modelService.addPricing(
       {
@@ -342,7 +351,7 @@ describe("Intelligent Routing Engine End-to-End Tests", () => {
         currency: "USD",
         source: "manual",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 9. Create API Key for workspace ws_1

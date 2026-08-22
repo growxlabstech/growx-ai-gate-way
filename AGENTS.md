@@ -1,4 +1,5 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -197,7 +198,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Structured schema is not an authorization boundary. Data within structured fields must still pass tenant isolation, capability, and policy governance.
 - Strict validation does not perform lossy type coercion (e.g. `"123"` does not coerce to `123` if the schema requires integer).
 - Refusal detection: Model safety refusals (`I'm sorry, but I cannot...`) are classified as refusals and must NEVER be retried.
-- Safe deterministic stripping: Only standard markdown fences (```json ... ``` and ``` ... ```) and leading/trailing whitespace may be stripped before parsing. No heuristic hallucination repair.
+- Safe deterministic stripping: Only standard markdown fences (`json ... ` and `...`) and leading/trailing whitespace may be stripped before parsing. No heuristic hallucination repair.
 - Cache namespace isolation: Cache keys (exact and semantic) must incorporate the deterministic `responseFormatHash` so different schemas never cross-pollinate.
 - Streaming structured output: In strict mode, output must be buffered and validated upon completion before finalizing downstream events.
 - Unsupported provider schemas: If a provider cannot represent a requested schema constraint in strict mode, mark the route unsupported and select a compliant fallback target.
@@ -331,6 +332,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Phase 40 Final Production Certification & Launch Rules
 
 Coding agents MUST NOT:
+
 - Introduce Phase 41 as a continuation of backend scope (Phase 40 is the final backend launch gate).
 - Add new features during production certification.
 - Hide failing tests or weaken assertions to obtain PASS.
@@ -343,4 +345,3 @@ Coding agents MUST NOT:
 - Increase timeouts blindly to hide performance defects.
 - Delete failed migration evidence or ignore race conditions/financial mismatches.
 - Claim GO with unresolved P0 or P1 engineering blockers.
-

@@ -14,7 +14,8 @@ export * from "./transport/privileged-auth.js";
 export * from "./transport/customer-auth.js";
 export * from "./transport/http-routes.js";
 
-export type ModelStatus = "active" | "preview" | "beta" | "deprecated" | "disabled" | "unavailable";
+export type ModelStatus =
+  "active" | "preview" | "beta" | "deprecated" | "disabled" | "unavailable";
 export interface ModelRecord {
   id: string;
   providerId: string;
@@ -38,23 +39,44 @@ export interface AliasVersion {
   status: "active" | "inactive";
 }
 export class ModelRegistry {
-  constructor(private readonly models: readonly ModelRecord[], private readonly aliases: readonly AliasVersion[]) {}
+  constructor(
+    private readonly models: readonly ModelRecord[],
+    private readonly aliases: readonly AliasVersion[],
+  ) {}
   list(): readonly ModelRecord[] {
-    return this.models.filter((model) => ["active", "preview", "beta", "deprecated"].includes(model.status));
+    return this.models.filter((model) =>
+      ["active", "preview", "beta", "deprecated"].includes(model.status),
+    );
   }
   resolve(requested: string, now = new Date()): readonly ModelRecord[] {
     const alias = this.aliases
-      .filter((value) => value.alias === requested && value.status === "active" && value.effectiveFrom <= now && (!value.effectiveUntil || value.effectiveUntil > now))
+      .filter(
+        (value) =>
+          value.alias === requested &&
+          value.status === "active" &&
+          value.effectiveFrom <= now &&
+          (!value.effectiveUntil || value.effectiveUntil > now),
+      )
       .sort((a, b) => b.version.localeCompare(a.version))[0];
     const ids = alias?.targets ?? [requested];
     return ids
       .map((id) => this.models.find((model) => model.publicModelId === id))
-      .filter((model): model is ModelRecord => Boolean(model && !["disabled", "unavailable"].includes(model.status)));
+      .filter((model): model is ModelRecord =>
+        Boolean(model && !["disabled", "unavailable"].includes(model.status)),
+      );
   }
-  requireCapabilities(model: ModelRecord, required: readonly ModelCapability[]): void {
-    const missing = required.filter((capability) => !model.capabilities.has(capability));
+  requireCapabilities(
+    model: ModelRecord,
+    required: readonly ModelCapability[],
+  ): void {
+    const missing = required.filter(
+      (capability) => !model.capabilities.has(capability),
+    );
     if (missing.length) {
-      throw Object.assign(new Error(`Model does not support: ${missing.join(", ")}`), { code: "model_capability_not_supported" });
+      throw Object.assign(
+        new Error(`Model does not support: ${missing.join(", ")}`),
+        { code: "model_capability_not_supported" },
+      );
     }
   }
 }

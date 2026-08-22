@@ -1,6 +1,90 @@
-export const privilegedCapabilities = ["ops.customer.read", "ops.request.inspect", "ops.request.content.read", "ops.provider.manage", "ops.routing.manage", "ops.billing.read", "ops.billing.adjust", "ops.security.read", "ops.security.respond", "ops.incident.manage", "ops.feature_flag.manage", "ops.support.session.create", "ops.audit.read"] as const;
-export type PrivilegedCapability = typeof privilegedCapabilities[number];
-export interface PrivilegedSession { id: string; operatorId: string; identityKind: "workforce_privileged"; authenticationStrength: "passkey" | "hardware_key"; authenticatedAt: Date; expiresAt: Date; capabilities: readonly PrivilegedCapability[]; reason: string; approvalReference: string | null; scope: { organizationId?: string; workspaceId?: string; environmentId?: string }; revokedAt: Date | null; breakGlass: boolean; }
-export interface PrivilegedRequest { identityKind: "customer" | "api_key" | "service_account" | "workload" | "workforce_privileged"; capability: PrivilegedCapability; organizationId?: string; workspaceId?: string; now?: Date; requiresRecentAuthentication?: boolean; requiresApproval?: boolean; sensitiveContent?: boolean; }
-export function authorizePrivileged(session: PrivilegedSession | null, request: PrivilegedRequest): void { const now = request.now ?? new Date(); if (request.identityKind !== "workforce_privileged" || !session || session.identityKind !== "workforce_privileged") throw new Error("privileged_identity_required"); if (session.revokedAt || session.expiresAt <= now) throw new Error("privileged_session_expired"); if (!session.capabilities.includes(request.capability)) throw new Error("privileged_capability_denied"); if (request.requiresRecentAuthentication && now.getTime() - session.authenticatedAt.getTime() > 5 * 60_000) throw new Error("step_up_required"); if (request.requiresApproval && !session.approvalReference) throw new Error("approval_required"); if (request.sensitiveContent && request.capability !== "ops.request.content.read") throw new Error("sensitive_content_denied"); if (session.scope.organizationId && session.scope.organizationId !== request.organizationId) throw new Error("privileged_scope_denied"); if (session.scope.workspaceId && session.scope.workspaceId !== request.workspaceId) throw new Error("privileged_scope_denied"); }
-export function requireAuditWrite(auditPersisted: boolean): void { if (!auditPersisted) throw new Error("privileged_audit_unavailable"); }
+export const privilegedCapabilities = [
+  "ops.customer.read",
+  "ops.request.inspect",
+  "ops.request.content.read",
+  "ops.provider.manage",
+  "ops.routing.manage",
+  "ops.billing.read",
+  "ops.billing.adjust",
+  "ops.security.read",
+  "ops.security.respond",
+  "ops.incident.manage",
+  "ops.feature_flag.manage",
+  "ops.support.session.create",
+  "ops.audit.read",
+] as const;
+export type PrivilegedCapability = (typeof privilegedCapabilities)[number];
+export interface PrivilegedSession {
+  id: string;
+  operatorId: string;
+  identityKind: "workforce_privileged";
+  authenticationStrength: "passkey" | "hardware_key";
+  authenticatedAt: Date;
+  expiresAt: Date;
+  capabilities: readonly PrivilegedCapability[];
+  reason: string;
+  approvalReference: string | null;
+  scope: {
+    organizationId?: string;
+    workspaceId?: string;
+    environmentId?: string;
+  };
+  revokedAt: Date | null;
+  breakGlass: boolean;
+}
+export interface PrivilegedRequest {
+  identityKind:
+    | "customer"
+    | "api_key"
+    | "service_account"
+    | "workload"
+    | "workforce_privileged";
+  capability: PrivilegedCapability;
+  organizationId?: string;
+  workspaceId?: string;
+  now?: Date;
+  requiresRecentAuthentication?: boolean;
+  requiresApproval?: boolean;
+  sensitiveContent?: boolean;
+}
+export function authorizePrivileged(
+  session: PrivilegedSession | null,
+  request: PrivilegedRequest,
+): void {
+  const now = request.now ?? new Date();
+  if (
+    request.identityKind !== "workforce_privileged" ||
+    !session ||
+    session.identityKind !== "workforce_privileged"
+  )
+    throw new Error("privileged_identity_required");
+  if (session.revokedAt || session.expiresAt <= now)
+    throw new Error("privileged_session_expired");
+  if (!session.capabilities.includes(request.capability))
+    throw new Error("privileged_capability_denied");
+  if (
+    request.requiresRecentAuthentication &&
+    now.getTime() - session.authenticatedAt.getTime() > 5 * 60_000
+  )
+    throw new Error("step_up_required");
+  if (request.requiresApproval && !session.approvalReference)
+    throw new Error("approval_required");
+  if (
+    request.sensitiveContent &&
+    request.capability !== "ops.request.content.read"
+  )
+    throw new Error("sensitive_content_denied");
+  if (
+    session.scope.organizationId &&
+    session.scope.organizationId !== request.organizationId
+  )
+    throw new Error("privileged_scope_denied");
+  if (
+    session.scope.workspaceId &&
+    session.scope.workspaceId !== request.workspaceId
+  )
+    throw new Error("privileged_scope_denied");
+}
+export function requireAuditWrite(auditPersisted: boolean): void {
+  if (!auditPersisted) throw new Error("privileged_audit_unavailable");
+}

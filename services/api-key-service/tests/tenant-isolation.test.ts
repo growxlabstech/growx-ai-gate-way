@@ -55,7 +55,11 @@ describe("Tenant Isolation & Lifecycle Bounds", () => {
     }
 
     // Cross-tenant lookup fails closed
-    const lookupAFromB = await service.get("org_beta", "ws_beta", keyA.record.id);
+    const lookupAFromB = await service.get(
+      "org_beta",
+      "ws_beta",
+      keyA.record.id,
+    );
     expect(lookupAFromB).toBeNull();
 
     // Cross-tenant update fails closed
@@ -63,17 +67,17 @@ describe("Tenant Isolation & Lifecycle Bounds", () => {
       service.update("org_beta", "ws_beta", keyA.record.id, {
         name: "Hacked Key Name",
         actorId: "usr_beta",
-      })
+      }),
     ).rejects.toThrow(/API key not found/);
 
     // Cross-tenant revoke fails closed
     await expect(
-      service.revoke("org_beta", "ws_beta", keyA.record.id, "usr_beta")
+      service.revoke("org_beta", "ws_beta", keyA.record.id, "usr_beta"),
     ).rejects.toThrow(/API key not found/);
 
     // Cross-tenant rotate fails closed
     await expect(
-      service.rotate("org_beta", "ws_beta", keyA.record.id, "usr_beta")
+      service.rotate("org_beta", "ws_beta", keyA.record.id, "usr_beta"),
     ).rejects.toThrow(/API key not found/);
   });
 

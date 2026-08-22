@@ -27,7 +27,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     this.customers.set(customer.id, { ...customer });
   }
 
-  async getCustomerByOrgAndProvider(orgId: string, provider: string): Promise<PaymentCustomer | undefined> {
+  async getCustomerByOrgAndProvider(
+    orgId: string,
+    provider: string,
+  ): Promise<PaymentCustomer | undefined> {
     for (const c of this.customers.values()) {
       if (c.organizationId === orgId && c.provider === provider) {
         return { ...c };
@@ -36,9 +39,15 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return undefined;
   }
 
-  async getCustomerByProviderId(provider: string, providerCustomerId: string): Promise<PaymentCustomer | undefined> {
+  async getCustomerByProviderId(
+    provider: string,
+    providerCustomerId: string,
+  ): Promise<PaymentCustomer | undefined> {
     for (const c of this.customers.values()) {
-      if (c.provider === provider && c.providerCustomerId === providerCustomerId) {
+      if (
+        c.provider === provider &&
+        c.providerCustomerId === providerCustomerId
+      ) {
         return { ...c };
       }
     }
@@ -57,7 +66,9 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
       .map((m) => ({ ...m }));
   }
 
-  async getDefaultPaymentMethod(orgId: string): Promise<PaymentMethodReference | undefined> {
+  async getDefaultPaymentMethod(
+    orgId: string,
+  ): Promise<PaymentMethodReference | undefined> {
     for (const m of this.paymentMethods.values()) {
       if (m.organizationId === orgId && m.isDefault && m.status === "active") {
         return { ...m };
@@ -72,12 +83,17 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     this.checkoutSessions.set(session.id, { ...session });
   }
 
-  async getCheckoutSessionById(id: string): Promise<CheckoutSession | undefined> {
+  async getCheckoutSessionById(
+    id: string,
+  ): Promise<CheckoutSession | undefined> {
     const s = this.checkoutSessions.get(id);
     return s ? { ...s } : undefined;
   }
 
-  async getCheckoutSessionByIdempotency(orgId: string, idempotencyKey: string): Promise<CheckoutSession | undefined> {
+  async getCheckoutSessionByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<CheckoutSession | undefined> {
     for (const s of this.checkoutSessions.values()) {
       if (s.organizationId === orgId && s.idempotencyKey === idempotencyKey) {
         return { ...s };
@@ -86,16 +102,25 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return undefined;
   }
 
-  async getCheckoutSessionByProviderSession(provider: string, providerSessionId: string): Promise<CheckoutSession | undefined> {
+  async getCheckoutSessionByProviderSession(
+    provider: string,
+    providerSessionId: string,
+  ): Promise<CheckoutSession | undefined> {
     for (const s of this.checkoutSessions.values()) {
-      if (s.provider === provider && s.providerSessionId === providerSessionId) {
+      if (
+        s.provider === provider &&
+        s.providerSessionId === providerSessionId
+      ) {
         return { ...s };
       }
     }
     return undefined;
   }
 
-  async updateCheckoutSession(id: string, updates: Partial<CheckoutSession>): Promise<void> {
+  async updateCheckoutSession(
+    id: string,
+    updates: Partial<CheckoutSession>,
+  ): Promise<void> {
     const existing = this.checkoutSessions.get(id);
     if (!existing) throw new Error(`CheckoutSession ${id} not found`);
     this.checkoutSessions.set(id, { ...existing, ...updates });
@@ -112,16 +137,25 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return p ? { ...p } : undefined;
   }
 
-  async getPaymentByProviderPaymentId(provider: string, providerPaymentId: string): Promise<Payment | undefined> {
+  async getPaymentByProviderPaymentId(
+    provider: string,
+    providerPaymentId: string,
+  ): Promise<Payment | undefined> {
     for (const p of this.payments.values()) {
-      if (p.provider === provider && p.providerPaymentId === providerPaymentId) {
+      if (
+        p.provider === provider &&
+        p.providerPaymentId === providerPaymentId
+      ) {
         return { ...p };
       }
     }
     return undefined;
   }
 
-  async getPaymentByIdempotency(orgId: string, idempotencyKey: string): Promise<Payment | undefined> {
+  async getPaymentByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<Payment | undefined> {
     for (const p of this.payments.values()) {
       if (p.organizationId === orgId && p.idempotencyKey === idempotencyKey) {
         return { ...p };
@@ -130,7 +164,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return undefined;
   }
 
-  async listPayments(orgId: string, filter?: { limit?: number; startingAfter?: string }): Promise<Payment[]> {
+  async listPayments(
+    orgId: string,
+    filter?: { limit?: number; startingAfter?: string },
+  ): Promise<Payment[]> {
     const limit = filter?.limit ?? 50;
     return Array.from(this.payments.values())
       .filter((p) => p.organizationId === orgId)
@@ -164,7 +201,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     this.providerEvents.set(event.id, { ...event });
   }
 
-  async getProviderEvent(provider: string, providerEventId: string): Promise<PaymentProviderEvent | undefined> {
+  async getProviderEvent(
+    provider: string,
+    providerEventId: string,
+  ): Promise<PaymentProviderEvent | undefined> {
     for (const e of this.providerEvents.values()) {
       if (e.provider === provider && e.providerEventId === providerEventId) {
         return { ...e };
@@ -173,7 +213,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return undefined;
   }
 
-  async updateProviderEvent(id: string, updates: Partial<PaymentProviderEvent>): Promise<void> {
+  async updateProviderEvent(
+    id: string,
+    updates: Partial<PaymentProviderEvent>,
+  ): Promise<void> {
     const existing = this.providerEvents.get(id);
     if (!existing) throw new Error(`ProviderEvent ${id} not found`);
     this.providerEvents.set(id, { ...existing, ...updates });
@@ -190,7 +233,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
     return r ? { ...r } : undefined;
   }
 
-  async getRefundByIdempotency(orgId: string, idempotencyKey: string): Promise<PaymentRefund | undefined> {
+  async getRefundByIdempotency(
+    orgId: string,
+    idempotencyKey: string,
+  ): Promise<PaymentRefund | undefined> {
     for (const r of this.refunds.values()) {
       if (r.organizationId === orgId && r.idempotencyKey === idempotencyKey) {
         return { ...r };
@@ -206,7 +252,10 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
       .map((r) => ({ ...r }));
   }
 
-  async updateRefund(id: string, updates: Partial<PaymentRefund>): Promise<void> {
+  async updateRefund(
+    id: string,
+    updates: Partial<PaymentRefund>,
+  ): Promise<void> {
     const existing = this.refunds.get(id);
     if (!existing) throw new Error(`Refund ${id} not found`);
     this.refunds.set(id, { ...existing, ...updates });
@@ -214,16 +263,25 @@ export class InMemoryPaymentRepository implements IPaymentRepository {
 
   // ─── Reconciliation ──────────────────────────────────────────
 
-  async listPendingPaymentsForReconciliation(before: Date, limit: number): Promise<Payment[]> {
+  async listPendingPaymentsForReconciliation(
+    before: Date,
+    limit: number,
+  ): Promise<Payment[]> {
     return Array.from(this.payments.values())
-      .filter((p) => (p.status === "pending" || p.status === "requires_action") && p.createdAt <= before)
+      .filter(
+        (p) =>
+          (p.status === "pending" || p.status === "requires_action") &&
+          p.createdAt <= before,
+      )
       .slice(0, limit)
       .map((p) => ({ ...p }));
   }
 
   // ─── Transaction ─────────────────────────────────────────────
 
-  async withTransaction<T>(fn: (tx: IPaymentRepository) => Promise<T>): Promise<T> {
+  async withTransaction<T>(
+    fn: (tx: IPaymentRepository) => Promise<T>,
+  ): Promise<T> {
     return fn(this);
   }
 }

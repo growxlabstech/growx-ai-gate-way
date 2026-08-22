@@ -75,11 +75,32 @@ describe("API Key Service HTTP Transport Routes", () => {
     headers: Record<string, string | string[] | undefined>;
     body: {
       status?: string | undefined;
-      error?: { code: string; message: string; requestId?: string | undefined } | undefined;
-      apiKey?: { id: string; name: string; prefix: string; maskedKey: string; status: string } | undefined;
+      error?:
+        | { code: string; message: string; requestId?: string | undefined }
+        | undefined;
+      apiKey?:
+        | {
+            id: string;
+            name: string;
+            prefix: string;
+            maskedKey: string;
+            status: string;
+          }
+        | undefined;
       oldApiKey?: { status: string } | undefined;
       secret?: string | undefined;
-      data?: Array<{ id: string; name: string; secret?: string | undefined; secretHash?: string | undefined }> & { id?: string | undefined; name?: string | undefined; status?: string | undefined } | undefined;
+      data?:
+        | (Array<{
+            id: string;
+            name: string;
+            secret?: string | undefined;
+            secretHash?: string | undefined;
+          }> & {
+            id?: string | undefined;
+            name?: string | undefined;
+            status?: string | undefined;
+          })
+        | undefined;
       principal?: { actorType: string } | undefined;
       pagination?: { cursor: string | null; hasMore: boolean } | undefined;
     };
@@ -89,7 +110,7 @@ describe("API Key Service HTTP Transport Routes", () => {
     method: string,
     path: string,
     body?: Record<string, unknown> | undefined,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): Promise<ApiResponse> {
     return new Promise((resolve, reject) => {
       const url = new URL(path, baseUrl);
@@ -121,7 +142,7 @@ describe("API Key Service HTTP Transport Routes", () => {
               });
             }
           });
-        }
+        },
       );
       req.on("error", reject);
       if (body) {
@@ -138,11 +159,15 @@ describe("API Key Service HTTP Transport Routes", () => {
   });
 
   it("creates an API key with one-time secret and Cache-Control: no-store", async () => {
-    const res = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Test API Key",
-      environment: "production",
-      permissions: ["models.read", "responses.create"],
-    });
+    const res = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Test API Key",
+        environment: "production",
+        permissions: ["models.read", "responses.create"],
+      },
+    );
 
     expect(res.status).toBe(201);
     expect(res.headers["cache-control"]).toContain("no-store");
@@ -153,55 +178,96 @@ describe("API Key Service HTTP Transport Routes", () => {
   });
 
   it("lists API keys returning safe metadata without secrets", async () => {
-    await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Key 1",
-    });
-    await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Key 2",
-    });
+    await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Key 1",
+      },
+    );
+    await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Key 2",
+      },
+    );
 
-    const res = await apiCall("GET", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`);
+    const res = await apiCall(
+      "GET",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+    );
     expect(res.status).toBe(200);
-    const items = res.body.data as unknown as Array<{ id: string; name: string; secret?: string; secretHash?: string }>;
+    const items = res.body.data as unknown as Array<{
+      id: string;
+      name: string;
+      secret?: string;
+      secretHash?: string;
+    }>;
     expect(items).toHaveLength(2);
     expect(items[0]?.secret).toBeUndefined();
     expect(items[0]?.secretHash).toBeUndefined();
   });
 
   it("gets, patches, and deletes (revokes) API key", async () => {
-    const createRes = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Lifecycle Key",
-    });
+    const createRes = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Lifecycle Key",
+      },
+    );
     const keyId = createRes.body.apiKey!.id;
 
-    const getRes = await apiCall("GET", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`);
+    const getRes = await apiCall(
+      "GET",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`,
+    );
     expect(getRes.status).toBe(200);
     const getData = getRes.body.data as unknown as { id: string; name: string };
     expect(getData.id).toBe(keyId);
 
-    const patchRes = await apiCall("PATCH", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`, {
-      name: "Updated Key Name",
-    });
+    const patchRes = await apiCall(
+      "PATCH",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`,
+      {
+        name: "Updated Key Name",
+      },
+    );
     expect(patchRes.status).toBe(200);
-    const patchData = patchRes.body.data as unknown as { id: string; name: string };
+    const patchData = patchRes.body.data as unknown as {
+      id: string;
+      name: string;
+    };
     expect(patchData.name).toBe("Updated Key Name");
 
-    const deleteRes = await apiCall("DELETE", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`);
+    const deleteRes = await apiCall(
+      "DELETE",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}`,
+    );
     expect(deleteRes.status).toBe(200);
     const deleteData = deleteRes.body.data as unknown as { status: string };
     expect(deleteData.status).toBe("revoked");
   });
 
   it("rotates API key via POST /:id/rotate", async () => {
-    const createRes = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Key To Rotate",
-    });
+    const createRes = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Key To Rotate",
+      },
+    );
     const keyId = createRes.body.apiKey!.id;
 
-    const rotateRes = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}/rotate`, {
-      overlapMinutes: 0,
-      reason: "Routine Key Rotation",
-    });
+    const rotateRes = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys/${keyId}/rotate`,
+      {
+        overlapMinutes: 0,
+        reason: "Routine Key Rotation",
+      },
+    );
 
     expect(rotateRes.status).toBe(200);
     expect(rotateRes.headers["cache-control"]).toContain("no-store");
@@ -211,9 +277,13 @@ describe("API Key Service HTTP Transport Routes", () => {
   });
 
   it("verifies GET /v1/auth/check endpoint for machine authentication", async () => {
-    const createRes = await apiCall("POST", `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`, {
-      name: "Check Auth Key",
-    });
+    const createRes = await apiCall(
+      "POST",
+      `/v1/organizations/${orgId}/workspaces/${wsId}/api-keys`,
+      {
+        name: "Check Auth Key",
+      },
+    );
     const secret = createRes.body.secret;
 
     const checkRes = await apiCall("GET", "/v1/auth/check", undefined, {

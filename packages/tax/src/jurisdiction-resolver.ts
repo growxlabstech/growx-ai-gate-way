@@ -18,9 +18,33 @@ export interface ResolveJurisdictionParams {
 }
 
 const EU_COUNTRIES = new Set([
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
-  "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
-  "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+  "AT",
+  "BE",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FI",
+  "FR",
+  "DE",
+  "GR",
+  "HU",
+  "IE",
+  "IT",
+  "LV",
+  "LT",
+  "LU",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
 ]);
 
 export class TaxJurisdictionResolver {
@@ -33,11 +57,19 @@ export class TaxJurisdictionResolver {
     const customerCountry = params.customer.country.toUpperCase();
     const sellerRegion = params.seller.stateRegion?.trim().toUpperCase();
     const customerRegion = params.customer.stateRegion?.trim().toUpperCase();
-    const placeOfSupply = (params.placeOfSupply ?? customerRegion ?? customerCountry).trim().toUpperCase();
+    const placeOfSupply = (
+      params.placeOfSupply ??
+      customerRegion ??
+      customerCountry
+    )
+      .trim()
+      .toUpperCase();
 
     // Determine B2B vs B2C
     const hasValidTaxId = params.customer.taxIdentifiers.some(
-      (t) => t.validationStatus === "syntactically_valid" || t.validationStatus === "verified"
+      (t) =>
+        t.validationStatus === "syntactically_valid" ||
+        t.validationStatus === "verified",
     );
     const customerType: CustomerType = hasValidTaxId ? "B2B" : "B2C";
     const taxExempt = params.customer.taxExemptionStatus === "exempt";
@@ -56,10 +88,10 @@ export class TaxJurisdictionResolver {
           : "inter_state";
 
         reasonCodes.push(
-          isIntraState
-            ? "INDIA_INTRA_STATE_GST"
-            : "INDIA_INTER_STATE_IGST",
-          customerType === "B2B" ? "INDIA_B2B_REGISTERED" : "INDIA_B2C_UNREGISTERED"
+          isIntraState ? "INDIA_INTRA_STATE_GST" : "INDIA_INTER_STATE_IGST",
+          customerType === "B2B"
+            ? "INDIA_B2B_REGISTERED"
+            : "INDIA_B2C_UNREGISTERED",
         );
 
         return {

@@ -19,7 +19,11 @@ export type {
   EntitlementOverride,
 } from "./types.js";
 
-export { ResolvedEntitlements, DENY_ALL_ENTITLEMENTS, globMatch } from "./types.js";
+export {
+  ResolvedEntitlements,
+  DENY_ALL_ENTITLEMENTS,
+  globMatch,
+} from "./types.js";
 
 // State Machine
 export {
@@ -30,7 +34,10 @@ export {
 export type { TransitionResult } from "./subscription-state-machine.js";
 
 // Entitlement Resolver
-export { resolveEntitlements, mergeModelAccessRules } from "./entitlement-resolver.js";
+export {
+  resolveEntitlements,
+  mergeModelAccessRules,
+} from "./entitlement-resolver.js";
 
 // Period Calculator
 export {

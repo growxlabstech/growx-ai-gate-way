@@ -19,12 +19,7 @@ export type FallbackReasonCode =
   | "OTHER_TRANSIENT";
 
 export type GatewayAttemptStatus =
-  | "pending"
-  | "executing"
-  | "succeeded"
-  | "failed"
-  | "cancelled"
-  | "timed_out";
+  "pending" | "executing" | "succeeded" | "failed" | "cancelled" | "timed_out";
 
 export interface RetryPolicy {
   /** Maximum total provider attempts per request (default: 3, max cap: 5) */

@@ -1,5 +1,9 @@
 import crypto from "node:crypto";
-import { TenantContext, ProviderFileReference, StorageError } from "../domain/types.js";
+import {
+  TenantContext,
+  ProviderFileReference,
+  StorageError,
+} from "../domain/types.js";
 import { FileService } from "./file-service.js";
 
 export interface UpstreamProviderFileUploader {
@@ -33,30 +37,43 @@ export class MockUpstreamProviderFileUploader implements UpstreamProviderFileUpl
 export class ProviderFileTransferService {
   constructor(
     private readonly fileService: FileService,
-    private readonly uploader: UpstreamProviderFileUploader = new MockUpstreamProviderFileUploader()
+    private readonly uploader: UpstreamProviderFileUploader = new MockUpstreamProviderFileUploader(),
   ) {}
 
   async ensureProviderFile(
     tenant: TenantContext,
     fileId: string,
     providerId: string,
-    credentialId?: string | null | undefined
+    credentialId?: string | null | undefined,
   ): Promise<ProviderFileReference> {
     const file = await this.fileService.getFile(tenant, fileId);
     if (file.status !== "ready") {
-      throw new StorageError("FILE_NOT_READY", `File ${fileId} is not in ready state for provider transfer`);
+      throw new StorageError(
+        "FILE_NOT_READY",
+        `File ${fileId} is not in ready state for provider transfer`,
+      );
     }
 
     // Check existing provider reference
-    const existing = await this.fileService.repository.getProviderReference(fileId, providerId, credentialId);
+    const existing = await this.fileService.repository.getProviderReference(
+      fileId,
+      providerId,
+      credentialId,
+    );
     const now = new Date();
 
-    if (existing && existing.providerStatus === "ready" && (!existing.expiresAt || existing.expiresAt > now)) {
+    if (
+      existing &&
+      existing.providerStatus === "ready" &&
+      (!existing.expiresAt || existing.expiresAt > now)
+    ) {
       return existing;
     }
 
     // Read binary from storage provider
-    const contentResult = await this.fileService.storageProvider.getObject(file.storageKey);
+    const contentResult = await this.fileService.storageProvider.getObject(
+      file.storageKey,
+    );
     let buf: Buffer;
     if (Buffer.isBuffer(contentResult.body)) {
       buf = contentResult.body;
@@ -95,7 +112,7 @@ export class ProviderFileTransferService {
       // Local file remains ready! Failure is isolated to this provider attempt.
       throw new StorageError(
         "PROVIDER_TRANSFER_FAILED",
-        `Failed to transfer file ${fileId} to provider ${providerId}: ${err.message}`
+        `Failed to transfer file ${fileId} to provider ${providerId}: ${err.message}`,
       );
     }
   }

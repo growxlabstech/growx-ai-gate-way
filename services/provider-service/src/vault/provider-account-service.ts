@@ -1,6 +1,4 @@
-import {
-  createPublicId,
-} from "@growx/ids";
+import { createPublicId } from "@growx/ids";
 import {
   GrowXProviderError,
   type CreateProviderAccountRequest,
@@ -17,18 +15,23 @@ import type { IProviderEvents } from "../application/events.js";
 export class ProviderAccountService {
   constructor(
     private readonly repository: IProviderRepository,
-    private readonly events: IProviderEvents
+    private readonly events: IProviderEvents,
   ) {}
 
   public async createAccount(
     providerId: string,
     input: CreateProviderAccountRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderAccount> {
     const provider = await this.repository.getProviderById(providerId);
     if (!provider) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider '${providerId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider '${providerId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -36,7 +39,9 @@ export class ProviderAccountService {
       id: `pacc_${createPublicId("key").slice(4)}`,
       providerId: provider.id,
       displayName: input.displayName,
-      ...(input.externalAccountReference ? { externalAccountReference: input.externalAccountReference } : {}),
+      ...(input.externalAccountReference
+        ? { externalAccountReference: input.externalAccountReference }
+        : {}),
       accountType: input.accountType || "standard",
       status: "active",
       environment: input.environment || "production",
@@ -49,7 +54,11 @@ export class ProviderAccountService {
     };
 
     const created = await this.repository.createAccount(account);
-    await this.events.emitSecurityEvent("provider.account.created", { accountId: created.id, providerId: provider.id }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.account.created",
+      { accountId: created.id, providerId: provider.id },
+      requestId,
+    );
     return created;
   }
 
@@ -57,17 +66,28 @@ export class ProviderAccountService {
     accountId: string,
     input: UpdateProviderAccountRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderAccount> {
     const existing = await this.repository.getAccountById(accountId);
     if (!existing) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${accountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${accountId}' not found`,
+        false,
+        404,
+      );
     }
 
     const updates: Partial<ProviderAccount> = {
-      ...(input.displayName !== undefined ? { displayName: input.displayName } : {}),
-      ...(input.externalAccountReference !== undefined ? { externalAccountReference: input.externalAccountReference } : {}),
-      ...(input.accountType !== undefined ? { accountType: input.accountType } : {}),
+      ...(input.displayName !== undefined
+        ? { displayName: input.displayName }
+        : {}),
+      ...(input.externalAccountReference !== undefined
+        ? { externalAccountReference: input.externalAccountReference }
+        : {}),
+      ...(input.accountType !== undefined
+        ? { accountType: input.accountType }
+        : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.region !== undefined ? { region: input.region } : {}),
       ...(input.residency !== undefined ? { residency: input.residency } : {}),
@@ -77,18 +97,27 @@ export class ProviderAccountService {
     };
 
     const updated = await this.repository.updateAccount(accountId, updates);
-    await this.events.emitSecurityEvent("provider.account.updated", { accountId, updates }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.account.updated",
+      { accountId, updates },
+      requestId,
+    );
     return updated;
   }
 
   public async drainAccount(
     accountId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderAccount> {
     const existing = await this.repository.getAccountById(accountId);
     if (!existing) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${accountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${accountId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -98,18 +127,27 @@ export class ProviderAccountService {
       updatedAt: now,
     });
 
-    await this.events.emitSecurityEvent("provider.account.draining", { accountId }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.account.draining",
+      { accountId },
+      requestId,
+    );
     return updated;
   }
 
   public async disableAccount(
     accountId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderAccount> {
     const existing = await this.repository.getAccountById(accountId);
     if (!existing) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${accountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${accountId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -119,18 +157,27 @@ export class ProviderAccountService {
       updatedAt: now,
     });
 
-    await this.events.emitSecurityEvent("provider.account.disabled", { accountId }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.account.disabled",
+      { accountId },
+      requestId,
+    );
     return updated;
   }
 
   public async enableAccount(
     accountId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderAccount> {
     const existing = await this.repository.getAccountById(accountId);
     if (!existing) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${accountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${accountId}' not found`,
+        false,
+        404,
+      );
     }
 
     const updated = await this.repository.updateAccount(accountId, {
@@ -144,7 +191,12 @@ export class ProviderAccountService {
   public async getAccount(accountId: string): Promise<ProviderAccount> {
     const account = await this.repository.getAccountById(accountId);
     if (!account) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${accountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${accountId}' not found`,
+        false,
+        404,
+      );
     }
     return account;
   }
@@ -156,14 +208,18 @@ export class ProviderAccountService {
   // Capability Management
   public async setCapability(
     accountId: string,
-    input: SetAccountCapabilityRequest
+    input: SetAccountCapabilityRequest,
   ): Promise<ProviderAccountCapability> {
     const now = new Date();
     const capability: ProviderAccountCapability = {
       id: `pacap_${createPublicId("key").slice(4)}`,
       providerAccountId: accountId,
-      ...(input.canonicalModelId ? { canonicalModelId: input.canonicalModelId } : {}),
-      ...(input.providerModelId ? { providerModelId: input.providerModelId } : {}),
+      ...(input.canonicalModelId
+        ? { canonicalModelId: input.canonicalModelId }
+        : {}),
+      ...(input.providerModelId
+        ? { providerModelId: input.providerModelId }
+        : {}),
       capability: input.capability,
       enabled: input.enabled ?? true,
       metadata: input.metadata || {},
@@ -173,20 +229,24 @@ export class ProviderAccountService {
     return this.repository.setAccountCapability(capability);
   }
 
-  public async listCapabilities(accountId: string): Promise<ProviderAccountCapability[]> {
+  public async listCapabilities(
+    accountId: string,
+  ): Promise<ProviderAccountCapability[]> {
     return this.repository.listAccountCapabilities(accountId);
   }
 
   // Limits Management
   public async setLimit(
     accountId: string,
-    input: SetAccountLimitRequest
+    input: SetAccountLimitRequest,
   ): Promise<ProviderAccountLimit> {
     const now = new Date();
     const limit: ProviderAccountLimit = {
       id: `palim_${createPublicId("key").slice(4)}`,
       providerAccountId: accountId,
-      ...(input.canonicalModelId ? { canonicalModelId: input.canonicalModelId } : {}),
+      ...(input.canonicalModelId
+        ? { canonicalModelId: input.canonicalModelId }
+        : {}),
       limitType: input.limitType,
       limitValue: input.limitValue,
       ...(input.windowSeconds ? { windowSeconds: input.windowSeconds } : {}),

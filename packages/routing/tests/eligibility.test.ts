@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { evaluateEligibility, type RouteCandidate, type RoutingRequest } from "../src/index.js";
+import {
+  evaluateEligibility,
+  type RouteCandidate,
+  type RoutingRequest,
+} from "../src/index.js";
 
-function createCandidate(overrides: Partial<RouteCandidate> = {}): RouteCandidate {
+function createCandidate(
+  overrides: Partial<RouteCandidate> = {},
+): RouteCandidate {
   return {
     routeId: "route_1",
     providerId: "openai",
@@ -26,7 +32,9 @@ function createCandidate(overrides: Partial<RouteCandidate> = {}): RouteCandidat
   };
 }
 
-function createRequest(overrides: Partial<RoutingRequest> = {}): RoutingRequest {
+function createRequest(
+  overrides: Partial<RoutingRequest> = {},
+): RoutingRequest {
   return {
     requestId: "req_123",
     requestedModel: "openai/gpt-4o",
@@ -56,49 +64,73 @@ describe("Hard Eligibility Filters", () => {
 
   it("excludes route when routeStatus is disabled or retired (ROUTE_DISABLED)", () => {
     const disabled = createCandidate({ routeStatus: "disabled" });
-    expect(evaluateEligibility(disabled, createRequest()).exclusionReason).toBe("ROUTE_DISABLED");
+    expect(evaluateEligibility(disabled, createRequest()).exclusionReason).toBe(
+      "ROUTE_DISABLED",
+    );
 
     const retired = createCandidate({ routeStatus: "retired" });
-    expect(evaluateEligibility(retired, createRequest()).exclusionReason).toBe("ROUTE_DISABLED");
+    expect(evaluateEligibility(retired, createRequest()).exclusionReason).toBe(
+      "ROUTE_DISABLED",
+    );
   });
 
   it("excludes route when providerStatus is disabled/maintenance/retired (PROVIDER_DISABLED)", () => {
     const disabled = createCandidate({ providerStatus: "disabled" });
-    expect(evaluateEligibility(disabled, createRequest()).exclusionReason).toBe("PROVIDER_DISABLED");
+    expect(evaluateEligibility(disabled, createRequest()).exclusionReason).toBe(
+      "PROVIDER_DISABLED",
+    );
 
     const maint = createCandidate({ providerStatus: "maintenance" });
-    expect(evaluateEligibility(maint, createRequest()).exclusionReason).toBe("PROVIDER_DISABLED");
+    expect(evaluateEligibility(maint, createRequest()).exclusionReason).toBe(
+      "PROVIDER_DISABLED",
+    );
 
     const retired = createCandidate({ providerStatus: "retired" });
-    expect(evaluateEligibility(retired, createRequest()).exclusionReason).toBe("PROVIDER_DISABLED");
+    expect(evaluateEligibility(retired, createRequest()).exclusionReason).toBe(
+      "PROVIDER_DISABLED",
+    );
   });
 
   it("excludes route when health is unhealthy or maintenance (UNAVAILABLE)", () => {
     const unhealthy = createCandidate({ health: "unhealthy" });
-    expect(evaluateEligibility(unhealthy, createRequest()).exclusionReason).toBe("UNAVAILABLE");
+    expect(
+      evaluateEligibility(unhealthy, createRequest()).exclusionReason,
+    ).toBe("UNAVAILABLE");
 
     const maint = createCandidate({ health: "maintenance" });
-    expect(evaluateEligibility(maint, createRequest()).exclusionReason).toBe("UNAVAILABLE");
+    expect(evaluateEligibility(maint, createRequest()).exclusionReason).toBe(
+      "UNAVAILABLE",
+    );
   });
 
   it("excludes route when circuit is OPEN (CIRCUIT_OPEN)", () => {
     const open = createCandidate({ circuit: "OPEN" });
-    expect(evaluateEligibility(open, createRequest()).exclusionReason).toBe("CIRCUIT_OPEN");
+    expect(evaluateEligibility(open, createRequest()).exclusionReason).toBe(
+      "CIRCUIT_OPEN",
+    );
   });
 
   it("excludes route when capacity is exhausted (NO_CAPACITY)", () => {
     const exhausted = createCandidate({ capacityState: "exhausted" });
-    expect(evaluateEligibility(exhausted, createRequest()).exclusionReason).toBe("NO_CAPACITY");
+    expect(
+      evaluateEligibility(exhausted, createRequest()).exclusionReason,
+    ).toBe("NO_CAPACITY");
   });
 
   it("excludes route when no active credential exists (NO_CREDENTIAL)", () => {
     const noCred = createCandidate({ hasActiveCredential: false });
-    expect(evaluateEligibility(noCred, createRequest()).exclusionReason).toBe("NO_CREDENTIAL");
+    expect(evaluateEligibility(noCred, createRequest()).exclusionReason).toBe(
+      "NO_CREDENTIAL",
+    );
   });
 
   it("excludes route when required capabilities are missing (CAPABILITY_MISMATCH)", () => {
-    const candidate = createCandidate({ capabilities: ["text.generate"] as any });
-    const req = createRequest({ capabilities: ["text.generate", "tools.call" as any] });
+    const candidate = createCandidate({
+      capabilities: ["text.generate"] as any,
+    });
+    const req = createRequest({
+      capabilities: ["text.generate", "tools.call" as any],
+    });
     const result = evaluateEligibility(candidate, req);
     expect(result.eligible).toBe(false);
     expect(result.exclusionReason).toBe("CAPABILITY_MISMATCH");
@@ -106,7 +138,11 @@ describe("Hard Eligibility Filters", () => {
 
   it("excludes route when context limits are exceeded (CONTEXT_LIMIT)", () => {
     const candidate = createCandidate({
-      limits: { contextWindow: 4000, maxOutputTokens: 2000, maxInputTokens: 3000 },
+      limits: {
+        contextWindow: 4000,
+        maxOutputTokens: 2000,
+        maxInputTokens: 3000,
+      },
     });
     const req = createRequest({ estimatedInputTokens: 5000 });
     const result = evaluateEligibility(candidate, req);
@@ -187,8 +223,12 @@ describe("Hard Eligibility Filters", () => {
       dataRegion: "india",
     };
 
-    expect(evaluateEligibility(usCandidate, createRequest(), policy).exclusionReason).toBe("REGION_DENIED");
-    expect(evaluateEligibility(indiaCandidate, createRequest(), policy).eligible).toBe(true);
+    expect(
+      evaluateEligibility(usCandidate, createRequest(), policy).exclusionReason,
+    ).toBe("REGION_DENIED");
+    expect(
+      evaluateEligibility(indiaCandidate, createRequest(), policy).eligible,
+    ).toBe(true);
   });
 
   it("excludes route when estimated cost exceeds maxEstimatedProviderCost (COST_LIMIT)", () => {
@@ -203,7 +243,7 @@ describe("Hard Eligibility Filters", () => {
       updatedAt: new Date(),
       maxEstimatedProviderCost: 0.05,
     };
-    const result = evaluateEligibility(candidate, createRequest(), policy, 0.10);
+    const result = evaluateEligibility(candidate, createRequest(), policy, 0.1);
     expect(result.eligible).toBe(false);
     expect(result.exclusionReason).toBe("COST_LIMIT");
   });

@@ -6,16 +6,19 @@ import { ProviderCredentialCrypto } from "../../src/application/credential-crypt
 import { ProviderService } from "../../src/application/provider-service.js";
 import { InMemoryProviderEvents } from "../../src/infrastructure/events.js";
 import { InMemoryProviderRepository } from "../../src/infrastructure/in-memory-repository.js";
-import {
-  InMemoryPrivilegedSessionResolver,
-} from "../../src/transport/privileged-auth.js";
+import { InMemoryPrivilegedSessionResolver } from "../../src/transport/privileged-auth.js";
 import { createHttpHandler } from "../../src/transport/http-routes.js";
 
 describe("Privileged Provider Ops Security Tests", () => {
   const repository = new InMemoryProviderRepository();
   const events = new InMemoryProviderEvents();
   const crypto = new ProviderCredentialCrypto();
-  const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+  const service = new ProviderService(
+    repository,
+    events,
+    crypto,
+    defaultAdapterRegistry,
+  );
   const sessionResolver = new InMemoryPrivilegedSessionResolver();
 
   // Register an operator session with full provider admin capabilities
@@ -46,7 +49,9 @@ describe("Privileged Provider Ops Security Tests", () => {
   const server = http.createServer(handler);
 
   it("rejects unauthenticated requests with 401 UNAUTHORIZED", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -61,7 +66,9 @@ describe("Privileged Provider Ops Security Tests", () => {
   });
 
   it("rejects customer API keys with 401 INVALID_PRINCIPAL", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -78,12 +85,16 @@ describe("Privileged Provider Ops Security Tests", () => {
   });
 
   it("rejects tokens in query parameters with 400 INVALID_CREDENTIAL_LOCATION", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
     try {
-      const res = await fetch(`${baseUrl}/internal/providers?jit_token=valid_admin_token`);
+      const res = await fetch(
+        `${baseUrl}/internal/providers?jit_token=valid_admin_token`,
+      );
       expect(res.status).toBe(400);
       const json = (await res.json()) as any;
       expect(json.error.code).toBe("INVALID_CREDENTIAL_LOCATION");
@@ -93,7 +104,9 @@ describe("Privileged Provider Ops Security Tests", () => {
   });
 
   it("rejects write operations from read-only session with 403 FORBIDDEN", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -121,7 +134,9 @@ describe("Privileged Provider Ops Security Tests", () => {
   });
 
   it("allows write and credential operations from authorized session", async () => {
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -146,17 +161,20 @@ describe("Privileged Provider Ops Security Tests", () => {
       expect(createJson.provider.code).toBe("mistral");
 
       // Add credential
-      const credRes = await fetch(`${baseUrl}/internal/providers/mistral/credentials`, {
-        method: "POST",
-        headers: {
-          authorization: "Bearer valid_admin_token",
-          "content-type": "application/json",
+      const credRes = await fetch(
+        `${baseUrl}/internal/providers/mistral/credentials`,
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer valid_admin_token",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            name: "mistral-prod",
+            rawSecret: "mis_secret_production_key",
+          }),
         },
-        body: JSON.stringify({
-          name: "mistral-prod",
-          rawSecret: "mis_secret_production_key",
-        }),
-      });
+      );
 
       expect(credRes.status).toBe(201);
       const credJson = (await credRes.json()) as any;

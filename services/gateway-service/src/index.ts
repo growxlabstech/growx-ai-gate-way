@@ -11,9 +11,7 @@ import {
   DrizzleModelRegistryEvents,
   ModelRegistryService,
 } from "@growx/model-registry-service";
-import {
-  AdapterRegistry,
-} from "@growx/provider-sdk";
+import { AdapterRegistry } from "@growx/provider-sdk";
 import {
   DatabaseProviderRepository,
   DrizzleProviderEvents,
@@ -93,14 +91,14 @@ export function createGatewayApplication(options?: {
   const crypto = new ProviderCredentialCrypto(
     options?.providerEncryptionKey ??
       process.env.PROVIDER_ENCRYPTION_KEY ??
-      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   );
   const adapterRegistry = new AdapterRegistry();
   const providerService = new ProviderService(
     providerRepo,
     providerEvents,
     crypto,
-    adapterRegistry
+    adapterRegistry,
   );
 
   const routingRepo = new DatabaseRoutingRepository(dbTyped);
@@ -109,7 +107,7 @@ export function createGatewayApplication(options?: {
     modelRegistry,
     providerService,
     routingRepo,
-    routingEvents
+    routingEvents,
   );
   const routeResolver = new RoutingEngineRouteResolver(routingEngine);
 
@@ -123,7 +121,7 @@ export function createGatewayApplication(options?: {
     gatewayRepo,
     gatewayEvents,
     routeResolver,
-    streamRegistry
+    streamRegistry,
   );
 
   const server = createGatewayServer({
@@ -165,14 +163,26 @@ export function createGatewayApplication(options?: {
 
 export function createApp(): Server {
   return createServer((request, response) => {
-    const status = { status: "ok", service: serviceName, timestamp: new Date().toISOString() };
-    if (request.url === "/health" || request.url === "/live" || request.url === "/ready") {
+    const status = {
+      status: "ok",
+      service: serviceName,
+      timestamp: new Date().toISOString(),
+    };
+    if (
+      request.url === "/health" ||
+      request.url === "/live" ||
+      request.url === "/ready"
+    ) {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify(status));
       return;
     }
     response.writeHead(404, { "content-type": "application/json" });
-    response.end(JSON.stringify({ error: { code: "NOT_FOUND", message: "Route not found" } }));
+    response.end(
+      JSON.stringify({
+        error: { code: "NOT_FOUND", message: "Route not found" },
+      }),
+    );
   });
 }
 
@@ -186,4 +196,3 @@ if (process.env.NODE_ENV !== "test" && process.env.AUTO_START !== "false") {
     createApp().listen(port);
   }
 }
-

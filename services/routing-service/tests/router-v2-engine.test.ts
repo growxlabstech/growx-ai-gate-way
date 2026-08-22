@@ -4,7 +4,10 @@ import { RoutingSimulationService } from "../src/application/simulation-service.
 import { PolicyManagementService } from "../src/application/policy-management-service.js";
 import { RouteManagementService } from "../src/application/route-management-service.js";
 import { buildRequestCapabilityProfile } from "@growx/routing";
-import type { CanonicalModelEntity, ProviderRouteEntity } from "@growx/model-registry-service";
+import type {
+  CanonicalModelEntity,
+  ProviderRouteEntity,
+} from "@growx/model-registry-service";
 
 describe("Routing Engine V2 - Service Integration", () => {
   let mockModelRegistry: any;
@@ -74,7 +77,9 @@ describe("Routing Engine V2 - Service Integration", () => {
         { id: "openai", enabled: true, status: "active" },
         { id: "anthropic", enabled: true, status: "active" },
       ],
-      listCredentials: async (pId: string) => [{ id: `cred_${pId}`, status: "active" }],
+      listCredentials: async (pId: string) => [
+        { id: `cred_${pId}`, status: "active" },
+      ],
     };
 
     routerV2 = new RoutingEngineV2(mockModelRegistry, mockProviderService);
@@ -153,7 +158,11 @@ describe("Routing Engine V2 - Service Integration", () => {
   });
 
   it("creates, activates, and retires versioned routing policies", async () => {
-    const auth: any = { organizationId: "org_1", workspaceId: "ws_1", apiKeyId: "key_admin" };
+    const auth: any = {
+      organizationId: "org_1",
+      workspaceId: "ws_1",
+      apiKeyId: "key_admin",
+    };
 
     const policy = await policyService.createPolicy(auth, {
       name: "Cost Optimized Policy",
@@ -169,9 +178,17 @@ describe("Routing Engine V2 - Service Integration", () => {
   });
 
   it("handles route draining and kill-switch disables", async () => {
-    const auth: any = { organizationId: "org_1", workspaceId: "ws_1", apiKeyId: "key_ops" };
+    const auth: any = {
+      organizationId: "org_1",
+      workspaceId: "ws_1",
+      apiKeyId: "key_ops",
+    };
 
-    const disabledControl = await routeService.disableRoute(auth, "route_openai", "Emergency upstream failure");
+    const disabledControl = await routeService.disableRoute(
+      auth,
+      "route_openai",
+      "Emergency upstream failure",
+    );
     expect(disabledControl.disabled).toBe(true);
     expect(disabledControl.mode).toBe("disabled");
 

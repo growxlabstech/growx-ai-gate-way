@@ -1,5 +1,9 @@
 import { Decimal } from "@growx/money";
-import type { ICreditRepository, WalletBalance, WalletLedgerEntry } from "../domain/types.js";
+import type {
+  ICreditRepository,
+  WalletBalance,
+  WalletLedgerEntry,
+} from "../domain/types.js";
 
 export interface ExpirationRunResult {
   lotsProcessed: number;
@@ -10,13 +14,16 @@ export interface ExpirationRunResult {
 export class CreditExpirationWorker {
   constructor(
     private readonly repository: ICreditRepository,
-    private readonly idGenerator: (prefix: string) => string = (p) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    private readonly idGenerator: (prefix: string) => string = (p) =>
+      `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   ) {}
 
   /**
    * Sweeps expired credit lots and debits unreserved expired amounts.
    */
-  async processExpiredLots(now: Date = new Date()): Promise<ExpirationRunResult> {
+  async processExpiredLots(
+    now: Date = new Date(),
+  ): Promise<ExpirationRunResult> {
     const expiredLots = await this.repository.listExpiredCreditLots(now);
     let totalExpired = Decimal.ZERO;
     const expiredLotIds: string[] = [];
@@ -29,11 +36,14 @@ export class CreditExpirationWorker {
         const freshLot = await tx.getCreditLotById(lot.id);
         if (!freshLot) return;
 
-        const unreservedExpired = freshLot.remainingAmount.sub(freshLot.reservedAmount);
+        const unreservedExpired = freshLot.remainingAmount.sub(
+          freshLot.reservedAmount,
+        );
         if (unreservedExpired.lte(Decimal.ZERO)) return;
 
         // Debit remaining amount
-        freshLot.remainingAmount = freshLot.remainingAmount.sub(unreservedExpired);
+        freshLot.remainingAmount =
+          freshLot.remainingAmount.sub(unreservedExpired);
         await tx.saveCreditLot(freshLot);
 
         const currentBalance = (await tx.getWalletBalance(freshLot.walletId))!;
@@ -42,7 +52,9 @@ export class CreditExpirationWorker {
 
         const newBalance: WalletBalance = {
           walletId: freshLot.walletId,
-          available: newAvailable.lt(Decimal.ZERO) ? Decimal.ZERO : newAvailable,
+          available: newAvailable.lt(Decimal.ZERO)
+            ? Decimal.ZERO
+            : newAvailable,
           reserved: currentBalance.reserved,
           total: newTotal.lt(Decimal.ZERO) ? Decimal.ZERO : newTotal,
           version: currentBalance.version + 1,
@@ -66,7 +78,10 @@ export class CreditExpirationWorker {
             reserved: newBalance.reserved,
             total: newBalance.total,
           },
-          metadata: { reason: "lot_expired", expiresAt: freshLot.expiresAt?.toISOString() },
+          metadata: {
+            reason: "lot_expired",
+            expiresAt: freshLot.expiresAt?.toISOString(),
+          },
           createdAt: now,
         };
         await tx.appendLedgerEntry(ledgerEntry);

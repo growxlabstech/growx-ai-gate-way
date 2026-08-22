@@ -1,5 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 import type { OpenAIChatCompletionRequest } from "@growx/contracts";
 
 describe("Phase 24 — Semantic Cache Gateway Integration", () => {
@@ -40,8 +43,13 @@ describe("Phase 24 — Semantic Cache Gateway Integration", () => {
       stream: false,
     };
 
-    const res1 = await fixture.gatewayEngine.executeChatCompletion(auth as any, initialReq as any);
-    expect(res1.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    const res1 = await fixture.gatewayEngine.executeChatCompletion(
+      auth as any,
+      initialReq as any,
+    );
+    expect(res1.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls.length).toBe(1);
 
     // 2. Semantically Rephrased Request (Semantic Cache Hit -> 0 Provider Calls)
@@ -55,8 +63,13 @@ describe("Phase 24 — Semantic Cache Gateway Integration", () => {
       stream: false,
     };
 
-    const res2 = await fixture.gatewayEngine.executeChatCompletion(auth as any, rephrasedReq as any);
-    expect(res2.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    const res2 = await fixture.gatewayEngine.executeChatCompletion(
+      auth as any,
+      rephrasedReq as any,
+    );
+    expect(res2.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls.length).toBe(1); // Provider NOT called again!
     expect(res2.id).not.toBe(res1.id); // New unique request ID generated
   });
@@ -90,7 +103,10 @@ describe("Phase 24 — Semantic Cache Gateway Integration", () => {
 
     // 1. Initial streaming request
     const chunks1: any[] = [];
-    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(auth as any, req1 as any)) {
+    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(
+      auth as any,
+      req1 as any,
+    )) {
       chunks1.push(chunk);
     }
     expect(chunks1.length).toBeGreaterThan(0);
@@ -105,7 +121,10 @@ describe("Phase 24 — Semantic Cache Gateway Integration", () => {
     };
 
     const chunks2: any[] = [];
-    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(auth as any, req2 as any)) {
+    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(
+      auth as any,
+      req2 as any,
+    )) {
       chunks2.push(chunk);
     }
     expect(chunks2.length).toBeGreaterThan(0);
@@ -207,7 +226,10 @@ describe("Phase 24 — Semantic Cache Gateway Integration", () => {
       stream: false,
     };
 
-    await fixture.gatewayEngine.executeChatCompletion(auth as any, rephrased as any);
+    await fixture.gatewayEngine.executeChatCompletion(
+      auth as any,
+      rephrased as any,
+    );
     expect(fixture.mockAdapter.calls.length).toBe(2);
   });
 });

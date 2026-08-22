@@ -1,7 +1,4 @@
-import {
-  type CanonicalCapability,
-  GrowXProviderError,
-} from "@growx/contracts";
+import { type CanonicalCapability, GrowXProviderError } from "@growx/contracts";
 import type {
   CanonicalModelEntity,
   ModelAliasEntity,
@@ -17,13 +14,16 @@ export interface ResolveOptions {
 
 export function eligibleConfiguredRoutes(
   model: CanonicalModelEntity,
-  routes: readonly ProviderRouteEntity[]
+  routes: readonly ProviderRouteEntity[],
 ): ProviderRouteEntity[] {
   if (!model.routingEligible) return [];
   if (!["active", "deprecated"].includes(model.status)) return [];
 
   return routes.filter((route) => {
-    if (route.modelId !== model.id && route.canonicalModelId !== model.canonicalId) {
+    if (
+      route.modelId !== model.id &&
+      route.canonicalModelId !== model.canonicalId
+    ) {
       return false;
     }
     if (!route.routingEligible) return false;
@@ -33,7 +33,7 @@ export function eligibleConfiguredRoutes(
 
 export function isModelExecutable(
   model: CanonicalModelEntity,
-  routes: readonly ProviderRouteEntity[]
+  routes: readonly ProviderRouteEntity[],
 ): boolean {
   if (!model.routingEligible) return false;
   if (!["active", "deprecated"].includes(model.status)) return false;
@@ -43,7 +43,7 @@ export function isModelExecutable(
 
 export function modelSupports(
   model: CanonicalModelEntity,
-  capability: CanonicalCapability
+  capability: CanonicalCapability,
 ): boolean {
   if (model.capabilities.includes(capability)) return true;
 
@@ -64,7 +64,10 @@ export function modelSupports(
     case "audio.output":
       return model.outputModalities.includes("audio");
     case "embeddings.create":
-      return model.category === "embeddings" || model.outputModalities.includes("embeddings");
+      return (
+        model.category === "embeddings" ||
+        model.outputModalities.includes("embeddings")
+      );
     default:
       return false;
   }
@@ -73,9 +76,12 @@ export function modelSupports(
 export function routeSupports(
   route: ProviderRouteEntity,
   model: CanonicalModelEntity,
-  capability: CanonicalCapability
+  capability: CanonicalCapability,
 ): boolean {
-  if (route.capabilitiesOverrides && Array.isArray(route.capabilitiesOverrides)) {
+  if (
+    route.capabilitiesOverrides &&
+    Array.isArray(route.capabilitiesOverrides)
+  ) {
     return route.capabilitiesOverrides.includes(capability);
   }
   return modelSupports(model, capability);
@@ -84,15 +90,20 @@ export function routeSupports(
 export function resolveAliasChain(
   requestedId: string,
   aliases: readonly ModelAliasEntity[],
-  maxHops = 5
-): { canonicalModelId: string; aliasUsed?: { alias: string; type: ModelAliasEntity["type"] } | undefined } {
+  maxHops = 5,
+): {
+  canonicalModelId: string;
+  aliasUsed?: { alias: string; type: ModelAliasEntity["type"] } | undefined;
+} {
   let current = requestedId;
   const visited = new Set<string>([current]);
   let aliasUsed: { alias: string; type: ModelAliasEntity["type"] } | undefined;
 
   for (let hop = 0; hop < maxHops; hop++) {
     const matchingAlias = aliases.find(
-      (a) => a.alias.toLowerCase() === current.toLowerCase() && a.status === "active"
+      (a) =>
+        a.alias.toLowerCase() === current.toLowerCase() &&
+        a.status === "active",
     );
 
     if (!matchingAlias) {
@@ -112,7 +123,7 @@ export function resolveAliasChain(
         "model_not_found",
         `Alias cycle detected for '${requestedId}' (cycle at '${nextTarget}')`,
         false,
-        400
+        400,
       );
     }
 
@@ -128,16 +139,20 @@ export function resolveModelContext(
   models: readonly CanonicalModelEntity[],
   aliases: readonly ModelAliasEntity[],
   routes: readonly ProviderRouteEntity[],
-  options: ResolveOptions = {}
+  options: ResolveOptions = {},
 ): ResolvedModelContext {
   const maxHops = options.maxHops ?? 5;
-  const { canonicalModelId, aliasUsed } = resolveAliasChain(requestedId, aliases, maxHops);
+  const { canonicalModelId, aliasUsed } = resolveAliasChain(
+    requestedId,
+    aliases,
+    maxHops,
+  );
 
   // Exact canonical ID lookup
   const model = models.find(
     (m) =>
       m.canonicalId.toLowerCase() === canonicalModelId.toLowerCase() ||
-      m.id.toLowerCase() === canonicalModelId.toLowerCase()
+      m.id.toLowerCase() === canonicalModelId.toLowerCase(),
   );
 
   if (!model) {
@@ -145,7 +160,7 @@ export function resolveModelContext(
       "model_not_found",
       `Model '${requestedId}' not found in canonical model registry`,
       false,
-      404
+      404,
     );
   }
 
@@ -154,7 +169,7 @@ export function resolveModelContext(
       "model_disabled",
       `Model '${model.canonicalId}' is currently disabled`,
       false,
-      403
+      403,
     );
   }
 
@@ -163,7 +178,7 @@ export function resolveModelContext(
       "model_retired",
       `Model '${model.canonicalId}' is retired and no longer available for execution`,
       false,
-      410
+      410,
     );
   }
 
@@ -172,12 +187,12 @@ export function resolveModelContext(
       "model_not_found",
       `Model '${model.canonicalId}' is in draft status and not available for execution`,
       false,
-      404
+      404,
     );
   }
 
   const modelRoutes = routes.filter(
-    (r) => r.modelId === model.id || r.canonicalModelId === model.canonicalId
+    (r) => r.modelId === model.id || r.canonicalModelId === model.canonicalId,
   );
   const eligibleRoutes = eligibleConfiguredRoutes(model, modelRoutes);
   const executable = isModelExecutable(model, modelRoutes);
@@ -197,7 +212,9 @@ export function resolveModelContext(
     isExecutable: executable,
     deprecation: model.deprecatedAt
       ? {
-          deprecatedAt: model.deprecatedAt ? model.deprecatedAt.toISOString() : null,
+          deprecatedAt: model.deprecatedAt
+            ? model.deprecatedAt.toISOString()
+            : null,
           sunsetAt: model.sunsetAt ? model.sunsetAt.toISOString() : null,
           replacementModelId: model.replacementModelId ?? null,
           message: model.deprecationMessage ?? null,

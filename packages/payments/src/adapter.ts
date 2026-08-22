@@ -116,23 +116,34 @@ export interface PaymentProviderAdapter {
 
   createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult>;
 
-  createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionResult>;
+  createCheckoutSession(
+    input: CreateCheckoutSessionInput,
+  ): Promise<CreateCheckoutSessionResult>;
 
-  createPaymentIntent(input: CreatePaymentIntentInput): Promise<CreatePaymentIntentResult>;
+  createPaymentIntent(
+    input: CreatePaymentIntentInput,
+  ): Promise<CreatePaymentIntentResult>;
 
-  createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult>;
+  createSubscription(
+    input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult>;
 
-  cancelSubscription(providerSubscriptionId: string, atPeriodEnd?: boolean): Promise<CancelSubscriptionResult>;
+  cancelSubscription(
+    providerSubscriptionId: string,
+    atPeriodEnd?: boolean,
+  ): Promise<CancelSubscriptionResult>;
 
   refundPayment(input: RefundPaymentInput): Promise<RefundPaymentResult>;
 
   verifyWebhook(
     payload: Uint8Array,
     signature: string,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
   ): Promise<VerifyWebhookResult>;
 
   retrievePayment(providerPaymentId: string): Promise<RetrievePaymentResult>;
 
-  retrieveSubscription(providerSubscriptionId: string): Promise<RetrieveSubscriptionResult>;
+  retrieveSubscription(
+    providerSubscriptionId: string,
+  ): Promise<RetrieveSubscriptionResult>;
 }

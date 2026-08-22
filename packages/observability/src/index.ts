@@ -1,6 +1,10 @@
 import pino from "pino";
 
-export interface TraceContext { requestId: string; correlationId: string; traceId?: string; }
+export interface TraceContext {
+  requestId: string;
+  correlationId: string;
+  traceId?: string;
+}
 
 const GROWX_KEY_REGEX = /gx_(live|test)_key_[a-f0-9]{32}_[A-Za-z0-9_-]{20,}/g;
 
@@ -10,7 +14,8 @@ export function redactGrowXSecrets(text: string): string {
 
 export function maskApiKey(value: string): string {
   if (!value) return "••••••••";
-  const match = /^gx_(live|test)_(key_[a-f0-9]{32})(?:_([A-Za-z0-9_-]+))?$/.exec(value);
+  const match =
+    /^gx_(live|test)_(key_[a-f0-9]{32})(?:_([A-Za-z0-9_-]+))?$/.exec(value);
   if (match) {
     const env = match[1];
     const keyId = match[2];
@@ -54,7 +59,8 @@ class GatewayMetricsCollector {
   }
 
   recordAuthFailure(code: string): void {
-    this.metrics.authFailureTotal[code] = (this.metrics.authFailureTotal[code] ?? 0) + 1;
+    this.metrics.authFailureTotal[code] =
+      (this.metrics.authFailureTotal[code] ?? 0) + 1;
   }
 
   recordRateLimit(): void {
@@ -78,7 +84,10 @@ class GatewayMetricsCollector {
   }
 
   getSnapshot(): Readonly<GatewayAuthMetrics> {
-    return { ...this.metrics, authFailureTotal: { ...this.metrics.authFailureTotal } };
+    return {
+      ...this.metrics,
+      authFailureTotal: { ...this.metrics.authFailureTotal },
+    };
   }
 
   reset(): void {
@@ -105,19 +114,29 @@ export function createLogger(service: string, context?: Partial<TraceContext>) {
     redact: {
       censor: "[REDACTED]",
       paths: [
-        "password", "*.password",
-        "token", "*.token",
-        "authorization", "*.authorization",
-        "cookie", "*.cookie",
-        "secret", "*.secret",
-        "secretHash", "*.secretHash",
-        "rawKey", "*.rawKey",
-        "apiKey", "*.apiKey",
-        "providerCredential", "*.providerCredential",
-        "paymentSecret", "*.paymentSecret",
-        "webhookSecret", "*.webhookSecret"
-      ]
-    }
+        "password",
+        "*.password",
+        "token",
+        "*.token",
+        "authorization",
+        "*.authorization",
+        "cookie",
+        "*.cookie",
+        "secret",
+        "*.secret",
+        "secretHash",
+        "*.secretHash",
+        "rawKey",
+        "*.rawKey",
+        "apiKey",
+        "*.apiKey",
+        "providerCredential",
+        "*.providerCredential",
+        "paymentSecret",
+        "*.paymentSecret",
+        "webhookSecret",
+        "*.webhookSecret",
+      ],
+    },
   });
 }
-

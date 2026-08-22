@@ -13,7 +13,12 @@ export interface BuildFallbackPlanInput {
 
 export class FallbackPlanBuilder {
   public static buildPlan(input: BuildFallbackPlanInput): RoutingPlan {
-    const { rankedCandidates, policyVersion = 1, objective = "balanced", requestProfileHash } = input;
+    const {
+      rankedCandidates,
+      policyVersion = 1,
+      objective = "balanced",
+      requestProfileHash,
+    } = input;
     if (rankedCandidates.length === 0) {
       throw new Error("Cannot build fallback plan from empty candidate list");
     }
@@ -46,42 +51,53 @@ export class FallbackPlanBuilder {
       providerAccountId?: string | undefined;
       credentialId?: string | undefined;
       statusCode?: number | undefined;
-    }[]
+    }[],
   ): RankedCandidateRecord | null {
-    const failedRouteIds = new Set(failedAttempts.map(a => a.routeId));
+    const failedRouteIds = new Set(failedAttempts.map((a) => a.routeId));
 
     const failedCredentials = new Set(
       failedAttempts
-        .filter(a => a.statusCode === 401 || a.statusCode === 403)
-        .map(a => a.credentialId)
-        .filter(Boolean)
+        .filter((a) => a.statusCode === 401 || a.statusCode === 403)
+        .map((a) => a.credentialId)
+        .filter(Boolean),
     );
 
     const failedAccounts = new Set(
       failedAttempts
-        .filter(a => a.statusCode === 429)
-        .map(a => a.providerAccountId)
-        .filter(Boolean)
+        .filter((a) => a.statusCode === 429)
+        .map((a) => a.providerAccountId)
+        .filter(Boolean),
     );
 
     const failedAuthProviders = new Set(
       failedAttempts
-        .filter(a => (a.statusCode === 401 || a.statusCode === 403) && !a.credentialId)
-        .map(a => a.providerId)
+        .filter(
+          (a) =>
+            (a.statusCode === 401 || a.statusCode === 403) && !a.credentialId,
+        )
+        .map((a) => a.providerId),
     );
 
     const failedOutageProviders = new Set(
-      failedAttempts.filter(a => a.statusCode && a.statusCode >= 500).map(a => a.providerId)
+      failedAttempts
+        .filter((a) => a.statusCode && a.statusCode >= 500)
+        .map((a) => a.providerId),
     );
 
     for (const candidate of plan.fallbacks) {
       if (failedRouteIds.has(candidate.routeId)) {
         continue;
       }
-      if (candidate.failureDomain?.credentialId && failedCredentials.has(candidate.failureDomain.credentialId)) {
+      if (
+        candidate.failureDomain?.credentialId &&
+        failedCredentials.has(candidate.failureDomain.credentialId)
+      ) {
         continue;
       }
-      if (candidate.failureDomain?.accountPoolId && failedAccounts.has(candidate.failureDomain.accountPoolId)) {
+      if (
+        candidate.failureDomain?.accountPoolId &&
+        failedAccounts.has(candidate.failureDomain.accountPoolId)
+      ) {
         continue;
       }
       if (failedAuthProviders.has(candidate.providerId)) {
@@ -94,6 +110,6 @@ export class FallbackPlanBuilder {
     }
 
     // Fallback: If no isolated domain candidate exists, pick next non-failed route ID
-    return plan.fallbacks.find(c => !failedRouteIds.has(c.routeId)) ?? null;
+    return plan.fallbacks.find((c) => !failedRouteIds.has(c.routeId)) ?? null;
   }
 }

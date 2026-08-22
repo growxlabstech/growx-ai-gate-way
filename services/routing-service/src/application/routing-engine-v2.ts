@@ -36,7 +36,8 @@ import {
   type RoutingStateSnapshot,
 } from "./routing-state-snapshot-service.js";
 
-export type RouterExecutionMode = "v1_primary" | "v2_shadow" | "v2_canary" | "v2_primary";
+export type RouterExecutionMode =
+  "v1_primary" | "v2_shadow" | "v2_canary" | "v2_primary";
 
 export interface RouterV2Options {
   mode?: RouterExecutionMode | undefined;
@@ -110,7 +111,7 @@ export class RoutingEngineV2 {
   constructor(
     private readonly modelRegistry: ModelRegistryService,
     private readonly providerService: ProviderService,
-    options: RouterV2Options = {}
+    options: RouterV2Options = {},
   ) {
     this.mode = options.mode ?? "v2_primary";
     this.canaryPercent = options.canaryTrafficPercent ?? 100;
@@ -121,12 +122,16 @@ export class RoutingEngineV2 {
     this.auditService = options.auditService;
     this.notificationService = options.notificationService;
 
-    this.snapshotService = new RoutingStateSnapshotService(modelRegistry, providerService, {
-      ttlMs: options.snapshotTtlMs,
-      routeHealthStore: options.routeHealthStore,
-      latencySignalProvider: options.latencySignalProvider,
-      capacitySignalProvider: options.capacitySignalProvider,
-    });
+    this.snapshotService = new RoutingStateSnapshotService(
+      modelRegistry,
+      providerService,
+      {
+        ttlMs: options.snapshotTtlMs,
+        routeHealthStore: options.routeHealthStore,
+        latencySignalProvider: options.latencySignalProvider,
+        capacitySignalProvider: options.capacitySignalProvider,
+      },
+    );
   }
 
   public setMode(mode: RouterExecutionMode, canaryPercent: number = 100): void {
@@ -138,7 +143,9 @@ export class RoutingEngineV2 {
     return this.mode;
   }
 
-  public async route(context: RouterV2RequestContext): Promise<RouterV2ExecutionResult> {
+  public async route(
+    context: RouterV2RequestContext,
+  ): Promise<RouterV2ExecutionResult> {
     const { resolvedModel, requiredCapabilities } = context;
     const model = resolvedModel.model;
 
@@ -149,9 +156,13 @@ export class RoutingEngineV2 {
       streaming: context.stream,
       inputModalities: context.inputModalities || model.inputModalities,
       outputModalities: context.outputModalities || model.outputModalities,
-      toolCalling: context.toolCalling ?? requiredCapabilities.includes("tools.call"),
-      structuredOutput: context.structuredOutput ?? requiredCapabilities.includes("structured_output"),
-      reasoningMode: context.reasoningMode ?? requiredCapabilities.includes("text.reason"),
+      toolCalling:
+        context.toolCalling ?? requiredCapabilities.includes("tools.call"),
+      structuredOutput:
+        context.structuredOutput ??
+        requiredCapabilities.includes("structured_output"),
+      reasoningMode:
+        context.reasoningMode ?? requiredCapabilities.includes("text.reason"),
       contextTokensEstimated: context.contextTokensEstimated,
       maxOutputTokens: context.maxOutputTokens,
       batch: context.batch,
@@ -174,7 +185,12 @@ export class RoutingEngineV2 {
       snapshot.routes.get(model.canonicalId) ||
       [];
 
-    const candidates = await this.buildCandidateRecords(configuredRoutes, model, snapshot, profile);
+    const candidates = await this.buildCandidateRecords(
+      configuredRoutes,
+      model,
+      snapshot,
+      profile,
+    );
 
     // 4. Hard Constraint Filtering
     const filterOptions = {
@@ -185,7 +201,11 @@ export class RoutingEngineV2 {
       maxExecutionCostMinor: profile.maxExecutionCostMinor,
     };
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates(candidates, profile, filterOptions);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      candidates,
+      profile,
+      filterOptions,
+    );
 
     if (eligible.length === 0) {
       const topReason = rejected[0]?.rejectionReason || "NO_ELIGIBLE_ROUTE";
@@ -193,7 +213,7 @@ export class RoutingEngineV2 {
         "model_unavailable",
         `No eligible provider routes available for model '${model.canonicalId}' matching constraints [${topReason}]`,
         false,
-        503
+        503,
       );
     }
 
@@ -201,17 +221,22 @@ export class RoutingEngineV2 {
     const controlledEligible = TrafficControlEvaluator.applyControls(
       eligible,
       snapshot.trafficControls,
-      context.auth.organizationId
+      context.auth.organizationId,
     );
 
-    const poolToRank = controlledEligible.length > 0 ? controlledEligible : eligible;
+    const poolToRank =
+      controlledEligible.length > 0 ? controlledEligible : eligible;
 
     // 6. Deterministic Candidate Scoring and Ranking
     const objective = context.objective || "balanced";
-    const { ranked, topChoice } = DeterministicCandidateRanker.rank(poolToRank, profile, {
-      objective,
-      weights: context.customWeights,
-    });
+    const { ranked, topChoice } = DeterministicCandidateRanker.rank(
+      poolToRank,
+      profile,
+      {
+        objective,
+        weights: context.customWeights,
+      },
+    );
 
     // 7. Build Fallback Plan
     const plan = FallbackPlanBuilder.buildPlan({
@@ -221,7 +246,9 @@ export class RoutingEngineV2 {
       requestProfileHash: profileHash,
     });
 
-    const selectedRouteEntity = configuredRoutes.find(r => r.id === topChoice.routeId) || configuredRoutes[0]!;
+    const selectedRouteEntity =
+      configuredRoutes.find((r) => r.id === topChoice.routeId) ||
+      configuredRoutes[0]!;
 
     // 8. Build RoutingDecisionV2
     const decision: RoutingDecisionV2 = {
@@ -261,20 +288,27 @@ export class RoutingEngineV2 {
     routes: ProviderRouteEntity[],
     model: CanonicalModelEntity,
     snapshot: RoutingStateSnapshot,
-    profile: RequestCapabilityProfile
+    profile: RequestCapabilityProfile,
   ): Promise<RouteCandidate[]> {
-    const routeIds = routes.map(r => r.id);
+    const routeIds = routes.map((r) => r.id);
     const healthMap = this.healthStore
-      ? await this.healthStore.getRouteHealthBatch(routeIds).catch(() => new Map())
+      ? await this.healthStore
+          .getRouteHealthBatch(routeIds)
+          .catch(() => new Map())
       : new Map();
 
     return Promise.all(
-      routes.map(async route => {
+      routes.map(async (route) => {
         const provider = snapshot.providers.get(route.providerId);
-        const providerStatus = provider ? (provider.enabled ? provider.status : "disabled") : "active";
+        const providerStatus = provider
+          ? provider.enabled
+            ? provider.status
+            : "disabled"
+          : "active";
 
         const creds = snapshot.credentials.get(route.providerId) || [];
-        const hasActiveCred = creds.length > 0 ? creds.some(c => c.status === "active") : true;
+        const hasActiveCred =
+          creds.length > 0 ? creds.some((c) => c.status === "active") : true;
 
         const healthSnap = healthMap.get(route.id);
         const health = healthSnap?.health ?? "healthy";
@@ -283,7 +317,13 @@ export class RoutingEngineV2 {
         // Latency
         let latencyMs = 800;
         if (this.latencyProvider) {
-          const latSignal = await this.latencyProvider.getLatencySignal(route.providerId, route.providerModelId, route.region).catch(() => null);
+          const latSignal = await this.latencyProvider
+            .getLatencySignal(
+              route.providerId,
+              route.providerModelId,
+              route.region,
+            )
+            .catch(() => null);
           if (latSignal) latencyMs = latSignal.p95LatencyMs;
         }
 
@@ -303,9 +343,10 @@ export class RoutingEngineV2 {
           }
         }
 
-        const candidateCaps = route.capabilitiesOverrides && route.capabilitiesOverrides.length > 0
-          ? route.capabilitiesOverrides
-          : model.capabilities;
+        const candidateCaps =
+          route.capabilitiesOverrides && route.capabilitiesOverrides.length > 0
+            ? route.capabilitiesOverrides
+            : model.capabilities;
 
         return {
           routeId: route.id,
@@ -317,7 +358,8 @@ export class RoutingEngineV2 {
           capabilities: candidateCaps as any,
           limits: {
             contextWindow: route.contextWindowOverride ?? model.contextWindow,
-            maxOutputTokens: route.maxOutputTokensOverride ?? model.maxOutputTokens,
+            maxOutputTokens:
+              route.maxOutputTokensOverride ?? model.maxOutputTokens,
           },
           routeStatus: route.status,
           providerStatus,
@@ -330,7 +372,7 @@ export class RoutingEngineV2 {
           capacityState: "available",
           capacityUtilization: 0.1,
         };
-      })
+      }),
     );
   }
 }

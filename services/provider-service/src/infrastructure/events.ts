@@ -1,62 +1,153 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  outbox,
-  privilegedAuditEvents,
-  securityEvents,
-} from "@growx/database";
+import { outbox, privilegedAuditEvents, securityEvents } from "@growx/database";
 import { createPublicId } from "@growx/ids";
 import type { IProviderEvents } from "../application/events.js";
-import { toCredentialMetadata, toProviderRecord } from "../domain/serializers.js";
+import {
+  toCredentialMetadata,
+  toProviderRecord,
+} from "../domain/serializers.js";
 import type {
   ProviderCredentialEntity,
   ProviderEntity,
 } from "../domain/types.js";
 
 export class InMemoryProviderEvents implements IProviderEvents {
-  public readonly auditEvents: Array<{ event: string; operatorId: string; data: any; requestId?: string | undefined }> = [];
+  public readonly auditEvents: Array<{
+    event: string;
+    operatorId: string;
+    data: any;
+    requestId?: string | undefined;
+  }> = [];
   public readonly outboxEvents: Array<{ eventType: string; payload: any }> = [];
-  public readonly secEvents: Array<{ type: string; data: any; requestId?: string | undefined }> = [];
+  public readonly secEvents: Array<{
+    type: string;
+    data: any;
+    requestId?: string | undefined;
+  }> = [];
 
-  async emitProviderCreated(provider: ProviderEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderCreated(
+    provider: ProviderEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const record = toProviderRecord(provider);
-    this.auditEvents.push({ event: "provider.created", operatorId, data: record, requestId });
+    this.auditEvents.push({
+      event: "provider.created",
+      operatorId,
+      data: record,
+      requestId,
+    });
     this.outboxEvents.push({ eventType: "provider.created", payload: record });
   }
 
-  async emitProviderUpdated(provider: ProviderEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderUpdated(
+    provider: ProviderEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const record = toProviderRecord(provider);
-    this.auditEvents.push({ event: "provider.updated", operatorId, data: record, requestId });
+    this.auditEvents.push({
+      event: "provider.updated",
+      operatorId,
+      data: record,
+      requestId,
+    });
     this.outboxEvents.push({ eventType: "provider.updated", payload: record });
   }
 
-  async emitProviderDisabled(providerId: string, operatorId: string, requestId?: string): Promise<void> {
-    this.auditEvents.push({ event: "provider.disabled", operatorId, data: { providerId }, requestId });
-    this.outboxEvents.push({ eventType: "provider.disabled", payload: { providerId } });
+  async emitProviderDisabled(
+    providerId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
+    this.auditEvents.push({
+      event: "provider.disabled",
+      operatorId,
+      data: { providerId },
+      requestId,
+    });
+    this.outboxEvents.push({
+      eventType: "provider.disabled",
+      payload: { providerId },
+    });
   }
 
-  async emitProviderEnabled(providerId: string, operatorId: string, requestId?: string): Promise<void> {
-    this.auditEvents.push({ event: "provider.enabled", operatorId, data: { providerId }, requestId });
-    this.outboxEvents.push({ eventType: "provider.enabled", payload: { providerId } });
+  async emitProviderEnabled(
+    providerId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
+    this.auditEvents.push({
+      event: "provider.enabled",
+      operatorId,
+      data: { providerId },
+      requestId,
+    });
+    this.outboxEvents.push({
+      eventType: "provider.enabled",
+      payload: { providerId },
+    });
   }
 
-  async emitCredentialCreated(credential: ProviderCredentialEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitCredentialCreated(
+    credential: ProviderCredentialEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const meta = toCredentialMetadata(credential);
-    this.auditEvents.push({ event: "provider.credential.created", operatorId, data: meta, requestId });
-    this.outboxEvents.push({ eventType: "provider.credential.created", payload: meta });
+    this.auditEvents.push({
+      event: "provider.credential.created",
+      operatorId,
+      data: meta,
+      requestId,
+    });
+    this.outboxEvents.push({
+      eventType: "provider.credential.created",
+      payload: meta,
+    });
   }
 
-  async emitCredentialRotated(credential: ProviderCredentialEntity, previousId: string, operatorId: string, requestId?: string): Promise<void> {
+  async emitCredentialRotated(
+    credential: ProviderCredentialEntity,
+    previousId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const meta = toCredentialMetadata(credential);
-    this.auditEvents.push({ event: "provider.credential.rotated", operatorId, data: { ...meta, previousId }, requestId });
-    this.outboxEvents.push({ eventType: "provider.credential.rotated", payload: { ...meta, previousId } });
+    this.auditEvents.push({
+      event: "provider.credential.rotated",
+      operatorId,
+      data: { ...meta, previousId },
+      requestId,
+    });
+    this.outboxEvents.push({
+      eventType: "provider.credential.rotated",
+      payload: { ...meta, previousId },
+    });
   }
 
-  async emitCredentialDisabled(credentialId: string, operatorId: string, requestId?: string): Promise<void> {
-    this.auditEvents.push({ event: "provider.credential.disabled", operatorId, data: { credentialId }, requestId });
-    this.outboxEvents.push({ eventType: "provider.credential.disabled", payload: { credentialId } });
+  async emitCredentialDisabled(
+    credentialId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
+    this.auditEvents.push({
+      event: "provider.credential.disabled",
+      operatorId,
+      data: { credentialId },
+      requestId,
+    });
+    this.outboxEvents.push({
+      eventType: "provider.credential.disabled",
+      payload: { credentialId },
+    });
   }
 
-  async emitSecurityEvent(type: string, data: Record<string, unknown>, requestId?: string): Promise<void> {
+  async emitSecurityEvent(
+    type: string,
+    data: Record<string, unknown>,
+    requestId?: string,
+  ): Promise<void> {
     this.secEvents.push({ type, data, requestId });
   }
 }
@@ -64,7 +155,11 @@ export class InMemoryProviderEvents implements IProviderEvents {
 export class DrizzleProviderEvents implements IProviderEvents {
   constructor(private readonly db: any) {}
 
-  async emitProviderCreated(provider: ProviderEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderCreated(
+    provider: ProviderEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const record = toProviderRecord(provider);
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
@@ -91,7 +186,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitProviderUpdated(provider: ProviderEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderUpdated(
+    provider: ProviderEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const record = toProviderRecord(provider);
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
@@ -118,7 +217,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitProviderDisabled(providerId: string, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderDisabled(
+    providerId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
 
@@ -144,7 +247,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitProviderEnabled(providerId: string, operatorId: string, requestId?: string): Promise<void> {
+  async emitProviderEnabled(
+    providerId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
 
@@ -170,7 +277,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitCredentialCreated(credential: ProviderCredentialEntity, operatorId: string, requestId?: string): Promise<void> {
+  async emitCredentialCreated(
+    credential: ProviderCredentialEntity,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const meta = toCredentialMetadata(credential);
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
@@ -197,7 +308,12 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitCredentialRotated(credential: ProviderCredentialEntity, previousId: string, operatorId: string, requestId?: string): Promise<void> {
+  async emitCredentialRotated(
+    credential: ProviderCredentialEntity,
+    previousId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const meta = toCredentialMetadata(credential);
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
@@ -224,7 +340,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitCredentialDisabled(credentialId: string, operatorId: string, requestId?: string): Promise<void> {
+  async emitCredentialDisabled(
+    credentialId: string,
+    operatorId: string,
+    requestId?: string,
+  ): Promise<void> {
     const reqId = requestId ?? createPublicId("req");
     const traceId = createPublicId("trace");
 
@@ -250,7 +370,11 @@ export class DrizzleProviderEvents implements IProviderEvents {
     });
   }
 
-  async emitSecurityEvent(type: string, data: Record<string, unknown>, requestId?: string): Promise<void> {
+  async emitSecurityEvent(
+    type: string,
+    data: Record<string, unknown>,
+    requestId?: string,
+  ): Promise<void> {
     const reqId = requestId ?? createPublicId("req");
     await this.db.insert(securityEvents).values({
       id: createPublicId("sec"),

@@ -10,7 +10,9 @@ import type {
   ProviderRouteEntity,
 } from "./types.js";
 
-export function toModelCatalogItem(model: CanonicalModelEntity): ModelCatalogItem {
+export function toModelCatalogItem(
+  model: CanonicalModelEntity,
+): ModelCatalogItem {
   return {
     id: model.canonicalId,
     canonicalId: model.canonicalId,
@@ -36,7 +38,9 @@ export function toModelCatalogItem(model: CanonicalModelEntity): ModelCatalogIte
   };
 }
 
-export function toOpenAIModelItem(model: CanonicalModelEntity): OpenAIModelItem {
+export function toOpenAIModelItem(
+  model: CanonicalModelEntity,
+): OpenAIModelItem {
   return {
     id: model.canonicalId,
     object: "model",
@@ -45,7 +49,9 @@ export function toOpenAIModelItem(model: CanonicalModelEntity): OpenAIModelItem 
   };
 }
 
-export function toOpenAIModelList(models: readonly CanonicalModelEntity[]): OpenAIModelListResponse {
+export function toOpenAIModelList(
+  models: readonly CanonicalModelEntity[],
+): OpenAIModelListResponse {
   return {
     object: "list",
     data: models.map(toOpenAIModelItem),
@@ -63,7 +69,7 @@ export function toAdminModelRecord(
   model: CanonicalModelEntity,
   routes: ProviderRouteEntity[] = [],
   aliases: ModelAliasEntity[] = [],
-  pricing: ModelPricingEntity[] = []
+  pricing: ModelPricingEntity[] = [],
 ): AdminModelDetail {
   return {
     model,

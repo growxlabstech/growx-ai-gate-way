@@ -4,14 +4,16 @@ import type { QuotaLimit, QuotaScopeType } from "./types.js";
 export interface IQuotaPolicyRepository {
   getLimitsForScope(
     scopeType: QuotaScopeType,
-    scopeId: string
+    scopeId: string,
   ): Promise<QuotaLimit[]>;
 
   getLimitsForScopes(
-    scopes: Array<{ scopeType: QuotaScopeType; scopeId: string }>
+    scopes: Array<{ scopeType: QuotaScopeType; scopeId: string }>,
   ): Promise<Map<string, QuotaLimit[]>>;
 
-  saveLimit(limit: Omit<QuotaLimit, "id"> & { id?: string }): Promise<QuotaLimit>;
+  saveLimit(
+    limit: Omit<QuotaLimit, "id"> & { id?: string },
+  ): Promise<QuotaLimit>;
   deleteLimit(id: string): Promise<boolean>;
   listPolicies(scopeType?: QuotaScopeType): Promise<QuotaLimit[]>;
 }
@@ -32,11 +34,15 @@ export class InMemoryQuotaPolicyRepository implements IQuotaPolicyRepository {
 
   async getLimitsForScope(
     scopeType: QuotaScopeType,
-    scopeId: string
+    scopeId: string,
   ): Promise<QuotaLimit[]> {
     const result: QuotaLimit[] = [];
     for (const limit of this.limits.values()) {
-      if (limit.scopeType === scopeType && limit.scopeId === scopeId && limit.enabled) {
+      if (
+        limit.scopeType === scopeType &&
+        limit.scopeId === scopeId &&
+        limit.enabled
+      ) {
         result.push({ ...limit });
       }
     }
@@ -44,7 +50,7 @@ export class InMemoryQuotaPolicyRepository implements IQuotaPolicyRepository {
   }
 
   async getLimitsForScopes(
-    scopes: Array<{ scopeType: QuotaScopeType; scopeId: string }>
+    scopes: Array<{ scopeType: QuotaScopeType; scopeId: string }>,
   ): Promise<Map<string, QuotaLimit[]>> {
     const map = new Map<string, QuotaLimit[]>();
     for (const s of scopes) {
@@ -56,9 +62,10 @@ export class InMemoryQuotaPolicyRepository implements IQuotaPolicyRepository {
   }
 
   async saveLimit(
-    limitInput: Omit<QuotaLimit, "id"> & { id?: string }
+    limitInput: Omit<QuotaLimit, "id"> & { id?: string },
   ): Promise<QuotaLimit> {
-    const id = limitInput.id ?? `qlim_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    const id =
+      limitInput.id ?? `qlim_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
     const limit: QuotaLimit = {
       ...limitInput,
       id,

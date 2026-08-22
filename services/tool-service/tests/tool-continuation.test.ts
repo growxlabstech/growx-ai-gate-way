@@ -6,7 +6,9 @@ import {
 
 describe("ToolContinuationService", () => {
   it("creates and resolves a continuation", async () => {
-    const service = new ToolContinuationService(new InMemoryContinuationRepository());
+    const service = new ToolContinuationService(
+      new InMemoryContinuationRepository(),
+    );
 
     const cont = await service.createContinuation({
       requestId: "req_123",
@@ -25,7 +27,9 @@ describe("ToolContinuationService", () => {
   });
 
   it("completes a continuation", async () => {
-    const service = new ToolContinuationService(new InMemoryContinuationRepository());
+    const service = new ToolContinuationService(
+      new InMemoryContinuationRepository(),
+    );
 
     const cont = await service.createContinuation({
       requestId: "req_456",

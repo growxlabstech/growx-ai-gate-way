@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Model Alias Resolution End-to-End Tests", () => {
   let fixture: TestGatewayFixture;
@@ -29,7 +32,7 @@ describe("Model Alias Resolution End-to-End Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -43,7 +46,9 @@ describe("Model Alias Resolution End-to-End Tests", () => {
     expect(body.model).toBe("growx/fast");
 
     // Verify mock adapter received canonicalModelId
-    expect(fixture.mockAdapter.calls[0]?.canonicalModelId).toBe("openai/gpt-4o-mini");
+    expect(fixture.mockAdapter.calls[0]?.canonicalModelId).toBe(
+      "openai/gpt-4o-mini",
+    );
 
     // Verify request lifecycle persisted both requestedModel and resolvedModel
     const reqId = response.headers.get("x-growx-request-id")!;

@@ -92,6 +92,6 @@ export interface IGatewayEvents {
   emitSecurityEvent(
     type: string,
     data: Record<string, unknown>,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void>;
 }

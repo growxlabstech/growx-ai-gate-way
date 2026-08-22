@@ -1,4 +1,8 @@
-import { GrowXProviderError, type ExecutionTarget, type ResolvedProviderCredential } from "@growx/contracts";
+import {
+  GrowXProviderError,
+  type ExecutionTarget,
+  type ResolvedProviderCredential,
+} from "@growx/contracts";
 import type { SecretProvider } from "./secret-provider.js";
 import type { IProviderRepository } from "../application/repository.js";
 
@@ -15,7 +19,10 @@ export class ProviderCredentialResolver {
   constructor(
     private readonly secretProvider: SecretProvider,
     private readonly repository: IProviderRepository,
-    options: { ttlMs?: number | undefined; maxCacheSize?: number | undefined } = {}
+    options: {
+      ttlMs?: number | undefined;
+      maxCacheSize?: number | undefined;
+    } = {},
   ) {
     this.ttlMs = options.ttlMs ?? 60_000; // 60 seconds TTL
     this.maxCacheSize = options.maxCacheSize ?? 1000;
@@ -23,7 +30,7 @@ export class ProviderCredentialResolver {
 
   public async resolve(
     target: ExecutionTarget,
-    callerContext?: { isInternalExecution?: boolean | undefined }
+    callerContext?: { isInternalExecution?: boolean | undefined },
   ): Promise<ResolvedProviderCredential> {
     // Only internal execution service is authorized to resolve provider credentials
     if (callerContext?.isInternalExecution === false) {
@@ -31,7 +38,7 @@ export class ProviderCredentialResolver {
         "provider_authentication_error",
         "Unauthorized caller cannot resolve provider credential secrets",
         false,
-        403
+        403,
       );
     }
 
@@ -44,13 +51,15 @@ export class ProviderCredentialResolver {
     }
 
     // Lookup credential metadata
-    const credential = await this.repository.getCredentialById(target.credentialId);
+    const credential = await this.repository.getCredentialById(
+      target.credentialId,
+    );
     if (!credential) {
       throw new GrowXProviderError(
         "provider_authentication_error",
         `Provider credential '${target.credentialId}' not found`,
         false,
-        404
+        404,
       );
     }
 
@@ -59,7 +68,7 @@ export class ProviderCredentialResolver {
         "provider_authentication_error",
         `Provider credential '${target.credentialId}' is ${credential.status}`,
         false,
-        502
+        502,
       );
     }
 
@@ -69,13 +78,14 @@ export class ProviderCredentialResolver {
       ? await this.repository.getCredentialVersionById?.(versionId)
       : await this.repository.getActiveCredentialVersion?.(credential.id);
 
-    const secretRef = versionRecord?.secretReference || credential.encryptedPayload;
+    const secretRef =
+      versionRecord?.secretReference || credential.encryptedPayload;
     if (!secretRef) {
       throw new GrowXProviderError(
         "provider_authentication_error",
         `No secret reference available for credential '${credential.id}'`,
         false,
-        502
+        502,
       );
     }
 
@@ -86,7 +96,7 @@ export class ProviderCredentialResolver {
         "provider_authentication_error",
         `Failed to resolve secret from vault for credential '${credential.id}'`,
         false,
-        502
+        502,
       );
     }
 

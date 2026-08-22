@@ -8,10 +8,13 @@ export function calculateNextAttemptMs(
   attempt: number,
   policy: WebhookRetryPolicy,
   retryAfterSeconds?: number | undefined,
-  random: () => number = Math.random
+  random: () => number = Math.random,
 ): number {
   if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
-    const clampedSeconds = Math.min(retryAfterSeconds, policy.maxRetryAfterSeconds);
+    const clampedSeconds = Math.min(
+      retryAfterSeconds,
+      policy.maxRetryAfterSeconds,
+    );
     return clampedSeconds * 1000;
   }
 
@@ -32,7 +35,9 @@ export function calculateNextAttemptMs(
   return half + jitterOffset;
 }
 
-export function parseRetryAfterHeader(headerValue?: string | null): number | undefined {
+export function parseRetryAfterHeader(
+  headerValue?: string | null,
+): number | undefined {
   if (!headerValue) return undefined;
 
   // 1. Check if integer seconds
@@ -64,7 +69,11 @@ export function classifyDeliveryOutcome(params: {
   const { responseStatus, error, currentAttempt, maxAttempts } = params;
 
   // 1. Success
-  if (responseStatus !== undefined && responseStatus >= 200 && responseStatus < 300) {
+  if (
+    responseStatus !== undefined &&
+    responseStatus >= 200 &&
+    responseStatus < 300
+  ) {
     return {
       status: "succeeded",
       isRetryable: false,
@@ -88,7 +97,11 @@ export function classifyDeliveryOutcome(params: {
   }
 
   // 3. HTTP 5xx Server Error (Retryable)
-  if (responseStatus !== undefined && responseStatus >= 500 && responseStatus < 600) {
+  if (
+    responseStatus !== undefined &&
+    responseStatus >= 500 &&
+    responseStatus < 600
+  ) {
     if (currentAttempt >= maxAttempts) {
       return {
         status: "dead_letter",
@@ -123,7 +136,11 @@ export function classifyDeliveryOutcome(params: {
   if (error) {
     const msg = error.message.toLowerCase();
 
-    if (msg.includes("ssrf") || msg.includes("forbidden ip") || msg.includes("private")) {
+    if (
+      msg.includes("ssrf") ||
+      msg.includes("forbidden ip") ||
+      msg.includes("private")
+    ) {
       return {
         status: "dead_letter",
         errorCategory: "SSRF_BLOCKED",
@@ -133,12 +150,24 @@ export function classifyDeliveryOutcome(params: {
 
     if (msg.includes("timeout") || msg.includes("aborted")) {
       if (currentAttempt >= maxAttempts) {
-        return { status: "dead_letter", errorCategory: "TIMEOUT", isRetryable: false };
+        return {
+          status: "dead_letter",
+          errorCategory: "TIMEOUT",
+          isRetryable: false,
+        };
       }
-      return { status: "retrying", errorCategory: "TIMEOUT", isRetryable: true };
+      return {
+        status: "retrying",
+        errorCategory: "TIMEOUT",
+        isRetryable: true,
+      };
     }
 
-    if (msg.includes("dns") || msg.includes("getaddrinfo") || msg.includes("enotfound")) {
+    if (
+      msg.includes("dns") ||
+      msg.includes("getaddrinfo") ||
+      msg.includes("enotfound")
+    ) {
       if (currentAttempt >= maxAttempts) {
         return {
           status: "dead_letter",
@@ -155,14 +184,26 @@ export function classifyDeliveryOutcome(params: {
 
     // Generic Network Error
     if (currentAttempt >= maxAttempts) {
-      return { status: "dead_letter", errorCategory: "NETWORK_ERROR", isRetryable: false };
+      return {
+        status: "dead_letter",
+        errorCategory: "NETWORK_ERROR",
+        isRetryable: false,
+      };
     }
-    return { status: "retrying", errorCategory: "NETWORK_ERROR", isRetryable: true };
+    return {
+      status: "retrying",
+      errorCategory: "NETWORK_ERROR",
+      isRetryable: true,
+    };
   }
 
   // Fallback
   if (currentAttempt >= maxAttempts) {
-    return { status: "dead_letter", errorCategory: "UNKNOWN", isRetryable: false };
+    return {
+      status: "dead_letter",
+      errorCategory: "UNKNOWN",
+      isRetryable: false,
+    };
   }
   return { status: "retrying", errorCategory: "UNKNOWN", isRetryable: true };
 }

@@ -1,6 +1,7 @@
 import type { LatencySketchData } from "./distribution.js";
 
-export type AnalyticsTimeGranularity = "minute" | "hour" | "day" | "month" | "auto";
+export type AnalyticsTimeGranularity =
+  "minute" | "hour" | "day" | "month" | "auto";
 
 export interface AnalyticsTimeRange {
   startTime: Date;

@@ -1,1 +1,15 @@
-import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Provider health"><p>Health score, reliability, latency, timeouts, rate limits, stream failures, and recovery state.</p><AdminTable subject="Provider health snapshots" /></AdminShell>; }
+import { AdminShell } from "../../../../components/admin-shell";
+import { listAdminProviders } from "../../../../lib/admin-data";
+import { AdminProvidersView } from "../../../../components/admin-providers-view";
+
+export default async function AdminProvidersHealthPage() {
+  const providers = await listAdminProviders();
+  return (
+    <AdminShell
+      title="Provider Health & Circuit Status"
+      description="Live P95 latency metrics, error rates, and automated circuit breaker states."
+    >
+      <AdminProvidersView initialProviders={providers} />
+    </AdminShell>
+  );
+}

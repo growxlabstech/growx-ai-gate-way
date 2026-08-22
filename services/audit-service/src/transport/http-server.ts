@@ -1,4 +1,8 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import type { AuditService } from "../application/audit-service.js";
 import type { SecurityService } from "../application/security-service.js";
 
@@ -11,7 +15,10 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
   const { auditService, securityService } = options;
 
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method ?? "GET";
 
@@ -36,7 +43,11 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
 
     try {
       // ─── Health Checks ───────────────────────────────────────────
-      if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
+      if (
+        pathname === "/health" ||
+        pathname === "/live" ||
+        pathname === "/ready"
+      ) {
         return sendJson(200, { status: "ok", service: "audit-service" });
       }
 
@@ -46,7 +57,8 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
 
       // ─── Customer Audit APIs ──────────────────────────────────────
       if (pathname === "/v1/audit/events" && method === "GET") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const limit = url.searchParams.get("limit")
           ? parseInt(url.searchParams.get("limit")!, 10)
@@ -72,7 +84,8 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
 
       const auditEventMatch = pathname.match(/^\/v1\/audit\/events\/([^/]+)$/);
       if (auditEventMatch && method === "GET") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
         const eventId = auditEventMatch[1]!;
         const event = await auditService.getCustomerAuditEvent(orgId, eventId);
         if (!event) return sendJson(404, { error: "Audit event not found" });
@@ -81,7 +94,8 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
 
       // ─── Customer Security APIs ───────────────────────────────────
       if (pathname === "/v1/security/events" && method === "GET") {
-        if (!orgId) return sendJson(401, { error: "Missing organization context" });
+        if (!orgId)
+          return sendJson(401, { error: "Missing organization context" });
 
         const events = await securityService.listSecurityEvents(orgId, {
           workspaceId,
@@ -126,11 +140,16 @@ export function createAuditHttpServer(options: AuditHttpServerOptions) {
         return sendJson(200, { signals });
       }
 
-      const signalStatusMatch = pathname.match(/^\/internal\/security\/signals\/([^/]+)\/status$/);
+      const signalStatusMatch = pathname.match(
+        /^\/internal\/security\/signals\/([^/]+)\/status$/,
+      );
       if (signalStatusMatch && method === "POST") {
         const signalId = signalStatusMatch[1]!;
         const body = await parseBody();
-        const updated = await securityService.updateSignalStatus(signalId, body.status);
+        const updated = await securityService.updateSignalStatus(
+          signalId,
+          body.status,
+        );
         return sendJson(200, { signal: updated });
       }
 

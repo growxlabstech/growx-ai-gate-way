@@ -3,13 +3,25 @@ import { Decimal } from "@growx/money";
 // ─── Currency Utilities & Minor Units ─────────────────────────
 
 const ZERO_DECIMAL_CURRENCIES = new Set([
-  "BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW",
-  "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF"
+  "BIF",
+  "CLP",
+  "DJF",
+  "GNF",
+  "ISK",
+  "JPY",
+  "KMF",
+  "KRW",
+  "PYG",
+  "RWF",
+  "UGX",
+  "VND",
+  "VUV",
+  "XAF",
+  "XOF",
+  "XPF",
 ]);
 
-const THREE_DECIMAL_CURRENCIES = new Set([
-  "BHD", "JOD", "KWD", "OMR", "TND"
-]);
+const THREE_DECIMAL_CURRENCIES = new Set(["BHD", "JOD", "KWD", "OMR", "TND"]);
 
 export function getCurrencyDecimalPlaces(currency: string): number {
   const code = currency.toUpperCase();
@@ -28,7 +40,10 @@ export function toMinorUnits(amount: Decimal, currency: string): bigint {
   return BigInt(combined);
 }
 
-export function fromMinorUnits(minor: bigint | number | string, currency: string): Decimal {
+export function fromMinorUnits(
+  minor: bigint | number | string,
+  currency: string,
+): Decimal {
   const decimals = getCurrencyDecimalPlaces(currency);
   const minorBig = BigInt(minor.toString());
   if (decimals === 0) {
@@ -66,15 +81,9 @@ export type CheckoutStatus =
   | "failed";
 
 export type CheckoutPurpose =
-  | "subscription_start"
-  | "subscription_change"
-  | "credit_purchase_future";
+  "subscription_start" | "subscription_change" | "credit_purchase_future";
 
-export type RefundStatus =
-  | "pending"
-  | "succeeded"
-  | "failed"
-  | "cancelled";
+export type RefundStatus = "pending" | "succeeded" | "failed" | "cancelled";
 
 export type PaymentFailureCategory =
   | "insufficient_funds"

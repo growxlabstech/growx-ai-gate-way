@@ -10,14 +10,17 @@ export interface ProviderAudioAdapter {
 
   translateTranscriptionRequest(
     request: TranscriptionRequest,
-    audioData?: string | Buffer
+    audioData?: string | Buffer,
   ): {
     urlPath: string;
     method: "POST";
     body: Record<string, unknown>;
   };
 
-  parseTranscriptionResponse(rawResponse: unknown, request: TranscriptionRequest): TranscriptionResponse;
+  parseTranscriptionResponse(
+    rawResponse: unknown,
+    request: TranscriptionRequest,
+  ): TranscriptionResponse;
 
   translateSpeechRequest(request: SpeechRequest): {
     urlPath: string;
@@ -25,5 +28,8 @@ export interface ProviderAudioAdapter {
     body: Record<string, unknown>;
   };
 
-  parseSpeechResponse(rawResponse: unknown, request: SpeechRequest): SpeechResponse;
+  parseSpeechResponse(
+    rawResponse: unknown,
+    request: SpeechRequest,
+  ): SpeechResponse;
 }

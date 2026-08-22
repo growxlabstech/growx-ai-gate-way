@@ -1,2 +1,44 @@
-import { AppShell, StatePanel } from "../../../components/app-shell";
-export default async function Page({ params }: { params: Promise<{ organizationSlug: string }> }) { const { organizationSlug } = await params; return <AppShell organizationSlug={organizationSlug} title="Teams"><div className="toolbar"><button type="button">Create</button><button type="button">Filter</button></div><StatePanel title="Teams" detail="Group members and attach teams to workspaces." /></AppShell>; }
+import { AppShell } from "../../../components/app-shell";
+import { loadTenantContext } from "../../../lib/load-tenant-context";
+import {
+  loadOrganizationMembers,
+  loadPendingInvitations,
+} from "../../../lib/settings-data";
+import { TeamMembersView } from "../../../components/settings/team-members-view";
+
+export default async function OrgTeamsPage({
+  params,
+}: {
+  params: Promise<{ organizationSlug: string }>;
+}) {
+  const { organizationSlug } = await params;
+  const contextResult = await loadTenantContext();
+
+  const organization =
+    contextResult.status === "ready"
+      ? contextResult.context.organizations.find(
+          (o) => o.organizationSlug === organizationSlug,
+        )
+      : undefined;
+
+  const organizationId = organization?.organizationId ?? "org_northstar";
+
+  const [members, invitations] = await Promise.all([
+    loadOrganizationMembers({ organizationId }),
+    loadPendingInvitations({ organizationId }),
+  ]);
+
+  return (
+    <AppShell
+      organizationSlug={organizationSlug}
+      title="Teams"
+      description="Manage cross-functional teams and workspace access scopes."
+    >
+      <TeamMembersView
+        organizationSlug={organizationSlug}
+        initialMembers={members}
+        initialInvitations={invitations}
+      />
+    </AppShell>
+  );
+}

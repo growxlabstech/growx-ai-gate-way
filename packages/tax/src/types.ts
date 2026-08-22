@@ -5,10 +5,7 @@ import { Decimal } from "@growx/money";
 export type TaxIdentifierType = "GSTIN" | "VAT_ID" | "EIN" | "PAN" | "OTHER";
 
 export type TaxIdentifierValidationStatus =
-  | "syntactically_valid"
-  | "verified"
-  | "unverified"
-  | "invalid";
+  "syntactically_valid" | "verified" | "unverified" | "invalid";
 
 export interface TaxIdentifier {
   type: TaxIdentifierType;
@@ -95,33 +92,15 @@ export interface InvoiceBillingProfileSnapshot {
 // ─── Tax Regimes & Classifications ───────────────────────────
 
 export type TaxRegime =
-  | "INDIA_GST"
-  | "EU_VAT"
-  | "UK_VAT"
-  | "US_SALES_TAX"
-  | "OTHER";
+  "INDIA_GST" | "EU_VAT" | "UK_VAT" | "US_SALES_TAX" | "OTHER";
 
 export type TaxTreatment =
-  | "standard"
-  | "zero_rated"
-  | "exempt"
-  | "reverse_charge"
-  | "out_of_scope";
+  "standard" | "zero_rated" | "exempt" | "reverse_charge" | "out_of_scope";
 
-export type TaxType =
-  | "CGST"
-  | "SGST"
-  | "IGST"
-  | "VAT"
-  | "SALES_TAX"
-  | "NONE";
+export type TaxType = "CGST" | "SGST" | "IGST" | "VAT" | "SALES_TAX" | "NONE";
 
 export type SupplyType =
-  | "domestic"
-  | "intra_state"
-  | "inter_state"
-  | "export"
-  | "import";
+  "domestic" | "intra_state" | "inter_state" | "export" | "import";
 
 export type CustomerType = "B2B" | "B2C";
 

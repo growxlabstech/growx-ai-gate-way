@@ -62,21 +62,32 @@ export class BatchService {
   public async createBatch(
     auth: MachineAuthContext,
     request: CreateBatchRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
   ): Promise<BatchJob> {
     const orgId = auth.organizationId;
     const wsId = auth.workspaceId;
 
     // Check scope
-    if (!auth.permissions.includes("batches.create" as any) && !auth.permissions.includes("apiKey.create" as any)) {
-      throw new BatchValidationError("Missing required permission 'batches.create'");
+    if (
+      !auth.permissions.includes("batches.create" as any) &&
+      !auth.permissions.includes("apiKey.create" as any)
+    ) {
+      throw new BatchValidationError(
+        "Missing required permission 'batches.create'",
+      );
     }
 
     // Handle Idempotency
     if (idempotencyKey) {
-      const existing = await this.repo.findIdempotencyRecord(orgId, idempotencyKey);
+      const existing = await this.repo.findIdempotencyRecord(
+        orgId,
+        idempotencyKey,
+      );
       if (existing) {
-        const existingJob = await this.repo.getBatchJob(orgId, existing.batchId);
+        const existingJob = await this.repo.getBatchJob(
+          orgId,
+          existing.batchId,
+        );
         if (existingJob) {
           return this.toContractJob(existingJob);
         }
@@ -91,25 +102,39 @@ export class BatchService {
     } else if (request.input_file_id) {
       // Source 2: JSONL file in Phase-25 storage
       if (!this.fileService) {
-        throw new BatchValidationError("File service not configured for input file processing");
+        throw new BatchValidationError(
+          "File service not configured for input file processing",
+        );
       }
       const tenant = {
         organizationId: orgId,
         workspaceId: wsId,
         userId: auth.createdBy,
       };
-      const fileRecord = await this.fileService.getFile(tenant, request.input_file_id);
+      const fileRecord = await this.fileService.getFile(
+        tenant,
+        request.input_file_id,
+      );
       if (!fileRecord) {
-        throw new BatchValidationError(`Input file ${request.input_file_id} not found`);
+        throw new BatchValidationError(
+          `Input file ${request.input_file_id} not found`,
+        );
       }
       if (fileRecord.purpose !== "batch_input") {
-        throw new BatchValidationError(`Input file ${request.input_file_id} must have purpose 'batch_input' (got '${fileRecord.purpose}')`);
+        throw new BatchValidationError(
+          `Input file ${request.input_file_id} must have purpose 'batch_input' (got '${fileRecord.purpose}')`,
+        );
       }
       if (fileRecord.status !== "ready") {
-        throw new BatchValidationError(`Input file ${request.input_file_id} is not ready (status: '${fileRecord.status}')`);
+        throw new BatchValidationError(
+          `Input file ${request.input_file_id} is not ready (status: '${fileRecord.status}')`,
+        );
       }
 
-      const streamRes = await this.fileService.getFileContentStream(tenant, request.input_file_id);
+      const streamRes = await this.fileService.getFileContentStream(
+        tenant,
+        request.input_file_id,
+      );
       let fileBuffer: Buffer;
       if (Buffer.isBuffer(streamRes.body)) {
         fileBuffer = streamRes.body;
@@ -124,25 +149,36 @@ export class BatchService {
       const parsed = this.parser.parse(fileBuffer);
       parsedItems = parsed.items;
     } else {
-      throw new BatchValidationError("Either input_file_id or items array must be provided");
+      throw new BatchValidationError(
+        "Either input_file_id or items array must be provided",
+      );
     }
 
     if (parsedItems.length === 0) {
-      throw new BatchValidationError("Batch input must contain at least 1 item");
+      throw new BatchValidationError(
+        "Batch input must contain at least 1 item",
+      );
     }
 
     const batchId = `batch_${randomUUID().replace(/-/g, "")}`;
     const now = new Date();
 
     // Calculate deadline from completion window
-    const windowHours = request.completion_window === "1h" ? 1 : request.completion_window === "6h" ? 6 : 24;
+    const windowHours =
+      request.completion_window === "1h"
+        ? 1
+        : request.completion_window === "6h"
+          ? 6
+          : 24;
     const deadlineAt = new Date(now.getTime() + windowHours * 60 * 60 * 1000);
 
     // Reserve estimated wallet credits if creditService is present
     let reservation: BatchExecutionReservationRecord | undefined;
     if (this.creditService) {
       const estimatedCreditsPerItem = "0.01";
-      const totalEstimatedCredits = (Number(estimatedCreditsPerItem) * parsedItems.length).toFixed(6);
+      const totalEstimatedCredits = (
+        Number(estimatedCreditsPerItem) * parsedItems.length
+      ).toFixed(6);
 
       reservation = {
         id: `ber_${randomUUID().replace(/-/g, "")}`,
@@ -231,7 +267,11 @@ export class BatchService {
         organizationId: orgId,
         workspaceId: wsId,
         actorId: auth.apiKeyId,
-        metadata: { batchId, totalItems: parsedItems.length, endpoint: jobRecord.endpoint },
+        metadata: {
+          batchId,
+          totalItems: parsedItems.length,
+          endpoint: jobRecord.endpoint,
+        },
       });
     }
 
@@ -241,7 +281,10 @@ export class BatchService {
   /**
    * Retrieve a batch job by ID
    */
-  public async getBatch(auth: MachineAuthContext, id: string): Promise<BatchJob> {
+  public async getBatch(
+    auth: MachineAuthContext,
+    id: string,
+  ): Promise<BatchJob> {
     const job = await this.repo.getBatchJob(auth.organizationId, id);
     if (!job) {
       throw new BatchNotFoundError(id);
@@ -252,10 +295,13 @@ export class BatchService {
   /**
    * List batch jobs with cursor pagination
    */
-  public async listBatches(auth: MachineAuthContext, query: BatchListQuery): Promise<BatchListResponse> {
+  public async listBatches(
+    auth: MachineAuthContext,
+    query: BatchListQuery,
+  ): Promise<BatchListResponse> {
     const result = await this.repo.listBatchJobs(auth.organizationId, query);
     return {
-      data: result.data.map(j => this.toContractJob(j)),
+      data: result.data.map((j) => this.toContractJob(j)),
       hasMore: result.hasMore,
       nextCursor: result.nextCursor,
     };
@@ -264,13 +310,22 @@ export class BatchService {
   /**
    * Cancel an in-flight or queued batch job
    */
-  public async cancelBatch(auth: MachineAuthContext, id: string): Promise<BatchJob> {
+  public async cancelBatch(
+    auth: MachineAuthContext,
+    id: string,
+  ): Promise<BatchJob> {
     const job = await this.repo.getBatchJob(auth.organizationId, id);
     if (!job) {
       throw new BatchNotFoundError(id);
     }
 
-    const terminalStates = ["completed", "partially_completed", "failed", "cancelled", "expired"];
+    const terminalStates = [
+      "completed",
+      "partially_completed",
+      "failed",
+      "cancelled",
+      "expired",
+    ];
     if (terminalStates.includes(job.status)) {
       return this.toContractJob(job);
     }
@@ -282,7 +337,11 @@ export class BatchService {
     // Mark all non-terminal items as cancelled
     const items = await this.repo.getAllBatchItems(id);
     for (const item of items) {
-      if (item.status !== "succeeded" && item.status !== "failed" && item.status !== "cancelled") {
+      if (
+        item.status !== "succeeded" &&
+        item.status !== "failed" &&
+        item.status !== "cancelled"
+      ) {
         await this.repo.updateBatchItem({
           ...item,
           status: "cancelled",
@@ -314,16 +373,25 @@ export class BatchService {
     auth: MachineAuthContext,
     batchId: string,
     limit = 50,
-    cursor?: string
-  ): Promise<{ data: BatchItem[]; hasMore: boolean; nextCursor: string | null }> {
+    cursor?: string,
+  ): Promise<{
+    data: BatchItem[];
+    hasMore: boolean;
+    nextCursor: string | null;
+  }> {
     const job = await this.repo.getBatchJob(auth.organizationId, batchId);
     if (!job) {
       throw new BatchNotFoundError(batchId);
     }
 
-    const result = await this.repo.listBatchItems(auth.organizationId, batchId, limit, cursor);
+    const result = await this.repo.listBatchItems(
+      auth.organizationId,
+      batchId,
+      limit,
+      cursor,
+    );
     return {
-      data: result.data.map(i => ({
+      data: result.data.map((i) => ({
         id: i.id,
         batchId: i.batchId,
         organizationId: i.organizationId,

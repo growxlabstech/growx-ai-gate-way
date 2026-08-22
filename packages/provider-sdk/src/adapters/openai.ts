@@ -16,13 +16,16 @@ import { parseSseStream } from "../sse-parser.js";
 export class OpenAIAdapter implements ProviderAdapter {
   constructor(public readonly providerId: string = "openai") {}
 
-  validateConfiguration(config: { baseUrl: string; apiVersion?: string | null | undefined }): void {
+  validateConfiguration(config: {
+    baseUrl: string;
+    apiVersion?: string | null | undefined;
+  }): void {
     if (!config.baseUrl || !config.baseUrl.startsWith("http")) {
       throw new GrowXProviderError(
         "provider_invalid_request",
         `Invalid OpenAI baseUrl '${config.baseUrl}'`,
         false,
-        400
+        400,
       );
     }
   }
@@ -50,19 +53,25 @@ export class OpenAIAdapter implements ProviderAdapter {
     }
 
     const u = raw as any;
-    const inputTokens = Math.max(0, Number(u.prompt_tokens ?? u.input_tokens ?? 0));
-    const outputTokens = Math.max(0, Number(u.completion_tokens ?? u.output_tokens ?? 0));
+    const inputTokens = Math.max(
+      0,
+      Number(u.prompt_tokens ?? u.input_tokens ?? 0),
+    );
+    const outputTokens = Math.max(
+      0,
+      Number(u.completion_tokens ?? u.output_tokens ?? 0),
+    );
     const totalTokens = Math.max(
       inputTokens + outputTokens,
-      Number(u.total_tokens ?? inputTokens + outputTokens)
+      Number(u.total_tokens ?? inputTokens + outputTokens),
     );
 
     const cachedInputTokens =
       u.prompt_tokens_details?.cached_tokens !== undefined
         ? Number(u.prompt_tokens_details.cached_tokens)
         : u.cached_tokens !== undefined
-        ? Number(u.cached_tokens)
-        : undefined;
+          ? Number(u.cached_tokens)
+          : undefined;
 
     const reasoningTokens =
       u.completion_tokens_details?.reasoning_tokens !== undefined
@@ -75,7 +84,8 @@ export class OpenAIAdapter implements ProviderAdapter {
       totalTokens,
       source: "provider_reported",
     };
-    if (cachedInputTokens !== undefined) usage.cachedInputTokens = cachedInputTokens;
+    if (cachedInputTokens !== undefined)
+      usage.cachedInputTokens = cachedInputTokens;
     if (reasoningTokens !== undefined) usage.reasoningTokens = reasoningTokens;
     return usage;
   }
@@ -84,62 +94,117 @@ export class OpenAIAdapter implements ProviderAdapter {
     if (error instanceof GrowXProviderError) return error;
 
     if (error instanceof DOMException && error.name === "AbortError") {
-      return new GrowXProviderError("request_cancelled", "The request was cancelled", false, 499, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "request_cancelled",
+        "The request was cancelled",
+        false,
+        499,
+        {
+          cause: error,
+        },
+      );
     }
 
     if (error instanceof Error && error.name === "TimeoutError") {
-      return new GrowXProviderError("provider_timeout", "Provider request timed out", true, 504, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_timeout",
+        "Provider request timed out",
+        true,
+        504,
+        {
+          cause: error,
+        },
+      );
     }
 
     const errObj = (error && typeof error === "object" ? error : {}) as any;
-    const status = typeof errObj.status === "number" ? errObj.status : undefined;
+    const status =
+      typeof errObj.status === "number" ? errObj.status : undefined;
     const msg =
       typeof errObj.message === "string"
         ? errObj.message
         : typeof errObj.error?.message === "string"
-        ? errObj.error.message
-        : "Unknown OpenAI provider error";
+          ? errObj.error.message
+          : "Unknown OpenAI provider error";
 
     if (status === 401 || status === 403) {
-      return new GrowXProviderError("provider_authentication_error", "Provider authentication failed", false, 502, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_authentication_error",
+        "Provider authentication failed",
+        false,
+        502,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 404) {
-      return new GrowXProviderError("model_not_found", `Model not found on provider: ${msg}`, false, 404, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "model_not_found",
+        `Model not found on provider: ${msg}`,
+        false,
+        404,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 429) {
-      return new GrowXProviderError("provider_rate_limit", `Provider rate limit exceeded: ${msg}`, true, 429, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_rate_limit",
+        `Provider rate limit exceeded: ${msg}`,
+        true,
+        429,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 400) {
-      return new GrowXProviderError("provider_invalid_request", `Bad request to provider: ${msg}`, false, 400, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_invalid_request",
+        `Bad request to provider: ${msg}`,
+        false,
+        400,
+        {
+          cause: error,
+        },
+      );
     }
     if (status && status >= 500) {
-      return new GrowXProviderError("provider_server_error", "Provider server error occurred", true, 503, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_server_error",
+        "Provider server error occurred",
+        true,
+        503,
+        {
+          cause: error,
+        },
+      );
     }
 
-    return new GrowXProviderError("provider_unavailable", `Provider error: ${msg}`, true, 503, {
-      cause: error,
-    });
+    return new GrowXProviderError(
+      "provider_unavailable",
+      `Provider error: ${msg}`,
+      true,
+      503,
+      {
+        cause: error,
+      },
+    );
   }
 
-  private buildRequestBody(request: NormalizedGenerationRequest, stream = false): any {
+  private buildRequestBody(
+    request: NormalizedGenerationRequest,
+    stream = false,
+  ): any {
     const openAIMessages: Array<any> = [];
 
     // If systemPrompt is provided separately and no top-level system message is present
-    if (request.systemPrompt && !request.messages.some((m) => m.role === "system")) {
+    if (
+      request.systemPrompt &&
+      !request.messages.some((m) => m.role === "system")
+    ) {
       openAIMessages.push({
         role: "system",
         content: request.systemPrompt,
@@ -150,7 +215,10 @@ export class OpenAIAdapter implements ProviderAdapter {
       if (msg.role === "system") {
         openAIMessages.push({
           role: "system",
-          content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+          content:
+            typeof msg.content === "string"
+              ? msg.content
+              : JSON.stringify(msg.content),
         });
       } else if (msg.role === "user") {
         if (typeof msg.content === "string") {
@@ -168,7 +236,9 @@ export class OpenAIAdapter implements ProviderAdapter {
                 type: "image_url",
                 image_url: {
                   url: part.imageUrl.url,
-                  ...(part.imageUrl.detail ? { detail: part.imageUrl.detail } : {}),
+                  ...(part.imageUrl.detail
+                    ? { detail: part.imageUrl.detail }
+                    : {}),
                 },
               };
             }
@@ -191,7 +261,10 @@ export class OpenAIAdapter implements ProviderAdapter {
             type: "function",
             function: {
               name: tc.name,
-              arguments: typeof tc.arguments === "string" ? tc.arguments : JSON.stringify(tc.arguments),
+              arguments:
+                typeof tc.arguments === "string"
+                  ? tc.arguments
+                  : JSON.stringify(tc.arguments),
             },
           }));
         }
@@ -200,7 +273,10 @@ export class OpenAIAdapter implements ProviderAdapter {
         openAIMessages.push({
           role: "tool",
           tool_call_id: msg.toolCallId ?? "",
-          content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+          content:
+            typeof msg.content === "string"
+              ? msg.content
+              : JSON.stringify(msg.content),
         });
       }
     }
@@ -215,9 +291,11 @@ export class OpenAIAdapter implements ProviderAdapter {
       body.stream_options = { include_usage: true };
     }
 
-    if (request.temperature !== undefined) body.temperature = request.temperature;
+    if (request.temperature !== undefined)
+      body.temperature = request.temperature;
     if (request.topP !== undefined) body.top_p = request.topP;
-    if (request.maxOutputTokens !== undefined) body.max_tokens = request.maxOutputTokens;
+    if (request.maxOutputTokens !== undefined)
+      body.max_tokens = request.maxOutputTokens;
     if (request.stop && request.stop.length > 0) body.stop = request.stop;
 
     // Tools
@@ -240,7 +318,10 @@ export class OpenAIAdapter implements ProviderAdapter {
     if (request.structuredOutput) {
       if (request.structuredOutput.type === "json_object") {
         body.response_format = { type: "json_object" };
-      } else if (request.structuredOutput.type === "json_schema" && request.structuredOutput.schema) {
+      } else if (
+        request.structuredOutput.type === "json_schema" &&
+        request.structuredOutput.schema
+      ) {
         body.response_format = {
           type: "json_schema",
           json_schema: {
@@ -260,7 +341,10 @@ export class OpenAIAdapter implements ProviderAdapter {
     return body;
   }
 
-  private createAbortSignal(context: ProviderExecutionContext): { signal: AbortSignal; cleanup: () => void } {
+  private createAbortSignal(context: ProviderExecutionContext): {
+    signal: AbortSignal;
+    cleanup: () => void;
+  } {
     const timeoutSignal = AbortSignal.timeout(context.timeoutMs);
     if (!context.cancellationSignal) {
       return { signal: timeoutSignal, cleanup: () => {} };
@@ -270,7 +354,9 @@ export class OpenAIAdapter implements ProviderAdapter {
     const onCancel = () => controller.abort(context.cancellationSignal?.reason);
     const onTimeout = () => controller.abort(timeoutSignal.reason);
 
-    context.cancellationSignal.addEventListener("abort", onCancel, { once: true });
+    context.cancellationSignal.addEventListener("abort", onCancel, {
+      once: true,
+    });
     timeoutSignal.addEventListener("abort", onTimeout, { once: true });
 
     return {
@@ -284,13 +370,15 @@ export class OpenAIAdapter implements ProviderAdapter {
 
   async execute(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): Promise<NormalizedGenerationResponse> {
     const startedAt = new Date();
     const { signal, cleanup } = this.createAbortSignal(context);
 
     try {
-      const baseUrl = ((context as unknown as any).baseUrl as string | undefined) || "https://api.openai.com/v1";
+      const baseUrl =
+        ((context as unknown as any).baseUrl as string | undefined) ||
+        "https://api.openai.com/v1";
       const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
       const body = this.buildRequestBody(request, false);
 
@@ -334,16 +422,22 @@ export class OpenAIAdapter implements ProviderAdapter {
         for (const tc of message.tool_calls) {
           toolCalls.push({
             id: tc.id ?? `call_${Math.random().toString(36).slice(2)}`,
-            name: (tc as any & { function?: { name?: string; arguments?: string } }).function?.name ?? "",
-            arguments: (tc as any & { function?: { name?: string; arguments?: string } }).function?.arguments ?? "{}",
+            name:
+              (tc as any & { function?: { name?: string; arguments?: string } })
+                .function?.name ?? "",
+            arguments:
+              (tc as any & { function?: { name?: string; arguments?: string } })
+                .function?.arguments ?? "{}",
           });
         }
       }
 
       let finishReason: NormalizedGenerationResponse["finishReason"] = "stop";
       if (choice?.finish_reason === "length") finishReason = "length";
-      else if (choice?.finish_reason === "tool_calls") finishReason = "tool_call";
-      else if (choice?.finish_reason === "content_filter") finishReason = "content_filter";
+      else if (choice?.finish_reason === "tool_calls")
+        finishReason = "tool_call";
+      else if (choice?.finish_reason === "content_filter")
+        finishReason = "content_filter";
       else if (choice?.finish_reason === "stop") finishReason = "stop";
       else if (choice?.finish_reason) finishReason = "other";
 
@@ -385,7 +479,7 @@ export class OpenAIAdapter implements ProviderAdapter {
 
   async *stream(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): AsyncIterable<NormalizedStreamEvent> {
     const startedAt = new Date();
     const { signal, cleanup } = this.createAbortSignal(context);
@@ -393,7 +487,8 @@ export class OpenAIAdapter implements ProviderAdapter {
     const responseId = `resp_${request.requestId.replace(/^req_/, "")}`;
 
     try {
-      const baseUrl = (context as unknown as any).baseUrl || "https://api.openai.com/v1";
+      const baseUrl =
+        (context as unknown as any).baseUrl || "https://api.openai.com/v1";
       const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
       const body = this.buildRequestBody(request, true);
 
@@ -425,7 +520,12 @@ export class OpenAIAdapter implements ProviderAdapter {
       }
 
       if (!res.body) {
-        throw new GrowXProviderError("provider_server_error", "Empty response body from OpenAI stream", true, 503);
+        throw new GrowXProviderError(
+          "provider_server_error",
+          "Empty response body from OpenAI stream",
+          true,
+          503,
+        );
       }
 
       yield {
@@ -437,8 +537,12 @@ export class OpenAIAdapter implements ProviderAdapter {
       };
 
       let fullContent = "";
-      const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
-      let finalFinishReason: NormalizedGenerationResponse["finishReason"] = "stop";
+      const toolCallMap = new Map<
+        number,
+        { id: string; name: string; arguments: string }
+      >();
+      let finalFinishReason: NormalizedGenerationResponse["finishReason"] =
+        "stop";
       let finalUsage: ProviderUsage | undefined;
       let firstTokenAt: Date | undefined;
 
@@ -461,8 +565,10 @@ export class OpenAIAdapter implements ProviderAdapter {
 
         if (choice.finish_reason) {
           if (choice.finish_reason === "length") finalFinishReason = "length";
-          else if (choice.finish_reason === "tool_calls") finalFinishReason = "tool_call";
-          else if (choice.finish_reason === "content_filter") finalFinishReason = "content_filter";
+          else if (choice.finish_reason === "tool_calls")
+            finalFinishReason = "tool_call";
+          else if (choice.finish_reason === "content_filter")
+            finalFinishReason = "content_filter";
           else if (choice.finish_reason === "stop") finalFinishReason = "stop";
           else finalFinishReason = "other";
         }
@@ -486,10 +592,15 @@ export class OpenAIAdapter implements ProviderAdapter {
         if (Array.isArray(delta.tool_calls)) {
           for (const tc of delta.tool_calls) {
             const index = tc.index ?? 0;
-            const existing = toolCallMap.get(index) ?? { id: "", name: "", arguments: "" };
+            const existing = toolCallMap.get(index) ?? {
+              id: "",
+              name: "",
+              arguments: "",
+            };
             if (tc.id) existing.id = tc.id;
             if (tc.function?.name) existing.name += tc.function.name;
-            if (tc.function?.arguments) existing.arguments += tc.function.arguments;
+            if (tc.function?.arguments)
+              existing.arguments += tc.function.arguments;
             toolCallMap.set(index, existing);
 
             yield {
@@ -541,19 +652,27 @@ export class OpenAIAdapter implements ProviderAdapter {
       }
 
       const completedAt = new Date();
-      const finalToolCalls: ToolCall[] = Array.from(toolCallMap.values()).map((tc) => ({
-        id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
-        name: tc.name,
-        arguments: tc.arguments,
-      }));
+      const finalToolCalls: ToolCall[] = Array.from(toolCallMap.values()).map(
+        (tc) => ({
+          id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
+          name: tc.name,
+          arguments: tc.arguments,
+        }),
+      );
 
-      const timing: { startedAt: Date; completedAt: Date; latencyMs: number; timeToFirstTokenMs?: number } = {
+      const timing: {
+        startedAt: Date;
+        completedAt: Date;
+        latencyMs: number;
+        timeToFirstTokenMs?: number;
+      } = {
         startedAt,
         completedAt,
         latencyMs: completedAt.getTime() - startedAt.getTime(),
       };
       if (firstTokenAt) {
-        timing.timeToFirstTokenMs = firstTokenAt.getTime() - startedAt.getTime();
+        timing.timeToFirstTokenMs =
+          firstTokenAt.getTime() - startedAt.getTime();
       }
 
       const completeResponse: NormalizedGenerationResponse = {
@@ -577,7 +696,8 @@ export class OpenAIAdapter implements ProviderAdapter {
         },
         timing,
       };
-      if (finalToolCalls.length > 0) completeResponse.toolCalls = finalToolCalls;
+      if (finalToolCalls.length > 0)
+        completeResponse.toolCalls = finalToolCalls;
 
       yield {
         requestId: request.requestId,
@@ -618,11 +738,16 @@ export class OpenAIAdapter implements ProviderAdapter {
     const started = Date.now();
     try {
       const signal = context.cancellationSignal
-        ? AbortSignal.any([context.cancellationSignal, AbortSignal.timeout(context.timeoutMs)])
+        ? AbortSignal.any([
+            context.cancellationSignal,
+            AbortSignal.timeout(context.timeoutMs),
+          ])
         : AbortSignal.timeout(context.timeoutMs);
 
       const res = await fetch(`${context.baseUrl.replace(/\/+$/, "")}/models`, {
-        headers: context.credential ? { authorization: `Bearer ${context.credential}` } : {},
+        headers: context.credential
+          ? { authorization: `Bearer ${context.credential}` }
+          : {},
         signal,
       });
 

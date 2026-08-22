@@ -96,11 +96,13 @@ describe("Phase 23 — Notification HTTP Server Endpoints", () => {
           type: "email.bounced",
           data: { to: ["bounced_dest@example.com"] },
         }),
-      }
+      },
     );
 
     expect(res.status).toBe(200);
-    const suppression = await repository.getSuppression("bounced_dest@example.com");
+    const suppression = await repository.getSuppression(
+      "bounced_dest@example.com",
+    );
     expect(suppression).toBeDefined();
     expect(suppression!.reason).toBe("hard_bounce");
   });

@@ -29,26 +29,29 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async getEndpoint(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<WebhookEndpoint | undefined> {
     const endpoint = this.endpoints.get(id);
-    if (!endpoint || endpoint.organizationId !== organizationId) return undefined;
+    if (!endpoint || endpoint.organizationId !== organizationId)
+      return undefined;
     return endpoint;
   }
 
   async listEndpoints(
     organizationId: string,
-    workspaceId?: string | undefined
+    workspaceId?: string | undefined,
   ): Promise<WebhookEndpoint[]> {
     return Array.from(this.endpoints.values())
       .filter((e) => e.organizationId === organizationId)
-      .filter((e) => (workspaceId ? !e.workspaceId || e.workspaceId === workspaceId : true));
+      .filter((e) =>
+        workspaceId ? !e.workspaceId || e.workspaceId === workspaceId : true,
+      );
   }
 
   async updateEndpoint(
     organizationId: string,
     id: string,
-    updates: Partial<WebhookEndpoint>
+    updates: Partial<WebhookEndpoint>,
   ): Promise<WebhookEndpoint> {
     const existing = await this.getEndpoint(organizationId, id);
     if (!existing) throw new Error(`Webhook endpoint not found: ${id}`);
@@ -60,24 +63,32 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   // ─── Secrets ─────────────────────────────────────────────────
 
-  async createSigningSecret(secret: WebhookSigningSecret): Promise<WebhookSigningSecret> {
+  async createSigningSecret(
+    secret: WebhookSigningSecret,
+  ): Promise<WebhookSigningSecret> {
     this.secrets.set(secret.id, secret);
     return secret;
   }
 
-  async getActiveSigningSecret(endpointId: string): Promise<WebhookSigningSecret | undefined> {
+  async getActiveSigningSecret(
+    endpointId: string,
+  ): Promise<WebhookSigningSecret | undefined> {
     return Array.from(this.secrets.values()).find(
-      (s) => s.endpointId === endpointId && s.status === "active"
+      (s) => s.endpointId === endpointId && s.status === "active",
     );
   }
 
-  async listSigningSecrets(endpointId: string): Promise<WebhookSigningSecret[]> {
-    return Array.from(this.secrets.values()).filter((s) => s.endpointId === endpointId);
+  async listSigningSecrets(
+    endpointId: string,
+  ): Promise<WebhookSigningSecret[]> {
+    return Array.from(this.secrets.values()).filter(
+      (s) => s.endpointId === endpointId,
+    );
   }
 
   async updateSigningSecret(
     id: string,
-    updates: Partial<WebhookSigningSecret>
+    updates: Partial<WebhookSigningSecret>,
   ): Promise<WebhookSigningSecret> {
     const existing = this.secrets.get(id);
     if (!existing) throw new Error(`Signing secret not found: ${id}`);
@@ -90,7 +101,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async createSubscriptions(
     endpointId: string,
-    eventTypes: readonly string[]
+    eventTypes: readonly string[],
   ): Promise<WebhookSubscription[]> {
     const results: WebhookSubscription[] = [];
     const now = new Date();
@@ -111,17 +122,17 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async listSubscriptions(endpointId: string): Promise<WebhookSubscription[]> {
     return Array.from(this.subscriptions.values()).filter(
-      (s) => s.endpointId === endpointId
+      (s) => s.endpointId === endpointId,
     );
   }
 
   async findMatchingEndpoints(
     organizationId: string,
     eventType: string,
-    workspaceId?: string | undefined
+    workspaceId?: string | undefined,
   ): Promise<WebhookEndpoint[]> {
     const orgEndpoints = Array.from(this.endpoints.values()).filter(
-      (e) => e.organizationId === organizationId && e.status === "active"
+      (e) => e.organizationId === organizationId && e.status === "active",
     );
 
     const matching: WebhookEndpoint[] = [];
@@ -134,7 +145,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
       // Check if endpoint eventTypes match pattern
       const hasMatch = ep.eventTypes.some((subscribed) =>
-        matchesEventSubscription(subscribed, eventType)
+        matchesEventSubscription(subscribed, eventType),
       );
 
       if (hasMatch) {
@@ -147,14 +158,16 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   // ─── Outbound Events ─────────────────────────────────────────
 
-  async createOutboundEvent(event: OutboundWebhookEvent): Promise<OutboundWebhookEvent> {
+  async createOutboundEvent(
+    event: OutboundWebhookEvent,
+  ): Promise<OutboundWebhookEvent> {
     this.outboundEvents.set(event.id, event);
     return event;
   }
 
   async getOutboundEvent(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<OutboundWebhookEvent | undefined> {
     const evt = this.outboundEvents.get(id);
     if (!evt || evt.organizationId !== organizationId) return undefined;
@@ -164,13 +177,13 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
   async findOutboundEventBySource(
     sourceEventId: string,
     eventType: string,
-    eventVersion: string
+    eventVersion: string,
   ): Promise<OutboundWebhookEvent | undefined> {
     return Array.from(this.outboundEvents.values()).find(
       (e) =>
         e.sourceEventId === sourceEventId &&
         e.eventType === eventType &&
-        e.eventVersion === eventVersion
+        e.eventVersion === eventVersion,
     );
   }
 
@@ -180,18 +193,24 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
       eventType?: string | undefined;
       fromDate?: Date | undefined;
       toDate?: Date | undefined;
-    }
+    },
   ): Promise<OutboundWebhookEvent[]> {
     return Array.from(this.outboundEvents.values())
       .filter((e) => e.organizationId === organizationId)
-      .filter((e) => (filters?.eventType ? e.eventType === filters.eventType : true))
-      .filter((e) => (filters?.fromDate ? e.createdAt >= filters.fromDate : true))
+      .filter((e) =>
+        filters?.eventType ? e.eventType === filters.eventType : true,
+      )
+      .filter((e) =>
+        filters?.fromDate ? e.createdAt >= filters.fromDate : true,
+      )
       .filter((e) => (filters?.toDate ? e.createdAt <= filters.toDate : true));
   }
 
   // ─── Deliveries & Attempts ───────────────────────────────────
 
-  async createDeliveries(deliveries: WebhookDelivery[]): Promise<WebhookDelivery[]> {
+  async createDeliveries(
+    deliveries: WebhookDelivery[],
+  ): Promise<WebhookDelivery[]> {
     for (const d of deliveries) {
       this.deliveries.set(d.id, d);
     }
@@ -200,7 +219,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async getDelivery(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<WebhookDelivery | undefined> {
     const del = this.deliveries.get(id);
     if (!del || del.organizationId !== organizationId) return undefined;
@@ -212,17 +231,19 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
     filters?: {
       endpointId?: string | undefined;
       status?: WebhookDeliveryStatus | undefined;
-    }
+    },
   ): Promise<WebhookDelivery[]> {
     return Array.from(this.deliveries.values())
       .filter((d) => d.organizationId === organizationId)
-      .filter((d) => (filters?.endpointId ? d.endpointId === filters.endpointId : true))
+      .filter((d) =>
+        filters?.endpointId ? d.endpointId === filters.endpointId : true,
+      )
       .filter((d) => (filters?.status ? d.status === filters.status : true));
   }
 
   async updateDelivery(
     id: string,
-    updates: Partial<WebhookDelivery>
+    updates: Partial<WebhookDelivery>,
   ): Promise<WebhookDelivery> {
     const existing = this.deliveries.get(id);
     if (!existing) throw new Error(`Webhook delivery not found: ${id}`);
@@ -234,7 +255,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
   async claimPendingDeliveries(
     batchSize: number,
     leaseDurationMs: number,
-    workerId: string
+    workerId: string,
   ): Promise<WebhookDelivery[]> {
     const now = new Date();
     const claimed: WebhookDelivery[] = [];
@@ -266,13 +287,17 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
     return claimed;
   }
 
-  async createAttempt(attempt: WebhookDeliveryAttempt): Promise<WebhookDeliveryAttempt> {
+  async createAttempt(
+    attempt: WebhookDeliveryAttempt,
+  ): Promise<WebhookDeliveryAttempt> {
     this.attempts.set(attempt.id, attempt);
     return attempt;
   }
 
   async listAttempts(deliveryId: string): Promise<WebhookDeliveryAttempt[]> {
-    return Array.from(this.attempts.values()).filter((a) => a.deliveryId === deliveryId);
+    return Array.from(this.attempts.values()).filter(
+      (a) => a.deliveryId === deliveryId,
+    );
   }
 
   // ─── Replay Jobs ─────────────────────────────────────────────
@@ -284,7 +309,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async getReplayJob(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<WebhookReplayJob | undefined> {
     const job = this.replayJobs.get(id);
     if (!job || job.organizationId !== organizationId) return undefined;
@@ -293,7 +318,7 @@ export class InMemoryWebhookRepository implements IWebhookRepository {
 
   async updateReplayJob(
     id: string,
-    updates: Partial<WebhookReplayJob>
+    updates: Partial<WebhookReplayJob>,
   ): Promise<WebhookReplayJob> {
     const existing = this.replayJobs.get(id);
     if (!existing) throw new Error(`Replay job not found: ${id}`);

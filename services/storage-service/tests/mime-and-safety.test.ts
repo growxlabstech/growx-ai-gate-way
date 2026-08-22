@@ -1,24 +1,40 @@
 import { describe, it, expect } from "vitest";
 import { FileTypeDetector } from "../src/domain/mime-detector.js";
-import { sanitizeFileName, generateStorageKey, validatePathSafety } from "../src/domain/storage-key.js";
+import {
+  sanitizeFileName,
+  generateStorageKey,
+  validatePathSafety,
+} from "../src/domain/storage-key.js";
 import { TruthfulFileScanner } from "../src/domain/file-scanner.js";
 
 describe("Phase 25: MIME & File Security Controls", () => {
   it("1. Accurately sniffs magic bytes for PNG, JPEG, PDF, MP3, and JSON", () => {
-    const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
-    expect(FileTypeDetector.detectMimeType(pngHeader).detectedMimeType).toBe("image/png");
+    const pngHeader = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00,
+    ]);
+    expect(FileTypeDetector.detectMimeType(pngHeader).detectedMimeType).toBe(
+      "image/png",
+    );
 
     const jpegHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
-    expect(FileTypeDetector.detectMimeType(jpegHeader).detectedMimeType).toBe("image/jpeg");
+    expect(FileTypeDetector.detectMimeType(jpegHeader).detectedMimeType).toBe(
+      "image/jpeg",
+    );
 
     const pdfHeader = Buffer.from("%PDF-1.7 header content here");
-    expect(FileTypeDetector.detectMimeType(pdfHeader).detectedMimeType).toBe("application/pdf");
+    expect(FileTypeDetector.detectMimeType(pdfHeader).detectedMimeType).toBe(
+      "application/pdf",
+    );
 
     const mp3Header = Buffer.from([0x49, 0x44, 0x33, 0x03, 0x00, 0x00]);
-    expect(FileTypeDetector.detectMimeType(mp3Header).detectedMimeType).toBe("audio/mpeg");
+    expect(FileTypeDetector.detectMimeType(mp3Header).detectedMimeType).toBe(
+      "audio/mpeg",
+    );
 
     const jsonHeader = Buffer.from('{"key": "value", "numbers": [1,2,3]}');
-    expect(FileTypeDetector.detectMimeType(jsonHeader).detectedMimeType).toBe("application/json");
+    expect(FileTypeDetector.detectMimeType(jsonHeader).detectedMimeType).toBe(
+      "application/json",
+    );
   });
 
   it("2. Strictly rejects executable binaries (PE, ELF, Mach-O)", () => {
@@ -54,7 +70,9 @@ describe("Phase 25: MIME & File Security Controls", () => {
   });
 
   it("4. Detects dangerous declared vs detected MIME type mismatches", () => {
-    const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const pngHeader = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     const detected = FileTypeDetector.detectMimeType(pngHeader);
 
     expect(() => {
@@ -63,15 +81,21 @@ describe("Phase 25: MIME & File Security Controls", () => {
         declaredMime: "text/plain",
         detected,
       });
-    }).toThrowError(/Declared MIME type.*dangerously contradicts detected content type/);
+    }).toThrowError(
+      /Declared MIME type.*dangerously contradicts detected content type/,
+    );
   });
 
   it("5. Sanitizes filenames and prevents path traversal attacks", () => {
     expect(sanitizeFileName("../../../etc/passwd")).toBe("passwd");
     expect(sanitizeFileName("..\\windows\\system32\\cmd.exe")).toBe("cmd.exe");
-    expect(sanitizeFileName("report (2026) [final]!.pdf")).toBe("report__2026___final__.pdf");
+    expect(sanitizeFileName("report (2026) [final]!.pdf")).toBe(
+      "report__2026___final__.pdf",
+    );
 
-    expect(validatePathSafety("org/123/workspace/ws1/files/f1/content")).toBe(true);
+    expect(validatePathSafety("org/123/workspace/ws1/files/f1/content")).toBe(
+      true,
+    );
     expect(validatePathSafety("org/123/../../etc/passwd")).toBe(false);
   });
 
@@ -82,7 +106,9 @@ describe("Phase 25: MIME & File Security Controls", () => {
       fileId: "file_999",
       safeFileName: "invoice.pdf",
     });
-    expect(key).toBe("org/org_alpha/workspace/ws_ws_prod/files/file_999/content");
+    expect(key).toBe(
+      "org/org_alpha/workspace/ws_ws_prod/files/file_999/content",
+    );
     expect(key.includes("invoice.pdf")).toBe(false);
   });
 

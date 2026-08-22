@@ -9,7 +9,11 @@ export interface SecretProviderHealth {
 }
 
 export interface SecretProvider {
-  putSecret(reference: string, payload: string, metadata?: Record<string, unknown>): Promise<void>;
+  putSecret(
+    reference: string,
+    payload: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void>;
   getSecret(reference: string): Promise<string | null>;
   deleteSecret(reference: string): Promise<void>;
   health(): Promise<SecretProviderHealth>;
@@ -19,18 +23,29 @@ export function generateSecretFingerprint(secret: string): string {
   if (!secret) return "unknown";
   const trimmed = secret.trim();
   const last4 = trimmed.length > 4 ? trimmed.slice(-4) : trimmed;
-  const hash = crypto.createHash("sha256").update(trimmed).digest("hex").slice(0, 8);
-  const prefix = trimmed.startsWith("sk-") ? "sk-..." : trimmed.startsWith("gsk_") ? "gsk_..." : "sec_...";
+  const hash = crypto
+    .createHash("sha256")
+    .update(trimmed)
+    .digest("hex")
+    .slice(0, 8);
+  const prefix = trimmed.startsWith("sk-")
+    ? "sk-..."
+    : trimmed.startsWith("gsk_")
+      ? "gsk_..."
+      : "sec_...";
   return `${prefix}${last4}#${hash}`;
 }
 
 export class InMemorySecretProvider implements SecretProvider {
-  private secrets = new Map<string, { payload: string; metadata?: Record<string, unknown> | undefined }>();
+  private secrets = new Map<
+    string,
+    { payload: string; metadata?: Record<string, unknown> | undefined }
+  >();
 
   public async putSecret(
     reference: string,
     payload: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     this.secrets.set(reference, {
       payload,
@@ -48,7 +63,11 @@ export class InMemorySecretProvider implements SecretProvider {
   }
 
   public async health(): Promise<SecretProviderHealth> {
-    return { status: "healthy", latencyMs: 0, details: { count: this.secrets.size, backend: "in-memory" } };
+    return {
+      status: "healthy",
+      latencyMs: 0,
+      details: { count: this.secrets.size, backend: "in-memory" },
+    };
   }
 
   public clear(): void {
@@ -59,7 +78,14 @@ export class InMemorySecretProvider implements SecretProvider {
 export class EnvelopeEncryptionSecretProvider implements SecretProvider {
   private readonly masterKey: Buffer;
   private readonly keyVersion: string;
-  private storage = new Map<string, { encryptedPayload: string; keyVersion: string; metadata?: Record<string, unknown> | undefined }>();
+  private storage = new Map<
+    string,
+    {
+      encryptedPayload: string;
+      keyVersion: string;
+      metadata?: Record<string, unknown> | undefined;
+    }
+  >();
 
   constructor(key?: Buffer | string, keyVersion = "v1") {
     this.keyVersion = keyVersion;
@@ -77,12 +103,18 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
             "provider_server_error",
             "Missing PROVIDER_ENCRYPTION_KEY in production environment",
             false,
-            500
+            500,
           );
         }
-        this.masterKey = Buffer.from("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "hex");
+        this.masterKey = Buffer.from(
+          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "hex",
+        );
       } else {
-        this.masterKey = Buffer.from(rawEnv, rawEnv.length === 64 ? "hex" : "utf8");
+        this.masterKey = Buffer.from(
+          rawEnv,
+          rawEnv.length === 64 ? "hex" : "utf8",
+        );
       }
     }
 
@@ -91,7 +123,7 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
         "provider_server_error",
         `Provider encryption master key must be 32 bytes. Received: ${this.masterKey.length} bytes`,
         false,
-        500
+        500,
       );
     }
   }
@@ -99,7 +131,7 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
   public async putSecret(
     reference: string,
     payload: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     try {
       const encryptedPayload = encryptSecret(payload, this.masterKey);
@@ -114,7 +146,7 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
         "Failed to encrypt and store secret in vault",
         false,
         500,
-        { cause: err }
+        { cause: err },
       );
     }
   }
@@ -130,7 +162,7 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
         "Failed to decrypt vault secret",
         false,
         500,
-        { cause: err }
+        { cause: err },
       );
     }
   }
@@ -146,11 +178,23 @@ export class EnvelopeEncryptionSecretProvider implements SecretProvider {
       const encrypted = encryptSecret(testVal, this.masterKey);
       const decrypted = decryptSecret(encrypted, this.masterKey);
       if (decrypted !== testVal) {
-        return { status: "unhealthy", latencyMs: Date.now() - start, details: { reason: "crypto_mismatch" } };
+        return {
+          status: "unhealthy",
+          latencyMs: Date.now() - start,
+          details: { reason: "crypto_mismatch" },
+        };
       }
-      return { status: "healthy", latencyMs: Date.now() - start, details: { count: this.storage.size, backend: "envelope_aes256_gcm" } };
+      return {
+        status: "healthy",
+        latencyMs: Date.now() - start,
+        details: { count: this.storage.size, backend: "envelope_aes256_gcm" },
+      };
     } catch (err) {
-      return { status: "unhealthy", latencyMs: Date.now() - start, details: { error: String(err) } };
+      return {
+        status: "unhealthy",
+        latencyMs: Date.now() - start,
+        details: { error: String(err) },
+      };
     }
   }
 }

@@ -50,7 +50,7 @@ export class InMemoryContinuationRepository implements IContinuationRepository {
 export class ToolContinuationService {
   constructor(
     private readonly repository: IContinuationRepository,
-    private readonly defaultTtlMs: number = 3_600_000
+    private readonly defaultTtlMs: number = 3_600_000,
   ) {}
 
   async createContinuation(params: {
@@ -82,7 +82,9 @@ export class ToolContinuationService {
     return continuation;
   }
 
-  async resolveContinuation(requestId: string): Promise<ToolContinuation | null> {
+  async resolveContinuation(
+    requestId: string,
+  ): Promise<ToolContinuation | null> {
     return this.repository.findByRequestId(requestId);
   }
 

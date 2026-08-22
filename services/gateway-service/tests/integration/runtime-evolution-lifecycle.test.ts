@@ -31,8 +31,12 @@ describe("Runtime Evolution & Selective Go/Rust Extraction Lifecycle (Phase 38)"
 
   it("determines deterministic runtime target according to canary percentage", () => {
     const orgId = "org_enterprise_1";
-    const decision1 = canaryController.resolveRuntimeTarget({ organizationId: orgId });
-    const decision2 = canaryController.resolveRuntimeTarget({ organizationId: orgId });
+    const decision1 = canaryController.resolveRuntimeTarget({
+      organizationId: orgId,
+    });
+    const decision2 = canaryController.resolveRuntimeTarget({
+      organizationId: orgId,
+    });
 
     expect(decision1.target).toBe(decision2.target);
     expect(["typescript", "go_runtime"]).toContain(decision1.target);
@@ -55,16 +59,29 @@ describe("Runtime Evolution & Selective Go/Rust Extraction Lifecycle (Phase 38)"
       durationMs: 3, // Go runtime faster
     };
 
-    const comparison = ShadowEvaluator.compareResults(primaryResult, shadowResult);
+    const comparison = ShadowEvaluator.compareResults(
+      primaryResult,
+      shadowResult,
+    );
     expect(comparison.matches).toBe(true);
     expect(comparison.mismatchType).toBe("none");
-    expect(comparison.shadowLatencyMs).toBeLessThan(comparison.primaryLatencyMs);
+    expect(comparison.shadowLatencyMs).toBeLessThan(
+      comparison.primaryLatencyMs,
+    );
   });
 
   it("executes cross-language golden contract verification across TypeScript, Go and Rust", async () => {
     const reqId = "req_golden_" + Date.now();
-    const tsRes = await tsAdapter.execute({ id: reqId, prompt: "Translate this", model: "gpt-4o" });
-    const goRes = await goAdapter.execute({ id: reqId, prompt: "Translate this", model: "gpt-4o" });
+    const tsRes = await tsAdapter.execute({
+      id: reqId,
+      prompt: "Translate this",
+      model: "gpt-4o",
+    });
+    const goRes = await goAdapter.execute({
+      id: reqId,
+      prompt: "Translate this",
+      model: "gpt-4o",
+    });
 
     // Verify 100% contract equivalence
     expect(() => {
@@ -72,12 +89,17 @@ describe("Runtime Evolution & Selective Go/Rust Extraction Lifecycle (Phase 38)"
     }).not.toThrow();
 
     // Verify Rust tokenizer bridge stateless throughput
-    const tokenCount = RustTokenizerAdapter.countTokens("Translate this into French");
+    const tokenCount = RustTokenizerAdapter.countTokens(
+      "Translate this into French",
+    );
     expect(tokenCount).toBeGreaterThan(0);
   });
 
   it("executes emergency rollback safely to TypeScript runtime", () => {
-    canaryController.updatePolicy({ canaryPercentage: 50, stage: "6_canary_50pct" });
+    canaryController.updatePolicy({
+      canaryPercentage: 50,
+      stage: "6_canary_50pct",
+    });
     expect(canaryController.getPolicy().canaryPercentage).toBe(50);
 
     try {
@@ -92,7 +114,9 @@ describe("Runtime Evolution & Selective Go/Rust Extraction Lifecycle (Phase 38)"
     expect(policy.stage).toBe("0_disabled");
 
     // All subsequent requests route strictly to TypeScript fallback
-    const decision = canaryController.resolveRuntimeTarget({ organizationId: "any_org" });
+    const decision = canaryController.resolveRuntimeTarget({
+      organizationId: "any_org",
+    });
     expect(decision.target).toBe("typescript");
     expect(decision.isCanary).toBe(false);
   });

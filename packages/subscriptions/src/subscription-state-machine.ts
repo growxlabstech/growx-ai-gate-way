@@ -4,13 +4,16 @@ import type { SubscriptionStatus } from "./types.js";
  * Defines valid subscription state transitions.
  * Each key is a current state; the value is the set of states it can transition to.
  */
-const VALID_TRANSITIONS: Record<SubscriptionStatus, readonly SubscriptionStatus[]> = {
-  trialing:  ["active", "cancelled", "expired"],
-  active:    ["paused", "cancelled", "past_due", "expired"],
-  paused:    ["active", "cancelled"],
-  past_due:  ["active", "cancelled", "expired"],
-  cancelled: [],  // terminal
-  expired:   [],  // terminal
+const VALID_TRANSITIONS: Record<
+  SubscriptionStatus,
+  readonly SubscriptionStatus[]
+> = {
+  trialing: ["active", "cancelled", "expired"],
+  active: ["paused", "cancelled", "past_due", "expired"],
+  paused: ["active", "cancelled"],
+  past_due: ["active", "cancelled", "expired"],
+  cancelled: [], // terminal
+  expired: [], // terminal
 };
 
 export interface TransitionResult {
@@ -27,7 +30,10 @@ export function validateTransition(
   to: SubscriptionStatus,
 ): TransitionResult {
   if (from === to) {
-    return { valid: false, reason: `Subscription is already in '${from}' state` };
+    return {
+      valid: false,
+      reason: `Subscription is already in '${from}' state`,
+    };
   }
 
   const allowed = VALID_TRANSITIONS[from];
@@ -55,6 +61,8 @@ export function isTerminalState(status: SubscriptionStatus): boolean {
 /**
  * Returns the list of valid target states from the given state.
  */
-export function getValidTransitions(from: SubscriptionStatus): readonly SubscriptionStatus[] {
+export function getValidTransitions(
+  from: SubscriptionStatus,
+): readonly SubscriptionStatus[] {
   return VALID_TRANSITIONS[from] ?? [];
 }

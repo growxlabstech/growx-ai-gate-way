@@ -17,7 +17,11 @@ import type {
   RetrievePaymentResult,
   RetrieveSubscriptionResult,
 } from "../adapter.js";
-import type { PaymentStatus, NormalizedPaymentEvent, RefundStatus } from "../types.js";
+import type {
+  PaymentStatus,
+  NormalizedPaymentEvent,
+  RefundStatus,
+} from "../types.js";
 
 export interface MockAdapterOptions {
   webhookSecret?: string;
@@ -34,11 +38,23 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
   private forcePaymentStatus?: PaymentStatus | undefined;
   private forceFailureMessage?: string | undefined;
 
-  public customers = new Map<string, { id: string; orgId: string; email?: string | undefined }>();
-  public checkouts = new Map<string, CreateCheckoutSessionInput & { id: string }>();
-  public payments = new Map<string, { id: string; status: PaymentStatus; amount: Decimal; currency: string }>();
+  public customers = new Map<
+    string,
+    { id: string; orgId: string; email?: string | undefined }
+  >();
+  public checkouts = new Map<
+    string,
+    CreateCheckoutSessionInput & { id: string }
+  >();
+  public payments = new Map<
+    string,
+    { id: string; status: PaymentStatus; amount: Decimal; currency: string }
+  >();
   public subscriptions = new Map<string, { id: string; status: string }>();
-  public refunds = new Map<string, { id: string; paymentId: string; amount: Decimal; status: RefundStatus }>();
+  public refunds = new Map<
+    string,
+    { id: string; paymentId: string; amount: Decimal; status: RefundStatus }
+  >();
 
   constructor(options?: MockAdapterOptions) {
     this.webhookSecret = options?.webhookSecret ?? "mock_webhook_secret_123456";
@@ -51,7 +67,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     this.forceFailureMessage = message;
   }
 
-  async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult> {
+  async createCustomer(
+    input: CreateCustomerInput,
+  ): Promise<CreateCustomerResult> {
     const providerCustomerId = `mock_cus_${input.organizationId}_${Date.now()}`;
     this.customers.set(providerCustomerId, {
       id: providerCustomerId,
@@ -61,7 +79,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     return { providerCustomerId };
   }
 
-  async createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionResult> {
+  async createCheckoutSession(
+    input: CreateCheckoutSessionInput,
+  ): Promise<CreateCheckoutSessionResult> {
     const providerSessionId = `mock_cs_${input.idempotencyKey}`;
     const checkoutUrl = `https://checkout.mockpayment.test/pay/${providerSessionId}`;
     this.checkouts.set(providerSessionId, {
@@ -74,7 +94,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createPaymentIntent(input: CreatePaymentIntentInput): Promise<CreatePaymentIntentResult> {
+  async createPaymentIntent(
+    input: CreatePaymentIntentInput,
+  ): Promise<CreatePaymentIntentResult> {
     const providerPaymentId = `mock_pi_${input.idempotencyKey}`;
     const status = this.forcePaymentStatus ?? "succeeded";
     this.payments.set(providerPaymentId, {
@@ -110,7 +132,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
+  async createSubscription(
+    input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult> {
     const providerSubscriptionId = `mock_sub_${input.idempotencyKey}`;
     this.subscriptions.set(providerSubscriptionId, {
       id: providerSubscriptionId,
@@ -122,7 +146,10 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async cancelSubscription(providerSubscriptionId: string, atPeriodEnd?: boolean): Promise<CancelSubscriptionResult> {
+  async cancelSubscription(
+    providerSubscriptionId: string,
+    atPeriodEnd?: boolean,
+  ): Promise<CancelSubscriptionResult> {
     const existing = this.subscriptions.get(providerSubscriptionId);
     const newStatus = atPeriodEnd ? "cancelling" : "cancelled";
     if (existing) {
@@ -160,7 +187,10 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
   /**
    * Helper to sign a mock webhook payload for tests.
    */
-  signWebhook(payload: Uint8Array, timestamp = Math.floor(Date.now() / 1000)): string {
+  signWebhook(
+    payload: Uint8Array,
+    timestamp = Math.floor(Date.now() / 1000),
+  ): string {
     const hmac = createHmac("sha256", this.webhookSecret);
     hmac.update(`${timestamp}.`);
     hmac.update(payload);
@@ -170,14 +200,16 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
   async verifyWebhook(
     payload: Uint8Array,
     signature: string,
-    _headers?: Record<string, string>
+    _headers?: Record<string, string>,
   ): Promise<VerifyWebhookResult> {
     // Parse signature t=...,v1=...
-    const parts = signature.split(",").reduce<Record<string, string>>((acc, part) => {
-      const [k, v] = part.split("=");
-      if (k && v) acc[k] = v;
-      return acc;
-    }, {});
+    const parts = signature
+      .split(",")
+      .reduce<Record<string, string>>((acc, part) => {
+        const [k, v] = part.split("=");
+        if (k && v) acc[k] = v;
+        return acc;
+      }, {});
 
     const timestamp = parseInt(parts.t ?? "0", 10);
     const expectedSig = parts.v1;
@@ -221,7 +253,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     try {
       const computedBuf = Buffer.from(computedHex, "hex");
       const expectedBuf = Buffer.from(expectedSig, "hex");
-      verified = computedBuf.length === expectedBuf.length && timingSafeEqual(computedBuf, expectedBuf);
+      verified =
+        computedBuf.length === expectedBuf.length &&
+        timingSafeEqual(computedBuf, expectedBuf);
     } catch {
       verified = false;
     }
@@ -275,7 +309,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     }
   }
 
-  async retrievePayment(providerPaymentId: string): Promise<RetrievePaymentResult> {
+  async retrievePayment(
+    providerPaymentId: string,
+  ): Promise<RetrievePaymentResult> {
     const existing = this.payments.get(providerPaymentId);
     if (!existing) {
       return {
@@ -295,7 +331,9 @@ export class MockPaymentProviderAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async retrieveSubscription(providerSubscriptionId: string): Promise<RetrieveSubscriptionResult> {
+  async retrieveSubscription(
+    providerSubscriptionId: string,
+  ): Promise<RetrieveSubscriptionResult> {
     const existing = this.subscriptions.get(providerSubscriptionId);
     return {
       providerSubscriptionId,

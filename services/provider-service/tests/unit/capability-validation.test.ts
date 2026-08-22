@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest";
 import { validateRequestCapabilities } from "../../src/domain/capability-validator.js";
-import { GrowXProviderError, type NormalizedGenerationRequest } from "@growx/contracts";
+import {
+  GrowXProviderError,
+  type NormalizedGenerationRequest,
+} from "@growx/contracts";
 
 describe("Capability Validation Unit Tests", () => {
   const baseRequest: NormalizedGenerationRequest = {
@@ -13,7 +16,7 @@ describe("Capability Validation Unit Tests", () => {
 
   it("passes when all requested capabilities are supported", () => {
     expect(() =>
-      validateRequestCapabilities(baseRequest, ["text.generate", "streaming"])
+      validateRequestCapabilities(baseRequest, ["text.generate", "streaming"]),
     ).not.toThrow();
   });
 
@@ -24,7 +27,7 @@ describe("Capability Validation Unit Tests", () => {
     };
 
     expect(() =>
-      validateRequestCapabilities(streamRequest, ["text.generate"])
+      validateRequestCapabilities(streamRequest, ["text.generate"]),
     ).toThrow(GrowXProviderError);
   });
 
@@ -41,7 +44,7 @@ describe("Capability Validation Unit Tests", () => {
     };
 
     expect(() =>
-      validateRequestCapabilities(toolsRequest, ["text.generate", "streaming"])
+      validateRequestCapabilities(toolsRequest, ["text.generate", "streaming"]),
     ).toThrow(GrowXProviderError);
   });
 
@@ -54,7 +57,10 @@ describe("Capability Validation Unit Tests", () => {
     };
 
     expect(() =>
-      validateRequestCapabilities(structuredRequest, ["text.generate", "streaming"])
+      validateRequestCapabilities(structuredRequest, [
+        "text.generate",
+        "streaming",
+      ]),
     ).toThrow(GrowXProviderError);
   });
 
@@ -65,7 +71,10 @@ describe("Capability Validation Unit Tests", () => {
     };
 
     expect(() =>
-      validateRequestCapabilities(reasoningRequest, ["text.generate", "streaming"])
+      validateRequestCapabilities(reasoningRequest, [
+        "text.generate",
+        "streaming",
+      ]),
     ).toThrow(GrowXProviderError);
   });
 
@@ -77,14 +86,20 @@ describe("Capability Validation Unit Tests", () => {
           role: "user",
           content: [
             { type: "text", text: "Look at this:" },
-            { type: "image_url", imageUrl: { url: "https://example.com/pic.png" } },
+            {
+              type: "image_url",
+              imageUrl: { url: "https://example.com/pic.png" },
+            },
           ],
         },
       ],
     };
 
     expect(() =>
-      validateRequestCapabilities(visionRequest, ["text.generate", "streaming"])
+      validateRequestCapabilities(visionRequest, [
+        "text.generate",
+        "streaming",
+      ]),
     ).toThrow(GrowXProviderError);
   });
 });

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DeterministicRouteResolver } from "../../src/domain/route-resolver.js";
-import type { CanonicalModelEntity, ProviderRouteEntity, ResolvedModelContext } from "@growx/model-registry-service";
+import type {
+  CanonicalModelEntity,
+  ProviderRouteEntity,
+  ResolvedModelContext,
+} from "@growx/model-registry-service";
 
 describe("DeterministicRouteResolver Unit Tests", () => {
   const resolver = new DeterministicRouteResolver();
@@ -23,7 +27,13 @@ describe("DeterministicRouteResolver Unit Tests", () => {
     supportsReasoning: false,
     inputModalities: ["text", "image"],
     outputModalities: ["text"],
-    capabilities: ["text.generate", "streaming", "tools.call", "structured_output", "vision.input"],
+    capabilities: [
+      "text.generate",
+      "streaming",
+      "tools.call",
+      "structured_output",
+      "vision.input",
+    ],
     metadata: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -79,9 +89,9 @@ describe("DeterministicRouteResolver Unit Tests", () => {
       isExecutable: true,
     };
 
-    expect(() => resolver.resolveRoute(context, ["text.generate", "tools.call"])).toThrowError(
-      /does not support tool calling/
-    );
+    expect(() =>
+      resolver.resolveRoute(context, ["text.generate", "tools.call"]),
+    ).toThrowError(/does not support tool calling/);
   });
 
   it("throws 503 when no eligible routes are available", () => {
@@ -99,8 +109,8 @@ describe("DeterministicRouteResolver Unit Tests", () => {
       isExecutable: false,
     };
 
-    expect(() => resolver.resolveRoute(context, ["text.generate"])).toThrowError(
-      /No eligible provider routes available/
-    );
+    expect(() =>
+      resolver.resolveRoute(context, ["text.generate"]),
+    ).toThrowError(/No eligible provider routes available/);
   });
 });

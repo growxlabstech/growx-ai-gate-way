@@ -7,7 +7,9 @@ import type { ExecutionTarget } from "@growx/contracts";
 describe("Provider Credential JIT Resolver", () => {
   const repo = new InMemoryProviderRepository();
   const secretProvider = new InMemorySecretProvider();
-  const resolver = new ProviderCredentialResolver(secretProvider, repo, { ttlMs: 1000 });
+  const resolver = new ProviderCredentialResolver(secretProvider, repo, {
+    ttlMs: 1000,
+  });
 
   it("resolves credential JIT and caches with instant invalidation", async () => {
     // Setup secret in vault
@@ -56,7 +58,9 @@ describe("Provider Credential JIT Resolver", () => {
     expect(resolved.credentialId).toBe("pcred_1");
 
     // 2. Reject unauthorized external execution caller
-    await expect(resolver.resolve(target, { isInternalExecution: false })).rejects.toThrow();
+    await expect(
+      resolver.resolve(target, { isInternalExecution: false }),
+    ).rejects.toThrow();
 
     // 3. Instant Invalidation
     resolver.invalidate("pcred_1");

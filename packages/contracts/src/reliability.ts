@@ -4,7 +4,12 @@ import { z } from "zod";
 // 1. Criticality Tiers & Recovery Classes
 // ==========================================
 
-export const criticalityTierSchema = z.enum(["TIER_0", "TIER_1", "TIER_2", "TIER_3"]);
+export const criticalityTierSchema = z.enum([
+  "TIER_0",
+  "TIER_1",
+  "TIER_2",
+  "TIER_3",
+]);
 export type CriticalityTier = z.infer<typeof criticalityTierSchema>;
 
 export const recoveryClassSchema = z.enum([
@@ -22,7 +27,9 @@ export const platformOperationalModeSchema = z.enum([
   "READ_ONLY",
   "MAINTENANCE",
 ]);
-export type PlatformOperationalMode = z.infer<typeof platformOperationalModeSchema>;
+export type PlatformOperationalMode = z.infer<
+  typeof platformOperationalModeSchema
+>;
 
 export const incidentSeveritySchema = z.enum(["SEV0", "SEV1", "SEV2", "SEV3"]);
 export type IncidentSeverity = z.infer<typeof incidentSeveritySchema>;
@@ -97,7 +104,9 @@ export const criticalInvariantResultSchema = z.object({
   recordsEvaluated: z.number().int().nonnegative().default(0),
   discrepanciesFound: z.number().int().nonnegative().default(0),
 });
-export type CriticalInvariantResult = z.infer<typeof criticalInvariantResultSchema>;
+export type CriticalInvariantResult = z.infer<
+  typeof criticalInvariantResultSchema
+>;
 
 export const recoveryRunSchema = z.object({
   id: z.string().min(1),

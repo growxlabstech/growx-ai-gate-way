@@ -1,5 +1,8 @@
 import { PromptTemplateRenderer } from "@growx/prompts";
-import type { PromptResolver, ResolvedPromptContext } from "@growx/prompt-service";
+import type {
+  PromptResolver,
+  ResolvedPromptContext,
+} from "@growx/prompt-service";
 import {
   GrowXProviderError,
   type NormalizedStreamEvent,
@@ -89,9 +92,16 @@ import {
   InMemoryUsageLedgerRepository,
 } from "@growx/metering";
 import { GatewayResilienceController } from "./resilience-controller.js";
-import { CacheService, SemanticCacheService, replayCachedResponseAsStream } from "@growx/cache";
+import {
+  CacheService,
+  SemanticCacheService,
+  replayCachedResponseAsStream,
+} from "@growx/cache";
 import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
-import { CustomerPriceCalculator, CustomerPricingResolver } from "@growx/pricing";
+import {
+  CustomerPriceCalculator,
+  CustomerPricingResolver,
+} from "@growx/pricing";
 import { Decimal } from "@growx/money";
 import { EntitlementGate } from "./entitlement-gate.js";
 import type { FileService } from "@growx/storage-service";
@@ -132,7 +142,7 @@ export class GatewayEngine {
     entitlementGate?: EntitlementGate,
     semanticCacheService?: SemanticCacheService,
     fileService?: FileService,
-    promptResolver?: PromptResolver
+    promptResolver?: PromptResolver,
   ) {
     this.promptResolver = promptResolver;
     this.routeResolver = routeResolver ?? new DeterministicRouteResolver();
@@ -141,7 +151,10 @@ export class GatewayEngine {
     this.fileService = fileService;
     this.quotaEngine =
       quotaEngine ??
-      new QuotaEngine(new InMemoryCounterStore(), new InMemoryQuotaPolicyRepository());
+      new QuotaEngine(
+        new InMemoryCounterStore(),
+        new InMemoryQuotaPolicyRepository(),
+      );
     this.policyEngine =
       policyEngine ?? new PolicyEngine(new InMemoryPolicyRepository());
     this.usageMetering =
@@ -151,7 +164,8 @@ export class GatewayEngine {
         tokenEstimator: this.tokenEstimator,
       });
     this.cacheService = cacheService ?? new CacheService();
-    this.semanticCacheService = semanticCacheService ?? new SemanticCacheService();
+    this.semanticCacheService =
+      semanticCacheService ?? new SemanticCacheService();
     this.creditService =
       creditService ?? new CreditService(new InMemoryCreditRepository());
     this.customerPriceCalculator =
@@ -172,14 +186,14 @@ export class GatewayEngine {
           tokenEstimator: this.tokenEstimator,
           policyEngine: this.policyEngine,
           usageMetering: this.usageMetering,
-        }
+        },
       );
   }
 
   async executeChatCompletion(
     auth: MachineAuthContext,
     request: OpenAIChatCompletionRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<OpenAIChatCompletionResponse> {
     const startTime = Date.now();
     const requestId = options.requestId ?? createPublicId("req");
@@ -187,7 +201,14 @@ export class GatewayEngine {
     let canonicalModelId = "";
     let effectiveRequest = request;
     let resolvedPromptContext: ResolvedPromptContext | undefined;
-    let promptExecutionRef: { promptId: string; promptVersionId: string; contentHash: string; renderedHash: string } | undefined;
+    let promptExecutionRef:
+      | {
+          promptId: string;
+          promptVersionId: string;
+          contentHash: string;
+          renderedHash: string;
+        }
+      | undefined;
     let promptRequiredCapabilities: string[] = [];
 
     if ((request as any).prompt) {
@@ -196,7 +217,7 @@ export class GatewayEngine {
           "provider_invalid_request",
           "Prompt execution binding is not configured on this Gateway instance",
           false,
-          500
+          500,
         );
       }
       resolvedPromptContext = await this.promptResolver.resolve(
@@ -204,12 +225,12 @@ export class GatewayEngine {
         (request as any).prompt.key,
         ((request as any).prompt.environment as any) || "production",
         auth.workspaceId,
-        (request as any).prompt.version
+        (request as any).prompt.version,
       );
 
       const rendered = PromptTemplateRenderer.render(
         resolvedPromptContext.version,
-        (request as any).prompt.variables || {}
+        (request as any).prompt.variables || {},
       );
 
       promptExecutionRef = {
@@ -218,25 +239,34 @@ export class GatewayEngine {
         contentHash: rendered.contentHash,
         renderedHash: rendered.renderedHash,
       };
-      promptRequiredCapabilities = (resolvedPromptContext.version.requiredCapabilities as any) || [];
+      promptRequiredCapabilities =
+        (resolvedPromptContext.version.requiredCapabilities as any) || [];
 
-      const targetModel = request.model || resolvedPromptContext.version.preferredModelFamily || "gpt-4o";
+      const targetModel =
+        request.model ||
+        resolvedPromptContext.version.preferredModelFamily ||
+        "gpt-4o";
       effectiveRequest = {
         ...request,
         model: targetModel,
-        messages: [...(rendered.renderedMessages as any), ...(request.messages ?? [])],
+        messages: [
+          ...(rendered.renderedMessages as any),
+          ...(request.messages ?? []),
+        ],
       };
     }
 
-    await this.usageMetering.recordRequestStarted({
-      requestId,
-      organizationId: auth.organizationId,
-      workspaceId: auth.workspaceId,
-      apiKeyId: auth.apiKeyId,
-      canonicalModelId: effectiveRequest.model,
-      operation: "chat_completion",
-      streaming: false,
-    }).catch(() => {});
+    await this.usageMetering
+      .recordRequestStarted({
+        requestId,
+        organizationId: auth.organizationId,
+        workspaceId: auth.workspaceId,
+        apiKeyId: auth.apiKeyId,
+        canonicalModelId: effectiveRequest.model,
+        operation: "chat_completion",
+        streaming: false,
+      })
+      .catch(() => {});
 
     try {
       // 1. Authorization: Verify API key has inference capability
@@ -248,15 +278,18 @@ export class GatewayEngine {
           "model_not_allowed",
           "API key lacks 'chat.completions.create' capability",
           false,
-          403
+          403,
         );
       }
 
       // 2. Resolve Model via Model Registry
-      const resolvedModelContext = await this.modelRegistry.resolve(effectiveRequest.model, {
-        allowDraft: false,
-        allowDisabled: false,
-      });
+      const resolvedModelContext = await this.modelRegistry.resolve(
+        effectiveRequest.model,
+        {
+          allowDraft: false,
+          allowDisabled: false,
+        },
+      );
 
       canonicalModelId = resolvedModelContext.canonicalModelId;
 
@@ -270,15 +303,21 @@ export class GatewayEngine {
         if (!entitlementCheck.allowed) {
           throw new GrowXProviderError(
             "policy_denied",
-            entitlementCheck.reason ?? `Model ${canonicalModelId} is not available on your current plan`,
+            entitlementCheck.reason ??
+              `Model ${canonicalModelId} is not available on your current plan`,
             false,
-            403
+            403,
           );
         }
       }
 
       // 2.6 Validate referenced files and modality compatibility
-      await this.validateReferencedFiles(auth, request, resolvedModelContext, canonicalModelId);
+      await this.validateReferencedFiles(
+        auth,
+        request,
+        resolvedModelContext,
+        canonicalModelId,
+      );
 
       // 3. Evaluate Policy Engine Governance
       const policyContext: PolicyEvaluationContext = {
@@ -314,13 +353,19 @@ export class GatewayEngine {
           ? { effort: (request as any).reasoning_effort }
           : undefined,
         temperature: request.temperature ?? undefined,
-        maxTokens: request.max_tokens ?? (request as any).max_completion_tokens ?? undefined,
+        maxTokens:
+          request.max_tokens ??
+          (request as any).max_completion_tokens ??
+          undefined,
         metadata: { requestId },
       };
 
-      const policyDecision = await this.policyEngine.evaluateRequest(policyContext, {
-        apiKeyModelRules: auth.modelRules,
-      });
+      const policyDecision = await this.policyEngine.evaluateRequest(
+        policyContext,
+        {
+          apiKeyModelRules: auth.modelRules,
+        },
+      );
 
       if (!policyDecision.allowed) {
         await this.events.emitSecurityEvent(
@@ -334,7 +379,7 @@ export class GatewayEngine {
             denialCode: policyDecision.denialCode,
             reasons: policyDecision.reasons,
           },
-          requestId
+          requestId,
         );
 
         const errorCode =
@@ -346,9 +391,10 @@ export class GatewayEngine {
 
         throw new GrowXProviderError(
           errorCode,
-          policyDecision.reasons[0] ?? `Request denied by governance policy: ${policyDecision.denialCode}`,
+          policyDecision.reasons[0] ??
+            `Request denied by governance policy: ${policyDecision.denialCode}`,
           false,
-          403
+          403,
         );
       }
 
@@ -357,8 +403,11 @@ export class GatewayEngine {
         organizationId: auth.organizationId,
         workspaceId: auth.workspaceId,
         canonicalModelId: resolvedModelContext.canonicalModelId,
-        modelVersion: resolvedModelContext.model.updatedAt ? new Date(resolvedModelContext.model.updatedAt).toISOString() : "v1",
-        policyFingerprint: (policyDecision as any).effectivePolicyFingerprint ?? "default",
+        modelVersion: resolvedModelContext.model.updatedAt
+          ? new Date(resolvedModelContext.model.updatedAt).toISOString()
+          : "v1",
+        policyFingerprint:
+          (policyDecision as any).effectivePolicyFingerprint ?? "default",
         request,
       };
 
@@ -397,11 +446,13 @@ export class GatewayEngine {
 
         await this.repository.createRequest(cacheRequestEntity).catch(() => {});
 
-        await this.usageMetering.recordRequestCompleted({
-          requestId,
-          status: "completed",
-          durationMs,
-        }).catch(() => {});
+        await this.usageMetering
+          .recordRequestCompleted({
+            requestId,
+            status: "completed",
+            durationMs,
+          })
+          .catch(() => {});
 
         return cachedResponse;
       }
@@ -449,11 +500,13 @@ export class GatewayEngine {
 
         await this.repository.createRequest(cacheRequestEntity).catch(() => {});
 
-        await this.usageMetering.recordRequestCompleted({
-          requestId,
-          status: "completed",
-          durationMs,
-        }).catch(() => {});
+        await this.usageMetering
+          .recordRequestCompleted({
+            requestId,
+            status: "completed",
+            durationMs,
+          })
+          .catch(() => {});
 
         return cachedResponse;
       }
@@ -477,9 +530,9 @@ export class GatewayEngine {
               startTime,
               canonicalModelId,
               cacheParams,
-              timeoutMs
+              timeoutMs,
             );
-          }
+          },
         );
 
         if (coalesced.coalesced) {
@@ -512,13 +565,17 @@ export class GatewayEngine {
             cachedResponseUsed: true,
           };
 
-          await this.repository.createRequest(cacheRequestEntity).catch(() => {});
+          await this.repository
+            .createRequest(cacheRequestEntity)
+            .catch(() => {});
 
-          await this.usageMetering.recordRequestCompleted({
-          requestId,
-          status: "completed",
-          durationMs,
-        }).catch(() => {});
+          await this.usageMetering
+            .recordRequestCompleted({
+              requestId,
+              status: "completed",
+              durationMs,
+            })
+            .catch(() => {});
 
           return followerResponse;
         }
@@ -536,7 +593,7 @@ export class GatewayEngine {
         startTime,
         canonicalModelId,
         cacheParams,
-        timeoutMs
+        timeoutMs,
       );
     } catch (err: unknown) {
       const isCancelled = options.cancellationSignal?.aborted;
@@ -544,14 +601,16 @@ export class GatewayEngine {
         err instanceof GrowXProviderError
           ? err.code
           : err instanceof Error
-          ? err.name
-          : "provider_invalid_request";
+            ? err.name
+            : "provider_invalid_request";
 
-      await this.usageMetering.recordRequestCompleted({
-        requestId,
-        status: isCancelled ? "cancelled" : "failed",
-        errorCode,
-      }).catch(() => {});
+      await this.usageMetering
+        .recordRequestCompleted({
+          requestId,
+          status: isCancelled ? "cancelled" : "failed",
+          errorCode,
+        })
+        .catch(() => {});
 
       throw err;
     }
@@ -567,7 +626,7 @@ export class GatewayEngine {
     startTime: number,
     canonicalModelId: string,
     cacheParams: any,
-    timeoutMs: number
+    timeoutMs: number,
   ): Promise<OpenAIChatCompletionResponse> {
     let customerReservation: QuotaReservation | undefined;
     let billingReservationId: string | undefined;
@@ -578,17 +637,18 @@ export class GatewayEngine {
       // 3.5 Customer Quota & Capacity Check
       const estimatedTokens = this.tokenEstimator.estimate(
         request as any,
-        resolvedModelContext.model
+        resolvedModelContext.model,
       );
 
-      const customerQuotaRes = await this.quotaEngine.evaluateAndReserveCustomerQuota({
-        apiKey: { id: auth.apiKeyId, rateLimits: auth.rateLimits },
-        organizationId: auth.organizationId,
-        workspaceId: auth.workspaceId,
-        estimatedTokens,
-        stream: false,
-        requestId,
-      });
+      const customerQuotaRes =
+        await this.quotaEngine.evaluateAndReserveCustomerQuota({
+          apiKey: { id: auth.apiKeyId, rateLimits: auth.rateLimits },
+          organizationId: auth.organizationId,
+          workspaceId: auth.workspaceId,
+          estimatedTokens,
+          stream: false,
+          requestId,
+        });
 
       if (!customerQuotaRes.decision.allowed) {
         await this.events.emitSecurityEvent(
@@ -601,15 +661,18 @@ export class GatewayEngine {
             blockingScope: customerQuotaRes.decision.blockingScope,
             blockingDimension: customerQuotaRes.decision.blockingDimension,
           },
-          requestId
+          requestId,
         );
 
-        const statusCode = customerQuotaRes.decision.denialCode === "global_overload" ? 503 : 429;
+        const statusCode =
+          customerQuotaRes.decision.denialCode === "global_overload"
+            ? 503
+            : 429;
         throw new GrowXProviderError(
           customerQuotaRes.decision.denialCode ?? "rate_limit_exceeded",
           customerQuotaRes.decision.reason ?? "Rate limit or quota exceeded",
           false,
-          statusCode
+          statusCode,
         );
       }
 
@@ -652,15 +715,17 @@ export class GatewayEngine {
               reason: billingAuth.reason,
               estimatedPrice: estPriceRes.subtotal.toString(),
             },
-            requestId
+            requestId,
           );
 
-          const statusCode = billingAuth.decision === "WALLET_FROZEN" ? 403 : 402;
+          const statusCode =
+            billingAuth.decision === "WALLET_FROZEN" ? 403 : 402;
           throw new GrowXProviderError(
             billingAuth.decision.toLowerCase() as any,
-            billingAuth.reason ?? "Payment required: insufficient credit balance",
+            billingAuth.reason ??
+              "Payment required: insufficient credit balance",
             false,
-            statusCode
+            statusCode,
           );
         }
 
@@ -682,8 +747,8 @@ export class GatewayEngine {
             stream: false,
             estimatedInputTokens: estInputTokens,
             estimatedOutputTokens: estOutputTokens,
-          }
-        )
+          },
+        ),
       );
 
       providerId = resolvedRoute.route.providerId;
@@ -725,7 +790,12 @@ export class GatewayEngine {
 
       // Check cancellation before calling provider
       if (options.cancellationSignal?.aborted) {
-        throw new GrowXProviderError("request_cancelled", "Request cancelled by client", false, 499);
+        throw new GrowXProviderError(
+          "request_cancelled",
+          "Request cancelled by client",
+          false,
+          499,
+        );
       }
 
       // 6. Build Normalized Generation Request
@@ -734,20 +804,22 @@ export class GatewayEngine {
         requestId,
         canonicalModelId,
         resolvedRoute.route.providerModelId,
-        timeoutMs
+        timeoutMs,
       );
 
       // 7. Execute via Resilience Controller
-      const resilienceResult = await this.resilienceController.executeNonStream({
-        requestId,
-        request: normalizedRequest,
-        auth,
-        resolvedModel: resolvedModelContext,
-        requiredCapabilities,
-        routingDecision: resolvedRoute.routingDecision,
-        resolvedRoute,
-        options,
-      });
+      const resilienceResult = await this.resilienceController.executeNonStream(
+        {
+          requestId,
+          request: normalizedRequest,
+          auth,
+          resolvedModel: resolvedModelContext,
+          requiredCapabilities,
+          routingDecision: resolvedRoute.routingDecision,
+          resolvedRoute,
+          options,
+        },
+      );
 
       const providerResponse = resilienceResult.response;
       const finalSelectedRoute = resilienceResult.selectedRoute;
@@ -771,7 +843,10 @@ export class GatewayEngine {
 
       await this.repository.saveLatencyRecord({
         requestId,
-        gatewayOverheadMs: Math.max(0, totalLatency - providerResponse.timing.latencyMs),
+        gatewayOverheadMs: Math.max(
+          0,
+          totalLatency - providerResponse.timing.latencyMs,
+        ),
         providerLatencyMs: providerResponse.timing.latencyMs,
         ...(providerResponse.timing.timeToFirstTokenMs !== undefined
           ? { timeToFirstTokenMs: providerResponse.timing.timeToFirstTokenMs }
@@ -803,78 +878,96 @@ export class GatewayEngine {
 
       // 10.5 Finalize Customer Quota Reservation
       if (customerReservation) {
-        await this.quotaEngine.finalizeReservation(customerReservation, {
-          inputTokens: providerResponse.usage.inputTokens,
-          outputTokens: providerResponse.usage.outputTokens,
-          totalTokens: providerResponse.usage.totalTokens,
-        }).catch(() => {});
+        await this.quotaEngine
+          .finalizeReservation(customerReservation, {
+            inputTokens: providerResponse.usage.inputTokens,
+            outputTokens: providerResponse.usage.outputTokens,
+            totalTokens: providerResponse.usage.totalTokens,
+          })
+          .catch(() => {});
       }
 
       // 10.6 Settle Billing Reservation
       if (billingReservationId) {
-        const finalPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-          requestId,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-          apiKeyId: auth.apiKeyId,
-          canonicalModelId,
-          logicalUsage: {
-            inputTokens: providerResponse.usage.inputTokens,
-            outputTokens: providerResponse.usage.outputTokens,
-            cachedInputTokens: providerResponse.usage.cachedInputTokens ?? 0,
-            reasoningTokens: providerResponse.usage.reasoningTokens ?? 0,
-          },
-          currency: "USD",
-        });
+        const finalPriceResult =
+          this.customerPriceCalculator.calculateRequestPrice({
+            requestId,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+            apiKeyId: auth.apiKeyId,
+            canonicalModelId,
+            logicalUsage: {
+              inputTokens: providerResponse.usage.inputTokens,
+              outputTokens: providerResponse.usage.outputTokens,
+              cachedInputTokens: providerResponse.usage.cachedInputTokens ?? 0,
+              reasoningTokens: providerResponse.usage.reasoningTokens ?? 0,
+            },
+            currency: "USD",
+          });
 
-        await this.creditService.settleReservation({
-          reservationId: billingReservationId,
-          finalCustomerPrice: finalPriceResult.subtotal,
-          actualInputTokens: providerResponse.usage.inputTokens,
-          actualOutputTokens: providerResponse.usage.outputTokens,
-        }).catch(() => {});
+        await this.creditService
+          .settleReservation({
+            reservationId: billingReservationId,
+            finalCustomerPrice: finalPriceResult.subtotal,
+            actualInputTokens: providerResponse.usage.inputTokens,
+            actualOutputTokens: providerResponse.usage.outputTokens,
+          })
+          .catch(() => {});
       }
 
-      await this.usageMetering.recordRequestCompleted({
-        requestId,
-        status: "completed",
-        completedAt: new Date(endTime),
-        durationMs: totalLatency,
-        ttftMs: providerResponse.timing.timeToFirstTokenMs,
-      }).catch(() => {});
+      await this.usageMetering
+        .recordRequestCompleted({
+          requestId,
+          status: "completed",
+          completedAt: new Date(endTime),
+          durationMs: totalLatency,
+          ttftMs: providerResponse.timing.timeToFirstTokenMs,
+        })
+        .catch(() => {});
 
-      const openAIResponse = toOpenAIChatCompletionResponse(providerResponse, request.model);
+      const openAIResponse = toOpenAIChatCompletionResponse(
+        providerResponse,
+        request.model,
+      );
 
       // 10.7 Asynchronously admit to exact cache if eligible
-      void this.cacheService.admitAndStore({
-        ...cacheParams,
-        response: openAIResponse,
-        sourceRequestId: requestId,
-      }).catch(() => {});
+      void this.cacheService
+        .admitAndStore({
+          ...cacheParams,
+          response: openAIResponse,
+          sourceRequestId: requestId,
+        })
+        .catch(() => {});
 
       // 10.8 Asynchronously admit to semantic cache if eligible
-      void this.semanticCacheService.admitAndStore({
-        organizationId: auth.organizationId,
-        workspaceId: auth.workspaceId,
-        canonicalModel: resolvedModelContext.canonicalModelId,
-        policyVersion: (policyDecision as any).policyVersion ?? 1,
-        request,
-        response: openAIResponse,
-        sourceRequestId: requestId,
-      }).catch(() => {});
+      void this.semanticCacheService
+        .admitAndStore({
+          organizationId: auth.organizationId,
+          workspaceId: auth.workspaceId,
+          canonicalModel: resolvedModelContext.canonicalModelId,
+          policyVersion: (policyDecision as any).policyVersion ?? 1,
+          request,
+          response: openAIResponse,
+          sourceRequestId: requestId,
+        })
+        .catch(() => {});
 
       // 11. Return Translated OpenAI Response
       return openAIResponse;
     } catch (err: unknown) {
       if (customerReservation) {
-        await this.quotaEngine.cancelReservation(customerReservation).catch(() => {});
+        await this.quotaEngine
+          .cancelReservation(customerReservation)
+          .catch(() => {});
       }
 
       if (billingReservationId) {
-        await this.creditService.releaseReservation({
-          reservationId: billingReservationId,
-          reason: err instanceof Error ? err.message : "execution_failed",
-        }).catch(() => {});
+        await this.creditService
+          .releaseReservation({
+            reservationId: billingReservationId,
+            reason: err instanceof Error ? err.message : "execution_failed",
+          })
+          .catch(() => {});
       }
 
       const endTime = Date.now();
@@ -888,8 +981,8 @@ export class GatewayEngine {
         err instanceof GrowXProviderError
           ? err.code
           : err instanceof Error
-          ? err.name
-          : "provider_invalid_request";
+            ? err.name
+            : "provider_invalid_request";
 
       if (requestRecordCreated) {
         await this.repository.updateRequest(requestId, {
@@ -904,7 +997,8 @@ export class GatewayEngine {
             id: createPublicId("err"),
             requestId,
             code: errorCode,
-            retryable: err instanceof GrowXProviderError ? err.retryable : false,
+            retryable:
+              err instanceof GrowXProviderError ? err.retryable : false,
             safeMessage: err instanceof Error ? err.message : "Internal error",
             createdAt: new Date(endTime),
           });
@@ -937,7 +1031,7 @@ export class GatewayEngine {
   async *streamChatCompletion(
     auth: MachineAuthContext,
     request: OpenAIChatCompletionRequest,
-    options: StreamExecutionOptions = {}
+    options: StreamExecutionOptions = {},
   ): AsyncIterable<OpenAIChatCompletionChunk> {
     const startTime = Date.now();
     const requestId = options.requestId ?? createPublicId("req");
@@ -948,15 +1042,17 @@ export class GatewayEngine {
     let canonicalModelId = "";
     let controller: GatewayStreamController | undefined;
 
-    await this.usageMetering.recordRequestStarted({
-      requestId,
-      organizationId: auth.organizationId,
-      workspaceId: auth.workspaceId,
-      apiKeyId: auth.apiKeyId,
-      canonicalModelId: request.model,
-      operation: "chat_completion",
-      streaming: true,
-    }).catch(() => {});
+    await this.usageMetering
+      .recordRequestStarted({
+        requestId,
+        organizationId: auth.organizationId,
+        workspaceId: auth.workspaceId,
+        apiKeyId: auth.apiKeyId,
+        canonicalModelId: request.model,
+        operation: "chat_completion",
+        streaming: true,
+      })
+      .catch(() => {});
 
     try {
       // 1. Authorization: Verify API key has inference capability
@@ -968,15 +1064,18 @@ export class GatewayEngine {
           "model_not_allowed",
           "API key lacks 'chat.completions.create' capability",
           false,
-          403
+          403,
         );
       }
 
       // 2. Resolve Model via Model Registry
-      const resolvedModelContext = await this.modelRegistry.resolve(request.model, {
-        allowDraft: false,
-        allowDisabled: false,
-      });
+      const resolvedModelContext = await this.modelRegistry.resolve(
+        request.model,
+        {
+          allowDraft: false,
+          allowDisabled: false,
+        },
+      );
 
       canonicalModelId = resolvedModelContext.canonicalModelId;
 
@@ -990,15 +1089,21 @@ export class GatewayEngine {
         if (!entitlementCheck.allowed) {
           throw new GrowXProviderError(
             "policy_denied",
-            entitlementCheck.reason ?? `Model ${canonicalModelId} is not available on your current plan`,
+            entitlementCheck.reason ??
+              `Model ${canonicalModelId} is not available on your current plan`,
             false,
-            403
+            403,
           );
         }
       }
 
       // 2.6 Validate referenced files and modality compatibility
-      await this.validateReferencedFiles(auth, request, resolvedModelContext, canonicalModelId);
+      await this.validateReferencedFiles(
+        auth,
+        request,
+        resolvedModelContext,
+        canonicalModelId,
+      );
 
       // 3. Evaluate Policy Engine Governance
       const policyContext: PolicyEvaluationContext = {
@@ -1034,13 +1139,19 @@ export class GatewayEngine {
           ? { effort: (request as any).reasoning_effort }
           : undefined,
         temperature: request.temperature ?? undefined,
-        maxTokens: request.max_tokens ?? (request as any).max_completion_tokens ?? undefined,
+        maxTokens:
+          request.max_tokens ??
+          (request as any).max_completion_tokens ??
+          undefined,
         metadata: { requestId },
       };
 
-      const policyDecision = await this.policyEngine.evaluateRequest(policyContext, {
-        apiKeyModelRules: auth.modelRules,
-      });
+      const policyDecision = await this.policyEngine.evaluateRequest(
+        policyContext,
+        {
+          apiKeyModelRules: auth.modelRules,
+        },
+      );
 
       if (!policyDecision.allowed) {
         await this.events.emitSecurityEvent(
@@ -1054,7 +1165,7 @@ export class GatewayEngine {
             denialCode: policyDecision.denialCode,
             reasons: policyDecision.reasons,
           },
-          requestId
+          requestId,
         );
 
         const errorCode =
@@ -1066,9 +1177,10 @@ export class GatewayEngine {
 
         throw new GrowXProviderError(
           errorCode,
-          policyDecision.reasons[0] ?? `Request denied by governance policy: ${policyDecision.denialCode}`,
+          policyDecision.reasons[0] ??
+            `Request denied by governance policy: ${policyDecision.denialCode}`,
           false,
-          403
+          403,
         );
       }
 
@@ -1077,8 +1189,11 @@ export class GatewayEngine {
         organizationId: auth.organizationId,
         workspaceId: auth.workspaceId,
         canonicalModelId: resolvedModelContext.canonicalModelId,
-        modelVersion: resolvedModelContext.model.updatedAt ? new Date(resolvedModelContext.model.updatedAt).toISOString() : "v1",
-        policyFingerprint: (policyDecision as any).effectivePolicyFingerprint ?? "default",
+        modelVersion: resolvedModelContext.model.updatedAt
+          ? new Date(resolvedModelContext.model.updatedAt).toISOString()
+          : "v1",
+        policyFingerprint:
+          (policyDecision as any).effectivePolicyFingerprint ?? "default",
         request,
       };
 
@@ -1111,13 +1226,19 @@ export class GatewayEngine {
 
         await this.repository.createRequest(cacheRequestEntity).catch(() => {});
 
-        await this.usageMetering.recordRequestCompleted({
-          requestId,
-          status: "completed",
-          durationMs,
-        }).catch(() => {});
+        await this.usageMetering
+          .recordRequestCompleted({
+            requestId,
+            status: "completed",
+            durationMs,
+          })
+          .catch(() => {});
 
-        for await (const chunk of replayCachedResponseAsStream(cachedEntry.responsePayload, requestId, created)) {
+        for await (const chunk of replayCachedResponseAsStream(
+          cachedEntry.responsePayload,
+          requestId,
+          created,
+        )) {
           if (options.cancellationSignal?.aborted) break;
           yield chunk;
         }
@@ -1160,13 +1281,19 @@ export class GatewayEngine {
 
         await this.repository.createRequest(cacheRequestEntity).catch(() => {});
 
-        await this.usageMetering.recordRequestCompleted({
-          requestId,
-          status: "completed",
-          durationMs,
-        }).catch(() => {});
+        await this.usageMetering
+          .recordRequestCompleted({
+            requestId,
+            status: "completed",
+            durationMs,
+          })
+          .catch(() => {});
 
-        for await (const chunk of replayCachedResponseAsStream(cachedEntry.responsePayload, requestId, created)) {
+        for await (const chunk of replayCachedResponseAsStream(
+          cachedEntry.responsePayload,
+          requestId,
+          created,
+        )) {
           if (options.cancellationSignal?.aborted) break;
           yield chunk;
         }
@@ -1176,17 +1303,18 @@ export class GatewayEngine {
       // 3.5 Customer Quota & Stream Concurrency Check
       const estimatedTokens = this.tokenEstimator.estimate(
         request as any,
-        resolvedModelContext.model
+        resolvedModelContext.model,
       );
 
-      const customerQuotaRes = await this.quotaEngine.evaluateAndReserveCustomerQuota({
-        apiKey: { id: auth.apiKeyId, rateLimits: auth.rateLimits },
-        organizationId: auth.organizationId,
-        workspaceId: auth.workspaceId,
-        estimatedTokens,
-        stream: true,
-        requestId,
-      });
+      const customerQuotaRes =
+        await this.quotaEngine.evaluateAndReserveCustomerQuota({
+          apiKey: { id: auth.apiKeyId, rateLimits: auth.rateLimits },
+          organizationId: auth.organizationId,
+          workspaceId: auth.workspaceId,
+          estimatedTokens,
+          stream: true,
+          requestId,
+        });
 
       if (!customerQuotaRes.decision.allowed) {
         await this.events.emitSecurityEvent(
@@ -1199,21 +1327,23 @@ export class GatewayEngine {
             blockingScope: customerQuotaRes.decision.blockingScope,
             blockingDimension: customerQuotaRes.decision.blockingDimension,
           },
-          requestId
+          requestId,
         );
 
         const statusCode =
-          (customerQuotaRes.decision.denialCode as string) === "concurrent_stream_limit"
+          (customerQuotaRes.decision.denialCode as string) ===
+          "concurrent_stream_limit"
             ? 429
             : customerQuotaRes.decision.denialCode === "global_overload"
-            ? 503
-            : 429;
+              ? 503
+              : 429;
 
         throw new GrowXProviderError(
           customerQuotaRes.decision.denialCode ?? "rate_limit_exceeded",
-          customerQuotaRes.decision.reason ?? "Rate limit or stream concurrency limit exceeded",
+          customerQuotaRes.decision.reason ??
+            "Rate limit or stream concurrency limit exceeded",
           false,
-          statusCode
+          statusCode,
         );
       }
 
@@ -1256,15 +1386,17 @@ export class GatewayEngine {
               reason: billingAuth.reason,
               estimatedPrice: estPriceRes.subtotal.toString(),
             },
-            requestId
+            requestId,
           );
 
-          const statusCode = billingAuth.decision === "WALLET_FROZEN" ? 403 : 402;
+          const statusCode =
+            billingAuth.decision === "WALLET_FROZEN" ? 403 : 402;
           throw new GrowXProviderError(
             billingAuth.decision.toLowerCase() as any,
-            billingAuth.reason ?? "Payment required: insufficient credit balance",
+            billingAuth.reason ??
+              "Payment required: insufficient credit balance",
             false,
-            statusCode
+            statusCode,
           );
         }
 
@@ -1286,8 +1418,8 @@ export class GatewayEngine {
             stream: true,
             estimatedInputTokens: estInputTokens,
             estimatedOutputTokens: estOutputTokens,
-          }
-        )
+          },
+        ),
       );
 
       controller = new GatewayStreamController(
@@ -1305,16 +1437,23 @@ export class GatewayEngine {
           requestedModel: request.model,
           startTime,
         },
-        options
+        options,
       );
 
       // Build Candidate Routes for streaming resilience
       const candidateRoutes: ProviderRouteEntity[] = [];
-      const allConfiguredRoutes = ((resolvedModelContext as any).eligibleConfiguredRoutes as ProviderRouteEntity[]) ?? [];
+      const allConfiguredRoutes =
+        ((resolvedModelContext as any)
+          .eligibleConfiguredRoutes as ProviderRouteEntity[]) ?? [];
       candidateRoutes.push(resolvedRoute.route);
-      if (resolvedRoute.routingDecision?.fallbackChain && resolvedRoute.routingDecision.fallbackChain.length > 0) {
+      if (
+        resolvedRoute.routingDecision?.fallbackChain &&
+        resolvedRoute.routingDecision.fallbackChain.length > 0
+      ) {
         for (const target of resolvedRoute.routingDecision.fallbackChain) {
-          const matching = allConfiguredRoutes.find((r) => r.id === target.routeId);
+          const matching = allConfiguredRoutes.find(
+            (r) => r.id === target.routeId,
+          );
           if (matching && !candidateRoutes.some((c) => c.id === matching.id)) {
             candidateRoutes.push(matching);
           }
@@ -1392,11 +1531,13 @@ export class GatewayEngine {
           requestId,
           resolvedModelContext.canonicalModelId,
           routeCandidate.providerModelId,
-          timeoutMs
+          timeoutMs,
         );
 
         const credentials =
-          routeCandidate.id === resolvedRoute.route.id ? (resolvedRoute as any).credentials : undefined;
+          routeCandidate.id === resolvedRoute.route.id
+            ? (resolvedRoute as any).credentials
+            : undefined;
 
         try {
           if (controller.currentState !== StreamState.CONNECTING) {
@@ -1408,7 +1549,8 @@ export class GatewayEngine {
             providerModelId: routeCandidate.providerModelId,
             region: routeCandidate.region,
             capabilities:
-              routeCandidate.capabilitiesOverrides && routeCandidate.capabilitiesOverrides.length > 0
+              routeCandidate.capabilitiesOverrides &&
+              routeCandidate.capabilitiesOverrides.length > 0
                 ? routeCandidate.capabilitiesOverrides
                 : resolvedModelContext.model.capabilities,
           };
@@ -1419,13 +1561,16 @@ export class GatewayEngine {
             {
               timeoutMs,
               cancellationSignal: controller.signal,
-            }
+            },
           );
 
           let firstEvent = true;
 
           for await (const rawEvent of streamIterable) {
-            if (firstEvent && controller.currentState !== StreamState.STREAMING) {
+            if (
+              firstEvent &&
+              controller.currentState !== StreamState.STREAMING
+            ) {
               controller.transitionToStreaming();
               firstEvent = false;
             }
@@ -1435,7 +1580,11 @@ export class GatewayEngine {
             }
 
             const processedEvent = controller.processProviderEvent(rawEvent);
-            const chunk = toOpenAIChatCompletionChunk(processedEvent, request.model, created);
+            const chunk = toOpenAIChatCompletionChunk(
+              processedEvent,
+              request.model,
+              created,
+            );
             controller.recordChunkWritten(JSON.stringify(chunk).length);
             yield chunk;
           }
@@ -1445,12 +1594,14 @@ export class GatewayEngine {
           }
           await controller.finalizeOnce(StreamState.COMPLETED);
 
-          await this.repository.updateAttempt(attemptId, {
-            status: "succeeded",
-            completedAt: new Date(),
-            latencyMs: Date.now() - attemptStart,
-            emittedClientOutput: true,
-          }).catch(() => {});
+          await this.repository
+            .updateAttempt(attemptId, {
+              status: "succeeded",
+              completedAt: new Date(),
+              latencyMs: Date.now() - attemptStart,
+              emittedClientOutput: true,
+            })
+            .catch(() => {});
 
           streamSucceeded = true;
           break;
@@ -1458,30 +1609,46 @@ export class GatewayEngine {
           lastStreamError = streamErr;
           const hasEmitted = controller.hasEmittedOutput;
 
-          await this.repository.updateAttempt(attemptId, {
-            status: "failed",
-            completedAt: new Date(),
-            latencyMs: Date.now() - attemptStart,
-            emittedClientOutput: hasEmitted,
-            errorCode: streamErr instanceof GrowXProviderError ? streamErr.code : "provider_invalid_request",
-          }).catch(() => {});
+          await this.repository
+            .updateAttempt(attemptId, {
+              status: "failed",
+              completedAt: new Date(),
+              latencyMs: Date.now() - attemptStart,
+              emittedClientOutput: hasEmitted,
+              errorCode:
+                streamErr instanceof GrowXProviderError
+                  ? streamErr.code
+                  : "provider_invalid_request",
+            })
+            .catch(() => {});
 
           if (hasEmitted) {
             const terminalState =
               options.cancellationSignal?.aborted || controller.signal.aborted
                 ? StreamState.CANCELLED
                 : StreamState.FAILED;
-            await controller.finalizeOnce(terminalState, streamErr instanceof Error ? streamErr : new Error(String(streamErr)));
+            await controller.finalizeOnce(
+              terminalState,
+              streamErr instanceof Error
+                ? streamErr
+                : new Error(String(streamErr)),
+            );
             throw streamErr;
           }
 
           // Pre-token failure: If there are more candidates, try next candidate
           if (i < candidateRoutes.length - 1) {
-            await this.events.emitSecurityEvent("gateway.fallback.selected", {
-              requestId,
-              fromProvider: routeCandidate.providerId,
-              toProvider: candidateRoutes[i + 1]!.providerId,
-            }, requestId).catch(() => {});
+            await this.events
+              .emitSecurityEvent(
+                "gateway.fallback.selected",
+                {
+                  requestId,
+                  fromProvider: routeCandidate.providerId,
+                  toProvider: candidateRoutes[i + 1]!.providerId,
+                },
+                requestId,
+              )
+              .catch(() => {});
             continue;
           }
 
@@ -1489,7 +1656,12 @@ export class GatewayEngine {
             options.cancellationSignal?.aborted || controller.signal.aborted
               ? StreamState.CANCELLED
               : StreamState.FAILED;
-          await controller.finalizeOnce(terminalState, streamErr instanceof Error ? streamErr : new Error(String(streamErr)));
+          await controller.finalizeOnce(
+            terminalState,
+            streamErr instanceof Error
+              ? streamErr
+              : new Error(String(streamErr)),
+          );
           throw streamErr;
         }
       }
@@ -1503,13 +1675,17 @@ export class GatewayEngine {
         const streamUsage = controller.usage ?? {
           inputTokens: estimatedTokens.inputTokens,
           outputTokens: Math.ceil(assembledContent.length / 4),
-          totalTokens: estimatedTokens.inputTokens + Math.ceil(assembledContent.length / 4),
+          totalTokens:
+            estimatedTokens.inputTokens +
+            Math.ceil(assembledContent.length / 4),
         };
-        await this.quotaEngine.finalizeReservation(customerReservation, {
-          inputTokens: streamUsage.inputTokens,
-          outputTokens: streamUsage.outputTokens,
-          totalTokens: streamUsage.totalTokens,
-        }).catch(() => {});
+        await this.quotaEngine
+          .finalizeReservation(customerReservation, {
+            inputTokens: streamUsage.inputTokens,
+            outputTokens: streamUsage.outputTokens,
+            totalTokens: streamUsage.totalTokens,
+          })
+          .catch(() => {});
       }
 
       // Settle billing reservation on successful stream completion
@@ -1517,28 +1693,33 @@ export class GatewayEngine {
         const streamUsage = controller?.usage ?? {
           inputTokens: estimatedTokens.inputTokens,
           outputTokens: Math.ceil(assembledContent.length / 4),
-          totalTokens: estimatedTokens.inputTokens + Math.ceil(assembledContent.length / 4),
+          totalTokens:
+            estimatedTokens.inputTokens +
+            Math.ceil(assembledContent.length / 4),
         };
 
-        const finalPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-          requestId,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-          apiKeyId: auth.apiKeyId,
-          canonicalModelId,
-          logicalUsage: {
-            inputTokens: streamUsage.inputTokens,
-            outputTokens: streamUsage.outputTokens,
-          },
-          currency: "USD",
-        });
+        const finalPriceResult =
+          this.customerPriceCalculator.calculateRequestPrice({
+            requestId,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+            apiKeyId: auth.apiKeyId,
+            canonicalModelId,
+            logicalUsage: {
+              inputTokens: streamUsage.inputTokens,
+              outputTokens: streamUsage.outputTokens,
+            },
+            currency: "USD",
+          });
 
-        await this.creditService.settleReservation({
-          reservationId: billingReservationId,
-          finalCustomerPrice: finalPriceResult.subtotal,
-          actualInputTokens: streamUsage.inputTokens,
-          actualOutputTokens: streamUsage.outputTokens,
-        }).catch(() => {});
+        await this.creditService
+          .settleReservation({
+            reservationId: billingReservationId,
+            finalCustomerPrice: finalPriceResult.subtotal,
+            actualInputTokens: streamUsage.inputTokens,
+            actualOutputTokens: streamUsage.outputTokens,
+          })
+          .catch(() => {});
       }
 
       // Admit to cache if streamed successfully
@@ -1546,7 +1727,9 @@ export class GatewayEngine {
         const streamUsage = controller.usage ?? {
           inputTokens: estimatedTokens.inputTokens,
           outputTokens: Math.ceil(assembledContent.length / 4),
-          totalTokens: estimatedTokens.inputTokens + Math.ceil(assembledContent.length / 4),
+          totalTokens:
+            estimatedTokens.inputTokens +
+            Math.ceil(assembledContent.length / 4),
         };
 
         const syntheticResponse: OpenAIChatCompletionResponse = {
@@ -1568,32 +1751,40 @@ export class GatewayEngine {
           },
         };
 
-        void this.cacheService.admitAndStore({
-          ...cacheParams,
-          response: syntheticResponse,
-          sourceRequestId: requestId,
-        }).catch(() => {});
+        void this.cacheService
+          .admitAndStore({
+            ...cacheParams,
+            response: syntheticResponse,
+            sourceRequestId: requestId,
+          })
+          .catch(() => {});
 
-        void this.semanticCacheService.admitAndStore({
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-          canonicalModel: resolvedModelContext.canonicalModelId,
-          policyVersion: (policyDecision as any).policyVersion ?? 1,
-          request,
-          response: syntheticResponse,
-          sourceRequestId: requestId,
-        }).catch(() => {});
+        void this.semanticCacheService
+          .admitAndStore({
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+            canonicalModel: resolvedModelContext.canonicalModelId,
+            policyVersion: (policyDecision as any).policyVersion ?? 1,
+            request,
+            response: syntheticResponse,
+            sourceRequestId: requestId,
+          })
+          .catch(() => {});
       }
     } catch (err: unknown) {
       if (customerReservation) {
-        await this.quotaEngine.cancelReservation(customerReservation).catch(() => {});
+        await this.quotaEngine
+          .cancelReservation(customerReservation)
+          .catch(() => {});
       }
 
       if (billingReservationId) {
-        await this.creditService.releaseReservation({
-          reservationId: billingReservationId,
-          reason: err instanceof Error ? err.message : "stream_failed",
-        }).catch(() => {});
+        await this.creditService
+          .releaseReservation({
+            reservationId: billingReservationId,
+            reason: err instanceof Error ? err.message : "stream_failed",
+          })
+          .catch(() => {});
       }
 
       const isCancelled = options.cancellationSignal?.aborted;
@@ -1601,14 +1792,16 @@ export class GatewayEngine {
         err instanceof GrowXProviderError
           ? err.code
           : err instanceof Error
-          ? err.name
-          : "provider_invalid_request";
+            ? err.name
+            : "provider_invalid_request";
 
-      await this.usageMetering.recordRequestCompleted({
-        requestId,
-        status: isCancelled ? "cancelled" : "failed",
-        errorCode,
-      }).catch(() => {});
+      await this.usageMetering
+        .recordRequestCompleted({
+          requestId,
+          status: isCancelled ? "cancelled" : "failed",
+          errorCode,
+        })
+        .catch(() => {});
 
       throw err;
     } finally {
@@ -1620,7 +1813,7 @@ export class GatewayEngine {
     auth: MachineAuthContext,
     request: OpenAIChatCompletionRequest,
     resolvedModelContext: any,
-    canonicalModelId: string
+    canonicalModelId: string,
   ): Promise<void> {
     if (!this.fileService) return;
 
@@ -1631,32 +1824,43 @@ export class GatewayEngine {
             const fileRef = (part as any).file;
             if (fileRef?.fileId) {
               const fileObj = await this.fileService.getFile(
-                { organizationId: auth.organizationId, workspaceId: auth.workspaceId },
-                fileRef.fileId
+                {
+                  organizationId: auth.organizationId,
+                  workspaceId: auth.workspaceId,
+                },
+                fileRef.fileId,
               );
               if (fileObj.status !== "ready") {
                 throw new GrowXProviderError(
                   "provider_invalid_request",
                   `Referenced file ${fileRef.fileId} is not ready (status: ${fileObj.status})`,
                   false,
-                  400
+                  400,
                 );
               }
-              const fileMime = (fileObj.detectedMimeType || fileObj.mimeType).toLowerCase();
-              if (fileMime.startsWith("image/") && !resolvedModelContext.model.inputModalities?.includes("image")) {
+              const fileMime = (
+                fileObj.detectedMimeType || fileObj.mimeType
+              ).toLowerCase();
+              if (
+                fileMime.startsWith("image/") &&
+                !resolvedModelContext.model.inputModalities?.includes("image")
+              ) {
                 throw new GrowXProviderError(
                   "model_capability_not_supported",
                   `Model ${canonicalModelId} does not support image input modality for file ${fileRef.fileId}`,
                   false,
-                  400
+                  400,
                 );
               }
-              if (fileMime.startsWith("audio/") && !resolvedModelContext.model.inputModalities?.includes("audio")) {
+              if (
+                fileMime.startsWith("audio/") &&
+                !resolvedModelContext.model.inputModalities?.includes("audio")
+              ) {
                 throw new GrowXProviderError(
                   "model_capability_not_supported",
                   `Model ${canonicalModelId} does not support audio input modality for file ${fileRef.fileId}`,
                   false,
-                  400
+                  400,
                 );
               }
             }
@@ -1669,7 +1873,7 @@ export class GatewayEngine {
   async executeEmbedding(
     auth: MachineAuthContext,
     request: OpenAIEmbeddingRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<OpenAIEmbeddingResponse> {
     const startTime = Date.now();
     const requestId = options.requestId ?? createPublicId("req");
@@ -1684,7 +1888,7 @@ export class GatewayEngine {
         "model_not_allowed",
         "API key lacks 'embeddings.create' capability",
         false,
-        403
+        403,
       );
     }
 
@@ -1696,25 +1900,33 @@ export class GatewayEngine {
       maxTotalTokensPerRequest: 1_000_000,
       maxTotalBytesPerRequest: 10 * 1024 * 1024,
     };
-    const { totalEstimatedTokens } = validateEmbeddingInput(inputs, inputLimits);
+    const { totalEstimatedTokens } = validateEmbeddingInput(
+      inputs,
+      inputLimits,
+    );
 
     // 3. Resolve canonical model and alias
-    const resolvedModelContext = await this.modelRegistry.resolve(request.model, {
-      allowDraft: false,
-      allowDisabled: false,
-    });
+    const resolvedModelContext = await this.modelRegistry.resolve(
+      request.model,
+      {
+        allowDraft: false,
+        allowDisabled: false,
+      },
+    );
     const canonicalModelId = resolvedModelContext.canonicalModelId;
 
     // Verify model is embedding-capable
     if (
       resolvedModelContext.model.category !== "embeddings" &&
-      !resolvedModelContext.model.capabilities.includes("embeddings.create" as any)
+      !resolvedModelContext.model.capabilities.includes(
+        "embeddings.create" as any,
+      )
     ) {
       throw new GrowXProviderError(
         "model_not_found",
         `Model '${request.model}' is not an embedding model`,
         false,
-        400
+        400,
       );
     }
 
@@ -1728,17 +1940,20 @@ export class GatewayEngine {
       if (!entitlementCheck.allowed) {
         throw new GrowXProviderError(
           "policy_denied",
-          entitlementCheck.reason ?? `Model ${canonicalModelId} is not available on your current plan`,
+          entitlementCheck.reason ??
+            `Model ${canonicalModelId} is not available on your current plan`,
           false,
-          403
+          403,
         );
       }
     }
 
     // 5. Dimension resolution & validation
-    const metadata: EmbeddingModelMetadata = (resolvedModelContext.model.metadata?.embedding as any) || {
+    const metadata: EmbeddingModelMetadata = (resolvedModelContext.model
+      .metadata?.embedding as any) || {
       defaultDimensions: resolvedModelContext.model.maxOutputTokens || 1536,
-      dimensionControl: resolvedModelContext.model.canonicalId.includes("text-embedding-3"),
+      dimensionControl:
+        resolvedModelContext.model.canonicalId.includes("text-embedding-3"),
       minDimensions: 256,
       maxDimensions: 3072,
       encodingFormats: ["float", "base64"],
@@ -1747,18 +1962,23 @@ export class GatewayEngine {
       normalizedVector: true,
       distanceRecommendations: ["cosine"],
     };
-    const resolvedDimensions = resolveEmbeddingDimensions(request.dimensions, metadata);
+    const resolvedDimensions = resolveEmbeddingDimensions(
+      request.dimensions,
+      metadata,
+    );
 
     // 6. Record usage started
-    await this.usageMetering.recordRequestStarted({
-      requestId,
-      organizationId: auth.organizationId,
-      workspaceId: auth.workspaceId,
-      apiKeyId: auth.apiKeyId,
-      canonicalModelId,
-      operation: "embedding",
-      streaming: false,
-    }).catch(() => {});
+    await this.usageMetering
+      .recordRequestStarted({
+        requestId,
+        organizationId: auth.organizationId,
+        workspaceId: auth.workspaceId,
+        apiKeyId: auth.apiKeyId,
+        canonicalModelId,
+        operation: "embedding",
+        streaming: false,
+      })
+      .catch(() => {});
 
     // 7. Policy evaluation
     const policyContext: PolicyEvaluationContext = {
@@ -1780,17 +2000,25 @@ export class GatewayEngine {
       requestCapabilities: ["embeddings.create" as any],
       inputModalities: resolvedModelContext.model.inputModalities,
       outputModalities: resolvedModelContext.model.outputModalities,
-      metadata: { requestId, totalEstimatedTokens, dimensions: resolvedDimensions },
+      metadata: {
+        requestId,
+        totalEstimatedTokens,
+        dimensions: resolvedDimensions,
+      },
     };
-    const policyDecision = await this.policyEngine.evaluateRequest(policyContext, {
-      apiKeyModelRules: auth.modelRules,
-    });
+    const policyDecision = await this.policyEngine.evaluateRequest(
+      policyContext,
+      {
+        apiKeyModelRules: auth.modelRules,
+      },
+    );
     if (!policyDecision.allowed) {
       throw new GrowXProviderError(
         "policy_denied",
-        policyDecision.reasons?.join("; ") || "Request blocked by organization policy",
+        policyDecision.reasons?.join("; ") ||
+          "Request blocked by organization policy",
         false,
-        403
+        403,
       );
     }
 
@@ -1829,7 +2057,7 @@ export class GatewayEngine {
           billingAuth.decision.toLowerCase() as any,
           billingAuth.reason ?? "Payment required: insufficient credit balance",
           false,
-          statusCode
+          statusCode,
         );
       }
       billingReservationId = billingAuth.reservationId;
@@ -1838,7 +2066,10 @@ export class GatewayEngine {
     // 9. Batch Planning & Chunk Execution
     const maxChunkSize = Math.min(metadata.maxBatchItems || 2048, 512);
     const plan = EmbeddingBatchPlanner.plan(inputs, maxChunkSize, 100_000);
-    const allEmbeddingData: Array<{ index: number; embedding: number[] | string }> = [];
+    const allEmbeddingData: Array<{
+      index: number;
+      embedding: number[] | string;
+    }> = [];
     let totalPromptTokens = 0;
 
     const resolvedRoute = await Promise.resolve(
@@ -1851,8 +2082,8 @@ export class GatewayEngine {
           stream: false,
           estimatedInputTokens: totalEstimatedTokens,
           estimatedOutputTokens: 0,
-        }
-      )
+        },
+      ),
     );
     const activeRoute = resolvedRoute.route;
 
@@ -1873,23 +2104,35 @@ export class GatewayEngine {
           activeRoute.providerId === "gemini"
             ? new GeminiEmbeddingAdapter()
             : activeRoute.providerId === "deterministic"
-            ? new DeterministicEmbeddingAdapter(resolvedDimensions)
-            : new OpenAIEmbeddingAdapter();
+              ? new DeterministicEmbeddingAdapter(resolvedDimensions)
+              : new OpenAIEmbeddingAdapter();
 
         let normResp: NormalizedEmbeddingResponse;
-        if (activeRoute.providerId === "deterministic" || !process.env.OPENAI_API_KEY) {
-          const detAdapter = new DeterministicEmbeddingAdapter(resolvedDimensions);
+        if (
+          activeRoute.providerId === "deterministic" ||
+          !process.env.OPENAI_API_KEY
+        ) {
+          const detAdapter = new DeterministicEmbeddingAdapter(
+            resolvedDimensions,
+          );
           normResp = detAdapter.parseResponse({}, normReq, resolvedDimensions);
         } else {
           normResp = adapter.parseResponse({}, normReq, resolvedDimensions);
         }
 
-        EmbeddingResponseValidator.validate(normResp.embeddings, chunk.inputs.length, resolvedDimensions);
+        EmbeddingResponseValidator.validate(
+          normResp.embeddings,
+          chunk.inputs.length,
+          resolvedDimensions,
+        );
 
         for (let i = 0; i < normResp.embeddings.length; i++) {
           const item = normResp.embeddings[i]!;
           const globalIndex = chunk.startIndex + item.index;
-          const formatted = formatVectorOutput(item.embedding, request.encoding_format || "float");
+          const formatted = formatVectorOutput(
+            item.embedding,
+            request.encoding_format || "float",
+          );
           allEmbeddingData.push({
             index: globalIndex,
             embedding: formatted,
@@ -1899,40 +2142,46 @@ export class GatewayEngine {
         totalPromptTokens += normResp.promptTokens;
       }
 
-      const sortedData = EmbeddingResponseValidator.sortByIndex(allEmbeddingData);
+      const sortedData =
+        EmbeddingResponseValidator.sortByIndex(allEmbeddingData);
 
       // 10. Record usage and settle wallet
       const durationMs = Date.now() - startTime;
-      await this.usageMetering.recordRequestCompleted({
-        requestId,
-        status: "completed",
-        completedAt: new Date(),
-        durationMs,
-        ttftMs: durationMs,
-      }).catch(() => {});
+      await this.usageMetering
+        .recordRequestCompleted({
+          requestId,
+          status: "completed",
+          completedAt: new Date(),
+          durationMs,
+          ttftMs: durationMs,
+        })
+        .catch(() => {});
 
       if (this.billingEnabled && billingReservationId) {
-        const finalPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-          requestId,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-          apiKeyId: auth.apiKeyId,
-          canonicalModelId,
-          logicalUsage: {
-            inputTokens: totalPromptTokens,
-            outputTokens: 0,
-            cachedInputTokens: 0,
-            reasoningTokens: 0,
-          },
-          currency: "USD",
-        });
+        const finalPriceResult =
+          this.customerPriceCalculator.calculateRequestPrice({
+            requestId,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+            apiKeyId: auth.apiKeyId,
+            canonicalModelId,
+            logicalUsage: {
+              inputTokens: totalPromptTokens,
+              outputTokens: 0,
+              cachedInputTokens: 0,
+              reasoningTokens: 0,
+            },
+            currency: "USD",
+          });
 
-        await this.creditService.settleReservation({
-          reservationId: billingReservationId,
-          finalCustomerPrice: finalPriceResult.subtotal,
-          actualInputTokens: totalPromptTokens,
-          actualOutputTokens: 0,
-        }).catch(() => {});
+        await this.creditService
+          .settleReservation({
+            reservationId: billingReservationId,
+            finalCustomerPrice: finalPriceResult.subtotal,
+            actualInputTokens: totalPromptTokens,
+            actualOutputTokens: 0,
+          })
+          .catch(() => {});
       }
 
       return {
@@ -1950,10 +2199,12 @@ export class GatewayEngine {
       };
     } catch (err: any) {
       if (this.billingEnabled && billingReservationId) {
-        await this.creditService.releaseReservation({
-          reservationId: billingReservationId,
-          reason: err instanceof Error ? err.message : "execution_failed",
-        }).catch(() => {});
+        await this.creditService
+          .releaseReservation({
+            reservationId: billingReservationId,
+            reason: err instanceof Error ? err.message : "execution_failed",
+          })
+          .catch(() => {});
       }
       throw err;
     }
@@ -1965,7 +2216,7 @@ export class GatewayEngine {
   async executeImageGeneration(
     auth: MachineAuthContext,
     request: ImageGenerationRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<ImageGenerationResponse> {
     const requestId = options.requestId || createPublicId("req");
     const canonicalModelId = request.model;
@@ -1980,7 +2231,7 @@ export class GatewayEngine {
         "model_not_allowed",
         "API key lacks 'images.generate' capability",
         false,
-        403
+        403,
       );
     }
 
@@ -1990,15 +2241,18 @@ export class GatewayEngine {
         "model_not_allowed",
         `Model '${canonicalModelId}' is not permitted by API key rules`,
         false,
-        403
+        403,
       );
     }
 
     // 3. Resolve model context
-    const resolvedModelContext = await this.modelRegistry.resolve(canonicalModelId, {
-      allowDraft: false,
-      allowDisabled: false,
-    });
+    const resolvedModelContext = await this.modelRegistry.resolve(
+      canonicalModelId,
+      {
+        allowDraft: false,
+        allowDisabled: false,
+      },
+    );
     const model = resolvedModelContext.model;
     const caps = model.capabilities || [];
     const isImageGen =
@@ -2012,7 +2266,7 @@ export class GatewayEngine {
         "model_not_found",
         `Model '${canonicalModelId}' is not an image generation model`,
         false,
-        400
+        400,
       );
     }
 
@@ -2060,7 +2314,7 @@ export class GatewayEngine {
           billingAuth.decision.toLowerCase() as any,
           billingAuth.reason ?? "Payment required: insufficient credit balance",
           false,
-          statusCode
+          statusCode,
         );
       }
       billingReservationId = billingAuth.reservationId;
@@ -2077,8 +2331,8 @@ export class GatewayEngine {
             stream: false,
             estimatedInputTokens: 100,
             estimatedOutputTokens: 0,
-          }
-        )
+          },
+        ),
       );
       const activeRoute = resolvedRoute.route;
 
@@ -2096,49 +2350,56 @@ export class GatewayEngine {
               revised_prompt: request.prompt,
             })),
           },
-          request
+          request,
         );
       }
 
       const count = response.data.length;
-      await this.usageMetering.recordRequestCompleted({
-        requestId,
-        status: "completed",
-        completedAt: new Date(),
-        durationMs: 50,
-      }).catch(() => {});
+      await this.usageMetering
+        .recordRequestCompleted({
+          requestId,
+          status: "completed",
+          completedAt: new Date(),
+          durationMs: 50,
+        })
+        .catch(() => {});
 
       if (this.billingEnabled && billingReservationId) {
-        const finalPriceResult = this.customerPriceCalculator.calculateRequestPrice({
-          requestId,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-          apiKeyId: auth.apiKeyId,
-          canonicalModelId,
-          logicalUsage: {
-            inputTokens: count * 1000,
-            outputTokens: 0,
-            cachedInputTokens: 0,
-            reasoningTokens: 0,
-          },
-          currency: "USD",
-        });
+        const finalPriceResult =
+          this.customerPriceCalculator.calculateRequestPrice({
+            requestId,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+            apiKeyId: auth.apiKeyId,
+            canonicalModelId,
+            logicalUsage: {
+              inputTokens: count * 1000,
+              outputTokens: 0,
+              cachedInputTokens: 0,
+              reasoningTokens: 0,
+            },
+            currency: "USD",
+          });
 
-        await this.creditService.settleReservation({
-          reservationId: billingReservationId,
-          finalCustomerPrice: finalPriceResult.subtotal,
-          actualInputTokens: count * 1000,
-          actualOutputTokens: 0,
-        }).catch(() => {});
+        await this.creditService
+          .settleReservation({
+            reservationId: billingReservationId,
+            finalCustomerPrice: finalPriceResult.subtotal,
+            actualInputTokens: count * 1000,
+            actualOutputTokens: 0,
+          })
+          .catch(() => {});
       }
 
       return response;
     } catch (err: any) {
       if (this.billingEnabled && billingReservationId) {
-        await this.creditService.releaseReservation({
-          reservationId: billingReservationId,
-          reason: err instanceof Error ? err.message : "execution_failed",
-        }).catch(() => {});
+        await this.creditService
+          .releaseReservation({
+            reservationId: billingReservationId,
+            reason: err instanceof Error ? err.message : "execution_failed",
+          })
+          .catch(() => {});
       }
       throw err;
     }
@@ -2150,7 +2411,7 @@ export class GatewayEngine {
   async executeImageEdit(
     auth: MachineAuthContext,
     request: ImageEditRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<ImageGenerationResponse> {
     if (
       !auth.permissions.includes("images.edit" as any) &&
@@ -2161,7 +2422,7 @@ export class GatewayEngine {
         "model_not_allowed",
         "API key lacks 'images.edit' capability",
         false,
-        403
+        403,
       );
     }
 
@@ -2169,26 +2430,30 @@ export class GatewayEngine {
     if (this.fileService && !request.image.startsWith("data:")) {
       const fileObj = await this.fileService.getFile(
         { organizationId: auth.organizationId, workspaceId: auth.workspaceId },
-        request.image
+        request.image,
       );
       if (fileObj.status !== "ready") {
         throw new GrowXProviderError(
           "provider_invalid_request",
           `Referenced source image file '${request.image}' is not ready`,
           false,
-          400
+          400,
         );
       }
     }
 
-    return this.executeImageGeneration(auth, {
-      model: request.model,
-      prompt: request.prompt,
-      n: request.n,
-      size: request.size,
-      response_format: request.response_format,
-      user: request.user,
-    }, options);
+    return this.executeImageGeneration(
+      auth,
+      {
+        model: request.model,
+        prompt: request.prompt,
+        n: request.n,
+        size: request.size,
+        response_format: request.response_format,
+        user: request.user,
+      },
+      options,
+    );
   }
 
   /**
@@ -2197,7 +2462,7 @@ export class GatewayEngine {
   async executeTranscription(
     auth: MachineAuthContext,
     request: TranscriptionRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<TranscriptionResponse> {
     const requestId = options.requestId || createPublicId("req");
     const canonicalModelId = request.model;
@@ -2211,7 +2476,7 @@ export class GatewayEngine {
         "model_not_allowed",
         "API key lacks 'audio.transcribe' capability",
         false,
-        403
+        403,
       );
     }
 
@@ -2220,7 +2485,7 @@ export class GatewayEngine {
         "model_not_allowed",
         `Model '${canonicalModelId}' is not permitted by API key rules`,
         false,
-        403
+        403,
       );
     }
 
@@ -2228,23 +2493,28 @@ export class GatewayEngine {
     if (request.file_id && this.fileService) {
       const fileObj = await this.fileService.getFile(
         { organizationId: auth.organizationId, workspaceId: auth.workspaceId },
-        request.file_id
+        request.file_id,
       );
       if (fileObj.status !== "ready") {
         throw new GrowXProviderError(
           "provider_invalid_request",
           `Referenced audio file '${request.file_id}' is not ready`,
           false,
-          400
+          400,
         );
       }
-      MediaValidator.validateAudioMime(fileObj.detectedMimeType || fileObj.mimeType);
+      MediaValidator.validateAudioMime(
+        fileObj.detectedMimeType || fileObj.mimeType,
+      );
     }
 
-    const resolvedModelContext = await this.modelRegistry.resolve(canonicalModelId, {
-      allowDraft: false,
-      allowDisabled: false,
-    });
+    const resolvedModelContext = await this.modelRegistry.resolve(
+      canonicalModelId,
+      {
+        allowDraft: false,
+        allowDisabled: false,
+      },
+    );
     const resolvedRoute = await Promise.resolve(
       this.routeResolver.resolveRoute(
         resolvedModelContext,
@@ -2255,8 +2525,8 @@ export class GatewayEngine {
           stream: false,
           estimatedInputTokens: 100,
           estimatedOutputTokens: 0,
-        }
-      )
+        },
+      ),
     );
     const activeRoute = resolvedRoute.route;
 
@@ -2267,12 +2537,14 @@ export class GatewayEngine {
 
     const response = adapter.parseTranscriptionResponse({}, request);
 
-    await this.usageMetering.recordRequestCompleted({
-      requestId,
-      status: "completed",
-      completedAt: new Date(),
-      durationMs: 50,
-    }).catch(() => {});
+    await this.usageMetering
+      .recordRequestCompleted({
+        requestId,
+        status: "completed",
+        completedAt: new Date(),
+        durationMs: 50,
+      })
+      .catch(() => {});
 
     return response;
   }
@@ -2283,7 +2555,7 @@ export class GatewayEngine {
   async executeSpeech(
     auth: MachineAuthContext,
     request: SpeechRequest,
-    options: GatewayExecutionOptions = {}
+    options: GatewayExecutionOptions = {},
   ): Promise<SpeechResponse> {
     const requestId = options.requestId || createPublicId("req");
     const canonicalModelId = request.model;
@@ -2297,7 +2569,7 @@ export class GatewayEngine {
         "model_not_allowed",
         "API key lacks 'audio.speech' capability",
         false,
-        403
+        403,
       );
     }
 
@@ -2306,17 +2578,20 @@ export class GatewayEngine {
         "model_not_allowed",
         `Model '${canonicalModelId}' is not permitted by API key rules`,
         false,
-        403
+        403,
       );
     }
 
     // Validate voice
     VoiceRegistry.validateVoice(request.voice);
 
-    const resolvedModelContext = await this.modelRegistry.resolve(canonicalModelId, {
-      allowDraft: false,
-      allowDisabled: false,
-    });
+    const resolvedModelContext = await this.modelRegistry.resolve(
+      canonicalModelId,
+      {
+        allowDraft: false,
+        allowDisabled: false,
+      },
+    );
     const resolvedRoute = await Promise.resolve(
       this.routeResolver.resolveRoute(
         resolvedModelContext,
@@ -2327,8 +2602,8 @@ export class GatewayEngine {
           stream: false,
           estimatedInputTokens: request.input.length,
           estimatedOutputTokens: 0,
-        }
-      )
+        },
+      ),
     );
     const activeRoute = resolvedRoute.route;
 
@@ -2339,12 +2614,14 @@ export class GatewayEngine {
 
     const response = adapter.parseSpeechResponse({}, request);
 
-    await this.usageMetering.recordRequestCompleted({
-      requestId,
-      status: "completed",
-      completedAt: new Date(),
-      durationMs: 50,
-    }).catch(() => {});
+    await this.usageMetering
+      .recordRequestCompleted({
+        requestId,
+        status: "completed",
+        completedAt: new Date(),
+        durationMs: 50,
+      })
+      .catch(() => {});
 
     return response;
   }

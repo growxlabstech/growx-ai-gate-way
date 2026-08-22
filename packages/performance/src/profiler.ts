@@ -22,9 +22,9 @@ export class PlatformProfiler {
       return sorted[idx] ?? 0;
     };
     return {
-      p50: getP(0.50),
+      p50: getP(0.5),
       p75: getP(0.75),
-      p90: getP(0.90),
+      p90: getP(0.9),
       p95: getP(0.95),
       p99: getP(0.99),
     };

@@ -11,7 +11,10 @@ import {
   type RoutingRequest,
 } from "../src/index.js";
 
-function createCandidate(id: string, overrides: Partial<RouteCandidate> = {}): RouteCandidate {
+function createCandidate(
+  id: string,
+  overrides: Partial<RouteCandidate> = {},
+): RouteCandidate {
   return {
     routeId: `route_${id}`,
     providerId: `provider_${id}`,
@@ -78,16 +81,31 @@ describe("Routing Strategy Evaluators", () => {
   describe("Lowest Cost Strategy", () => {
     it("selects candidate with lowest estimated provider cost", () => {
       const expensive = createCandidate("expensive", {
-        pricing: { inputPricePerMillionMinor: 500, outputPricePerMillionMinor: 1000, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 500,
+          outputPricePerMillionMinor: 1000,
+          currency: "USD",
+        },
       });
       const cheap = createCandidate("cheap", {
-        pricing: { inputPricePerMillionMinor: 50, outputPricePerMillionMinor: 100, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 50,
+          outputPricePerMillionMinor: 100,
+          currency: "USD",
+        },
       });
       const medium = createCandidate("medium", {
-        pricing: { inputPricePerMillionMinor: 200, outputPricePerMillionMinor: 400, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 200,
+          outputPricePerMillionMinor: 400,
+          currency: "USD",
+        },
       });
 
-      const ranked = evaluateLowestCostStrategy([expensive, cheap, medium], req);
+      const ranked = evaluateLowestCostStrategy(
+        [expensive, cheap, medium],
+        req,
+      );
       expect(ranked[0]!.candidate.routeId).toBe("route_cheap");
       expect(ranked[1]!.candidate.routeId).toBe("route_medium");
       expect(ranked[2]!.candidate.routeId).toBe("route_expensive");
@@ -95,7 +113,11 @@ describe("Routing Strategy Evaluators", () => {
 
     it("handles missing pricing by placing unknown route last", () => {
       const cheap = createCandidate("cheap", {
-        pricing: { inputPricePerMillionMinor: 50, outputPricePerMillionMinor: 100, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 50,
+          outputPricePerMillionMinor: 100,
+          currency: "USD",
+        },
       });
       const unknown = createCandidate("unknown", { pricing: undefined });
 
@@ -106,9 +128,15 @@ describe("Routing Strategy Evaluators", () => {
 
   describe("Lowest Latency Strategy", () => {
     it("selects candidate with lowest p95 latency", () => {
-      const fast = createCandidate("fast", { latencySignal: { p95LatencyMs: 30, source: "telemetry" } });
-      const slow = createCandidate("slow", { latencySignal: { p95LatencyMs: 250, source: "telemetry" } });
-      const medium = createCandidate("medium", { latencySignal: { p95LatencyMs: 85, source: "telemetry" } });
+      const fast = createCandidate("fast", {
+        latencySignal: { p95LatencyMs: 30, source: "telemetry" },
+      });
+      const slow = createCandidate("slow", {
+        latencySignal: { p95LatencyMs: 250, source: "telemetry" },
+      });
+      const medium = createCandidate("medium", {
+        latencySignal: { p95LatencyMs: 85, source: "telemetry" },
+      });
 
       const ranked = evaluateLowestLatencyStrategy([slow, fast, medium], req);
       expect(ranked[0]!.candidate.routeId).toBe("route_fast");
@@ -121,15 +149,31 @@ describe("Routing Strategy Evaluators", () => {
     it("combines cost, latency, availability, and priority according to weights", () => {
       const allRounder = createCandidate("allRounder", {
         priority: 10,
-        pricing: { inputPricePerMillionMinor: 100, outputPricePerMillionMinor: 100, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 100,
+          outputPricePerMillionMinor: 100,
+          currency: "USD",
+        },
         latencySignal: { p95LatencyMs: 50, source: "telemetry" },
-        availabilitySignal: { available: true, successRate: 0.999, source: "telemetry" },
+        availabilitySignal: {
+          available: true,
+          successRate: 0.999,
+          source: "telemetry",
+        },
       });
       const poorAvailability = createCandidate("poorAvail", {
         priority: 5,
-        pricing: { inputPricePerMillionMinor: 10, outputPricePerMillionMinor: 10, currency: "USD" },
+        pricing: {
+          inputPricePerMillionMinor: 10,
+          outputPricePerMillionMinor: 10,
+          currency: "USD",
+        },
         latencySignal: { p95LatencyMs: 40, source: "telemetry" },
-        availabilitySignal: { available: true, successRate: 0.50, source: "telemetry" },
+        availabilitySignal: {
+          available: true,
+          successRate: 0.5,
+          source: "telemetry",
+        },
       });
 
       const policy: RoutingPolicy = {
@@ -143,9 +187,15 @@ describe("Routing Strategy Evaluators", () => {
         updatedAt: new Date(),
       };
 
-      const ranked = evaluateBalancedStrategy([poorAvailability, allRounder], req, policy);
+      const ranked = evaluateBalancedStrategy(
+        [poorAvailability, allRounder],
+        req,
+        policy,
+      );
       expect(ranked[0]!.candidate.routeId).toBe("route_allRounder");
-      expect(ranked[0]!.reasons.some((r) => r.includes("highest_balanced_score"))).toBe(true);
+      expect(
+        ranked[0]!.reasons.some((r) => r.includes("highest_balanced_score")),
+      ).toBe(true);
     });
   });
 
@@ -161,7 +211,9 @@ describe("Routing Strategy Evaluators", () => {
       for (let i = 0; i < iterations; i++) {
         // Deterministic pseudo-random sequence for repeatability
         const pseudoRng = () => (i * 0.6180339887) % 1;
-        const ranked = evaluateWeightedStrategy([cA, cB], req, undefined, { rng: pseudoRng });
+        const ranked = evaluateWeightedStrategy([cA, cB], req, undefined, {
+          rng: pseudoRng,
+        });
         if (ranked[0]!.candidate.routeId === "route_a") {
           countA++;
         } else {
@@ -171,8 +223,8 @@ describe("Routing Strategy Evaluators", () => {
 
       // 70% weight should yield ~65-75% of selections
       const proportionA = countA / iterations;
-      expect(proportionA).toBeGreaterThan(0.60);
-      expect(proportionA).toBeLessThan(0.80);
+      expect(proportionA).toBeGreaterThan(0.6);
+      expect(proportionA).toBeLessThan(0.8);
     });
 
     it("produces deterministic sticky routing for the same stableKey", () => {
@@ -180,8 +232,12 @@ describe("Routing Strategy Evaluators", () => {
       const cB = createCandidate("b", { weight: 30 });
 
       const key = "workspace_tenant_xyz_session_1";
-      const first = evaluateWeightedStrategy([cA, cB], req, undefined, { stableKey: key });
-      const second = evaluateWeightedStrategy([cA, cB], req, undefined, { stableKey: key });
+      const first = evaluateWeightedStrategy([cA, cB], req, undefined, {
+        stableKey: key,
+      });
+      const second = evaluateWeightedStrategy([cA, cB], req, undefined, {
+        stableKey: key,
+      });
 
       expect(first[0]!.candidate.routeId).toBe(second[0]!.candidate.routeId);
     });

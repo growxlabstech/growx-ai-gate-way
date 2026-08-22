@@ -3,7 +3,7 @@
  */
 export async function* parseSseStream(
   body: ReadableStream<Uint8Array>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): AsyncIterable<{ event?: string | undefined; data: string }> {
   const reader = body.getReader();
   const decoder = new TextDecoder("utf-8");

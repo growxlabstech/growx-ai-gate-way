@@ -17,11 +17,12 @@ function makeRequest(
     method?: string;
     headers?: Record<string, string>;
     body?: unknown;
-  } = {}
+  } = {},
 ): Promise<ApiResponse> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
-    const bodyStr = options.body !== undefined ? JSON.stringify(options.body) : undefined;
+    const bodyStr =
+      options.body !== undefined ? JSON.stringify(options.body) : undefined;
     const req = httpRequest(
       {
         hostname: parsed.hostname,
@@ -29,13 +30,20 @@ function makeRequest(
         path: parsed.pathname + parsed.search,
         method: options.method ?? "GET",
         headers: {
-          ...(bodyStr ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(bodyStr) } : {}),
+          ...(bodyStr
+            ? {
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(bodyStr),
+              }
+            : {}),
           ...options.headers,
         },
       },
       (res) => {
         const chunks: Buffer[] = [];
-        res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+        res.on("data", (chunk) =>
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)),
+        );
         res.on("end", () => {
           const raw = Buffer.concat(chunks).toString("utf-8");
           let body = null;
@@ -46,7 +54,7 @@ function makeRequest(
           }
           resolve({ status: res.statusCode ?? 0, body });
         });
-      }
+      },
     );
     req.on("error", reject);
     if (bodyStr) req.write(bodyStr);
@@ -77,7 +85,13 @@ describe("Privileged Operations Security Tests", () => {
     privilegedAuth.registerSession({
       id: validSessionId,
       operatorId: "usr_superadmin",
-      capabilities: ["ops.models.read", "ops.models.write", "ops.routes.manage", "ops.aliases.manage", "ops.pricing.manage"],
+      capabilities: [
+        "ops.models.read",
+        "ops.models.write",
+        "ops.routes.manage",
+        "ops.aliases.manage",
+        "ops.pricing.manage",
+      ],
       expiresAt: new Date(Date.now() + 3_600_000), // +1 hour
     });
 
@@ -152,16 +166,19 @@ describe("Privileged Operations Security Tests", () => {
   });
 
   it("rejects credentials passed in URL query parameters with 400 INVALID_CREDENTIAL_LOCATION", async () => {
-    const res = await makeRequest(`${baseUrl}/internal/ops/models?jit_token=${validSessionId}`, {
-      method: "POST",
-      body: {
-        canonicalId: "openai/gpt-4o",
-        displayName: "GPT-4o",
-        family: "gpt",
-        contextWindow: 128_000,
-        maxOutputTokens: 4096,
+    const res = await makeRequest(
+      `${baseUrl}/internal/ops/models?jit_token=${validSessionId}`,
+      {
+        method: "POST",
+        body: {
+          canonicalId: "openai/gpt-4o",
+          displayName: "GPT-4o",
+          family: "gpt",
+          contextWindow: 128_000,
+          maxOutputTokens: 4096,
+        },
       },
-    });
+    );
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("INVALID_CREDENTIAL_LOCATION");
@@ -206,7 +223,9 @@ describe("Privileged Operations Security Tests", () => {
 
     // Verify security event emission
     expect(events.security).toHaveLength(1);
-    expect(events.security[0]?.type).toBe("security.privileged.unauthorized_model_access");
+    expect(events.security[0]?.type).toBe(
+      "security.privileged.unauthorized_model_access",
+    );
   });
 
   it("rejects expired JIT session with 401 SESSION_EXPIRED", async () => {

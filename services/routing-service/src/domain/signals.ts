@@ -4,21 +4,21 @@ export interface ILatencySignalProvider {
   getLatencySignal(
     providerId: string,
     providerModelId: string,
-    region?: string | undefined
+    region?: string | undefined,
   ): Promise<LatencySignal | null>;
 }
 
 export interface IAvailabilitySignalProvider {
   getAvailabilitySignal(
     providerId: string,
-    providerModelId?: string | undefined
+    providerModelId?: string | undefined,
   ): Promise<AvailabilitySignal | null>;
 }
 
 export interface ICapacitySignalProvider {
   getCapacitySignal(
     providerId: string,
-    providerModelId?: string | undefined
+    providerModelId?: string | undefined,
   ): Promise<{
     utilization: number;
     state: "available" | "busy" | "near_limit" | "exhausted";

@@ -47,7 +47,9 @@ describe("Phase 21 — Webhook Event Router & Redaction", () => {
 
     expect(outboundEvent.id).toMatch(/^evt_/);
     expect(deliveries.length).toBe(1);
-    expect(deliveries[0]!.destinationUrlSnapshot).toBe("https://api.payments.com/hook");
+    expect(deliveries[0]!.destinationUrlSnapshot).toBe(
+      "https://api.payments.com/hook",
+    );
   });
 
   it("guarantees idempotency when same source event is routed multiple times", async () => {

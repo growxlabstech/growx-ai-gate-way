@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
 import { GrowXProviderError } from "@growx/contracts";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Error Normalization Tests", () => {
   let fixture: TestGatewayFixture;
@@ -32,14 +35,14 @@ describe("Error Normalization Tests", () => {
         "provider_rate_limit",
         "Provider rate limit exceeded: TPM limit reached",
         true,
-        429
+        429,
       );
     };
 
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -65,7 +68,7 @@ describe("Error Normalization Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "text/plain",
       },
       body: "plain text body",
@@ -82,7 +85,7 @@ describe("Error Normalization Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: "{ not a valid json",
@@ -102,7 +105,7 @@ describe("Error Normalization Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

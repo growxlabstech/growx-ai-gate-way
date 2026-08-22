@@ -6,18 +6,31 @@ import type {
   RouteOutcomeInput,
 } from "./health-types.js";
 import { DEFAULT_CIRCUIT_CONFIG } from "./health-types.js";
-import { RouteCircuitBreaker, type CircuitStateTransition } from "./circuit-breaker.js";
+import {
+  RouteCircuitBreaker,
+  type CircuitStateTransition,
+} from "./circuit-breaker.js";
 
 export interface IRouteHealthStore {
-  getRouteHealth(routeId: string, providerId?: string): Promise<RouteHealthSnapshot>;
-  getRouteHealthBatch(routeIds: string[]): Promise<Map<string, RouteHealthSnapshot>>;
-  acquireExecutionPermit(routeId: string, providerId: string): Promise<ExecutionPermit>;
-  recordRouteOutcome(outcome: RouteOutcomeInput): Promise<CircuitStateTransition | null>;
+  getRouteHealth(
+    routeId: string,
+    providerId?: string,
+  ): Promise<RouteHealthSnapshot>;
+  getRouteHealthBatch(
+    routeIds: string[],
+  ): Promise<Map<string, RouteHealthSnapshot>>;
+  acquireExecutionPermit(
+    routeId: string,
+    providerId: string,
+  ): Promise<ExecutionPermit>;
+  recordRouteOutcome(
+    outcome: RouteOutcomeInput,
+  ): Promise<CircuitStateTransition | null>;
   recordProbeOutcome(
     routeId: string,
     providerId: string,
     healthy: boolean,
-    latencyMs?: number
+    latencyMs?: number,
   ): Promise<CircuitStateTransition | null>;
   setManualOverride(
     routeId: string,
@@ -25,10 +38,17 @@ export interface IRouteHealthStore {
     state: "FORCED_OPEN" | "FORCED_CLOSED",
     reason: string,
     setBy: string,
-    expiresAt?: Date | null
+    expiresAt?: Date | null,
   ): Promise<CircuitStateTransition>;
-  recoverRoute(routeId: string, providerId: string, setBy: string): Promise<CircuitStateTransition>;
-  resetRoute(routeId: string, providerId?: string): Promise<CircuitStateTransition>;
+  recoverRoute(
+    routeId: string,
+    providerId: string,
+    setBy: string,
+  ): Promise<CircuitStateTransition>;
+  resetRoute(
+    routeId: string,
+    providerId?: string,
+  ): Promise<CircuitStateTransition>;
   listSnapshots(): Promise<RouteHealthSnapshot[]>;
   getAggregateProviderHealth(providerId: string): Promise<{
     providerId: string;
@@ -42,15 +62,24 @@ export interface IRouteHealthStore {
 export class InMemoryRouteHealthStore implements IRouteHealthStore {
   private readonly breakers = new Map<string, RouteCircuitBreaker>();
   private readonly globalConfig: CircuitConfiguration;
-  private readonly providerConfigs = new Map<string, Partial<CircuitConfiguration>>();
-  private readonly routeConfigs = new Map<string, Partial<CircuitConfiguration>>();
+  private readonly providerConfigs = new Map<
+    string,
+    Partial<CircuitConfiguration>
+  >();
+  private readonly routeConfigs = new Map<
+    string,
+    Partial<CircuitConfiguration>
+  >();
   private readonly transitionsHistory: CircuitStateTransition[] = [];
 
   constructor(globalConfig: CircuitConfiguration = DEFAULT_CIRCUIT_CONFIG) {
     this.globalConfig = globalConfig;
   }
 
-  setProviderConfig(providerId: string, config: Partial<CircuitConfiguration>): void {
+  setProviderConfig(
+    providerId: string,
+    config: Partial<CircuitConfiguration>,
+  ): void {
     this.providerConfigs.set(providerId, config);
   }
 
@@ -58,9 +87,14 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     this.routeConfigs.set(routeId, config);
   }
 
-  private resolveEffectiveConfig(routeId: string, providerId?: string): CircuitConfiguration {
+  private resolveEffectiveConfig(
+    routeId: string,
+    providerId?: string,
+  ): CircuitConfiguration {
     const routeOverride = this.routeConfigs.get(routeId) ?? {};
-    const providerOverride = providerId ? (this.providerConfigs.get(providerId) ?? {}) : {};
+    const providerOverride = providerId
+      ? (this.providerConfigs.get(providerId) ?? {})
+      : {};
 
     return {
       ...this.globalConfig,
@@ -69,7 +103,10 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     };
   }
 
-  private getOrCreateBreaker(routeId: string, providerId = "unknown"): RouteCircuitBreaker {
+  private getOrCreateBreaker(
+    routeId: string,
+    providerId = "unknown",
+  ): RouteCircuitBreaker {
     let breaker = this.breakers.get(routeId);
     if (!breaker) {
       const config = this.resolveEffectiveConfig(routeId, providerId);
@@ -79,12 +116,17 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     return breaker;
   }
 
-  async getRouteHealth(routeId: string, providerId?: string): Promise<RouteHealthSnapshot> {
+  async getRouteHealth(
+    routeId: string,
+    providerId?: string,
+  ): Promise<RouteHealthSnapshot> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     return breaker.getSnapshot();
   }
 
-  async getRouteHealthBatch(routeIds: string[]): Promise<Map<string, RouteHealthSnapshot>> {
+  async getRouteHealthBatch(
+    routeIds: string[],
+  ): Promise<Map<string, RouteHealthSnapshot>> {
     const result = new Map<string, RouteHealthSnapshot>();
     for (const routeId of routeIds) {
       const breaker = this.getOrCreateBreaker(routeId);
@@ -93,7 +135,10 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     return result;
   }
 
-  async acquireExecutionPermit(routeId: string, providerId: string): Promise<ExecutionPermit> {
+  async acquireExecutionPermit(
+    routeId: string,
+    providerId: string,
+  ): Promise<ExecutionPermit> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     const { permit, transition } = breaker.acquirePermit();
     if (transition) {
@@ -102,13 +147,18 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     return permit;
   }
 
-  async recordRouteOutcome(outcome: RouteOutcomeInput): Promise<CircuitStateTransition | null> {
-    const breaker = this.getOrCreateBreaker(outcome.routeId, outcome.providerId);
+  async recordRouteOutcome(
+    outcome: RouteOutcomeInput,
+  ): Promise<CircuitStateTransition | null> {
+    const breaker = this.getOrCreateBreaker(
+      outcome.routeId,
+      outcome.providerId,
+    );
     const { transition } = breaker.recordOutcome(
       outcome.signal,
       outcome.latencyMs,
       outcome.permitId,
-      outcome.timestamp
+      outcome.timestamp,
     );
     if (transition) {
       this.transitionsHistory.push(transition);
@@ -121,7 +171,7 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     routeId: string,
     providerId: string,
     healthy: boolean,
-    latencyMs?: number
+    latencyMs?: number,
   ): Promise<CircuitStateTransition | null> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     const { transition } = breaker.recordProbe(healthy, latencyMs);
@@ -138,7 +188,7 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     state: "FORCED_OPEN" | "FORCED_CLOSED",
     reason: string,
     setBy: string,
-    expiresAt?: Date | null
+    expiresAt?: Date | null,
   ): Promise<CircuitStateTransition> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     const transition =
@@ -153,7 +203,7 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
   async recoverRoute(
     routeId: string,
     providerId: string,
-    setBy: string
+    setBy: string,
   ): Promise<CircuitStateTransition> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     const transition = breaker.recover(setBy);
@@ -161,7 +211,10 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     return transition;
   }
 
-  async resetRoute(routeId: string, providerId?: string): Promise<CircuitStateTransition> {
+  async resetRoute(
+    routeId: string,
+    providerId?: string,
+  ): Promise<CircuitStateTransition> {
     const breaker = this.getOrCreateBreaker(routeId, providerId);
     const transition = breaker.reset();
     this.transitionsHistory.push(transition);
@@ -187,7 +240,7 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
     totalRoutes: number;
   }> {
     const routes = Array.from(this.breakers.values()).filter(
-      (b) => b.providerId === providerId
+      (b) => b.providerId === providerId,
     );
 
     if (routes.length === 0) {
@@ -202,10 +255,11 @@ export class InMemoryRouteHealthStore implements IRouteHealthStore {
 
     const snapshots = routes.map((r) => r.getSnapshot());
     const openRoutes = snapshots.filter(
-      (s) => s.circuitState === "OPEN" || s.circuitState === "FORCED_OPEN"
+      (s) => s.circuitState === "OPEN" || s.circuitState === "FORCED_OPEN",
     ).length;
     const avgScore = Math.round(
-      snapshots.reduce((acc, s) => acc + s.availabilityScore, 0) / snapshots.length
+      snapshots.reduce((acc, s) => acc + s.availabilityScore, 0) /
+        snapshots.length,
     );
 
     let state: RouteHealthState = "healthy";

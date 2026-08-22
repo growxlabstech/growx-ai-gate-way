@@ -12,7 +12,9 @@ describe("Canonical Request Serializer & Versioned Key Builder", () => {
     const objB = { a: 1, c: { y: 25, z: 26 }, b: 2 };
 
     expect(canonicalJsonStringify(objA)).toBe(canonicalJsonStringify(objB));
-    expect(canonicalJsonStringify(objA)).toBe('{"a":1,"b":2,"c":{"y":25,"z":26}}');
+    expect(canonicalJsonStringify(objA)).toBe(
+      '{"a":1,"b":2,"c":{"y":25,"z":26}}',
+    );
   });
 
   it("is sensitive to message ordering in conversations", () => {
@@ -45,8 +47,14 @@ describe("Canonical Request Serializer & Versioned Key Builder", () => {
       model: "gpt-4o",
       messages: [{ role: "user", content: "What is the weather?" }],
       tools: [
-        { type: "function", function: { name: "get_weather", description: "Get weather" } },
-        { type: "function", function: { name: "get_location", description: "Get location" } },
+        {
+          type: "function",
+          function: { name: "get_weather", description: "Get weather" },
+        },
+        {
+          type: "function",
+          function: { name: "get_location", description: "Get location" },
+        },
       ],
       temperature: 0,
     };
@@ -55,8 +63,14 @@ describe("Canonical Request Serializer & Versioned Key Builder", () => {
       model: "gpt-4o",
       messages: [{ role: "user", content: "What is the weather?" }],
       tools: [
-        { type: "function", function: { name: "get_location", description: "Get location" } },
-        { type: "function", function: { name: "get_weather", description: "Get weather" } },
+        {
+          type: "function",
+          function: { name: "get_location", description: "Get location" },
+        },
+        {
+          type: "function",
+          function: { name: "get_weather", description: "Get weather" },
+        },
       ],
       temperature: 0,
     };
@@ -102,8 +116,14 @@ describe("Canonical Request Serializer & Versioned Key Builder", () => {
     };
 
     const key1 = buildExactCacheKey(baseParams).cacheKey;
-    const keyPolicyChanged = buildExactCacheKey({ ...baseParams, policyFingerprint: "pol_fp_2" }).cacheKey;
-    const keyVersionChanged = buildExactCacheKey({ ...baseParams, modelVersion: "v2024_11_20" }).cacheKey;
+    const keyPolicyChanged = buildExactCacheKey({
+      ...baseParams,
+      policyFingerprint: "pol_fp_2",
+    }).cacheKey;
+    const keyVersionChanged = buildExactCacheKey({
+      ...baseParams,
+      modelVersion: "v2024_11_20",
+    }).cacheKey;
 
     expect(key1).not.toBe(keyPolicyChanged);
     expect(key1).not.toBe(keyVersionChanged);

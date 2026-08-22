@@ -2,10 +2,7 @@ import type {
   IRoutingRepository,
   RoutingDecisionListFilter,
 } from "../application/repository.js";
-import type {
-  RoutingDecision,
-  RoutingPolicy,
-} from "../domain/types.js";
+import type { RoutingDecision, RoutingPolicy } from "../domain/types.js";
 import { DEFAULT_GLOBAL_POLICY } from "@growx/routing";
 
 export class InMemoryRoutingRepository implements IRoutingRepository {
@@ -17,7 +14,9 @@ export class InMemoryRoutingRepository implements IRoutingRepository {
     this.decisions.set(decision.id, { ...decision });
   }
 
-  async getDecisionByRequestId(requestId: string): Promise<RoutingDecision | null> {
+  async getDecisionByRequestId(
+    requestId: string,
+  ): Promise<RoutingDecision | null> {
     for (const d of this.decisions.values()) {
       if (d.requestId === requestId) {
         return { ...d };
@@ -31,7 +30,9 @@ export class InMemoryRoutingRepository implements IRoutingRepository {
     return d ? { ...d } : null;
   }
 
-  async listDecisions(filter?: RoutingDecisionListFilter | undefined): Promise<RoutingDecision[]> {
+  async listDecisions(
+    filter?: RoutingDecisionListFilter | undefined,
+  ): Promise<RoutingDecision[]> {
     let items = Array.from(this.decisions.values());
     if (filter?.limit) {
       items = items.slice(0, filter.limit);
@@ -41,7 +42,7 @@ export class InMemoryRoutingRepository implements IRoutingRepository {
 
   async getPolicy(
     organizationId?: string | null | undefined,
-    workspaceId?: string | null | undefined
+    workspaceId?: string | null | undefined,
   ): Promise<RoutingPolicy | null> {
     for (const p of this.policies.values()) {
       if (
@@ -63,7 +64,10 @@ export class InMemoryRoutingRepository implements IRoutingRepository {
     this.policies.set(policy.id, { ...policy });
   }
 
-  async updatePolicy(id: string, updates: Partial<RoutingPolicy>): Promise<void> {
+  async updatePolicy(
+    id: string,
+    updates: Partial<RoutingPolicy>,
+  ): Promise<void> {
     const existing = this.policies.get(id);
     if (existing) {
       this.policies.set(id, {

@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Concurrency and Load Tests", () => {
   let fixture: TestGatewayFixture;
@@ -37,25 +40,27 @@ describe("Concurrency and Load Tests", () => {
     const CONCURRENT_COUNT = 30;
     const startTime = Date.now();
 
-    const promises = Array.from({ length: CONCURRENT_COUNT }).map(async (_, idx) => {
-      const key = keys[idx % keys.length]!;
-      const res = await fetch(`${baseUrl}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
-          messages: [{ role: "user", content: `Concurrent request ${idx}` }],
-        }),
-      });
+    const promises = Array.from({ length: CONCURRENT_COUNT }).map(
+      async (_, idx) => {
+        const key = keys[idx % keys.length]!;
+        const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-4o-mini",
+            messages: [{ role: "user", content: `Concurrent request ${idx}` }],
+          }),
+        });
 
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      const reqId = res.headers.get("x-growx-request-id")!;
-      return { reqId, json };
-    });
+        expect(res.status).toBe(200);
+        const json = await res.json();
+        const reqId = res.headers.get("x-growx-request-id")!;
+        return { reqId, json };
+      },
+    );
 
     const results = await Promise.all(promises);
     const totalTimeMs = Date.now() - startTime;

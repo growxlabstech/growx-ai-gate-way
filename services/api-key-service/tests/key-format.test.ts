@@ -41,8 +41,12 @@ describe("API Key Format, Hashing, and Parsing", () => {
     expect(parseApiKey("")).toBeNull();
     expect(parseApiKey("invalid_prefix_key_123_abc")).toBeNull();
     expect(parseApiKey("gx_live_key_123_abc")).toBeNull();
-    expect(parseApiKey(" gx_live_key_0123456789abcdef0123456789abcdef_secret ")).toBeNull();
-    expect(parseApiKey("gx_live_key_0123456789abcdef0123456789abcdef_secret\n")).toBeNull();
+    expect(
+      parseApiKey(" gx_live_key_0123456789abcdef0123456789abcdef_secret "),
+    ).toBeNull();
+    expect(
+      parseApiKey("gx_live_key_0123456789abcdef0123456789abcdef_secret\n"),
+    ).toBeNull();
     expect(parseApiKey("a".repeat(400))).toBeNull();
   });
 
@@ -53,13 +57,21 @@ describe("API Key Format, Hashing, and Parsing", () => {
 
     expect(verifyApiKey(secretPart, hash, pepper)).toBe(true);
     expect(verifyApiKey("wrong-secret-token", hash, pepper)).toBe(false);
-    expect(verifyApiKey(secretPart, hash, "different-pepper-at-least-32-chars-long!!")).toBe(false);
+    expect(
+      verifyApiKey(
+        secretPart,
+        hash,
+        "different-pepper-at-least-32-chars-long!!",
+      ),
+    ).toBe(false);
   });
 
   it("masks keys safely exposing only environment and prefix", () => {
     const raw = `gx_live_key_0123456789abcdef0123456789abcdef_${"s".repeat(32)}`;
     const masked = maskApiKey(raw);
-    expect(masked).toBe("gx_live_key_0123456789abcdef0123456789abcdef_••••••••••••");
+    expect(masked).toBe(
+      "gx_live_key_0123456789abcdef0123456789abcdef_••••••••••••",
+    );
     expect(masked).not.toContain("s".repeat(32));
 
     expect(maskApiKey("")).toBe("••••••••");
@@ -70,6 +82,8 @@ describe("API Key Format, Hashing, and Parsing", () => {
       environment: "production",
       id: "key_0123456789abcdef0123456789abcdef",
     });
-    expect(pub).toBe("gx_live_key_0123456789abcdef0123456789abcdef_••••••••••••");
+    expect(pub).toBe(
+      "gx_live_key_0123456789abcdef0123456789abcdef_••••••••••••",
+    );
   });
 });

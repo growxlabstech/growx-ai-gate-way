@@ -1,7 +1,4 @@
-import type {
-  DataCategory,
-  RetentionPolicy,
-} from "@growx/contracts";
+import type { DataCategory, RetentionPolicy } from "@growx/contracts";
 import type { IGovernanceRepository } from "./repository.js";
 
 export interface PolicyResolutionContext {
@@ -14,7 +11,9 @@ export interface PolicyResolutionContext {
 export class GovernancePolicyResolver {
   constructor(private repository: IGovernanceRepository) {}
 
-  public async resolvePolicy(ctx: PolicyResolutionContext): Promise<RetentionPolicy> {
+  public async resolvePolicy(
+    ctx: PolicyResolutionContext,
+  ): Promise<RetentionPolicy> {
     // Deterministic Precedence:
     // 1. Specific Resource Policy
     // 2. Category within Workspace
@@ -28,7 +27,7 @@ export class GovernancePolicyResolver {
     // 1. Resource specific
     if (ctx.resourceId) {
       const resPolicy = allPolicies.find(
-        (p) => p.scope === "resource" && p.scopeId === ctx.resourceId
+        (p) => p.scope === "resource" && p.scopeId === ctx.resourceId,
       );
       if (resPolicy) return resPolicy;
     }
@@ -36,13 +35,19 @@ export class GovernancePolicyResolver {
     // 2. Category within Workspace
     if (ctx.workspaceId) {
       const wsCatPolicy = allPolicies.find(
-        (p) => p.scope === "workspace" && p.scopeId === ctx.workspaceId && p.category === ctx.category
+        (p) =>
+          p.scope === "workspace" &&
+          p.scopeId === ctx.workspaceId &&
+          p.category === ctx.category,
       );
       if (wsCatPolicy) return wsCatPolicy;
 
       // 3. Workspace default
       const wsPolicy = allPolicies.find(
-        (p) => p.scope === "workspace" && p.scopeId === ctx.workspaceId && !p.category
+        (p) =>
+          p.scope === "workspace" &&
+          p.scopeId === ctx.workspaceId &&
+          !p.category,
       );
       if (wsPolicy) return wsPolicy;
     }
@@ -50,25 +55,33 @@ export class GovernancePolicyResolver {
     // 4. Category within Organization
     if (ctx.organizationId) {
       const orgCatPolicy = allPolicies.find(
-        (p) => p.scope === "organization" && p.scopeId === ctx.organizationId && p.category === ctx.category
+        (p) =>
+          p.scope === "organization" &&
+          p.scopeId === ctx.organizationId &&
+          p.category === ctx.category,
       );
       if (orgCatPolicy) return orgCatPolicy;
 
       // 5. Organization default
       const orgPolicy = allPolicies.find(
-        (p) => p.scope === "organization" && p.scopeId === ctx.organizationId && !p.category
+        (p) =>
+          p.scope === "organization" &&
+          p.scopeId === ctx.organizationId &&
+          !p.category,
       );
       if (orgPolicy) return orgPolicy;
     }
 
     // 6. Category platform default
     const catDefault = allPolicies.find(
-      (p) => p.scope === "category" && p.category === ctx.category
+      (p) => p.scope === "category" && p.category === ctx.category,
     );
     if (catDefault) return catDefault;
 
     // 7. Platform global fallback
-    const platformDefault = allPolicies.find((p) => p.scope === "platform_default");
+    const platformDefault = allPolicies.find(
+      (p) => p.scope === "platform_default",
+    );
     if (platformDefault) return platformDefault;
 
     // Built-in absolute default: 30 days retention for customer content
@@ -84,7 +97,10 @@ export class GovernancePolicyResolver {
     };
   }
 
-  public calculateExpirationDate(policy: RetentionPolicy, fromDate: Date = new Date()): Date | null {
+  public calculateExpirationDate(
+    policy: RetentionPolicy,
+    fromDate: Date = new Date(),
+  ): Date | null {
     if (policy.durationDays === 0) {
       return fromDate; // Zero retention
     }

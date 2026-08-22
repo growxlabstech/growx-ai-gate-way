@@ -22,6 +22,8 @@ describe("service-auth", () => {
 
   it("rejects tokens signed with wrong secret", () => {
     const token = generateServiceToken("identity-service", secret);
-    expect(() => verifyServiceToken(token, "wrong_secret_key")).toThrow("Service token signature verification failed");
+    expect(() => verifyServiceToken(token, "wrong_secret_key")).toThrow(
+      "Service token signature verification failed",
+    );
   });
 });

@@ -20,7 +20,7 @@ describe("Provider Credential Pooling", () => {
         environment: "production",
         metadata: {},
       },
-      "admin"
+      "admin",
     );
 
     expect(pool.id).toBeDefined();
@@ -36,7 +36,7 @@ describe("Provider Credential Pooling", () => {
         priority: 100,
         maxConcurrency: 50,
       },
-      "admin"
+      "admin",
     );
 
     expect(member.poolId).toBe(pool.id);

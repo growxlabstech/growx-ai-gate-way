@@ -75,12 +75,16 @@ export class GatewayResilienceController {
     private readonly providerService: ProviderService,
     private readonly repository: IGatewayRepository,
     private readonly events: IGatewayEvents,
-    options: ResilienceControllerOptions = {}
+    options: ResilienceControllerOptions = {},
   ) {
-    this.healthStore = options.routeHealthStore ?? new InMemoryRouteHealthStore();
+    this.healthStore =
+      options.routeHealthStore ?? new InMemoryRouteHealthStore();
     this.quotaEngine =
       options.quotaEngine ??
-      new QuotaEngine(new InMemoryCounterStore(), new InMemoryQuotaPolicyRepository());
+      new QuotaEngine(
+        new InMemoryCounterStore(),
+        new InMemoryQuotaPolicyRepository(),
+      );
     this.tokenEstimator = options.tokenEstimator ?? new TokenEstimator();
     this.policyEngine = options.policyEngine;
     this.usageMetering = options.usageMetering;
@@ -88,7 +92,10 @@ export class GatewayResilienceController {
       ...DEFAULT_RETRY_POLICY,
       ...options.retryPolicy,
       // Hard cap to prevent dangerous retry explosion
-      maxAttempts: Math.min(5, options.retryPolicy?.maxAttempts ?? DEFAULT_RETRY_POLICY.maxAttempts),
+      maxAttempts: Math.min(
+        5,
+        options.retryPolicy?.maxAttempts ?? DEFAULT_RETRY_POLICY.maxAttempts,
+      ),
     };
     this.idGenerator = options.idGenerator ?? (() => createPublicId("attempt"));
   }
@@ -101,7 +108,7 @@ export class GatewayResilienceController {
     route: ProviderRouteEntity,
     model: any,
     auth: MachineAuthContext,
-    requiredCapabilities: CanonicalCapability[]
+    requiredCapabilities: CanonicalCapability[],
   ): Promise<boolean> {
     try {
       // 1. Check Route Status
@@ -128,11 +135,15 @@ export class GatewayResilienceController {
 
       // 4. Check Provider Credential
       const activeEnv = auth.environment || "development";
-      const creds = await this.providerService.listCredentials(route.providerId);
+      const creds = await this.providerService.listCredentials(
+        route.providerId,
+      );
       const hasActiveCred = creds.some(
         (c) =>
           c.status === "active" &&
-          (c.environment === activeEnv || c.environment === "production" || !c.environment)
+          (c.environment === activeEnv ||
+            c.environment === "production" ||
+            !c.environment),
       );
 
       if (!hasActiveCred) {
@@ -140,8 +151,14 @@ export class GatewayResilienceController {
       }
 
       // 5. Check Circuit Breaker State
-      const health = await this.healthStore.getRouteHealth(route.id, route.providerId);
-      if (health.circuitState === "OPEN" || health.circuitState === "FORCED_OPEN") {
+      const health = await this.healthStore.getRouteHealth(
+        route.id,
+        route.providerId,
+      );
+      if (
+        health.circuitState === "OPEN" ||
+        health.circuitState === "FORCED_OPEN"
+      ) {
         return false;
       }
 
@@ -175,7 +192,7 @@ export class GatewayResilienceController {
           ],
           {
             apiKeyModelRules: auth.modelRules,
-          }
+          },
         );
 
         if (policyRes.eligible.length === 0) {
@@ -193,9 +210,7 @@ export class GatewayResilienceController {
    * Executes a non-streaming generation request under the resilience engine,
    * with safe same-route retry, ranked fallback, deadline budgets, and attempt recording.
    */
-  async executeNonStream(
-    params: ExecuteResilienceParams
-  ): Promise<{
+  async executeNonStream(params: ExecuteResilienceParams): Promise<{
     response: NormalizedGenerationResponse;
     selectedRoute: ProviderRouteEntity;
     attempts: GatewayAttemptEntity[];
@@ -217,16 +232,25 @@ export class GatewayResilienceController {
 
     // 1. Build Candidate Queue from Phase 8 Routing Decision & Model Routes
     const candidateRoutes: ProviderRouteEntity[] = [];
-    const allConfiguredRoutes = (resolvedModel as any).eligibleConfiguredRoutes as ProviderRouteEntity[];
+    const allConfiguredRoutes = (resolvedModel as any)
+      .eligibleConfiguredRoutes as ProviderRouteEntity[];
 
     // First candidate is the primary route
     candidateRoutes.push(resolvedRoute.route);
 
     // Followed by ranked fallback alternatives from decision
-    if (routingDecision?.fallbackChain && routingDecision.fallbackChain.length > 0) {
+    if (
+      routingDecision?.fallbackChain &&
+      routingDecision.fallbackChain.length > 0
+    ) {
       for (const target of routingDecision.fallbackChain) {
-        const matchingRoute = allConfiguredRoutes.find((r) => r.id === target.routeId);
-        if (matchingRoute && !candidateRoutes.some((c) => c.id === matchingRoute.id)) {
+        const matchingRoute = allConfiguredRoutes.find(
+          (r) => r.id === target.routeId,
+        );
+        if (
+          matchingRoute &&
+          !candidateRoutes.some((c) => c.id === matchingRoute.id)
+        ) {
           candidateRoutes.push(matchingRoute);
         }
       }
@@ -254,7 +278,7 @@ export class GatewayResilienceController {
           "request_cancelled",
           "Request was cancelled by client",
           false,
-          499
+          499,
         );
       }
 
@@ -265,7 +289,7 @@ export class GatewayResilienceController {
           "gateway_timeout",
           `Request deadline exceeded (${timeoutMs}ms) before retry attempt could be scheduled`,
           false,
-          504
+          504,
         );
       }
 
@@ -279,7 +303,7 @@ export class GatewayResilienceController {
         currentRoute,
         resolvedModel.model,
         auth,
-        requiredCapabilities
+        requiredCapabilities,
       );
 
       if (!isValid) {
@@ -291,7 +315,7 @@ export class GatewayResilienceController {
       // 4.5 Acquire Execution Permit from Circuit Breaker
       const permit = await this.healthStore.acquireExecutionPermit(
         currentRoute.id,
-        currentRoute.providerId
+        currentRoute.providerId,
       );
       if (!permit.allowed) {
         lastFallbackReason = "PROVIDER_UNAVAILABLE";
@@ -304,17 +328,18 @@ export class GatewayResilienceController {
       // 4.6 Acquire Provider Attempt Capacity Reservation
       const estimatedTokens = this.tokenEstimator.estimate(
         request as any,
-        resolvedModel.model
+        resolvedModel.model,
       );
 
-      const provCapRes = await this.quotaEngine.evaluateAndReserveProviderAttempt({
-        routeId: currentRoute.id,
-        providerId: currentRoute.providerId,
-        estimatedTokens,
-        stream: false,
-        attemptNumber: attemptNumber + 1,
-        requestId,
-      });
+      const provCapRes =
+        await this.quotaEngine.evaluateAndReserveProviderAttempt({
+          routeId: currentRoute.id,
+          providerId: currentRoute.providerId,
+          estimatedTokens,
+          stream: false,
+          attemptNumber: attemptNumber + 1,
+          requestId,
+        });
 
       if (!provCapRes.decision.allowed) {
         lastFallbackReason = "PROVIDER_UNAVAILABLE";
@@ -355,26 +380,30 @@ export class GatewayResilienceController {
       await this.repository.createAttempt(attemptEntity).catch(() => {});
       attempts.push(attemptEntity);
 
-      await this.usageMetering?.recordAttemptStarted({
-        attemptId,
-        requestId,
-        attemptNumber,
-        providerId: currentRoute.providerId,
-        providerRouteId: currentRoute.id,
-        providerModelId: currentRoute.providerModelId,
-        region: currentRoute.region,
-        fallbackReason: lastFallbackReason ?? undefined,
-      }).catch(() => {});
+      await this.usageMetering
+        ?.recordAttemptStarted({
+          attemptId,
+          requestId,
+          attemptNumber,
+          providerId: currentRoute.providerId,
+          providerRouteId: currentRoute.id,
+          providerModelId: currentRoute.providerModelId,
+          region: currentRoute.region,
+          fallbackReason: lastFallbackReason ?? undefined,
+        })
+        .catch(() => {});
 
-      await this.events.emitAttemptStarted({
-        requestId,
-        attemptNumber,
-        routeId: currentRoute.id,
-        providerId: currentRoute.providerId,
-        providerModelId: currentRoute.providerModelId,
-        organizationId: auth.organizationId,
-        workspaceId: auth.workspaceId,
-      }).catch(() => {});
+      await this.events
+        .emitAttemptStarted({
+          requestId,
+          attemptNumber,
+          routeId: currentRoute.id,
+          providerId: currentRoute.providerId,
+          providerModelId: currentRoute.providerModelId,
+          organizationId: auth.organizationId,
+          workspaceId: auth.workspaceId,
+        })
+        .catch(() => {});
 
       // 6. Setup Per-Attempt Deadline
       const attemptTimeoutMs = Math.min(timeoutMs, remainingDeadlineMs);
@@ -414,7 +443,7 @@ export class GatewayResilienceController {
             apiKeyId: auth.apiKeyId,
             timeoutMs: attemptTimeoutMs,
             cancellationSignal: attemptAbortController.signal,
-          }
+          },
         );
 
         clearTimeout(attemptTimer);
@@ -423,22 +452,26 @@ export class GatewayResilienceController {
         const latencyMs = Date.now() - attemptStarted.getTime();
 
         // Record positive outcome into HealthStore
-        await this.healthStore.recordRouteOutcome({
-          routeId: currentRoute.id,
-          providerId: currentRoute.providerId,
-          signal: "success",
-          latencyMs,
-          permitId: permit.permitId,
-          timestamp: new Date(),
-        }).catch(() => null);
+        await this.healthStore
+          .recordRouteOutcome({
+            routeId: currentRoute.id,
+            providerId: currentRoute.providerId,
+            signal: "success",
+            latencyMs,
+            permitId: permit.permitId,
+            timestamp: new Date(),
+          })
+          .catch(() => null);
 
         // Finalize provider attempt quota reservation
         if (provReservation) {
-          await this.quotaEngine.finalizeReservation(provReservation, {
-            inputTokens: response.usage.inputTokens,
-            outputTokens: response.usage.outputTokens,
-            totalTokens: response.usage.totalTokens,
-          }).catch(() => {});
+          await this.quotaEngine
+            .finalizeReservation(provReservation, {
+              inputTokens: response.usage.inputTokens,
+              outputTokens: response.usage.outputTokens,
+              totalTokens: response.usage.totalTokens,
+            })
+            .catch(() => {});
         }
 
         // 8. Attempt Succeeded
@@ -448,41 +481,47 @@ export class GatewayResilienceController {
         attemptEntity.providerRequestId = response.providerRequestId ?? null;
         attemptEntity.usage = response.usage;
 
-        await this.repository.updateAttempt(attemptId, {
-          status: "succeeded",
-          completedAt: attemptEntity.completedAt,
-          latencyMs,
-          providerRequestId: response.providerRequestId ?? null,
-          usage: response.usage,
-        }).catch(() => {});
+        await this.repository
+          .updateAttempt(attemptId, {
+            status: "succeeded",
+            completedAt: attemptEntity.completedAt,
+            latencyMs,
+            providerRequestId: response.providerRequestId ?? null,
+            usage: response.usage,
+          })
+          .catch(() => {});
 
-        await this.usageMetering?.recordAttemptCompleted({
-          attemptId,
-          requestId,
-          completedAt: attemptEntity.completedAt,
-          durationMs: latencyMs,
-          ttftMs: response.timing.timeToFirstTokenMs,
-          providerRequestId: response.providerRequestId,
-          usage: {
-            inputTokens: response.usage.inputTokens,
-            outputTokens: response.usage.outputTokens,
-            totalTokens: response.usage.totalTokens,
-            cachedInputTokens: response.usage.cachedInputTokens,
-            reasoningTokens: response.usage.reasoningTokens,
-            source: response.usage.source as any,
-          },
-        }).catch(() => {});
+        await this.usageMetering
+          ?.recordAttemptCompleted({
+            attemptId,
+            requestId,
+            completedAt: attemptEntity.completedAt,
+            durationMs: latencyMs,
+            ttftMs: response.timing.timeToFirstTokenMs,
+            providerRequestId: response.providerRequestId,
+            usage: {
+              inputTokens: response.usage.inputTokens,
+              outputTokens: response.usage.outputTokens,
+              totalTokens: response.usage.totalTokens,
+              cachedInputTokens: response.usage.cachedInputTokens,
+              reasoningTokens: response.usage.reasoningTokens,
+              source: response.usage.source as any,
+            },
+          })
+          .catch(() => {});
 
-        await this.events.emitAttemptSucceeded({
-          requestId,
-          attemptNumber,
-          routeId: currentRoute.id,
-          providerId: currentRoute.providerId,
-          providerModelId: currentRoute.providerModelId,
-          latencyMs,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-        }).catch(() => {});
+        await this.events
+          .emitAttemptSucceeded({
+            requestId,
+            attemptNumber,
+            routeId: currentRoute.id,
+            providerId: currentRoute.providerId,
+            providerModelId: currentRoute.providerModelId,
+            latencyMs,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+          })
+          .catch(() => {});
 
         return {
           response,
@@ -495,7 +534,9 @@ export class GatewayResilienceController {
 
         // Cancel provider attempt quota reservation on failure
         if (provReservation) {
-          await this.quotaEngine.cancelReservation(provReservation).catch(() => {});
+          await this.quotaEngine
+            .cancelReservation(provReservation)
+            .catch(() => {});
         }
 
         const latencyMs = Date.now() - attemptStarted.getTime();
@@ -509,7 +550,11 @@ export class GatewayResilienceController {
 
         // Record health outcome into HealthStore
         let signal: HealthOutcomeSignal = "error_5xx";
-        if (options.cancellationSignal?.aborted || (err instanceof GrowXProviderError && err.code === "request_cancelled")) {
+        if (
+          options.cancellationSignal?.aborted ||
+          (err instanceof GrowXProviderError &&
+            err.code === "request_cancelled")
+        ) {
           signal = "client_cancelled";
         } else if (classification.errorClass === "RETRYABLE_RATE_LIMIT") {
           signal = "rate_limit_429";
@@ -523,70 +568,86 @@ export class GatewayResilienceController {
           signal = "content_rejected";
         }
 
-        await this.healthStore.recordRouteOutcome({
-          routeId: currentRoute.id,
-          providerId: currentRoute.providerId,
-          signal,
-          latencyMs,
-          permitId: permit.permitId,
-          timestamp: new Date(),
-        }).catch(() => null);
+        await this.healthStore
+          .recordRouteOutcome({
+            routeId: currentRoute.id,
+            providerId: currentRoute.providerId,
+            signal,
+            latencyMs,
+            permitId: permit.permitId,
+            timestamp: new Date(),
+          })
+          .catch(() => null);
 
-        attemptEntity.status = options.cancellationSignal?.aborted ? "cancelled" : "failed";
+        attemptEntity.status = options.cancellationSignal?.aborted
+          ? "cancelled"
+          : "failed";
         attemptEntity.completedAt = new Date();
         attemptEntity.latencyMs = latencyMs;
         attemptEntity.errorCode = err?.code ?? "provider_error";
         attemptEntity.retryable = classification.retryable;
 
-        await this.repository.updateAttempt(attemptId, {
-          status: attemptEntity.status,
-          completedAt: attemptEntity.completedAt,
-          latencyMs,
-          errorCode: attemptEntity.errorCode,
-          retryable: classification.retryable,
-        }).catch(() => {});
+        await this.repository
+          .updateAttempt(attemptId, {
+            status: attemptEntity.status,
+            completedAt: attemptEntity.completedAt,
+            latencyMs,
+            errorCode: attemptEntity.errorCode,
+            retryable: classification.retryable,
+          })
+          .catch(() => {});
 
         if (options.cancellationSignal?.aborted) {
-          await this.usageMetering?.recordAttemptCancelled({
-            attemptId,
-            requestId,
-            completedAt: attemptEntity.completedAt,
-            durationMs: latencyMs,
-            usage: err?.usage ? {
-              inputTokens: err.usage.inputTokens,
-              outputTokens: err.usage.outputTokens,
-              totalTokens: err.usage.totalTokens,
-              source: "provider_reported",
-            } : undefined,
-          }).catch(() => {});
+          await this.usageMetering
+            ?.recordAttemptCancelled({
+              attemptId,
+              requestId,
+              completedAt: attemptEntity.completedAt,
+              durationMs: latencyMs,
+              usage: err?.usage
+                ? {
+                    inputTokens: err.usage.inputTokens,
+                    outputTokens: err.usage.outputTokens,
+                    totalTokens: err.usage.totalTokens,
+                    source: "provider_reported",
+                  }
+                : undefined,
+            })
+            .catch(() => {});
         } else {
-          await this.usageMetering?.recordAttemptFailed({
-            attemptId,
-            requestId,
-            completedAt: attemptEntity.completedAt,
-            durationMs: latencyMs,
-            errorCategory: classification.errorClass,
-            errorCode: attemptEntity.errorCode ?? undefined,
-            usage: err?.usage ? {
-              inputTokens: err.usage.inputTokens,
-              outputTokens: err.usage.outputTokens,
-              totalTokens: err.usage.totalTokens,
-              source: "provider_reported",
-            } : undefined,
-          }).catch(() => {});
+          await this.usageMetering
+            ?.recordAttemptFailed({
+              attemptId,
+              requestId,
+              completedAt: attemptEntity.completedAt,
+              durationMs: latencyMs,
+              errorCategory: classification.errorClass,
+              errorCode: attemptEntity.errorCode ?? undefined,
+              usage: err?.usage
+                ? {
+                    inputTokens: err.usage.inputTokens,
+                    outputTokens: err.usage.outputTokens,
+                    totalTokens: err.usage.totalTokens,
+                    source: "provider_reported",
+                  }
+                : undefined,
+            })
+            .catch(() => {});
         }
 
-        await this.events.emitAttemptFailed({
-          requestId,
-          attemptNumber,
-          routeId: currentRoute.id,
-          providerId: currentRoute.providerId,
-          providerModelId: currentRoute.providerModelId,
-          errorCode: attemptEntity.errorCode,
-          latencyMs,
-          organizationId: auth.organizationId,
-          workspaceId: auth.workspaceId,
-        }).catch(() => {});
+        await this.events
+          .emitAttemptFailed({
+            requestId,
+            attemptNumber,
+            routeId: currentRoute.id,
+            providerId: currentRoute.providerId,
+            providerModelId: currentRoute.providerModelId,
+            errorCode: attemptEntity.errorCode,
+            latencyMs,
+            organizationId: auth.organizationId,
+            workspaceId: auth.workspaceId,
+          })
+          .catch(() => {});
 
         // If client cancelled, fail immediately
         if (options.cancellationSignal?.aborted) {
@@ -594,7 +655,7 @@ export class GatewayResilienceController {
             "request_cancelled",
             "Request was cancelled by client",
             false,
-            499
+            499,
           );
         }
 
@@ -605,13 +666,15 @@ export class GatewayResilienceController {
 
         // Check if overall attempts budget is exhausted
         if (attemptNumber >= this.policy.maxAttempts) {
-          await this.events.emitRetryExhausted({
-            requestId,
-            totalAttempts: attemptNumber,
-            lastError: err?.message || String(err),
-            organizationId: auth.organizationId,
-            workspaceId: auth.workspaceId,
-          }).catch(() => {});
+          await this.events
+            .emitRetryExhausted({
+              requestId,
+              totalAttempts: attemptNumber,
+              lastError: err?.message || String(err),
+              organizationId: auth.organizationId,
+              workspaceId: auth.workspaceId,
+            })
+            .catch(() => {});
           throw err;
         }
 
@@ -637,14 +700,16 @@ export class GatewayResilienceController {
             remainingDeadlineMs: overallDeadline - Date.now(),
           });
 
-          await this.events.emitRetryScheduled({
-            requestId,
-            attemptNumber: attemptNumber + 1,
-            delayMs,
-            reason: classification.reason,
-            organizationId: auth.organizationId,
-            workspaceId: auth.workspaceId,
-          }).catch(() => {});
+          await this.events
+            .emitRetryScheduled({
+              requestId,
+              attemptNumber: attemptNumber + 1,
+              delayMs,
+              reason: classification.reason,
+              organizationId: auth.organizationId,
+              workspaceId: auth.workspaceId,
+            })
+            .catch(() => {});
 
           await cancellableSleep(delayMs, options.cancellationSignal);
           continue; // Retry same route
@@ -657,16 +722,18 @@ export class GatewayResilienceController {
           sameRouteRetries = 0;
           lastFallbackReason = classification.reason;
 
-          await this.events.emitFallbackSelected({
-            requestId,
-            fromProviderId: fromRoute.providerId,
-            toProviderId: nextRoute.providerId,
-            fromRouteId: fromRoute.id,
-            toRouteId: nextRoute.id,
-            reason: classification.reason,
-            organizationId: auth.organizationId,
-            workspaceId: auth.workspaceId,
-          }).catch(() => {});
+          await this.events
+            .emitFallbackSelected({
+              requestId,
+              fromProviderId: fromRoute.providerId,
+              toProviderId: nextRoute.providerId,
+              fromRouteId: fromRoute.id,
+              toRouteId: nextRoute.id,
+              reason: classification.reason,
+              organizationId: auth.organizationId,
+              workspaceId: auth.workspaceId,
+            })
+            .catch(() => {});
 
           const delayMs = calculateBackoffDelay({
             attemptNumber: 1,
@@ -681,13 +748,15 @@ export class GatewayResilienceController {
           continue; // Try next candidate route
         } else {
           // Exhausted or denied
-          await this.events.emitRetryExhausted({
-            requestId,
-            totalAttempts: attemptNumber,
-            lastError: err?.message || String(err),
-            organizationId: auth.organizationId,
-            workspaceId: auth.workspaceId,
-          }).catch(() => {});
+          await this.events
+            .emitRetryExhausted({
+              requestId,
+              totalAttempts: attemptNumber,
+              lastError: err?.message || String(err),
+              organizationId: auth.organizationId,
+              workspaceId: auth.workspaceId,
+            })
+            .catch(() => {});
           throw err;
         }
       }
@@ -702,7 +771,7 @@ export class GatewayResilienceController {
       "model_unavailable",
       "All candidate routes exhausted without successful execution",
       false,
-      503
+      503,
     );
   }
 }

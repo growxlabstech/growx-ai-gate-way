@@ -19,7 +19,5 @@ export function computeBatchRequestHash(params: {
     metadata: params.metadata ?? {},
   };
 
-  return createHash("sha256")
-    .update(JSON.stringify(normalized))
-    .digest("hex");
+  return createHash("sha256").update(JSON.stringify(normalized)).digest("hex");
 }

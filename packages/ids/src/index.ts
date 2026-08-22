@@ -40,4 +40,3 @@ export function createPublicId(prefix: PublicIdPrefix): string {
 export function generateId(prefix: string = "id"): string {
   return `${prefix}_${randomBytes(16).toString("hex")}`;
 }
-

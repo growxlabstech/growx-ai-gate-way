@@ -3,7 +3,10 @@ import { isCanonicalModelAllowedByKey } from "../../src/domain/api-key-matcher.j
 
 describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
   it("allows all models when no modelRules are defined", () => {
-    const res = isCanonicalModelAllowedByKey({ modelRules: [] }, "openai/gpt-4o");
+    const res = isCanonicalModelAllowedByKey(
+      { modelRules: [] },
+      "openai/gpt-4o",
+    );
     expect(res.allowed).toBe(true);
   });
 
@@ -12,7 +15,7 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
       {
         modelRules: [{ pattern: "openai/gpt-4o", effect: "allow" }],
       },
-      "openai/gpt-4o"
+      "openai/gpt-4o",
     );
     expect(res.allowed).toBe(true);
   });
@@ -22,7 +25,7 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
       {
         modelRules: [{ pattern: "openai/*", effect: "allow" }],
       },
-      "openai/gpt-4o-mini"
+      "openai/gpt-4o-mini",
     );
     expect(res.allowed).toBe(true);
   });
@@ -32,10 +35,12 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
       {
         modelRules: [{ pattern: "openai/*", effect: "allow" }],
       },
-      "anthropic/claude-3-5-sonnet"
+      "anthropic/claude-3-5-sonnet",
     );
     expect(res.allowed).toBe(false);
-    expect(res.reason).toContain("not included in the API key allowed models list");
+    expect(res.reason).toContain(
+      "not included in the API key allowed models list",
+    );
   });
 
   it("enforces explicit deny rule override over allow wildcard", () => {
@@ -46,10 +51,12 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
           { pattern: "anthropic/*", effect: "deny" },
         ],
       },
-      "anthropic/claude-3-5-sonnet"
+      "anthropic/claude-3-5-sonnet",
     );
     expect(res.allowed).toBe(false);
-    expect(res.reason).toContain("denied by API key rule pattern 'anthropic/*'");
+    expect(res.reason).toContain(
+      "denied by API key rule pattern 'anthropic/*'",
+    );
   });
 
   it("filters by category in rule", () => {
@@ -60,7 +67,7 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
         ],
       },
       "openai/gpt-4o",
-      "chat"
+      "chat",
     );
     expect(res.allowed).toBe(false);
 
@@ -71,7 +78,7 @@ describe("API Key Model Restriction Pattern Matcher Unit Tests", () => {
         ],
       },
       "openai/text-embedding-3-small",
-      "embeddings"
+      "embeddings",
     );
     expect(embedRes.allowed).toBe(true);
   });

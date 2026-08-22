@@ -1,3 +1,55 @@
-import { describe, expect, it } from "vitest"; import type { GrowXModelRequest } from "@growx/contracts"; import { cacheEligible, LocalInFlightStore, requestFingerprint } from "./index.js";
-const request: GrowXModelRequest = { requestId: "r", organizationId: "o", workspaceId: "w", environmentId: "e", apiKeyId: "k", model: "growx/fast", input: "hello", stream: false, generation: { temperature: 0 } };
-describe("cache", () => { it("creates deterministic tenant-isolated keys", () => { expect(requestFingerprint(request, "org-a", "v1")).toBe(requestFingerprint(request, "org-a", "v1")); expect(requestFingerprint(request, "org-a", "v1")).not.toBe(requestFingerprint(request, "org-b", "v1")); }); it("only caches deterministic safe requests", () => { expect(cacheEligible(request, true)).toBe(true); expect(cacheEligible({ ...request, tools: [{ type: "function", name: "write", parameters: {} }] }, true)).toBe(false); }); it("deduplicates concurrent execution", async () => { const store = new LocalInFlightStore<number>(); let calls = 0; const factory = async () => { calls++; await new Promise((resolve) => setTimeout(resolve, 5)); return 7; }; const values = await Promise.all([store.joinOrStart("x", 10, factory), store.joinOrStart("x", 10, factory)]); expect(calls).toBe(1); expect(values.some((value) => value.deduplicated)).toBe(true); }); });
+import { describe, expect, it } from "vitest";
+import type { GrowXModelRequest } from "@growx/contracts";
+import {
+  cacheEligible,
+  LocalInFlightStore,
+  requestFingerprint,
+} from "./index.js";
+const request: GrowXModelRequest = {
+  requestId: "r",
+  organizationId: "o",
+  workspaceId: "w",
+  environmentId: "e",
+  apiKeyId: "k",
+  model: "growx/fast",
+  input: "hello",
+  stream: false,
+  generation: { temperature: 0 },
+};
+describe("cache", () => {
+  it("creates deterministic tenant-isolated keys", () => {
+    expect(requestFingerprint(request, "org-a", "v1")).toBe(
+      requestFingerprint(request, "org-a", "v1"),
+    );
+    expect(requestFingerprint(request, "org-a", "v1")).not.toBe(
+      requestFingerprint(request, "org-b", "v1"),
+    );
+  });
+  it("only caches deterministic safe requests", () => {
+    expect(cacheEligible(request, true)).toBe(true);
+    expect(
+      cacheEligible(
+        {
+          ...request,
+          tools: [{ type: "function", name: "write", parameters: {} }],
+        },
+        true,
+      ),
+    ).toBe(false);
+  });
+  it("deduplicates concurrent execution", async () => {
+    const store = new LocalInFlightStore<number>();
+    let calls = 0;
+    const factory = async () => {
+      calls++;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return 7;
+    };
+    const values = await Promise.all([
+      store.joinOrStart("x", 10, factory),
+      store.joinOrStart("x", 10, factory),
+    ]);
+    expect(calls).toBe(1);
+    expect(values.some((value) => value.deduplicated)).toBe(true);
+  });
+});

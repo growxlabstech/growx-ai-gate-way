@@ -30,7 +30,13 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
     environmentId: "env_dev",
     environment: "development",
     name: "Test Batch Key",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create", "models.read"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+      "models.read",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -56,7 +62,10 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
           choices: [
             {
               index: 0,
-              message: { role: "assistant", content: `Echo: ${req.messages[0].content}` },
+              message: {
+                role: "assistant",
+                content: `Echo: ${req.messages[0].content}`,
+              },
               finish_reason: "stop",
             },
           ],
@@ -115,7 +124,12 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
         gatewayEngine: mockGatewayEngine,
         finalizer,
       },
-      { workerId: "worker-1", concurrency: 5, leaseDurationMs: 10000, maxPerTenant: 10 }
+      {
+        workerId: "worker-1",
+        concurrency: 5,
+        leaseDurationMs: 10000,
+        maxPerTenant: 10,
+      },
     );
 
     scheduler = new BatchScheduler({
@@ -132,13 +146,19 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
           custom_id: "item-1",
           method: "POST",
           url: "/v1/chat/completions",
-          body: { model: "gpt-4o", messages: [{ role: "user", content: "Hello batch 1" }] },
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "Hello batch 1" }],
+          },
         },
         {
           custom_id: "item-2",
           method: "POST",
           url: "/v1/chat/completions",
-          body: { model: "gpt-4o", messages: [{ role: "user", content: "Hello batch 2" }] },
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "Hello batch 2" }],
+          },
         },
       ],
       endpoint: "/v1/chat/completions",
@@ -173,11 +193,20 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
     expect(completedJob.outputFileId).toBeTruthy();
 
     // 6. Verify output file content in FileService
-    const tenant = { organizationId: authContext.organizationId, workspaceId: authContext.workspaceId };
-    const outputFile = await fileService.getFile(tenant, completedJob.outputFileId!);
+    const tenant = {
+      organizationId: authContext.organizationId,
+      workspaceId: authContext.workspaceId,
+    };
+    const outputFile = await fileService.getFile(
+      tenant,
+      completedJob.outputFileId!,
+    );
     expect(outputFile.purpose).toBe("batch_output");
 
-    const contentStream = await fileService.getFileContentStream(tenant, completedJob.outputFileId!);
+    const contentStream = await fileService.getFileContentStream(
+      tenant,
+      completedJob.outputFileId!,
+    );
     const contentText = (contentStream.body as Buffer).toString("utf8");
     expect(contentText).toContain('"custom_id":"item-1"');
     expect(contentText).toContain('"custom_id":"item-2"');
@@ -192,11 +221,27 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
   it("submits Phase-25 input file, parses JSONL stream, executes, and creates error file on failures", async () => {
     // 1. Create and upload Phase-25 input JSONL file
     const inputJsonl = [
-      JSON.stringify({ custom_id: "task-1", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "ok" }] } }),
-      JSON.stringify({ custom_id: "task-2-fail", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "fail-me" }] } }),
+      JSON.stringify({
+        custom_id: "task-1",
+        method: "POST",
+        url: "/v1/chat/completions",
+        body: { model: "gpt-4o", messages: [{ role: "user", content: "ok" }] },
+      }),
+      JSON.stringify({
+        custom_id: "task-2-fail",
+        method: "POST",
+        url: "/v1/chat/completions",
+        body: {
+          model: "gpt-4o",
+          messages: [{ role: "user", content: "fail-me" }],
+        },
+      }),
     ].join("\n");
 
-    const tenant = { organizationId: authContext.organizationId, workspaceId: authContext.workspaceId };
+    const tenant = {
+      organizationId: authContext.organizationId,
+      workspaceId: authContext.workspaceId,
+    };
     const createRes = await fileService.createFile(tenant, {
       fileName: "input.jsonl",
       purpose: "batch_input",
@@ -205,8 +250,16 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
       sizeBytes: Buffer.byteLength(inputJsonl, "utf8"),
     });
 
-    await fileService.storageProvider.putObject(createRes.file.storageKey, Buffer.from(inputJsonl, "utf8"), { contentType: "application/jsonl" });
-    const compRes = await fileService.completeUpload(tenant, createRes.file.id, { uploadSessionId: createRes.uploadSessionId });
+    await fileService.storageProvider.putObject(
+      createRes.file.storageKey,
+      Buffer.from(inputJsonl, "utf8"),
+      { contentType: "application/jsonl" },
+    );
+    const compRes = await fileService.completeUpload(
+      tenant,
+      createRes.file.id,
+      { uploadSessionId: createRes.uploadSessionId },
+    );
 
     // Mock failure for task-2
     mockGatewayEngine.executeChatCompletion = async (_auth: any, req: any) => {
@@ -218,7 +271,13 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
       }
       return {
         id: "chatcmpl_success",
-        choices: [{ index: 0, message: { role: "assistant", content: "Success response" }, finish_reason: "stop" }],
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content: "Success response" },
+            finish_reason: "stop",
+          },
+        ],
       };
     };
 
@@ -244,7 +303,10 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
     expect(resultJob.outputFileId).toBeTruthy();
     expect(resultJob.errorFileId).toBeTruthy();
 
-    const errStream = await fileService.getFileContentStream(tenant, resultJob.errorFileId!);
+    const errStream = await fileService.getFileContentStream(
+      tenant,
+      resultJob.errorFileId!,
+    );
     const errText = (errStream.body as Buffer).toString("utf8");
     expect(errText).toContain('"custom_id":"task-2-fail"');
     expect(errText).toContain("Invalid prompt parameter");
@@ -253,8 +315,18 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
   it("handles batch cancellation and halts unprocessed items", async () => {
     const batch = await batchService.createBatch(authContext, {
       items: [
-        { custom_id: "c-1", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } },
-        { custom_id: "c-2", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] } },
+        {
+          custom_id: "c-1",
+          method: "POST",
+          url: "/v1/chat/completions",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] },
+        },
+        {
+          custom_id: "c-2",
+          method: "POST",
+          url: "/v1/chat/completions",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "2" }] },
+        },
       ],
     });
 
@@ -263,12 +335,19 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
     expect(cancelled.cancelledAt).toBeTruthy();
 
     const items = await batchService.listBatchItems(authContext, batch.id);
-    expect(items.data.every(i => i.status === "cancelled")).toBe(true);
+    expect(items.data.every((i) => i.status === "cancelled")).toBe(true);
   });
 
   it("enforces tenant isolation — cannot access another org's batch", async () => {
     const batch = await batchService.createBatch(authContext, {
-      items: [{ custom_id: "t-1", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } }],
+      items: [
+        {
+          custom_id: "t-1",
+          method: "POST",
+          url: "/v1/chat/completions",
+          body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] },
+        },
+      ],
     });
 
     const otherTenantAuth: MachineAuthContext = {
@@ -276,25 +355,49 @@ describe("Batch Execution Plane Lifecycle Integration", () => {
       organizationId: "org_beta_intruder",
     };
 
-    await expect(batchService.getBatch(otherTenantAuth, batch.id)).rejects.toThrow(/not found/);
-    await expect(batchService.cancelBatch(otherTenantAuth, batch.id)).rejects.toThrow(/not found/);
+    await expect(
+      batchService.getBatch(otherTenantAuth, batch.id),
+    ).rejects.toThrow(/not found/);
+    await expect(
+      batchService.cancelBatch(otherTenantAuth, batch.id),
+    ).rejects.toThrow(/not found/);
   });
 
   it("handles idempotency key deduplication", async () => {
     const batch1 = await batchService.createBatch(
       authContext,
       {
-        items: [{ custom_id: "idem-1", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } }],
+        items: [
+          {
+            custom_id: "idem-1",
+            method: "POST",
+            url: "/v1/chat/completions",
+            body: {
+              model: "gpt-4o",
+              messages: [{ role: "user", content: "1" }],
+            },
+          },
+        ],
       },
-      "unique-idem-key-999"
+      "unique-idem-key-999",
     );
 
     const batch2 = await batchService.createBatch(
       authContext,
       {
-        items: [{ custom_id: "idem-1", method: "POST", url: "/v1/chat/completions", body: { model: "gpt-4o", messages: [{ role: "user", content: "1" }] } }],
+        items: [
+          {
+            custom_id: "idem-1",
+            method: "POST",
+            url: "/v1/chat/completions",
+            body: {
+              model: "gpt-4o",
+              messages: [{ role: "user", content: "1" }],
+            },
+          },
+        ],
       },
-      "unique-idem-key-999"
+      "unique-idem-key-999",
     );
 
     expect(batch1.id).toBe(batch2.id);

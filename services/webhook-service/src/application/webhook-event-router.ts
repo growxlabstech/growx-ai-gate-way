@@ -22,7 +22,10 @@ export class WebhookEventRouter {
     workspaceId?: string | undefined;
     data: T;
     createdAt?: Date | undefined;
-  }): Promise<{ outboundEvent: OutboundWebhookEvent; deliveries: WebhookDelivery[] }> {
+  }): Promise<{
+    outboundEvent: OutboundWebhookEvent;
+    deliveries: WebhookDelivery[];
+  }> {
     const version = params.eventVersion ?? "v1";
     const fullEventType = `${params.eventType}.${version}`;
 
@@ -30,11 +33,15 @@ export class WebhookEventRouter {
     const existing = await this.repository.findOutboundEventBySource(
       params.sourceEventId,
       params.eventType,
-      version
+      version,
     );
     if (existing) {
-      const existingDeliveries = await this.repository.listDeliveries(params.organizationId);
-      const matched = existingDeliveries.filter((d) => d.webhookEventId === existing.id);
+      const existingDeliveries = await this.repository.listDeliveries(
+        params.organizationId,
+      );
+      const matched = existingDeliveries.filter(
+        (d) => d.webhookEventId === existing.id,
+      );
       return { outboundEvent: existing, deliveries: matched };
     }
 
@@ -42,7 +49,7 @@ export class WebhookEventRouter {
     const matchingEndpoints = await this.repository.findMatchingEndpoints(
       params.organizationId,
       fullEventType,
-      params.workspaceId
+      params.workspaceId,
     );
 
     // If no endpoints subscribed, we still record the outbound event or return empty deliveries

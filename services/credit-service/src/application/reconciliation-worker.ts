@@ -10,7 +10,7 @@ export interface WalletReconciliationReport {
 export class ReconciliationWorker {
   constructor(
     private readonly repository: ICreditRepository,
-    private readonly creditService: CreditService
+    private readonly creditService: CreditService,
   ) {}
 
   /**

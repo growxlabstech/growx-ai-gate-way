@@ -27,10 +27,11 @@ export class PaymentReconciliationWorker {
     errors: number;
   }> {
     const cutoff = new Date(Date.now() - this.staleThresholdMs);
-    const pendingPayments = await this.repository.listPendingPaymentsForReconciliation(
-      cutoff,
-      this.batchSize
-    );
+    const pendingPayments =
+      await this.repository.listPendingPaymentsForReconciliation(
+        cutoff,
+        this.batchSize,
+      );
 
     let processed = 0;
     let corrected = 0;

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { canonicalCapabilitySchema, inputModalitySchema, outputModalitySchema } from "./ai.js";
+import {
+  canonicalCapabilitySchema,
+  inputModalitySchema,
+  outputModalitySchema,
+} from "./ai.js";
 
 export const routingWorkloadTypeSchema = z.enum([
   "realtime_interactive",
@@ -83,7 +87,9 @@ export const requestCapabilityProfileSchema = z.object({
   requestedAudioFormat: z.string().optional(),
   policyId: z.string().optional(),
 });
-export type RequestCapabilityProfile = z.infer<typeof requestCapabilityProfileSchema>;
+export type RequestCapabilityProfile = z.infer<
+  typeof requestCapabilityProfileSchema
+>;
 
 export const routeScoreDetailsSchema = z.object({
   candidateId: z.string(),
@@ -186,7 +192,9 @@ export const routingPolicyConstraintsSchema = z.object({
   allowCanaryRoutes: z.boolean().default(true),
   explorationRate: z.number().min(0).max(0.2).default(0.02),
 });
-export type RoutingPolicyConstraints = z.infer<typeof routingPolicyConstraintsSchema>;
+export type RoutingPolicyConstraints = z.infer<
+  typeof routingPolicyConstraintsSchema
+>;
 
 export const routingPolicyV2Schema = z.object({
   id: z.string(),
@@ -222,7 +230,9 @@ export const createRoutingPolicyRequestSchema = z.object({
   weights: routingPolicyWeightsSchema.optional(),
   constraints: routingPolicyConstraintsSchema.optional(),
 });
-export type CreateRoutingPolicyRequest = z.infer<typeof createRoutingPolicyRequestSchema>;
+export type CreateRoutingPolicyRequest = z.infer<
+  typeof createRoutingPolicyRequestSchema
+>;
 
 export const updateRoutingPolicyRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -231,7 +241,9 @@ export const updateRoutingPolicyRequestSchema = z.object({
   constraints: routingPolicyConstraintsSchema.optional(),
   status: z.enum(["draft", "active", "retired"]).optional(),
 });
-export type UpdateRoutingPolicyRequest = z.infer<typeof updateRoutingPolicyRequestSchema>;
+export type UpdateRoutingPolicyRequest = z.infer<
+  typeof updateRoutingPolicyRequestSchema
+>;
 
 export const routingSimulationRequestSchema = z.object({
   profile: requestCapabilityProfileSchema,
@@ -239,7 +251,9 @@ export const routingSimulationRequestSchema = z.object({
   customWeights: routingPolicyWeightsSchema.optional(),
   customConstraints: routingPolicyConstraintsSchema.optional(),
 });
-export type RoutingSimulationRequest = z.infer<typeof routingSimulationRequestSchema>;
+export type RoutingSimulationRequest = z.infer<
+  typeof routingSimulationRequestSchema
+>;
 
 export const routingSimulationResponseSchema = z.object({
   profile: requestCapabilityProfileSchema,
@@ -254,4 +268,6 @@ export const routingSimulationResponseSchema = z.object({
   decisionReason: z.string(),
   simulatedAt: z.coerce.date(),
 });
-export type RoutingSimulationResponse = z.infer<typeof routingSimulationResponseSchema>;
+export type RoutingSimulationResponse = z.infer<
+  typeof routingSimulationResponseSchema
+>;

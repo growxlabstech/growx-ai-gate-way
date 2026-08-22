@@ -19,16 +19,22 @@ const common = {
 function launch(name, filter, port) {
   const output = openSync(resolve(runtime, `${name}-live.log`), "a");
   const error = openSync(resolve(runtime, `${name}-live.err.log`), "a");
-  const child = spawn(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "pnpm.cmd", "--filter", filter, "dev"], {
-    cwd: root,
-    detached: true,
-    env: { ...common, PORT: String(port) },
-    stdio: ["ignore", output, error],
-    windowsHide: true,
-  });
+  const child = spawn(
+    process.env.ComSpec ?? "cmd.exe",
+    ["/d", "/s", "/c", "pnpm.cmd", "--filter", filter, "dev"],
+    {
+      cwd: root,
+      detached: true,
+      env: { ...common, PORT: String(port) },
+      stdio: ["ignore", output, error],
+      windowsHide: true,
+    },
+  );
   child.unref();
 }
 
 const target = process.argv[2] ?? "all";
-if (target === "all" || target === "identity") launch("identity", "@growx/identity-service", 4000);
-if (target === "all" || target === "notification") launch("notification", "@growx/notification-service", 4013);
+if (target === "all" || target === "identity")
+  launch("identity", "@growx/identity-service", 4000);
+if (target === "all" || target === "notification")
+  launch("notification", "@growx/notification-service", 4013);

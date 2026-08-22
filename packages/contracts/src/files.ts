@@ -78,7 +78,12 @@ export const createFileRequestSchema = z.object({
   uploadType: fileUploadTypeSchema.default("single").optional(),
   partCount: z.number().int().positive().max(10000).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  expiresInSeconds: z.number().int().positive().max(86400 * 365).optional(),
+  expiresInSeconds: z
+    .number()
+    .int()
+    .positive()
+    .max(86400 * 365)
+    .optional(),
 });
 export type CreateFileRequest = z.infer<typeof createFileRequestSchema>;
 
@@ -112,12 +117,16 @@ export const completeFileUploadRequestSchema = z.object({
   checksumSha256: z.string().optional(),
   actualSizeBytes: z.number().int().nonnegative().optional(),
 });
-export type CompleteFileUploadRequest = z.infer<typeof completeFileUploadRequestSchema>;
+export type CompleteFileUploadRequest = z.infer<
+  typeof completeFileUploadRequestSchema
+>;
 
 export const completeFileUploadResponseSchema = z.object({
   file: fileObjectSchema,
 });
-export type CompleteFileUploadResponse = z.infer<typeof completeFileUploadResponseSchema>;
+export type CompleteFileUploadResponse = z.infer<
+  typeof completeFileUploadResponseSchema
+>;
 
 export const fileDownloadResponseSchema = z.object({
   file: fileObjectSchema,

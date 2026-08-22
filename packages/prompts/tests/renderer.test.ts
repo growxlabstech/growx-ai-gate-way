@@ -9,14 +9,31 @@ describe("PromptTemplateRenderer", () => {
     promptId: "pdef_1",
     version: 1,
     messages: [
-      { role: "system", contentTemplate: "You are a customer support agent for {{company}}." },
-      { role: "user", contentTemplate: "Customer inquiry: {{inquiry_text}}\nUser tier: {{tier}}" },
+      {
+        role: "system",
+        contentTemplate: "You are a customer support agent for {{company}}.",
+      },
+      {
+        role: "user",
+        contentTemplate:
+          "Customer inquiry: {{inquiry_text}}\nUser tier: {{tier}}",
+      },
     ],
     templateFormat: "mustache",
     variableSchema: [
-      { name: "company", type: "string", required: true, defaultValue: "GrowX AI" },
+      {
+        name: "company",
+        type: "string",
+        required: true,
+        defaultValue: "GrowX AI",
+      },
       { name: "inquiry_text", type: "string", required: true, maxLength: 500 },
-      { name: "tier", type: "string", required: true, enum: ["free", "pro", "enterprise"] },
+      {
+        name: "tier",
+        type: "string",
+        required: true,
+        enum: ["free", "pro", "enterprise"],
+      },
       { name: "account_id", type: "string", required: false, sensitive: true },
     ],
     metadata: {},
@@ -41,7 +58,8 @@ describe("PromptTemplateRenderer", () => {
     });
     expect(result.renderedMessages[1]).toEqual({
       role: "user",
-      content: "Customer inquiry: How do I upgrade to enterprise?\nUser tier: pro",
+      content:
+        "Customer inquiry: How do I upgrade to enterprise?\nUser tier: pro",
     });
     expect(result.renderedHash).toBeDefined();
     expect(result.sensitiveVariableNames).toEqual(["account_id"]);
@@ -52,7 +70,9 @@ describe("PromptTemplateRenderer", () => {
       inquiry_text: "Billing issue",
       tier: "free",
     });
-    expect(result.renderedMessages[0]?.content).toBe("You are a customer support agent for GrowX AI.");
+    expect(result.renderedMessages[0]?.content).toBe(
+      "You are a customer support agent for GrowX AI.",
+    );
   });
 
   it("fails fast when required variable without default is missing", () => {
@@ -99,7 +119,11 @@ describe("PromptTemplateRenderer", () => {
       promptId: "pdef_2",
       version: 1,
       messages: [
-        { role: "user", contentTemplate: "Count: {{count}}, Active: {{active}}, Items: {{items}}, Metadata: {{meta}}" },
+        {
+          role: "user",
+          contentTemplate:
+            "Count: {{count}}, Active: {{active}}, Items: {{items}}, Metadata: {{meta}}",
+        },
       ],
       templateFormat: "mustache",
       variableSchema: [
@@ -149,7 +173,7 @@ describe("PromptTemplateRenderer", () => {
       PromptTemplateRenderer.render(
         hugeVersion,
         { big_text: "a".repeat(2000) },
-        { maxTotalRenderBytes: 1000 }
+        { maxTotalRenderBytes: 1000 },
       );
     }).toThrowError(PromptRenderError);
   });

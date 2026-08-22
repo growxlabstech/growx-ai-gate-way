@@ -1,1 +1,9 @@
-{"extends":"../../tsconfig.base.json","compilerOptions":{"outDir":"dist","rootDir":".","exactOptionalPropertyTypes":false},"include":["src/**/*.ts","tests/**/*.ts"]}
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
+}

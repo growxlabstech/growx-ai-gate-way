@@ -7,7 +7,7 @@ export class CostScorer {
    */
   public static score(
     candidate: RouteCandidate,
-    allCandidates: RouteCandidate[]
+    allCandidates: RouteCandidate[],
   ): { score: number; estimatedCostMinor: number } {
     const cost =
       candidate.estimatedCost ??
@@ -17,8 +17,14 @@ export class CostScorer {
 
     // Relative cost normalization against candidate pool
     const allCosts = allCandidates
-      .map(c => c.estimatedCost ?? (c.priceInputPerMillionMinor !== undefined ? Number(c.priceInputPerMillionMinor) : 1000))
-      .filter(c => c > 0);
+      .map(
+        (c) =>
+          c.estimatedCost ??
+          (c.priceInputPerMillionMinor !== undefined
+            ? Number(c.priceInputPerMillionMinor)
+            : 1000),
+      )
+      .filter((c) => c > 0);
 
     const minCost = Math.min(...allCosts, cost);
     const maxCost = Math.max(...allCosts, cost);

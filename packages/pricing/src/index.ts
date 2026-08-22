@@ -13,7 +13,8 @@ export { Decimal, type RoundingMode } from "@growx/money";
 // Legacy compatibility helpers (if needed by older stubs)
 import { assertSameCurrency, multiplyRatio, type Money } from "@growx/money";
 
-export type PricingLevel = "platform" | "plan" | "organization" | "workspace" | "model" | "promotion";
+export type PricingLevel =
+  "platform" | "plan" | "organization" | "workspace" | "model" | "promotion";
 export interface PricingVersion {
   id: string;
   version: number;
@@ -32,9 +33,18 @@ export interface PricingRule {
   minimumMarginBasisPoints: bigint;
 }
 
-const precedence: readonly PricingLevel[] = ["platform", "plan", "organization", "workspace", "model", "promotion"];
+const precedence: readonly PricingLevel[] = [
+  "platform",
+  "plan",
+  "organization",
+  "workspace",
+  "model",
+  "promotion",
+];
 export function selectPricingRule(rules: readonly PricingRule[]): PricingRule {
-  const selected = [...rules].sort((a, b) => precedence.indexOf(b.level) - precedence.indexOf(a.level))[0];
+  const selected = [...rules].sort(
+    (a, b) => precedence.indexOf(b.level) - precedence.indexOf(a.level),
+  )[0];
   if (!selected) throw new Error("No pricing rule");
   return selected;
 }
@@ -47,7 +57,10 @@ export interface PriceResult {
   pricingVersionId: string;
 }
 
-export function calculatePrice(providerCost: Money, rule: PricingRule): PriceResult {
+export function calculatePrice(
+  providerCost: Money,
+  rule: PricingRule,
+): PriceResult {
   let customerCharge: Money;
   if (rule.method === "fixed") {
     if (!rule.fixedCharge) throw new Error("Fixed charge missing");
@@ -56,14 +69,21 @@ export function calculatePrice(providerCost: Money, rule: PricingRule): PriceRes
   } else {
     const markup = rule.markupBasisPoints ?? 0n;
     customerCharge = {
-      amountMinor: providerCost.amountMinor + multiplyRatio(providerCost.amountMinor, markup, 10_000n),
+      amountMinor:
+        providerCost.amountMinor +
+        multiplyRatio(providerCost.amountMinor, markup, 10_000n),
       currency: providerCost.currency,
     };
   }
   const margin = customerCharge.amountMinor - providerCost.amountMinor;
-  const marginBasisPoints = customerCharge.amountMinor === 0n ? 0n : (margin * 10_000n) / customerCharge.amountMinor;
+  const marginBasisPoints =
+    customerCharge.amountMinor === 0n
+      ? 0n
+      : (margin * 10_000n) / customerCharge.amountMinor;
   if (marginBasisPoints < rule.minimumMarginBasisPoints) {
-    throw Object.assign(new Error("Minimum margin policy violated"), { code: "minimum_margin_violation" });
+    throw Object.assign(new Error("Minimum margin policy violated"), {
+      code: "minimum_margin_violation",
+    });
   }
   return {
     providerCost,
@@ -90,5 +110,8 @@ export function providerTokenCost(input: {
     input.outputTokens * input.outputPerMillion +
     input.cachedTokens * input.cachedPerMillion +
     input.reasoningTokens * input.reasoningPerMillion;
-  return { amountMinor: (units + 999_999n) / 1_000_000n, currency: input.currency };
+  return {
+    amountMinor: (units + 999_999n) / 1_000_000n,
+    currency: input.currency,
+  };
 }

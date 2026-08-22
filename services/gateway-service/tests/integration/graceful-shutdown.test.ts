@@ -25,7 +25,7 @@ function createTestController(registry: StreamRegistry, requestId: string) {
       providerId: "prov_mock",
       requestedModel: "openai/gpt-4o-mini",
       startTime: Date.now(),
-    }
+    },
   );
   return { controller, repository, events };
 }

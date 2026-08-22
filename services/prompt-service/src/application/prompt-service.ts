@@ -18,14 +18,18 @@ import {
   PromptNotFoundError,
   PromptReleaseError,
 } from "@growx/prompts";
-import type { IPromptRepository, IPromptEvents, PromptListFilter } from "../domain/types.js";
+import type {
+  IPromptRepository,
+  IPromptEvents,
+  PromptListFilter,
+} from "../domain/types.js";
 import type { PromptResolver } from "./prompt-resolver.js";
 
 export class PromptService {
   constructor(
     private readonly repository: IPromptRepository,
     private readonly events: IPromptEvents,
-    private readonly resolver?: PromptResolver | undefined
+    private readonly resolver?: PromptResolver | undefined,
   ) {}
 
   // -------------------------------------------------------------
@@ -36,14 +40,24 @@ export class PromptService {
     workspaceId: string | undefined,
     input: CreatePromptRequest,
     actorId: string,
-    requestId?: string
-  ): Promise<{ prompt: PromptDefinition; initialVersion?: PromptVersion | undefined }> {
+    requestId?: string,
+  ): Promise<{
+    prompt: PromptDefinition;
+    initialVersion?: PromptVersion | undefined;
+  }> {
     // 1. Check duplicate key within organization & workspace scope
-    const existing = await this.repository.getDefinitionByKey(organizationId, input.key, workspaceId);
+    const existing = await this.repository.getDefinitionByKey(
+      organizationId,
+      input.key,
+      workspaceId,
+    );
     if (existing) {
-      throw new PromptValidationError(`Prompt with key '${input.key}' already exists in this scope`, {
-        key: input.key,
-      });
+      throw new PromptValidationError(
+        `Prompt with key '${input.key}' already exists in this scope`,
+        {
+          key: input.key,
+        },
+      );
     }
 
     const now = new Date();
@@ -66,7 +80,11 @@ export class PromptService {
     };
 
     const createdPrompt = await this.repository.createDefinition(prompt);
-    await this.events.emitPromptEvent("prompt.created", { promptId, organizationId, key: input.key }, requestId);
+    await this.events.emitPromptEvent(
+      "prompt.created",
+      { promptId, organizationId, key: input.key },
+      requestId,
+    );
 
     let initialVersion: PromptVersion | undefined;
     if (input.initialVersion) {
@@ -75,14 +93,17 @@ export class PromptService {
         promptId,
         input.initialVersion,
         actorId,
-        requestId
+        requestId,
       );
     }
 
     return { prompt: createdPrompt, initialVersion };
   }
 
-  public async getPrompt(organizationId: string, promptId: string): Promise<PromptDefinition> {
+  public async getPrompt(
+    organizationId: string,
+    promptId: string,
+  ): Promise<PromptDefinition> {
     const prompt = await this.repository.getDefinitionById(promptId);
     if (!prompt || prompt.organizationId !== organizationId) {
       throw new PromptNotFoundError(`Prompt '${promptId}' not found`);
@@ -93,9 +114,13 @@ export class PromptService {
   public async getPromptByKey(
     organizationId: string,
     workspaceId: string | undefined,
-    key: string
+    key: string,
   ): Promise<PromptDefinition> {
-    const prompt = await this.repository.getDefinitionByKey(organizationId, key, workspaceId);
+    const prompt = await this.repository.getDefinitionByKey(
+      organizationId,
+      key,
+      workspaceId,
+    );
     if (!prompt) {
       throw new PromptNotFoundError(`Prompt with key '${key}' not found`);
     }
@@ -108,26 +133,42 @@ export class PromptService {
     input: UpdatePromptRequest,
     actorId: string,
     isPrivileged = false,
-    requestId?: string
+    requestId?: string,
   ): Promise<PromptDefinition> {
     const prompt = await this.getPrompt(organizationId, promptId);
 
     if (prompt.isProtected && !isPrivileged) {
-      await this.events.emitSecurityEvent("prompt.protected.change_denied", { promptId, actorId }, requestId);
-      throw new PromptValidationError("Protected prompt requires privileged authorization to modify");
+      await this.events.emitSecurityEvent(
+        "prompt.protected.change_denied",
+        { promptId, actorId },
+        requestId,
+      );
+      throw new PromptValidationError(
+        "Protected prompt requires privileged authorization to modify",
+      );
     }
 
     const updates: Partial<PromptDefinition> = {
       ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.description !== undefined
+        ? { description: input.description }
+        : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
-      ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
-      ...(input.isProtected !== undefined ? { isProtected: input.isProtected } : {}),
+      ...(input.visibility !== undefined
+        ? { visibility: input.visibility }
+        : {}),
+      ...(input.isProtected !== undefined
+        ? { isProtected: input.isProtected }
+        : {}),
       updatedAt: new Date(),
     };
 
     const updated = await this.repository.updateDefinition(promptId, updates);
-    await this.events.emitPromptEvent("prompt.updated", { promptId, organizationId, updates }, requestId);
+    await this.events.emitPromptEvent(
+      "prompt.updated",
+      { promptId, organizationId, updates },
+      requestId,
+    );
     return updated;
   }
 
@@ -135,7 +176,7 @@ export class PromptService {
     organizationId: string,
     promptId: string,
     actorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<PromptDefinition> {
     const prompt = await this.getPrompt(organizationId, promptId);
     const updated = await this.repository.updateDefinition(promptId, {
@@ -144,11 +185,17 @@ export class PromptService {
     });
 
     this.resolver?.invalidate(prompt.organizationId, prompt.key);
-    await this.events.emitPromptEvent("prompt.archived", { promptId, organizationId }, requestId);
+    await this.events.emitPromptEvent(
+      "prompt.archived",
+      { promptId, organizationId },
+      requestId,
+    );
     return updated;
   }
 
-  public async listPrompts(filter: PromptListFilter): Promise<PromptDefinition[]> {
+  public async listPrompts(
+    filter: PromptListFilter,
+  ): Promise<PromptDefinition[]> {
     return this.repository.listDefinitions(filter);
   }
 
@@ -160,7 +207,7 @@ export class PromptService {
     promptId: string,
     input: CreatePromptVersionRequest,
     actorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<PromptVersion> {
     const prompt = await this.getPrompt(organizationId, promptId);
 
@@ -171,25 +218,32 @@ export class PromptService {
       sensitive: v.sensitive ?? false,
     }));
 
-    const issues = PromptLinter.lint(input.messages, input.template, variableSchema);
+    const issues = PromptLinter.lint(
+      input.messages,
+      input.template,
+      variableSchema,
+    );
     const errors = issues.filter((i) => i.severity === "error");
     if (errors.length > 0) {
       throw new PromptValidationError(
         `Prompt template validation failed: ${errors.map((e) => e.message).join("; ")}`,
-        { errors }
+        { errors },
       );
     }
 
     // 2. Monotonic version calculation
     const existingVersions = await this.repository.listVersions(promptId);
-    const nextVersionNum = existingVersions.length > 0 ? Math.max(...existingVersions.map((v) => v.version)) + 1 : 1;
+    const nextVersionNum =
+      existingVersions.length > 0
+        ? Math.max(...existingVersions.map((v) => v.version)) + 1
+        : 1;
 
     // 3. Deterministic content hash
     const contentHash = PromptTemplateRenderer.calculateContentHash(
       input.messages,
       input.template,
       variableSchema,
-      input.outputSchema
+      input.outputSchema,
     );
 
     const now = new Date();
@@ -207,7 +261,9 @@ export class PromptService {
       metadata: input.metadata || {},
       contentHash,
       requiredCapabilities: input.requiredCapabilities || [],
-      ...(input.preferredModelFamily ? { preferredModelFamily: input.preferredModelFamily } : {}),
+      ...(input.preferredModelFamily
+        ? { preferredModelFamily: input.preferredModelFamily }
+        : {}),
       allowedModels: input.allowedModels || [],
       createdBy: actorId,
       createdAt: now,
@@ -217,22 +273,34 @@ export class PromptService {
     await this.events.emitPromptEvent(
       "prompt.version.created",
       { promptId, versionId, version: nextVersionNum, contentHash },
-      requestId
+      requestId,
     );
 
     return createdVersion;
   }
 
-  public async getVersion(organizationId: string, promptId: string, versionNumber: number): Promise<PromptVersion> {
+  public async getVersion(
+    organizationId: string,
+    promptId: string,
+    versionNumber: number,
+  ): Promise<PromptVersion> {
     await this.getPrompt(organizationId, promptId);
-    const version = await this.repository.getVersionByNumber(promptId, versionNumber);
+    const version = await this.repository.getVersionByNumber(
+      promptId,
+      versionNumber,
+    );
     if (!version) {
-      throw new PromptNotFoundError(`Version ${versionNumber} for prompt '${promptId}' not found`);
+      throw new PromptNotFoundError(
+        `Version ${versionNumber} for prompt '${promptId}' not found`,
+      );
     }
     return version;
   }
 
-  public async listVersions(organizationId: string, promptId: string): Promise<PromptVersion[]> {
+  public async listVersions(
+    organizationId: string,
+    promptId: string,
+  ): Promise<PromptVersion[]> {
     await this.getPrompt(organizationId, promptId);
     return this.repository.listVersions(promptId);
   }
@@ -246,7 +314,7 @@ export class PromptService {
     input: CreatePromptReleaseRequest,
     actorId: string,
     isPrivileged = false,
-    requestId?: string
+    requestId?: string,
   ): Promise<PromptRelease> {
     const prompt = await this.getPrompt(organizationId, promptId);
     const env: PromptReleaseEnvironment = input.environment || "production";
@@ -258,11 +326,16 @@ export class PromptService {
 
     const version = await this.repository.getVersionById(input.promptVersionId);
     if (!version || version.promptId !== promptId) {
-      throw new PromptNotFoundError(`Prompt version '${input.promptVersionId}' does not belong to prompt '${promptId}'`);
+      throw new PromptNotFoundError(
+        `Prompt version '${input.promptVersionId}' does not belong to prompt '${promptId}'`,
+      );
     }
 
     const existingReleases = await this.repository.listReleases(promptId, env);
-    const nextReleaseNumber = existingReleases.length > 0 ? Math.max(...existingReleases.map((r) => r.releaseNumber)) + 1 : 1;
+    const nextReleaseNumber =
+      existingReleases.length > 0
+        ? Math.max(...existingReleases.map((r) => r.releaseNumber)) + 1
+        : 1;
 
     const now = new Date();
     const releaseId = `prel_${createPublicId("key").slice(4)}`;
@@ -297,8 +370,14 @@ export class PromptService {
 
     await this.events.emitPromptEvent(
       "prompt.released",
-      { promptId, releaseId, versionId: version.id, version: version.version, environment: env },
-      requestId
+      {
+        promptId,
+        releaseId,
+        versionId: version.id,
+        version: version.version,
+        environment: env,
+      },
+      requestId,
     );
 
     return createdRelease;
@@ -310,34 +389,45 @@ export class PromptService {
     input: RollbackPromptReleaseRequest,
     actorId: string,
     isPrivileged = false,
-    requestId?: string
+    requestId?: string,
   ): Promise<PromptRelease> {
     const prompt = await this.getPrompt(organizationId, promptId);
     const env: PromptReleaseEnvironment = input.environment || "production";
 
     const currentHead = await this.repository.getReleaseHead(promptId, env);
     if (!currentHead) {
-      throw new PromptReleaseError(`No active release exists for prompt '${promptId}' in environment '${env}'`);
+      throw new PromptReleaseError(
+        `No active release exists for prompt '${promptId}' in environment '${env}'`,
+      );
     }
 
     let targetVersion: PromptVersion | null = null;
     if (input.targetVersionId) {
-      targetVersion = await this.repository.getVersionById(input.targetVersionId);
+      targetVersion = await this.repository.getVersionById(
+        input.targetVersionId,
+      );
     } else {
       // Find the previous release before the current active release
       const history = await this.repository.listReleases(promptId, env);
       const prev = history.find((r) => r.id !== currentHead.activeReleaseId);
       if (prev) {
-        targetVersion = await this.repository.getVersionById(prev.promptVersionId);
+        targetVersion = await this.repository.getVersionById(
+          prev.promptVersionId,
+        );
       }
     }
 
     if (!targetVersion || targetVersion.promptId !== promptId) {
-      throw new PromptNotFoundError("No valid previous version found to rollback to");
+      throw new PromptNotFoundError(
+        "No valid previous version found to rollback to",
+      );
     }
 
     const existingReleases = await this.repository.listReleases(promptId, env);
-    const nextReleaseNumber = existingReleases.length > 0 ? Math.max(...existingReleases.map((r) => r.releaseNumber)) + 1 : 1;
+    const nextReleaseNumber =
+      existingReleases.length > 0
+        ? Math.max(...existingReleases.map((r) => r.releaseNumber)) + 1
+        : 1;
 
     const now = new Date();
     const rollbackReleaseId = `prel_${createPublicId("key").slice(4)}`;
@@ -379,7 +469,7 @@ export class PromptService {
         environment: env,
         reason: input.reason,
       },
-      requestId
+      requestId,
     );
 
     return created;

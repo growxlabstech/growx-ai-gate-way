@@ -14,7 +14,10 @@ import type {
 export interface IGovernanceRepository {
   registerResource(resource: DataResource): Promise<void>;
   getResource(id: string): Promise<DataResource | null>;
-  findExpiredResources(options: { before: Date; limit: number }): Promise<DataResource[]>;
+  findExpiredResources(options: {
+    before: Date;
+    limit: number;
+  }): Promise<DataResource[]>;
   findResourcesByScope(options: {
     organizationId?: string;
     workspaceId?: string;
@@ -38,11 +41,17 @@ export interface IGovernanceRepository {
 
   createDeletionRequest(req: DeletionRequest): Promise<void>;
   getDeletionRequest(id: string): Promise<DeletionRequest | null>;
-  updateDeletionRequest(id: string, patch: Partial<DeletionRequest>): Promise<DeletionRequest>;
+  updateDeletionRequest(
+    id: string,
+    patch: Partial<DeletionRequest>,
+  ): Promise<DeletionRequest>;
   listDeletionRequests(organizationId?: string): Promise<DeletionRequest[]>;
 
   createDeletionTask(task: DeletionTask): Promise<void>;
-  updateDeletionTask(id: string, patch: Partial<DeletionTask>): Promise<DeletionTask>;
+  updateDeletionTask(
+    id: string,
+    patch: Partial<DeletionTask>,
+  ): Promise<DeletionTask>;
   listDeletionTasks(deletionRequestId: string): Promise<DeletionTask[]>;
 
   recordEvidence(evidence: DeletionEvidence): Promise<void>;
@@ -50,9 +59,15 @@ export interface IGovernanceRepository {
 
   createExportRequest(req: DataExportRequest): Promise<void>;
   getExportRequest(id: string): Promise<DataExportRequest | null>;
-  updateExportRequest(id: string, patch: Partial<DataExportRequest>): Promise<DataExportRequest>;
+  updateExportRequest(
+    id: string,
+    patch: Partial<DataExportRequest>,
+  ): Promise<DataExportRequest>;
 
-  getProviderPolicy(providerId: string, accountId?: string): Promise<ProviderDataPolicy | null>;
+  getProviderPolicy(
+    providerId: string,
+    accountId?: string,
+  ): Promise<ProviderDataPolicy | null>;
   setProviderPolicy(policy: ProviderDataPolicy): Promise<void>;
 }
 
@@ -75,7 +90,10 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return res ? { ...res } : null;
   }
 
-  public async findExpiredResources(options: { before: Date; limit: number }): Promise<DataResource[]> {
+  public async findExpiredResources(options: {
+    before: Date;
+    limit: number;
+  }): Promise<DataResource[]> {
     const results: DataResource[] = [];
     for (const res of this.resources.values()) {
       if (results.length >= options.limit) break;
@@ -97,8 +115,13 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     for (const res of this.resources.values()) {
       if (results.length >= options.limit) break;
       if (res.deletedAt) continue;
-      if (options.organizationId && res.organizationId !== options.organizationId) continue;
-      if (options.workspaceId && res.workspaceId !== options.workspaceId) continue;
+      if (
+        options.organizationId &&
+        res.organizationId !== options.organizationId
+      )
+        continue;
+      if (options.workspaceId && res.workspaceId !== options.workspaceId)
+        continue;
       if (options.userId && res.userId !== options.userId) continue;
       if (options.category && res.dataCategory !== options.category) continue;
       results.push({ ...res });
@@ -122,7 +145,10 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return pol ? { ...pol } : null;
   }
 
-  public async listPolicies(scope?: string, scopeId?: string): Promise<RetentionPolicy[]> {
+  public async listPolicies(
+    scope?: string,
+    scopeId?: string,
+  ): Promise<RetentionPolicy[]> {
     return Array.from(this.policies.values()).filter((p) => {
       if (scope && p.scope !== scope) return false;
       if (scopeId && p.scopeId !== scopeId) return false;
@@ -144,9 +170,20 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return Array.from(this.holds.values()).filter((h) => {
       if (h.status !== "active") return false;
       if (h.organizationId !== options.organizationId) return false;
-      if (h.workspaceId && options.workspaceId && h.workspaceId !== options.workspaceId) return false;
-      if (h.category && options.category && h.category !== options.category) return false;
-      if (h.resourceId && options.resourceId && h.resourceId !== options.resourceId) return false;
+      if (
+        h.workspaceId &&
+        options.workspaceId &&
+        h.workspaceId !== options.workspaceId
+      )
+        return false;
+      if (h.category && options.category && h.category !== options.category)
+        return false;
+      if (
+        h.resourceId &&
+        options.resourceId &&
+        h.resourceId !== options.resourceId
+      )
+        return false;
       if (h.expiresAt && h.expiresAt < now) return false;
       return true;
     });
@@ -161,7 +198,10 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return req ? { ...req } : null;
   }
 
-  public async updateDeletionRequest(id: string, patch: Partial<DeletionRequest>): Promise<DeletionRequest> {
+  public async updateDeletionRequest(
+    id: string,
+    patch: Partial<DeletionRequest>,
+  ): Promise<DeletionRequest> {
     const existing = this.deletionRequests.get(id);
     if (!existing) throw new Error(`DeletionRequest '${id}' not found`);
     const updated = { ...existing, ...patch };
@@ -169,7 +209,9 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return { ...updated };
   }
 
-  public async listDeletionRequests(organizationId?: string): Promise<DeletionRequest[]> {
+  public async listDeletionRequests(
+    organizationId?: string,
+  ): Promise<DeletionRequest[]> {
     return Array.from(this.deletionRequests.values()).filter((r) => {
       if (organizationId && r.organizationId !== organizationId) return false;
       return true;
@@ -180,7 +222,10 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     this.deletionTasks.set(task.id, { ...task });
   }
 
-  public async updateDeletionTask(id: string, patch: Partial<DeletionTask>): Promise<DeletionTask> {
+  public async updateDeletionTask(
+    id: string,
+    patch: Partial<DeletionTask>,
+  ): Promise<DeletionTask> {
     const existing = this.deletionTasks.get(id);
     if (!existing) throw new Error(`DeletionTask '${id}' not found`);
     const updated = { ...existing, ...patch };
@@ -188,16 +233,24 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return { ...updated };
   }
 
-  public async listDeletionTasks(deletionRequestId: string): Promise<DeletionTask[]> {
-    return Array.from(this.deletionTasks.values()).filter((t) => t.deletionRequestId === deletionRequestId);
+  public async listDeletionTasks(
+    deletionRequestId: string,
+  ): Promise<DeletionTask[]> {
+    return Array.from(this.deletionTasks.values()).filter(
+      (t) => t.deletionRequestId === deletionRequestId,
+    );
   }
 
   public async recordEvidence(evidence: DeletionEvidence): Promise<void> {
     this.evidence.set(evidence.id, { ...evidence });
   }
 
-  public async listEvidence(deletionRequestId: string): Promise<DeletionEvidence[]> {
-    return Array.from(this.evidence.values()).filter((e) => e.deletionRequestId === deletionRequestId);
+  public async listEvidence(
+    deletionRequestId: string,
+  ): Promise<DeletionEvidence[]> {
+    return Array.from(this.evidence.values()).filter(
+      (e) => e.deletionRequestId === deletionRequestId,
+    );
   }
 
   public async createExportRequest(req: DataExportRequest): Promise<void> {
@@ -209,7 +262,10 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return req ? { ...req } : null;
   }
 
-  public async updateExportRequest(id: string, patch: Partial<DataExportRequest>): Promise<DataExportRequest> {
+  public async updateExportRequest(
+    id: string,
+    patch: Partial<DataExportRequest>,
+  ): Promise<DataExportRequest> {
     const existing = this.exportRequests.get(id);
     if (!existing) throw new Error(`ExportRequest '${id}' not found`);
     const updated = { ...existing, ...patch };
@@ -217,14 +273,20 @@ export class InMemoryGovernanceRepository implements IGovernanceRepository {
     return { ...updated };
   }
 
-  public async getProviderPolicy(providerId: string, accountId?: string): Promise<ProviderDataPolicy | null> {
+  public async getProviderPolicy(
+    providerId: string,
+    accountId?: string,
+  ): Promise<ProviderDataPolicy | null> {
     const key = accountId ? `${providerId}:${accountId}` : providerId;
-    const pol = this.providerPolicies.get(key) || this.providerPolicies.get(providerId);
+    const pol =
+      this.providerPolicies.get(key) || this.providerPolicies.get(providerId);
     return pol ? { ...pol } : null;
   }
 
   public async setProviderPolicy(policy: ProviderDataPolicy): Promise<void> {
-    const key = policy.accountId ? `${policy.providerId}:${policy.accountId}` : policy.providerId;
+    const key = policy.accountId
+      ? `${policy.providerId}:${policy.accountId}`
+      : policy.providerId;
     this.providerPolicies.set(key, { ...policy });
   }
 }

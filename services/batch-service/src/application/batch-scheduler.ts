@@ -17,7 +17,7 @@ export class BatchScheduler {
       batchRepository: BatchRepository;
       finalizer: BatchFinalizer;
     },
-    options: BatchSchedulerOptions = {}
+    options: BatchSchedulerOptions = {},
   ) {
     this.repo = deps.batchRepository;
     this.finalizer = deps.finalizer;
@@ -27,7 +27,11 @@ export class BatchScheduler {
   /**
    * Run one scheduler scan cycle.
    */
-  public async step(): Promise<{ activatedCount: number; finalizedCount: number; expiredCount: number }> {
+  public async step(): Promise<{
+    activatedCount: number;
+    finalizedCount: number;
+    expiredCount: number;
+  }> {
     const now = new Date();
     let activatedCount = 0;
     let finalizedCount = 0;
@@ -45,7 +49,9 @@ export class BatchScheduler {
     const runnableJobs = await this.repo.findRunnableBatchJobs(50);
     for (const job of runnableJobs) {
       if (job.status === "queued") {
-        await this.repo.updateBatchJobStatus(job.id, "running", { startedAt: now });
+        await this.repo.updateBatchJobStatus(job.id, "running", {
+          startedAt: now,
+        });
         activatedCount++;
       } else if (job.status === "cancelling") {
         // Mark remaining items cancelled
@@ -64,7 +70,9 @@ export class BatchScheduler {
         finalizedCount++;
       } else if (job.status === "running") {
         const items = await this.repo.getAllBatchItems(job.id);
-        const allDone = items.length === 0 || items.every(i => isTerminalItemStatus(i.status));
+        const allDone =
+          items.length === 0 ||
+          items.every((i) => isTerminalItemStatus(i.status));
         if (allDone) {
           await this.finalizer.finalizeBatch(job.id);
           finalizedCount++;

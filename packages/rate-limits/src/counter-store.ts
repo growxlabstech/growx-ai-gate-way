@@ -8,15 +8,19 @@ import type {
 export interface IRuntimeCounterStore {
   checkAndReserveAtomic(
     reservations: AtomicReservationRequest[],
-    now?: Date
+    now?: Date,
   ): Promise<AtomicReservationResult>;
 
   acquireConcurrencyPermit(
     key: string,
     limit: number,
     ttlSeconds: number,
-    now?: Date
-  ): Promise<{ acquired: boolean; permitId?: string | undefined; current: number }>;
+    now?: Date,
+  ): Promise<{
+    acquired: boolean;
+    permitId?: string | undefined;
+    current: number;
+  }>;
 
   releaseConcurrencyPermit(key: string, permitId: string): Promise<boolean>;
 
@@ -24,7 +28,7 @@ export interface IRuntimeCounterStore {
     key: string,
     permitId: string,
     ttlSeconds: number,
-    now?: Date
+    now?: Date,
   ): Promise<boolean>;
 
   finalizeTokens(
@@ -32,17 +36,14 @@ export interface IRuntimeCounterStore {
     windowSeconds: number,
     reservedAmount: number,
     actualAmount: number,
-    now?: Date
+    now?: Date,
   ): Promise<void>;
 
-  rollbackReservation(
-    scopes: ReservedScopeAmount[],
-    now?: Date
-  ): Promise<void>;
+  rollbackReservation(scopes: ReservedScopeAmount[], now?: Date): Promise<void>;
 
   getCapacityMetrics(
     keys: string[],
-    now?: Date
+    now?: Date,
   ): Promise<
     Record<
       string,
@@ -81,7 +82,10 @@ interface ConcurrencyLeaseRecord {
  */
 export class InMemoryCounterStore implements IRuntimeCounterStore {
   private readonly counters = new Map<string, SlidingWindowCounter>();
-  private readonly concurrency = new Map<string, Map<string, ConcurrencyLeaseRecord>>();
+  private readonly concurrency = new Map<
+    string,
+    Map<string, ConcurrencyLeaseRecord>
+  >();
 
   private getWindowUsed(counter: SlidingWindowCounter, nowSec: number): number {
     const minTime = nowSec - counter.windowSeconds;
@@ -104,7 +108,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
 
   async checkAndReserveAtomic(
     reservations: AtomicReservationRequest[],
-    now = new Date()
+    now = new Date(),
   ): Promise<AtomicReservationResult> {
     const nowSec = Math.floor(now.getTime() / 1000);
 
@@ -116,7 +120,11 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
 
       let counter = this.counters.get(req.key);
       if (!counter) {
-        counter = { buckets: [], windowSeconds: req.windowSeconds, limit: req.limit };
+        counter = {
+          buckets: [],
+          windowSeconds: req.windowSeconds,
+          limit: req.limit,
+        };
         this.counters.set(req.key, counter);
       }
       counter.windowSeconds = req.windowSeconds;
@@ -147,12 +155,18 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
     for (const req of reservations) {
       let counter = this.counters.get(req.key);
       if (!counter) {
-        counter = { buckets: [], windowSeconds: req.windowSeconds, limit: req.limit };
+        counter = {
+          buckets: [],
+          windowSeconds: req.windowSeconds,
+          limit: req.limit,
+        };
         this.counters.set(req.key, counter);
       }
 
       // Add to current second bucket
-      let currentBucket = counter.buckets.find((b) => b.timestampSec === nowSec);
+      let currentBucket = counter.buckets.find(
+        (b) => b.timestampSec === nowSec,
+      );
       if (!currentBucket) {
         currentBucket = { timestampSec: nowSec, amount: 0 };
         counter.buckets.push(currentBucket);
@@ -167,7 +181,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
     key: string,
     limit: number,
     ttlSeconds: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<{ acquired: boolean; permitId?: string; current: number }> {
     const nowMs = now.getTime();
     this.cleanExpiredConcurrency(key, nowMs);
@@ -192,7 +206,10 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
     return { acquired: true, permitId, current: permits.size };
   }
 
-  async releaseConcurrencyPermit(key: string, permitId: string): Promise<boolean> {
+  async releaseConcurrencyPermit(
+    key: string,
+    permitId: string,
+  ): Promise<boolean> {
     const permits = this.concurrency.get(key);
     if (!permits) return false;
     const deleted = permits.delete(permitId);
@@ -206,7 +223,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
     key: string,
     permitId: string,
     ttlSeconds: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<boolean> {
     const nowMs = now.getTime();
     const permits = this.concurrency.get(key);
@@ -229,7 +246,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
     _windowSeconds: number,
     reservedAmount: number,
     actualAmount: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<void> {
     const nowSec = Math.floor(now.getTime() / 1000);
     const counter = this.counters.get(key);
@@ -249,7 +266,9 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
       }
     } else {
       // Under-reserved: add extra tokens consumed
-      let currentBucket = counter.buckets.find((b) => b.timestampSec === nowSec);
+      let currentBucket = counter.buckets.find(
+        (b) => b.timestampSec === nowSec,
+      );
       if (!currentBucket) {
         currentBucket = { timestampSec: nowSec, amount: 0 };
         counter.buckets.push(currentBucket);
@@ -260,7 +279,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
 
   async rollbackReservation(
     scopes: ReservedScopeAmount[],
-    _now = new Date()
+    _now = new Date(),
   ): Promise<void> {
     for (const scope of scopes) {
       const counter = this.counters.get(scope.counterKey);
@@ -278,7 +297,7 @@ export class InMemoryCounterStore implements IRuntimeCounterStore {
 
   async getCapacityMetrics(
     keys: string[],
-    now = new Date()
+    now = new Date(),
   ): Promise<
     Record<
       string,

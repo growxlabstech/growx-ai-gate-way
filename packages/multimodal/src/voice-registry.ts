@@ -9,10 +9,13 @@ export const CANONICAL_VOICES = [
   "shimmer",
 ] as const;
 
-export type CanonicalVoiceName = typeof CANONICAL_VOICES[number];
+export type CanonicalVoiceName = (typeof CANONICAL_VOICES)[number];
 
 export class VoiceRegistry {
-  private static readonly providerVoiceMap: Record<string, Record<string, string>> = {
+  private static readonly providerVoiceMap: Record<
+    string,
+    Record<string, string>
+  > = {
     openai: {
       alloy: "alloy",
       echo: "echo",
@@ -27,11 +30,15 @@ export class VoiceRegistry {
     return CANONICAL_VOICES.includes(voice.toLowerCase() as CanonicalVoiceName);
   }
 
-  public static validateVoice(voice: string, modelSupportedVoices?: readonly string[]): void {
+  public static validateVoice(
+    voice: string,
+    modelSupportedVoices?: readonly string[],
+  ): void {
     const norm = voice.toLowerCase().trim();
-    const allowed = modelSupportedVoices && modelSupportedVoices.length > 0
-      ? modelSupportedVoices
-      : CANONICAL_VOICES;
+    const allowed =
+      modelSupportedVoices && modelSupportedVoices.length > 0
+        ? modelSupportedVoices
+        : CANONICAL_VOICES;
 
     if (!allowed.includes(norm)) {
       throw new VoiceUnsupportedError(voice, Array.from(allowed));

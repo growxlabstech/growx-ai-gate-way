@@ -69,19 +69,25 @@ describe("Phase 20 — Credit Notes", () => {
     expect(invoice.amountDue.toString()).toBe("150");
 
     // Issue $50 partial credit note
-    const { creditNote, invoice: updatedInvoice } = await invoiceService.issueCreditNote({
-      organizationId: "org_cn_test",
-      originalInvoiceId: invoice.id,
-      reason: "Discount adjustment",
-      amount: Decimal.from("50.00"),
-    });
+    const { creditNote, invoice: updatedInvoice } =
+      await invoiceService.issueCreditNote({
+        organizationId: "org_cn_test",
+        originalInvoiceId: invoice.id,
+        reason: "Discount adjustment",
+        amount: Decimal.from("50.00"),
+      });
 
-    expect(creditNote.creditNoteNumber).toMatch(/^CN-GXL\/\d{4}-\d{2}\/000002$/);
+    expect(creditNote.creditNoteNumber).toMatch(
+      /^CN-GXL\/\d{4}-\d{2}\/000002$/,
+    );
     expect(creditNote.total.toString()).toBe("50");
     expect(updatedInvoice.amountDue.toString()).toBe("100");
 
     // Retrieve credit note
-    const fetchedCn = await invoiceService.getCreditNote("org_cn_test", creditNote.id);
+    const fetchedCn = await invoiceService.getCreditNote(
+      "org_cn_test",
+      creditNote.id,
+    );
     expect(fetchedCn).toBeDefined();
     expect(fetchedCn!.reason).toBe("Discount adjustment");
   });

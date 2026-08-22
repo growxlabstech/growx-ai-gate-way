@@ -118,7 +118,10 @@ describe("Phase 19 — MockPaymentProviderAdapter", () => {
     });
 
     const payloadBytes = Buffer.from(JSON.stringify({ id: "evt_1" }), "utf8");
-    const result = await adapter.verifyWebhook(payloadBytes, "t=1234567890,v1=bad_hex_signature");
+    const result = await adapter.verifyWebhook(
+      payloadBytes,
+      "t=1234567890,v1=bad_hex_signature",
+    );
     expect(result.verified).toBe(false);
   });
 
@@ -166,7 +169,10 @@ describe("Phase 19 — StripeAdapter Webhook Verification", () => {
     };
     const payloadBytes = Buffer.from(JSON.stringify(payloadObj), "utf8");
     const ts = Math.floor(Date.now() / 1000);
-    const hmac = require("node:crypto").createHmac("sha256", "whsec_stripe_test");
+    const hmac = require("node:crypto").createHmac(
+      "sha256",
+      "whsec_stripe_test",
+    );
     hmac.update(`${ts}.`);
     hmac.update(payloadBytes);
     const sig = `t=${ts},v1=${hmac.digest("hex")}`;

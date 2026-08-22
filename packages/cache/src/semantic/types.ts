@@ -22,10 +22,7 @@ export type SemanticMissReason =
   | "numeric_mismatch";
 
 export type SemanticCacheEntryStatus =
-  | "active"
-  | "expired"
-  | "invalidated"
-  | "quarantined";
+  "active" | "expired" | "invalidated" | "quarantined";
 
 export interface SemanticCachePolicy {
   enabled: boolean;

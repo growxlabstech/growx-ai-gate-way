@@ -10,7 +10,11 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
   const events = new InMemoryProviderEvents();
   const secretProvider = new InMemorySecretProvider();
   const accountService = new ProviderAccountService(repo, events);
-  const vaultService = new ProviderCredentialVaultService(repo, secretProvider, events);
+  const vaultService = new ProviderCredentialVaultService(
+    repo,
+    secretProvider,
+    events,
+  );
 
   it("creates credential with zero database plaintext and manages atomic version rotation", async () => {
     // Setup provider and account
@@ -38,7 +42,7 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
         priority: 1,
         metadata: {},
       },
-      "admin"
+      "admin",
     );
 
     // 1. Create Credential V1
@@ -53,7 +57,7 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
         autoActivate: true,
         validateBeforeActivation: false,
       },
-      "admin"
+      "admin",
     );
 
     expect(credential.id).toBeDefined();
@@ -72,7 +76,7 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
         reason: "Scheduled 90-day rotation",
         validateBeforeActivation: false,
       },
-      "admin"
+      "admin",
     );
 
     expect(v2.version).toBe(2);
@@ -83,12 +87,20 @@ describe("Provider Credential Vault Zero-Downtime Lifecycle", () => {
     expect(oldV1?.status).toBe("draining");
 
     // 3. Rollback to V1
-    const rolledBack = await vaultService.rollbackVersion(credential.id, v1.id, "admin");
+    const rolledBack = await vaultService.rollbackVersion(
+      credential.id,
+      v1.id,
+      "admin",
+    );
     expect(rolledBack.id).toBe(v1.id);
     expect(rolledBack.status).toBe("active");
 
     // 4. Emergency Revocation
-    const revoked = await vaultService.emergencyRevoke(credential.id, "Suspected compromise", "admin");
+    const revoked = await vaultService.emergencyRevoke(
+      credential.id,
+      "Suspected compromise",
+      "admin",
+    );
     expect(revoked.status).toBe("revoked");
   });
 });

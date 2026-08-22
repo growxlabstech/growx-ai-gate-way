@@ -10,7 +10,9 @@ describe("Router V2 - Request Capability Profile", () => {
     expect(classifyWorkload({ batch: true })).toBe("batch");
     expect(classifyWorkload({ reasoningMode: true })).toBe("reasoning");
     expect(classifyWorkload({ toolCalling: true })).toBe("tool_call");
-    expect(classifyWorkload({ structuredOutput: true })).toBe("structured_generation");
+    expect(classifyWorkload({ structuredOutput: true })).toBe(
+      "structured_generation",
+    );
     expect(classifyWorkload({ inputModalities: ["image"] })).toBe("image");
     expect(classifyWorkload({ inputModalities: ["audio"] })).toBe("audio");
     expect(classifyWorkload({ streaming: true })).toBe("realtime_interactive");

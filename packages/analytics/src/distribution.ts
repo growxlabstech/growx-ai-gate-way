@@ -6,7 +6,8 @@
  */
 
 export const LATENCY_BUCKET_UPPER_BOUNDS = [
-  5, 10, 20, 35, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000, 15000, 20000, 30000, 60000, 120000
+  5, 10, 20, 35, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000,
+  5000, 7500, 10000, 15000, 20000, 30000, 60000, 120000,
 ] as const;
 
 export interface LatencySketchData {
@@ -69,7 +70,10 @@ export class LatencyDistributionSketch {
   }
 
   public merge(other: LatencyDistributionSketch | LatencySketchData): this {
-    const otherSketch = other instanceof LatencyDistributionSketch ? other : new LatencyDistributionSketch(other);
+    const otherSketch =
+      other instanceof LatencyDistributionSketch
+        ? other
+        : new LatencyDistributionSketch(other);
     if (otherSketch.count === 0) return this;
 
     if (this.count === 0) {

@@ -22,13 +22,19 @@ export class ProviderCredentialCrypto {
             "provider_server_error",
             "Missing PROVIDER_ENCRYPTION_KEY in production environment",
             false,
-            500
+            500,
           );
         }
         // Test/Development fallback key (32 bytes = 64 hex chars)
-        this.masterKey = Buffer.from("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "hex");
+        this.masterKey = Buffer.from(
+          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "hex",
+        );
       } else {
-        this.masterKey = Buffer.from(rawEnv, rawEnv.length === 64 ? "hex" : "utf8");
+        this.masterKey = Buffer.from(
+          rawEnv,
+          rawEnv.length === 64 ? "hex" : "utf8",
+        );
       }
     }
 
@@ -37,7 +43,7 @@ export class ProviderCredentialCrypto {
         "provider_server_error",
         `Provider encryption master key must be exactly 32 bytes. Received: ${this.masterKey.length} bytes`,
         false,
-        500
+        500,
       );
     }
   }
@@ -55,12 +61,15 @@ export class ProviderCredentialCrypto {
         "Failed to encrypt provider credential",
         false,
         500,
-        { cause: err }
+        { cause: err },
       );
     }
   }
 
-  decrypt(encryptedPayload: string, _encryptionKeyVersion?: number | string): string {
+  decrypt(
+    encryptedPayload: string,
+    _encryptionKeyVersion?: number | string,
+  ): string {
     try {
       return decryptSecret(encryptedPayload, this.masterKey);
     } catch (err) {
@@ -69,7 +78,7 @@ export class ProviderCredentialCrypto {
         "Failed to decrypt provider credential payload",
         false,
         500,
-        { cause: err }
+        { cause: err },
       );
     }
   }

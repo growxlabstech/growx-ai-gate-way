@@ -8,23 +8,34 @@ export function estimateInputTokens(text: string): number {
   return Math.max(charBased, wordBased, 1);
 }
 
-export function normalizeEmbeddingInput(rawInput: string | string[] | number[] | number[][]): string[] {
+export function normalizeEmbeddingInput(
+  rawInput: string | string[] | number[] | number[][],
+): string[] {
   if (typeof rawInput === "string") {
     const trimmed = rawInput.trim();
     if (trimmed.length === 0) {
-      throw new EmbeddingValidationError("EMBEDDING_EMPTY_INPUT", "Input string must not be empty");
+      throw new EmbeddingValidationError(
+        "EMBEDDING_EMPTY_INPUT",
+        "Input string must not be empty",
+      );
     }
     return [rawInput];
   }
 
   if (Array.isArray(rawInput)) {
     if (rawInput.length === 0) {
-      throw new EmbeddingValidationError("EMBEDDING_EMPTY_BATCH", "Input array must not be empty");
+      throw new EmbeddingValidationError(
+        "EMBEDDING_EMPTY_BATCH",
+        "Input array must not be empty",
+      );
     }
 
     // Check if array of numbers (single token array)
     if (typeof rawInput[0] === "number") {
-      throw new EmbeddingValidationError("EMBEDDING_UNSUPPORTED_INPUT_TYPE", "Direct token arrays are not supported on this endpoint. Please pass string or string array.");
+      throw new EmbeddingValidationError(
+        "EMBEDDING_UNSUPPORTED_INPUT_TYPE",
+        "Direct token arrays are not supported on this endpoint. Please pass string or string array.",
+      );
     }
 
     // Array of strings
@@ -33,24 +44,30 @@ export function normalizeEmbeddingInput(rawInput: string | string[] | number[] |
       for (let i = 0; i < strings.length; i++) {
         const item = strings[i];
         if (typeof item !== "string" || item.trim().length === 0) {
-          throw new EmbeddingValidationError("EMBEDDING_EMPTY_INPUT_ITEM", `Input item at index ${i} must be a non-empty string`);
+          throw new EmbeddingValidationError(
+            "EMBEDDING_EMPTY_INPUT_ITEM",
+            `Input item at index ${i} must be a non-empty string`,
+          );
         }
       }
       return strings;
     }
   }
 
-  throw new EmbeddingValidationError("EMBEDDING_INVALID_INPUT", "Input must be a non-empty string or array of non-empty strings");
+  throw new EmbeddingValidationError(
+    "EMBEDDING_INVALID_INPUT",
+    "Input must be a non-empty string or array of non-empty strings",
+  );
 }
 
 export function validateEmbeddingInput(
   inputs: string[],
-  limits: EmbeddingLimits
+  limits: EmbeddingLimits,
 ): { totalEstimatedTokens: number; totalBytes: number } {
   if (inputs.length > limits.maxBatchItems) {
     throw new EmbeddingValidationError(
       "EMBEDDING_BATCH_TOO_LARGE",
-      `Input batch size ${inputs.length} exceeds maximum allowed of ${limits.maxBatchItems}`
+      `Input batch size ${inputs.length} exceeds maximum allowed of ${limits.maxBatchItems}`,
     );
   }
 
@@ -66,7 +83,7 @@ export function validateEmbeddingInput(
     if (tokens > limits.maxInputTokensPerItem) {
       throw new EmbeddingValidationError(
         "EMBEDDING_INPUT_TOO_LARGE",
-        `Input item at index ${i} exceeds token limit (${tokens} estimated tokens > ${limits.maxInputTokensPerItem})`
+        `Input item at index ${i} exceeds token limit (${tokens} estimated tokens > ${limits.maxInputTokensPerItem})`,
       );
     }
     totalEstimatedTokens += tokens;
@@ -75,14 +92,14 @@ export function validateEmbeddingInput(
   if (totalEstimatedTokens > limits.maxTotalTokensPerRequest) {
     throw new EmbeddingValidationError(
       "EMBEDDING_TOTAL_TOKENS_EXCEEDED",
-      `Total estimated tokens (${totalEstimatedTokens}) exceeds request limit (${limits.maxTotalTokensPerRequest})`
+      `Total estimated tokens (${totalEstimatedTokens}) exceeds request limit (${limits.maxTotalTokensPerRequest})`,
     );
   }
 
   if (totalBytes > limits.maxTotalBytesPerRequest) {
     throw new EmbeddingValidationError(
       "EMBEDDING_TOTAL_BYTES_EXCEEDED",
-      `Total input bytes (${totalBytes}) exceeds request limit (${limits.maxTotalBytesPerRequest})`
+      `Total input bytes (${totalBytes}) exceeds request limit (${limits.maxTotalBytesPerRequest})`,
     );
   }
 

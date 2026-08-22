@@ -42,7 +42,9 @@ describe("Phase 21 — Webhook Tenant Isolation & Security", () => {
     expect(outboundEvent.organizationId).toBe("org_a");
     expect(deliveries.length).toBe(1);
     expect(deliveries[0]!.organizationId).toBe("org_a");
-    expect(deliveries[0]!.destinationUrlSnapshot).toBe("https://api.orga.com/webhook");
+    expect(deliveries[0]!.destinationUrlSnapshot).toBe(
+      "https://api.orga.com/webhook",
+    );
 
     // Org B list deliveries finds 0
     const orgBDeliveries = await repository.listDeliveries("org_b");
@@ -65,7 +67,7 @@ describe("Phase 21 — Webhook Tenant Isolation & Security", () => {
 
     // Org B attempts to replay Org A delivery -> throws error
     await expect(
-      replayService.replayDelivery("org_b", deliveryA!.id)
+      replayService.replayDelivery("org_b", deliveryA!.id),
     ).rejects.toThrow("Webhook delivery not found");
   });
 });

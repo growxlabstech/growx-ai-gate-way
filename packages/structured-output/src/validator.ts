@@ -1,14 +1,14 @@
-import _Ajv from 'ajv';
+import _Ajv from "ajv";
 const Ajv = (_Ajv as any).default || _Ajv;
-import _addFormats from 'ajv-formats';
+import _addFormats from "ajv-formats";
 const addFormats = (_addFormats as any).default || _addFormats;
-import { computeSchemaHash } from './schema-normalizer.js';
+import { computeSchemaHash } from "./schema-normalizer.js";
 
 export interface StructuredOutputValidationResult {
   valid: boolean;
   parsedOutput?: unknown;
   errors?: Array<{ path: string; code: string; message: string }>;
-  failureCategory?: 'invalid_json' | 'schema_invalid' | 'refusal' | 'truncated';
+  failureCategory?: "invalid_json" | "schema_invalid" | "refusal" | "truncated";
 }
 
 export class StructuredOutputValidator {
@@ -25,7 +25,11 @@ export class StructuredOutputValidator {
     return this.ajv.validateSchema(schema);
   }
 
-  public validateOutput(schema: any, output: any, strict: boolean = true): StructuredOutputValidationResult {
+  public validateOutput(
+    schema: any,
+    output: any,
+    strict: boolean = true,
+  ): StructuredOutputValidationResult {
     const hash = computeSchemaHash(schema);
     let validate = this.cache.get(hash);
     if (!validate) {
@@ -45,23 +49,27 @@ export class StructuredOutputValidator {
     const errors = validate.errors?.map((err: any) => ({
       path: err.instancePath,
       code: err.keyword,
-      message: err.message || 'Validation error'
+      message: err.message || "Validation error",
     }));
 
     return {
       valid: false,
       parsedOutput: output,
       errors,
-      failureCategory: 'schema_invalid'
+      failureCategory: "schema_invalid",
     };
   }
 
-  public parseAndValidate(rawOutput: string, schema: any, strict: boolean = true): StructuredOutputValidationResult {
+  public parseAndValidate(
+    rawOutput: string,
+    schema: any,
+    strict: boolean = true,
+  ): StructuredOutputValidationResult {
     let parsed: any;
     try {
       parsed = JSON.parse(rawOutput);
     } catch (e) {
-      return { valid: false, failureCategory: 'invalid_json' };
+      return { valid: false, failureCategory: "invalid_json" };
     }
     return this.validateOutput(schema, parsed, strict);
   }

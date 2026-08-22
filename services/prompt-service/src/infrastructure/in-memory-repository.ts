@@ -13,7 +13,9 @@ export class InMemoryPromptRepository implements IPromptRepository {
   private readonly releases = new Map<string, PromptRelease>();
   private readonly releaseHeads = new Map<string, PromptReleaseHead>();
 
-  async createDefinition(definition: PromptDefinition): Promise<PromptDefinition> {
+  async createDefinition(
+    definition: PromptDefinition,
+  ): Promise<PromptDefinition> {
     this.definitions.set(definition.id, { ...definition });
     return { ...definition };
   }
@@ -26,7 +28,7 @@ export class InMemoryPromptRepository implements IPromptRepository {
   async getDefinitionByKey(
     organizationId: string,
     key: string,
-    workspaceId?: string | null | undefined
+    workspaceId?: string | null | undefined,
   ): Promise<PromptDefinition | null> {
     let orgWidePrompt: PromptDefinition | null = null;
     for (const d of this.definitions.values()) {
@@ -42,7 +44,10 @@ export class InMemoryPromptRepository implements IPromptRepository {
     return orgWidePrompt;
   }
 
-  async updateDefinition(id: string, updates: Partial<PromptDefinition>): Promise<PromptDefinition> {
+  async updateDefinition(
+    id: string,
+    updates: Partial<PromptDefinition>,
+  ): Promise<PromptDefinition> {
     const curr = this.definitions.get(id);
     if (!curr) throw new Error(`Prompt ${id} not found`);
     const updated = { ...curr, ...updates, updatedAt: new Date() };
@@ -51,21 +56,28 @@ export class InMemoryPromptRepository implements IPromptRepository {
   }
 
   async listDefinitions(filter: PromptListFilter): Promise<PromptDefinition[]> {
-    let list = Array.from(this.definitions.values()).filter(d => d.organizationId === filter.organizationId);
+    let list = Array.from(this.definitions.values()).filter(
+      (d) => d.organizationId === filter.organizationId,
+    );
     if (filter.workspaceId) {
-      list = list.filter(d => !d.workspaceId || d.workspaceId === filter.workspaceId);
+      list = list.filter(
+        (d) => !d.workspaceId || d.workspaceId === filter.workspaceId,
+      );
     }
     if (filter.status) {
-      list = list.filter(d => d.status === filter.status);
+      list = list.filter((d) => d.status === filter.status);
     }
     if (filter.visibility) {
-      list = list.filter(d => d.visibility === filter.visibility);
+      list = list.filter((d) => d.visibility === filter.visibility);
     }
     if (filter.search) {
       const q = filter.search.toLowerCase();
-      list = list.filter(d => d.key.toLowerCase().includes(q) || d.name.toLowerCase().includes(q));
+      list = list.filter(
+        (d) =>
+          d.key.toLowerCase().includes(q) || d.name.toLowerCase().includes(q),
+      );
     }
-    return list.map(d => ({ ...d }));
+    return list.map((d) => ({ ...d }));
   }
 
   async createVersion(version: PromptVersion): Promise<PromptVersion> {
@@ -78,7 +90,10 @@ export class InMemoryPromptRepository implements IPromptRepository {
     return v ? { ...v } : null;
   }
 
-  async getVersionByNumber(promptId: string, versionNumber: number): Promise<PromptVersion | null> {
+  async getVersionByNumber(
+    promptId: string,
+    versionNumber: number,
+  ): Promise<PromptVersion | null> {
     for (const v of this.versions.values()) {
       if (v.promptId === promptId && v.version === versionNumber) {
         return { ...v };
@@ -89,9 +104,9 @@ export class InMemoryPromptRepository implements IPromptRepository {
 
   async listVersions(promptId: string): Promise<PromptVersion[]> {
     return Array.from(this.versions.values())
-      .filter(v => v.promptId === promptId)
+      .filter((v) => v.promptId === promptId)
       .sort((a, b) => b.version - a.version)
-      .map(v => ({ ...v }));
+      .map((v) => ({ ...v }));
   }
 
   async createRelease(release: PromptRelease): Promise<PromptRelease> {
@@ -104,15 +119,25 @@ export class InMemoryPromptRepository implements IPromptRepository {
     return r ? { ...r } : null;
   }
 
-  async listReleases(promptId: string, environment?: PromptReleaseEnvironment): Promise<PromptRelease[]> {
-    let list = Array.from(this.releases.values()).filter(r => r.promptId === promptId);
+  async listReleases(
+    promptId: string,
+    environment?: PromptReleaseEnvironment,
+  ): Promise<PromptRelease[]> {
+    let list = Array.from(this.releases.values()).filter(
+      (r) => r.promptId === promptId,
+    );
     if (environment) {
-      list = list.filter(r => r.environment === environment);
+      list = list.filter((r) => r.environment === environment);
     }
-    return list.sort((a, b) => b.releaseNumber - a.releaseNumber).map(r => ({ ...r }));
+    return list
+      .sort((a, b) => b.releaseNumber - a.releaseNumber)
+      .map((r) => ({ ...r }));
   }
 
-  async getReleaseHead(promptId: string, environment: PromptReleaseEnvironment): Promise<PromptReleaseHead | null> {
+  async getReleaseHead(
+    promptId: string,
+    environment: PromptReleaseEnvironment,
+  ): Promise<PromptReleaseHead | null> {
     const key = `${promptId}:${environment}`;
     const h = this.releaseHeads.get(key);
     return h ? { ...h } : null;

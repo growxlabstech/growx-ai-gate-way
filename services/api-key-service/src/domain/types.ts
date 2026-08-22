@@ -8,7 +8,8 @@ import type {
   ApiKeySpendingLimit,
 } from "@growx/contracts";
 
-export type ApiKeyEnvironment = "development" | "staging" | "production" | "custom";
+export type ApiKeyEnvironment =
+  "development" | "staging" | "production" | "custom";
 
 export type {
   ApiKeyScope,
@@ -62,7 +63,8 @@ export interface ApiKeyRecord {
 }
 
 export interface TenantState {
-  organizationStatus: "active" | "trial" | "restricted" | "suspended" | "archived";
+  organizationStatus:
+    "active" | "trial" | "restricted" | "suspended" | "archived";
   workspaceStatus: "active" | "restricted" | "suspended" | "archived";
   environmentStatus: "active" | "restricted" | "suspended" | "archived";
 }

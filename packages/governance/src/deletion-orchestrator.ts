@@ -64,10 +64,14 @@ export class GovernanceDeletionOrchestrator {
 
         try {
           // Execute deletion
-          await processor.delete(resId, { organizationId: request.organizationId });
+          await processor.delete(resId, {
+            organizationId: request.organizationId,
+          });
 
           // Verify purge
-          const verified = await processor.verify(resId, { organizationId: request.organizationId });
+          const verified = await processor.verify(resId, {
+            organizationId: request.organizationId,
+          });
 
           if (verified) {
             await this.repository.updateDeletionTask(taskId, {

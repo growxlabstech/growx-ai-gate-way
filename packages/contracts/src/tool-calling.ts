@@ -8,18 +8,32 @@ export const toolNameSchema = z
   .string()
   .min(1)
   .max(64)
-  .regex(/^[A-Za-z0-9_-]{1,64}$/, "Tool name must contain only letters, numbers, underscores, and hyphens (1-64 chars)");
+  .regex(
+    /^[A-Za-z0-9_-]{1,64}$/,
+    "Tool name must contain only letters, numbers, underscores, and hyphens (1-64 chars)",
+  );
 
-export const toolExecutionModeSchema = z.enum(["return_to_client", "platform_managed"]);
+export const toolExecutionModeSchema = z.enum([
+  "return_to_client",
+  "platform_managed",
+]);
 export type ToolExecutionMode = z.infer<typeof toolExecutionModeSchema>;
 
 export const toolStatusSchema = z.enum(["active", "disabled", "archived"]);
 export type ToolStatus = z.infer<typeof toolStatusSchema>;
 
-export const toolVisibilitySchema = z.enum(["workspace", "organization", "internal"]);
+export const toolVisibilitySchema = z.enum([
+  "workspace",
+  "organization",
+  "internal",
+]);
 export type ToolVisibility = z.infer<typeof toolVisibilitySchema>;
 
-export const sideEffectClassSchema = z.enum(["read_only", "idempotent_write", "non_idempotent_write"]);
+export const sideEffectClassSchema = z.enum([
+  "read_only",
+  "idempotent_write",
+  "non_idempotent_write",
+]);
 export type SideEffectClass = z.infer<typeof sideEffectClassSchema>;
 
 // ==========================================
@@ -36,7 +50,9 @@ export const canonicalToolDefinitionSchema = z.object({
   strict: z.boolean().default(false),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
-export type CanonicalToolDefinition = z.infer<typeof canonicalToolDefinitionSchema>;
+export type CanonicalToolDefinition = z.infer<
+  typeof canonicalToolDefinitionSchema
+>;
 
 // Backward-compatible alias
 export const toolDefinitionContractSchema = canonicalToolDefinitionSchema;
@@ -170,8 +186,15 @@ export const toolExecutionContextSchema = z.object({
 });
 export type ToolExecutionContext = z.infer<typeof toolExecutionContextSchema>;
 
-export const toolContinuationStatusSchema = z.enum(["pending", "resumed", "expired", "failed"]);
-export type ToolContinuationStatus = z.infer<typeof toolContinuationStatusSchema>;
+export const toolContinuationStatusSchema = z.enum([
+  "pending",
+  "resumed",
+  "expired",
+  "failed",
+]);
+export type ToolContinuationStatus = z.infer<
+  typeof toolContinuationStatusSchema
+>;
 
 export const toolContinuationSchema = z.object({
   id: z.string(), // "tcont_..."
@@ -227,7 +250,9 @@ export const createToolVersionRequestSchema = z.object({
   executionMode: toolExecutionModeSchema.optional(),
   requiredCapabilities: z.array(z.string()).optional(),
 });
-export type CreateToolVersionRequest = z.infer<typeof createToolVersionRequestSchema>;
+export type CreateToolVersionRequest = z.infer<
+  typeof createToolVersionRequestSchema
+>;
 
 export const submitToolResultRequestSchema = z.object({
   toolCallId: z.string(),
@@ -236,7 +261,9 @@ export const submitToolResultRequestSchema = z.object({
   structuredData: z.record(z.string(), z.unknown()).optional(),
   error: toolErrorSchema.optional(),
 });
-export type SubmitToolResultRequest = z.infer<typeof submitToolResultRequestSchema>;
+export type SubmitToolResultRequest = z.infer<
+  typeof submitToolResultRequestSchema
+>;
 
 export const toolBindingSnapshotSchema = z.object({
   requestId: z.string(),

@@ -18,7 +18,12 @@ describe("Batch HTTP Router Integration", () => {
     environmentId: "env_http",
     environment: "production",
     name: "HTTP Batch Key",
-    permissions: ["batches.create", "batches.read", "batches.cancel", "chat.completions.create"],
+    permissions: [
+      "batches.create",
+      "batches.read",
+      "batches.cancel",
+      "chat.completions.create",
+    ],
     modelRules: [],
     ipAllowlist: [],
     rateLimits: [],
@@ -31,7 +36,10 @@ describe("Batch HTTP Router Integration", () => {
   beforeEach(() => {
     const repo = new InMemoryBatchRepository();
     const finalizer = new BatchFinalizer({ batchRepository: repo });
-    const reconciler = new BatchReconciler({ batchRepository: repo, finalizer });
+    const reconciler = new BatchReconciler({
+      batchRepository: repo,
+      finalizer,
+    });
     batchService = new BatchService({ batchRepository: repo, finalizer });
     router = new BatchHttpRouter({ batchService, reconciler });
   });
@@ -43,7 +51,10 @@ describe("Batch HTTP Router Integration", () => {
           custom_id: "http-item-1",
           method: "POST",
           url: "/v1/chat/completions",
-          body: { model: "gpt-4o", messages: [{ role: "user", content: "hello" }] },
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "hello" }],
+          },
         },
       ],
       completion_window: "6h",
@@ -61,12 +72,18 @@ describe("Batch HTTP Router Integration", () => {
       items: [
         {
           custom_id: "http-item-2",
-          body: { model: "gpt-4o", messages: [{ role: "user", content: "hello" }] },
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "hello" }],
+          },
         },
       ],
     });
 
-    const getRes = await router.handleGetBatch(authContext, created.body.batch.id);
+    const getRes = await router.handleGetBatch(
+      authContext,
+      created.body.batch.id,
+    );
     expect(getRes.status).toBe(200);
 
     const listRes = await router.handleListBatches(authContext, { limit: 10 });
@@ -80,12 +97,18 @@ describe("Batch HTTP Router Integration", () => {
       items: [
         {
           custom_id: "http-item-cancel",
-          body: { model: "gpt-4o", messages: [{ role: "user", content: "hello" }] },
+          body: {
+            model: "gpt-4o",
+            messages: [{ role: "user", content: "hello" }],
+          },
         },
       ],
     });
 
-    const cancelRes = await router.handleCancelBatch(authContext, created.body.batch.id);
+    const cancelRes = await router.handleCancelBatch(
+      authContext,
+      created.body.batch.id,
+    );
     expect(cancelRes.status).toBe(200);
     const cancelBody: any = cancelRes.body;
     expect(cancelBody.status).toBe("cancelled");

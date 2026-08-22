@@ -12,14 +12,17 @@ export interface ToolRouteContext {
  */
 export function createToolRouteHandlers(registry: ToolRegistryService) {
   return {
-    async createTool(ctx: ToolRouteContext, body: {
-      key: string;
-      name: string;
-      description?: string;
-      executionMode?: "return_to_client" | "platform_managed";
-      inputSchema: Record<string, unknown>;
-      outputSchema?: Record<string, unknown>;
-    }) {
+    async createTool(
+      ctx: ToolRouteContext,
+      body: {
+        key: string;
+        name: string;
+        description?: string;
+        executionMode?: "return_to_client" | "platform_managed";
+        inputSchema: Record<string, unknown>;
+        outputSchema?: Record<string, unknown>;
+      },
+    ) {
       return registry.createTool({
         ...body,
         organizationId: ctx.organizationId,
@@ -40,11 +43,15 @@ export function createToolRouteHandlers(registry: ToolRegistryService) {
       return registry.archiveTool(toolId);
     },
 
-    async createVersion(ctx: ToolRouteContext, toolId: string, body: {
-      inputSchema: Record<string, unknown>;
-      outputSchema?: Record<string, unknown>;
-      description?: string;
-    }) {
+    async createVersion(
+      ctx: ToolRouteContext,
+      toolId: string,
+      body: {
+        inputSchema: Record<string, unknown>;
+        outputSchema?: Record<string, unknown>;
+        description?: string;
+      },
+    ) {
       return registry.createVersion(toolId, {
         ...body,
         createdBy: ctx.actorId,

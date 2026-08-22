@@ -2,10 +2,7 @@ import type {
   ProviderCredentialMetadata,
   ProviderRecord,
 } from "@growx/contracts";
-import type {
-  ProviderCredentialEntity,
-  ProviderEntity,
-} from "./types.js";
+import type { ProviderCredentialEntity, ProviderEntity } from "./types.js";
 
 export function toProviderRecord(entity: ProviderEntity): ProviderRecord {
   return {
@@ -26,7 +23,7 @@ export function toProviderRecord(entity: ProviderEntity): ProviderRecord {
 }
 
 export function toCredentialMetadata(
-  entity: ProviderCredentialEntity
+  entity: ProviderCredentialEntity,
 ): ProviderCredentialMetadata {
   return {
     id: entity.id,

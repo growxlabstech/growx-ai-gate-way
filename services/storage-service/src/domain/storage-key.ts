@@ -28,7 +28,10 @@ export function generateStorageKey(params: {
 }): string {
   const { organizationId, workspaceId, fileId, prefix = "files" } = params;
   if (!organizationId || !fileId) {
-    throw new StorageError("INVALID_STORAGE_KEY", "organizationId and fileId are required for storage key");
+    throw new StorageError(
+      "INVALID_STORAGE_KEY",
+      "organizationId and fileId are required for storage key",
+    );
   }
   const wsPart = workspaceId ? `ws_${workspaceId}` : "default";
   return `org/${organizationId}/workspace/${wsPart}/${prefix}/${fileId}/content`;

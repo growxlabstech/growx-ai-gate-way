@@ -81,7 +81,12 @@ export const retentionScopeSchema = z.enum([
 ]);
 export type RetentionScope = z.infer<typeof retentionScopeSchema>;
 
-export const retentionActionSchema = z.enum(["DELETE", "ANONYMIZE", "AGGREGATE", "RETAIN"]);
+export const retentionActionSchema = z.enum([
+  "DELETE",
+  "ANONYMIZE",
+  "AGGREGATE",
+  "RETAIN",
+]);
 export type RetentionAction = z.infer<typeof retentionActionSchema>;
 
 export const retentionPolicySchema = z.object({
@@ -148,8 +153,12 @@ export const providerDataPolicySchema = z.object({
   region: dataRegionSchema.default("GLOBAL"),
   dataUsagePolicy: z.string().optional(),
   retentionBehavior: z.string().optional(),
-  trainingBehavior: z.enum(["prohibited", "permitted", "unknown"]).default("unknown"),
-  deletionCapability: z.enum(["supported", "unsupported", "manual"]).default("unsupported"),
+  trainingBehavior: z
+    .enum(["prohibited", "permitted", "unknown"])
+    .default("unknown"),
+  deletionCapability: z
+    .enum(["supported", "unsupported", "manual"])
+    .default("unsupported"),
   zeroRetentionCapability: z.boolean().default(false),
   effectiveFrom: z.coerce.date(),
   verifiedAt: z.coerce.date().nullable().optional(),

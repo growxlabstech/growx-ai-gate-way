@@ -28,13 +28,15 @@ export interface OptimizationResult {
 export class RequestOptimizationService {
   constructor(
     public readonly exactCache: CacheService,
-    public readonly semanticCache: SemanticCacheService
+    public readonly semanticCache: SemanticCacheService,
   ) {}
 
   /**
    * Orchestrates the exact-before-semantic optimization pipeline.
    */
-  async optimizeRequest(params: RequestOptimizationParams): Promise<OptimizationResult> {
+  async optimizeRequest(
+    params: RequestOptimizationParams,
+  ): Promise<OptimizationResult> {
     const startMs = Date.now();
 
     // 1. Stage 1: Exact Cache Check (Deterministic & zero embedding overhead)
@@ -114,8 +116,10 @@ export class RequestOptimizationService {
       response: params.response,
       sourceRequestId: params.sourceRequestId,
     };
-    if (params.ttlSeconds !== undefined) exactParams.ttlSeconds = params.ttlSeconds;
-    if (params.providerId !== undefined) exactParams.providerId = params.providerId;
+    if (params.ttlSeconds !== undefined)
+      exactParams.ttlSeconds = params.ttlSeconds;
+    if (params.providerId !== undefined)
+      exactParams.providerId = params.providerId;
 
     await this.exactCache.admitAndStore(exactParams).catch(() => {});
 

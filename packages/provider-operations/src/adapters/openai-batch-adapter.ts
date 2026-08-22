@@ -11,7 +11,7 @@ export class OpenAIBatchAdapter implements ProviderOperationAdapter {
 
   public async getOperationStatus(
     providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationStatusResult> {
     // Normalizes OpenAI Batch Object: { id, status: 'validating'|'in_progress'|'completed'|'failed'|'expired'|'cancelling'|'cancelled', output_file_id }
     return {
@@ -23,7 +23,7 @@ export class OpenAIBatchAdapter implements ProviderOperationAdapter {
 
   public async cancelOperation(
     _providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationCancelResult> {
     return {
       cancelled: true,
@@ -33,7 +33,7 @@ export class OpenAIBatchAdapter implements ProviderOperationAdapter {
 
   public async fetchResult(
     resultReference: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationResultData> {
     return {
       data: {
@@ -46,7 +46,7 @@ export class OpenAIBatchAdapter implements ProviderOperationAdapter {
 
   public parseCallback(
     payload: Record<string, unknown>,
-    _headers: Record<string, string>
+    _headers: Record<string, string>,
   ): {
     providerOperationId: string;
     status: ProviderOperationStatus;

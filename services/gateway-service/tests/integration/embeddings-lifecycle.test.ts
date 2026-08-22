@@ -7,7 +7,9 @@ import {
 import type { MachineAuthContext } from "@growx/api-key-service";
 import { decodeBase64ToFloat32 } from "@growx/embeddings";
 
-function createMockAuth(overrides: Partial<MachineAuthContext> = {}): MachineAuthContext {
+function createMockAuth(
+  overrides: Partial<MachineAuthContext> = {},
+): MachineAuthContext {
   return {
     actorType: "apiKey",
     apiKeyId: "key_test_embed_123",
@@ -15,7 +17,12 @@ function createMockAuth(overrides: Partial<MachineAuthContext> = {}): MachineAut
     workspaceId: "ws_test_123",
     environmentId: "env_test_123",
     environment: "production",
-    permissions: ["embeddings.create", "chat.completions.create", "responses.create", "models.read"],
+    permissions: [
+      "embeddings.create",
+      "chat.completions.create",
+      "responses.create",
+      "models.read",
+    ],
     modelRules: [],
     rateLimits: [],
     ...overrides,
@@ -64,7 +71,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
           },
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     await fixture.modelService.addProviderRoute(
@@ -77,7 +84,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     const adaModel = await fixture.modelService.createModel(
@@ -110,7 +117,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
           },
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     await fixture.modelService.addProviderRoute(
@@ -123,7 +130,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_operator"
+      "usr_operator",
     );
   });
 
@@ -176,7 +183,9 @@ describe("Embeddings Infrastructure V2 Integration", () => {
     expect(response.data.length).toBe(1);
     expect(typeof response.data[0]!.embedding).toBe("string");
 
-    const decoded = decodeBase64ToFloat32(response.data[0]!.embedding as string);
+    const decoded = decodeBase64ToFloat32(
+      response.data[0]!.embedding as string,
+    );
     expect(decoded.length).toBe(1536);
   });
 
@@ -201,7 +210,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
         model: "openai/text-embedding-ada-002",
         input: "Invalid custom dimension",
         dimensions: 512,
-      })
+      }),
     ).rejects.toThrow(/does not support dimension customization/);
   });
 
@@ -211,7 +220,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
       engine.executeEmbedding(auth, {
         model: "openai/gpt-4o-mini",
         input: "Try to embed with chat completion model",
-      })
+      }),
     ).rejects.toThrow(/not an embedding model/);
   });
 
@@ -224,7 +233,7 @@ describe("Embeddings Infrastructure V2 Integration", () => {
       engine.executeEmbedding(auth, {
         model: "openai/text-embedding-3-small",
         input: "Test missing permission",
-      })
+      }),
     ).rejects.toThrow(/API key lacks 'embeddings.create' capability/);
   });
 
@@ -234,14 +243,14 @@ describe("Embeddings Infrastructure V2 Integration", () => {
       engine.executeEmbedding(auth, {
         model: "openai/text-embedding-3-small",
         input: "   ",
-      })
+      }),
     ).rejects.toThrow(/Input string must not be empty/);
 
     await expect(
       engine.executeEmbedding(auth, {
         model: "openai/text-embedding-3-small",
         input: [],
-      })
+      }),
     ).rejects.toThrow(/Input array must not be empty/);
   });
 });

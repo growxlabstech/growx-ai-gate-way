@@ -11,7 +11,9 @@ import type {
  * - Integer seconds e.g. "5" -> 5000ms
  * - HTTP date string e.g. "Wed, 21 Oct 2026 07:28:00 GMT" -> diff from now
  */
-export function parseRetryAfter(headerValue?: string | number | null): number | undefined {
+export function parseRetryAfter(
+  headerValue?: string | number | null,
+): number | undefined {
   if (headerValue === undefined || headerValue === null || headerValue === "") {
     return undefined;
   }
@@ -41,7 +43,7 @@ export function parseRetryAfter(headerValue?: string | number | null): number | 
  */
 export function classifyRetry(
   error: unknown,
-  context: RetryClassificationContext = {}
+  context: RetryClassificationContext = {},
 ): RetryClassificationResult {
   const { emittedOutput = false, retryAfterHeader } = context;
   const suggestedDelayMs = parseRetryAfter(retryAfterHeader);
@@ -55,7 +57,8 @@ export function classifyRetry(
       fallbackAllowed: false,
       suggestedDelayMs: undefined,
       reason: "OTHER_TRANSIENT",
-      safeMessage: "Stream error occurred after model output commenced; retries aborted to prevent duplication",
+      safeMessage:
+        "Stream error occurred after model output commenced; retries aborted to prevent duplication",
     };
   }
 
@@ -73,7 +76,8 @@ export function classifyRetry(
           fallbackAllowed: true,
           suggestedDelayMs,
           reason: "RATE_LIMIT",
-          safeMessage: "Provider rate limit reached; queued for retry or alternate candidate",
+          safeMessage:
+            "Provider rate limit reached; queued for retry or alternate candidate",
         };
 
       case "provider_timeout":
@@ -85,7 +89,8 @@ export function classifyRetry(
           fallbackAllowed: true,
           suggestedDelayMs,
           reason: "TIMEOUT",
-          safeMessage: "Provider request timed out before response was received",
+          safeMessage:
+            "Provider request timed out before response was received",
         };
 
       case "provider_unavailable":
@@ -108,7 +113,8 @@ export function classifyRetry(
           fallbackAllowed: true, // Allow fallback to alternate provider / credential
           suggestedDelayMs: undefined,
           reason: "CREDENTIAL_FAILURE",
-          safeMessage: "Provider authentication failed with configured credential",
+          safeMessage:
+            "Provider authentication failed with configured credential",
         };
 
       case "model_not_found":
@@ -131,7 +137,8 @@ export function classifyRetry(
           fallbackAllowed: false, // Never retry invalid payload across providers blindly
           suggestedDelayMs: undefined,
           reason: "OTHER_TRANSIENT",
-          safeMessage: error.message || "Invalid request payload rejected by provider",
+          safeMessage:
+            error.message || "Invalid request payload rejected by provider",
         };
 
       case "provider_content_policy":
@@ -142,7 +149,8 @@ export function classifyRetry(
           fallbackAllowed: false, // Safety invariant: never bypass safety rejections via fallback
           suggestedDelayMs: undefined,
           reason: "OTHER_TRANSIENT",
-          safeMessage: "Request was rejected by provider safety & content filter policy",
+          safeMessage:
+            "Request was rejected by provider safety & content filter policy",
         };
 
       case "model_not_allowed":

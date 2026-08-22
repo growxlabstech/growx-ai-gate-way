@@ -16,13 +16,16 @@ import { parseSseStream } from "../sse-parser.js";
 export class AnthropicAdapter implements ProviderAdapter {
   constructor(public readonly providerId: string = "anthropic") {}
 
-  validateConfiguration(config: { baseUrl: string; apiVersion?: string | null | undefined }): void {
+  validateConfiguration(config: {
+    baseUrl: string;
+    apiVersion?: string | null | undefined;
+  }): void {
     if (!config.baseUrl || !config.baseUrl.startsWith("http")) {
       throw new GrowXProviderError(
         "provider_invalid_request",
         `Invalid Anthropic baseUrl '${config.baseUrl}'`,
         false,
-        400
+        400,
       );
     }
   }
@@ -63,7 +66,8 @@ export class AnthropicAdapter implements ProviderAdapter {
       totalTokens,
       source: "provider_reported",
     };
-    if (cachedInputTokens !== undefined) usage.cachedInputTokens = cachedInputTokens;
+    if (cachedInputTokens !== undefined)
+      usage.cachedInputTokens = cachedInputTokens;
     return usage;
   }
 
@@ -71,69 +75,133 @@ export class AnthropicAdapter implements ProviderAdapter {
     if (error instanceof GrowXProviderError) return error;
 
     if (error instanceof DOMException && error.name === "AbortError") {
-      return new GrowXProviderError("request_cancelled", "The request was cancelled", false, 499, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "request_cancelled",
+        "The request was cancelled",
+        false,
+        499,
+        {
+          cause: error,
+        },
+      );
     }
 
     if (error instanceof Error && error.name === "TimeoutError") {
-      return new GrowXProviderError("provider_timeout", "Provider request timed out", true, 504, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_timeout",
+        "Provider request timed out",
+        true,
+        504,
+        {
+          cause: error,
+        },
+      );
     }
 
     const errObj = (error && typeof error === "object" ? error : {}) as any;
-    const status = typeof errObj.status === "number" ? errObj.status : undefined;
+    const status =
+      typeof errObj.status === "number" ? errObj.status : undefined;
     const msg =
       typeof errObj.message === "string"
         ? errObj.message
         : typeof errObj.error?.message === "string"
-        ? errObj.error.message
-        : "Unknown Anthropic provider error";
+          ? errObj.error.message
+          : "Unknown Anthropic provider error";
 
     if (status === 401 || status === 403) {
-      return new GrowXProviderError("provider_authentication_error", "Provider authentication failed", false, 502, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_authentication_error",
+        "Provider authentication failed",
+        false,
+        502,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 404) {
-      return new GrowXProviderError("model_not_found", `Model not found on provider: ${msg}`, false, 404, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "model_not_found",
+        `Model not found on provider: ${msg}`,
+        false,
+        404,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 429) {
-      return new GrowXProviderError("provider_rate_limit", `Provider rate limit exceeded: ${msg}`, true, 429, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_rate_limit",
+        `Provider rate limit exceeded: ${msg}`,
+        true,
+        429,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 400) {
-      return new GrowXProviderError("provider_invalid_request", `Bad request to provider: ${msg}`, false, 400, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_invalid_request",
+        `Bad request to provider: ${msg}`,
+        false,
+        400,
+        {
+          cause: error,
+        },
+      );
     }
     if (status === 529) {
-      return new GrowXProviderError("provider_unavailable", "Anthropic is temporarily overloaded", true, 503, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_unavailable",
+        "Anthropic is temporarily overloaded",
+        true,
+        503,
+        {
+          cause: error,
+        },
+      );
     }
     if (status && status >= 500) {
-      return new GrowXProviderError("provider_server_error", "Provider server error occurred", true, 503, {
-        cause: error,
-      });
+      return new GrowXProviderError(
+        "provider_server_error",
+        "Provider server error occurred",
+        true,
+        503,
+        {
+          cause: error,
+        },
+      );
     }
 
-    return new GrowXProviderError("provider_unavailable", `Provider error: ${msg}`, true, 503, {
-      cause: error,
-    });
+    return new GrowXProviderError(
+      "provider_unavailable",
+      `Provider error: ${msg}`,
+      true,
+      503,
+      {
+        cause: error,
+      },
+    );
   }
 
-  private buildRequestBody(request: NormalizedGenerationRequest, stream = false): any {
+  private buildRequestBody(
+    request: NormalizedGenerationRequest,
+    stream = false,
+  ): any {
     let systemPrompt: string | undefined = request.systemPrompt;
-    const anthropicMessages: Array<{ role: "user" | "assistant"; content: string | unknown[] }> = [];
+    const anthropicMessages: Array<{
+      role: "user" | "assistant";
+      content: string | unknown[];
+    }> = [];
 
     for (const msg of request.messages) {
       if (msg.role === "system") {
-        const text = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+        const text =
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content);
         systemPrompt = systemPrompt ? `${systemPrompt}\n\n${text}` : text;
       } else if (msg.role === "user") {
         if (typeof msg.content === "string") {
@@ -183,7 +251,10 @@ export class AnthropicAdapter implements ProviderAdapter {
         } else {
           anthropicMessages.push({
             role: "assistant",
-            content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+            content:
+              typeof msg.content === "string"
+                ? msg.content
+                : JSON.stringify(msg.content),
           });
         }
       } else if (msg.role === "tool") {
@@ -194,7 +265,10 @@ export class AnthropicAdapter implements ProviderAdapter {
             {
               type: "tool_result",
               tool_use_id: msg.toolCallId ?? "",
-              content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+              content:
+                typeof msg.content === "string"
+                  ? msg.content
+                  : JSON.stringify(msg.content),
             },
           ],
         });
@@ -212,9 +286,11 @@ export class AnthropicAdapter implements ProviderAdapter {
       body.system = systemPrompt;
     }
 
-    if (request.temperature !== undefined) body.temperature = request.temperature;
+    if (request.temperature !== undefined)
+      body.temperature = request.temperature;
     if (request.topP !== undefined) body.top_p = request.topP;
-    if (request.stop && request.stop.length > 0) body.stop_sequences = request.stop;
+    if (request.stop && request.stop.length > 0)
+      body.stop_sequences = request.stop;
 
     // Tools
     if (request.tools && request.tools.length > 0) {
@@ -229,8 +305,14 @@ export class AnthropicAdapter implements ProviderAdapter {
           body.tool_choice = { type: "auto" };
         } else if (request.toolChoice === "required") {
           body.tool_choice = { type: "any" };
-        } else if (typeof request.toolChoice === "object" && request.toolChoice.type === "function") {
-          body.tool_choice = { type: "tool", name: request.toolChoice.function.name };
+        } else if (
+          typeof request.toolChoice === "object" &&
+          request.toolChoice.type === "function"
+        ) {
+          body.tool_choice = {
+            type: "tool",
+            name: request.toolChoice.function.name,
+          };
         }
       }
     }
@@ -238,7 +320,10 @@ export class AnthropicAdapter implements ProviderAdapter {
     return body;
   }
 
-  private createAbortSignal(context: ProviderExecutionContext): { signal: AbortSignal; cleanup: () => void } {
+  private createAbortSignal(context: ProviderExecutionContext): {
+    signal: AbortSignal;
+    cleanup: () => void;
+  } {
     const timeoutSignal = AbortSignal.timeout(context.timeoutMs);
     if (!context.cancellationSignal) {
       return { signal: timeoutSignal, cleanup: () => {} };
@@ -248,7 +333,9 @@ export class AnthropicAdapter implements ProviderAdapter {
     const onCancel = () => controller.abort(context.cancellationSignal?.reason);
     const onTimeout = () => controller.abort(timeoutSignal.reason);
 
-    context.cancellationSignal.addEventListener("abort", onCancel, { once: true });
+    context.cancellationSignal.addEventListener("abort", onCancel, {
+      once: true,
+    });
     timeoutSignal.addEventListener("abort", onTimeout, { once: true });
 
     return {
@@ -262,13 +349,14 @@ export class AnthropicAdapter implements ProviderAdapter {
 
   async execute(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): Promise<NormalizedGenerationResponse> {
     const startedAt = new Date();
     const { signal, cleanup } = this.createAbortSignal(context);
 
     try {
-      const rawBaseUrl = (context as unknown as any).baseUrl || "https://api.anthropic.com";
+      const rawBaseUrl =
+        (context as unknown as any).baseUrl || "https://api.anthropic.com";
       const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, "");
       const url = cleanBaseUrl.endsWith("/v1")
         ? `${cleanBaseUrl}/messages`
@@ -373,7 +461,7 @@ export class AnthropicAdapter implements ProviderAdapter {
 
   async *stream(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): AsyncIterable<NormalizedStreamEvent> {
     const startedAt = new Date();
     const { signal, cleanup } = this.createAbortSignal(context);
@@ -381,7 +469,8 @@ export class AnthropicAdapter implements ProviderAdapter {
     const responseId = `resp_${request.requestId.replace(/^req_/, "")}`;
 
     try {
-      const rawBaseUrl = (context as unknown as any).baseUrl || "https://api.anthropic.com";
+      const rawBaseUrl =
+        (context as unknown as any).baseUrl || "https://api.anthropic.com";
       const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, "");
       const url = cleanBaseUrl.endsWith("/v1")
         ? `${cleanBaseUrl}/messages`
@@ -418,7 +507,12 @@ export class AnthropicAdapter implements ProviderAdapter {
       }
 
       if (!res.body) {
-        throw new GrowXProviderError("provider_server_error", "Empty response body from Anthropic stream", true, 503);
+        throw new GrowXProviderError(
+          "provider_server_error",
+          "Empty response body from Anthropic stream",
+          true,
+          503,
+        );
       }
 
       yield {
@@ -430,8 +524,12 @@ export class AnthropicAdapter implements ProviderAdapter {
       };
 
       let fullContent = "";
-      const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
-      let finalFinishReason: NormalizedGenerationResponse["finishReason"] = "stop";
+      const toolCallMap = new Map<
+        number,
+        { id: string; name: string; arguments: string }
+      >();
+      let finalFinishReason: NormalizedGenerationResponse["finishReason"] =
+        "stop";
       let inputTokens = 0;
       let outputTokens = 0;
       let firstTokenAt: Date | undefined;
@@ -488,8 +586,15 @@ export class AnthropicAdapter implements ProviderAdapter {
               timestamp: new Date().toISOString(),
               delta: delta.text,
             };
-          } else if (delta?.type === "input_json_delta" && typeof delta.partial_json === "string") {
-            const existing = toolCallMap.get(index) ?? { id: "", name: "", arguments: "" };
+          } else if (
+            delta?.type === "input_json_delta" &&
+            typeof delta.partial_json === "string"
+          ) {
+            const existing = toolCallMap.get(index) ?? {
+              id: "",
+              name: "",
+              arguments: "",
+            };
             existing.arguments += delta.partial_json;
             toolCallMap.set(index, existing);
 
@@ -519,10 +624,13 @@ export class AnthropicAdapter implements ProviderAdapter {
           }
         } else if (eventType === "error") {
           const err = eventPayload.error;
-          throw Object.assign(new Error(err?.message ?? "Anthropic streaming error"), {
-            status: err?.type === "rate_limit_error" ? 429 : 500,
-            message: err?.message,
-          });
+          throw Object.assign(
+            new Error(err?.message ?? "Anthropic streaming error"),
+            {
+              status: err?.type === "rate_limit_error" ? 429 : 500,
+              message: err?.message,
+            },
+          );
         }
       }
 
@@ -563,19 +671,27 @@ export class AnthropicAdapter implements ProviderAdapter {
       };
 
       const completedAt = new Date();
-      const finalToolCalls: ToolCall[] = Array.from(toolCallMap.values()).map((tc) => ({
-        id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
-        name: tc.name,
-        arguments: tc.arguments,
-      }));
+      const finalToolCalls: ToolCall[] = Array.from(toolCallMap.values()).map(
+        (tc) => ({
+          id: tc.id || `call_${Math.random().toString(36).slice(2)}`,
+          name: tc.name,
+          arguments: tc.arguments,
+        }),
+      );
 
-      const timing: { startedAt: Date; completedAt: Date; latencyMs: number; timeToFirstTokenMs?: number } = {
+      const timing: {
+        startedAt: Date;
+        completedAt: Date;
+        latencyMs: number;
+        timeToFirstTokenMs?: number;
+      } = {
         startedAt,
         completedAt,
         latencyMs: completedAt.getTime() - startedAt.getTime(),
       };
       if (firstTokenAt) {
-        timing.timeToFirstTokenMs = firstTokenAt.getTime() - startedAt.getTime();
+        timing.timeToFirstTokenMs =
+          firstTokenAt.getTime() - startedAt.getTime();
       }
 
       const completeResponse: NormalizedGenerationResponse = {
@@ -594,7 +710,8 @@ export class AnthropicAdapter implements ProviderAdapter {
         usage: finalUsage,
         timing,
       };
-      if (finalToolCalls.length > 0) completeResponse.toolCalls = finalToolCalls;
+      if (finalToolCalls.length > 0)
+        completeResponse.toolCalls = finalToolCalls;
 
       yield {
         requestId: request.requestId,
@@ -635,7 +752,10 @@ export class AnthropicAdapter implements ProviderAdapter {
     const started = Date.now();
     try {
       const signal = context.cancellationSignal
-        ? AbortSignal.any([context.cancellationSignal, AbortSignal.timeout(context.timeoutMs)])
+        ? AbortSignal.any([
+            context.cancellationSignal,
+            AbortSignal.timeout(context.timeoutMs),
+          ])
         : AbortSignal.timeout(context.timeoutMs);
 
       const rawBaseUrl = context.baseUrl || "https://api.anthropic.com";

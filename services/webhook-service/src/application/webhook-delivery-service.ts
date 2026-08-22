@@ -39,12 +39,14 @@ export class WebhookDeliveryService {
   /**
    * Claims and processes a batch of pending deliveries.
    */
-  async processBatch(params: {
-    batchSize?: number | undefined;
-    leaseDurationMs?: number | undefined;
-    workerId?: string | undefined;
-    allowInsecureHttp?: boolean | undefined;
-  } = {}): Promise<{ delivered: number; retried: number; deadLettered: number }> {
+  async processBatch(
+    params: {
+      batchSize?: number | undefined;
+      leaseDurationMs?: number | undefined;
+      workerId?: string | undefined;
+      allowInsecureHttp?: boolean | undefined;
+    } = {},
+  ): Promise<{ delivered: number; retried: number; deadLettered: number }> {
     const batchSize = params.batchSize ?? 10;
     const leaseDurationMs = params.leaseDurationMs ?? 30_000;
     const workerId = params.workerId ?? generateId("wrk");
@@ -52,7 +54,7 @@ export class WebhookDeliveryService {
     const claimed = await this.repository.claimPendingDeliveries(
       batchSize,
       leaseDurationMs,
-      workerId
+      workerId,
     );
 
     let delivered = 0;
@@ -76,7 +78,7 @@ export class WebhookDeliveryService {
    */
   async deliverSingle(
     delivery: WebhookDelivery,
-    options?: { allowInsecureHttp?: boolean | undefined }
+    options?: { allowInsecureHttp?: boolean | undefined },
   ): Promise<{ status: string; responseStatus?: number | undefined }> {
     const now = new Date();
     const startedAt = now;
@@ -85,7 +87,7 @@ export class WebhookDeliveryService {
     // 1. Fetch Outbound Event
     const event = await this.repository.getOutboundEvent(
       delivery.organizationId,
-      delivery.webhookEventId
+      delivery.webhookEventId,
     );
     if (!event) {
       // Event missing -> mark dead letter
@@ -100,7 +102,7 @@ export class WebhookDeliveryService {
     // 2. Fetch Endpoint and Active Secret
     const endpoint = await this.repository.getEndpoint(
       delivery.organizationId,
-      delivery.endpointId
+      delivery.endpointId,
     );
     if (!endpoint || endpoint.status === "disabled") {
       // Endpoint disabled -> mark cancelled or dead_letter
@@ -111,7 +113,9 @@ export class WebhookDeliveryService {
       return { status: "cancelled" };
     }
 
-    const secretRecord = await this.repository.getActiveSigningSecret(endpoint.id);
+    const secretRecord = await this.repository.getActiveSigningSecret(
+      endpoint.id,
+    );
     const plaintextSecret = secretRecord
       ? decryptWebhookSecret(secretRecord.encryptedSecret)
       : decryptWebhookSecret(endpoint.secretEncrypted);
@@ -123,9 +127,12 @@ export class WebhookDeliveryService {
     let retryAfterSeconds: number | undefined;
 
     try {
-      const destinationUrl = validateWebhookUrl(delivery.destinationUrlSnapshot, {
-        allowInsecureHttp: options?.allowInsecureHttp,
-      });
+      const destinationUrl = validateWebhookUrl(
+        delivery.destinationUrlSnapshot,
+        {
+          allowInsecureHttp: options?.allowInsecureHttp,
+        },
+      );
       await resolveAndValidateDns(destinationUrl.hostname);
 
       // 4. Exact Body String & Signing
@@ -156,7 +163,9 @@ export class WebhookDeliveryService {
       });
 
       responseStatus = response.status;
-      retryAfterSeconds = parseRetryAfterHeader(response.headers.get("retry-after"));
+      retryAfterSeconds = parseRetryAfterHeader(
+        response.headers.get("retry-after"),
+      );
 
       // Read small bounded snippet of response body
       try {
@@ -207,13 +216,13 @@ export class WebhookDeliveryService {
       await this.endpointService.recordEndpointOutcome(
         delivery.organizationId,
         endpoint.id,
-        true
+        true,
       );
     } else if (outcome.status === "retrying") {
       const delayMs = calculateNextAttemptMs(
         attemptNumber,
         this.retryPolicy,
-        retryAfterSeconds
+        retryAfterSeconds,
       );
       const nextAttemptAt = new Date(completedAt.getTime() + delayMs);
 
@@ -228,7 +237,7 @@ export class WebhookDeliveryService {
       await this.endpointService.recordEndpointOutcome(
         delivery.organizationId,
         endpoint.id,
-        false
+        false,
       );
     } else {
       // Dead Letter or permanent failure
@@ -242,7 +251,7 @@ export class WebhookDeliveryService {
       await this.endpointService.recordEndpointOutcome(
         delivery.organizationId,
         endpoint.id,
-        false
+        false,
       );
     }
 

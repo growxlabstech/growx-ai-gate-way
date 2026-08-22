@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("API Key Authentication Security Tests", () => {
   let fixture: TestGatewayFixture;
@@ -42,14 +45,17 @@ describe("API Key Authentication Security Tests", () => {
   it("denies request with query param api_key (400) with 0 provider calls", async () => {
     const { rawKey } = await fixture.createTestApiKey();
 
-    const response = await fetch(`${baseUrl}/v1/chat/completions?api_key=${rawKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: "hi" }],
-      }),
-    });
+    const response = await fetch(
+      `${baseUrl}/v1/chat/completions?api_key=${rawKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai/gpt-4o-mini",
+          messages: [{ role: "user", content: "hi" }],
+        }),
+      },
+    );
 
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -65,7 +71,7 @@ describe("API Key Authentication Security Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -88,7 +94,7 @@ describe("API Key Authentication Security Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -111,7 +117,7 @@ describe("API Key Authentication Security Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -137,7 +143,7 @@ describe("API Key Authentication Security Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

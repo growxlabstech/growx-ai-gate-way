@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { InfrastructureCostModeler } from '../src/cost-modeler.js';
+import { describe, it, expect } from "vitest";
+import { InfrastructureCostModeler } from "../src/cost-modeler.js";
 
-describe('InfrastructureCostModeler', () => {
-  it('calculates realistic infrastructure costs per million requests', () => {
+describe("InfrastructureCostModeler", () => {
+  it("calculates realistic infrastructure costs per million requests", () => {
     const cost = InfrastructureCostModeler.calculateCostPerMillion({
       avgComputeDurationMs: 10,
       dbQueriesPerRequest: 2,

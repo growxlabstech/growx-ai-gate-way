@@ -1,15 +1,51 @@
-# Observability
+# GrowX AI Gateway — Production Observability Architecture
 
-Services emit structured JSON through `@growx/observability`; direct console logging is prohibited. Logs carry service, request ID, correlation ID, and trace ID. Sensitive fields are redacted at the logger boundary.
+## 1. Structured Logging & Secret Redaction
 
-OpenTelemetry is the tracing and metrics transport. Prometheus collects requests, errors, latency, memory, CPU, and build/deployment signals; Grafana visualizes and alerts. Sentry captures actionable exceptions and Axiom stores searchable logs. Vendor keys are optional locally and required only in environments where the integration is enabled.
+All microservices and workers emit newline-delimited structured JSON using `@growx/observability` and Pino. Direct `console.log` is prohibited.
 
-Alerts must describe impact, owner, and runbook. Avoid high-cardinality metric labels such as user IDs and request IDs.
+Every log entry automatically carries:
 
-Phase 2 spans authentication, organization/workspace creation, invitations, authorization decisions, database transactions, notification delivery, and admin actions. Required counters include login success/failure, registration, organization/workspace creation, invitation acceptance, and authorization denial. Latency histograms cover API, database, and email-delivery work.
+- `service`: Microservice or worker identifier (e.g. `gateway-service`, `usage-worker`).
+- `requestId`: Canonical GrowX request identifier (`req_...`).
+- `correlationId`: Distributed trace correlation ID.
+- `traceId`: OpenTelemetry W3C trace ID.
 
-Phase 3 adds `growx_gateway_requests_total`, `growx_gateway_auth_success_total`, `growx_gateway_auth_failure_total`, `growx_gateway_auth_duration_seconds`, `growx_gateway_rate_limit_total`, `growx_gateway_permission_denied_total`, `growx_gateway_budget_denied_total`, and key-cache hit/miss counters. The GrowX Gateway Access dashboard shows requests, auth outcomes, denial categories, latency, and cache ratio. Expected denials are metrics/security events, not Sentry exceptions.
+### Secret Redaction Guarantee
 
-Phase 4 traces gateway validation/model-resolution/routing, each provider attempt and stream, usage capture, and event publication. Metrics cover model success/failure, streams, latency/TTFT, provider errors/timeouts/fallback, model traffic, and input/output tokens. The “GrowX AI Gateway — Execution” dashboard reports RPS, success/error rates, P50/P95/P99, TTFT, providers/models, fallbacks, and tokens.
+The logger boundary automatically masks and redacts:
 
-Phase 5 adds routing evaluation/policy/health/capacity/scoring/selection/fallback, circuit, and cache spans. Metrics include decisions and duration, selected providers/candidates, fallback/retry exhaustion, health score, circuit state, capacity utilization, cache hit ratio, and deduplication. Dashboards: Gateway Routing Overview, Provider Reliability, Provider Capacity, Fallback Analysis, and Cache Performance. Alerts cover unhealthy scores, opened circuits, fallback/429/timeout/latency spikes, near-limit capacity, cache failures, queue backlog, and routing failures.
+- Customer API Keys (`gx_live_...`, `gx_test_...` -> `gx_live_key_...••••••••`)
+- Upstream Provider Secrets (`sk-...`, `Bearer ...`)
+- User Session Tokens and Passwords
+- Payment CVV/Secrets and Bank Account Information
+
+---
+
+## 2. Distributed Tracing & Metrics (OpenTelemetry)
+
+OpenTelemetry is the canonical transport for distributed spans and telemetry:
+
+- **`OTEL_EXPORTER_OTLP_ENDPOINT`**: Configured to stream OTLP/gRPC traces to the central telemetry collector.
+- **Trace Path**: `Edge Load Balancer -> Gateway Service -> Policy Engine -> Router V2 -> Provider Adapter -> Usage Worker -> Credit Settlement`.
+
+### Key Performance Counters & Metrics:
+
+- `growx_gateway_requests_total`: Aggregated total inference completions.
+- `growx_gateway_auth_success_total` & `growx_gateway_auth_failure_total`: Key auth validation metrics.
+- `growx_gateway_ttft_milliseconds`: Time to first token for streaming responses (Target: P95 < 120ms).
+- `growx_gateway_duration_milliseconds`: Total request round-trip latency.
+- `growx_gateway_provider_circuit_state`: Status of provider circuit breakers (Closed, Half-Open, Open).
+- `growx_gateway_cache_hits_total` & `growx_gateway_cache_misses_total`: Exact and semantic cache hit ratios.
+
+---
+
+## 3. Exception Tracking & Alerting Destinations
+
+- **Sentry Integration**: Optional exception capture for unexpected fatal runtime bugs with sanitized stack traces and release version correlation.
+- **Critical Alert Triggers**:
+  1. Gateway 5xx Error Rate > 0.5% over 5 minutes.
+  2. Provider Outage / Open Circuit Breaker on primary model.
+  3. Worker Batch Queue Backlog > 10,000 items or lease timeout spike.
+  4. PostgreSQL connection pool saturation > 85%.
+  5. Wallet / Ledger financial reconciliation imbalance detected.

@@ -18,15 +18,19 @@ export class SecretRedactor {
         if (match.startsWith("Bearer ")) return "Bearer [REDACTED_SECRET]";
         if (match.startsWith('"apiKey"')) return '"apiKey":"[REDACTED_SECRET]"';
         if (match.startsWith('"secret"')) return '"secret":"[REDACTED_SECRET]"';
-        if (match.startsWith('"rawSecret"')) return '"rawSecret":"[REDACTED_SECRET]"';
-        if (match.startsWith('"decryptedCredential"')) return '"decryptedCredential":"[REDACTED_SECRET]"';
+        if (match.startsWith('"rawSecret"'))
+          return '"rawSecret":"[REDACTED_SECRET]"';
+        if (match.startsWith('"decryptedCredential"'))
+          return '"decryptedCredential":"[REDACTED_SECRET]"';
         return "[REDACTED_SECRET]";
       });
     }
     return result;
   }
 
-  public static redactHeaders(headers: Record<string, unknown>): Record<string, unknown> {
+  public static redactHeaders(
+    headers: Record<string, unknown>,
+  ): Record<string, unknown> {
     const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(headers)) {
       const lower = key.toLowerCase();
@@ -53,7 +57,7 @@ export class SecretRedactor {
     if (typeof obj !== "object") return obj;
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.redactObject(item)) as unknown as T;
+      return obj.map((item) => this.redactObject(item)) as unknown as T;
     }
 
     const copy: Record<string, unknown> = {};

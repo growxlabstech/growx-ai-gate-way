@@ -107,7 +107,7 @@ describe("Provider Operations Runtime Lifecycle (Phase 34)", () => {
       "deterministic",
       { providerOperationId: "upstream_img_123", status: "completed" },
       { authorization: "Bearer webhook_secret_token" },
-      "webhook_secret_token"
+      "webhook_secret_token",
     );
 
     expect(result.handled).toBe(true);
@@ -118,7 +118,7 @@ describe("Provider Operations Runtime Lifecycle (Phase 34)", () => {
     const regressiveResult = await callbackHandler.handleCallback(
       "deterministic",
       { providerOperationId: "upstream_img_123", status: "running" },
-      {}
+      {},
     );
 
     expect(regressiveResult.handled).toBe(true);

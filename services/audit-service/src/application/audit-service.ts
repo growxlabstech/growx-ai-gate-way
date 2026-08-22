@@ -10,7 +10,10 @@ import {
   type AuditOutcome,
   type AuditVerificationResult,
 } from "@growx/audit";
-import type { IAuditRepository, ListAuditEventsParams } from "../domain/types.js";
+import type {
+  IAuditRepository,
+  ListAuditEventsParams,
+} from "../domain/types.js";
 
 export interface RecordAuditEventInput {
   organizationId?: string | undefined;
@@ -43,7 +46,7 @@ export class AuditService {
 
   constructor(
     private readonly repository: IAuditRepository,
-    private readonly secretKey?: string | undefined
+    private readonly secretKey?: string | undefined,
   ) {}
 
   /**
@@ -180,7 +183,7 @@ export class AuditService {
    */
   async verifyChain(
     chainScope: string,
-    initialPreviousHash: string = GENESIS_HASH
+    initialPreviousHash: string = GENESIS_HASH,
   ): Promise<AuditVerificationResult> {
     const events = await this.repository.listAuditEvents({ chainScope });
     return verifyAuditChain(events, initialPreviousHash, this.secretKey);
@@ -189,7 +192,9 @@ export class AuditService {
   /**
    * Creates a signed or hash-based checkpoint of the current chain head.
    */
-  async createCheckpoint(chainScope: string): Promise<AuditIntegrityCheckpoint | undefined> {
+  async createCheckpoint(
+    chainScope: string,
+  ): Promise<AuditIntegrityCheckpoint | undefined> {
     const head = await this.repository.getChainHead(chainScope);
     if (!head) return undefined;
 
@@ -208,7 +213,7 @@ export class AuditService {
 
   async listCustomerAuditEvents(
     organizationId: string,
-    filters: Omit<ListAuditEventsParams, "organizationId" | "chainScope">
+    filters: Omit<ListAuditEventsParams, "organizationId" | "chainScope">,
   ): Promise<AuditEvent[]> {
     return this.repository.listAuditEvents({
       ...filters,
@@ -218,7 +223,7 @@ export class AuditService {
 
   async getCustomerAuditEvent(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<AuditEvent | undefined> {
     const event = await this.repository.getAuditEvent(id);
     if (!event || event.organizationId !== organizationId) {
@@ -227,7 +232,9 @@ export class AuditService {
     return event;
   }
 
-  async listInternalAuditEvents(filters: ListAuditEventsParams): Promise<AuditEvent[]> {
+  async listInternalAuditEvents(
+    filters: ListAuditEventsParams,
+  ): Promise<AuditEvent[]> {
     return this.repository.listAuditEvents(filters);
   }
 }

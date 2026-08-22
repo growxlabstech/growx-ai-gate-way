@@ -12,10 +12,16 @@ export interface PlatformReconciliationReport {
 }
 
 export class PlatformReconciliationOrchestrator {
-  public async reconcileAll(domainHandlers: Array<{
-    name: string;
-    reconcile: () => Promise<{ evaluated: number; reconciled: number; errors?: string[] }>;
-  }>): Promise<PlatformReconciliationReport> {
+  public async reconcileAll(
+    domainHandlers: Array<{
+      name: string;
+      reconcile: () => Promise<{
+        evaluated: number;
+        reconciled: number;
+        errors?: string[];
+      }>;
+    }>,
+  ): Promise<PlatformReconciliationReport> {
     const results: ReconciliationDomainResult[] = [];
     let hasFailures = false;
 

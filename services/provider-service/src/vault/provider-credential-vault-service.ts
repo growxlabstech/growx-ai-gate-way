@@ -7,7 +7,10 @@ import {
   type ProviderCredential,
   type ProviderCredentialVersion,
 } from "@growx/contracts";
-import { generateSecretFingerprint, type SecretProvider } from "./secret-provider.js";
+import {
+  generateSecretFingerprint,
+  type SecretProvider,
+} from "./secret-provider.js";
 import type { IProviderRepository } from "../application/repository.js";
 import type { IProviderEvents } from "../application/events.js";
 import type { ProviderCredentialResolver } from "./credential-resolver.js";
@@ -17,18 +20,26 @@ export class ProviderCredentialVaultService {
     private readonly repository: IProviderRepository,
     private readonly secretProvider: SecretProvider,
     private readonly events: IProviderEvents,
-    private readonly resolver?: ProviderCredentialResolver | undefined
+    private readonly resolver?: ProviderCredentialResolver | undefined,
   ) {}
 
   public async createCredential(
     providerAccountId: string,
     input: CreateProviderCredentialRequestV2,
     operatorId: string,
-    requestId?: string
-  ): Promise<{ credential: ProviderCredential; version: ProviderCredentialVersion }> {
+    requestId?: string,
+  ): Promise<{
+    credential: ProviderCredential;
+    version: ProviderCredentialVersion;
+  }> {
     const account = await this.repository.getAccountById(providerAccountId);
     if (!account) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider account '${providerAccountId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider account '${providerAccountId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -78,12 +89,13 @@ export class ProviderCredentialVaultService {
       metadata: input.metadata || {},
     };
 
-    const createdCredential = await this.repository.createCredentialV2(credential);
+    const createdCredential =
+      await this.repository.createCredentialV2(credential);
 
     await this.events.emitSecurityEvent(
       "provider.credential.created",
       { credentialId, accountId: account.id, versionId, fingerprint },
-      requestId
+      requestId,
     );
 
     return { credential: createdCredential, version };
@@ -93,15 +105,21 @@ export class ProviderCredentialVaultService {
     credentialId: string,
     input: CreateProviderCredentialVersionRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialVersion> {
     const credential = await this.repository.getCredentialById(credentialId);
     if (!credential) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider credential '${credentialId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider credential '${credentialId}' not found`,
+        false,
+        404,
+      );
     }
 
     const versions = await this.repository.listCredentialVersions(credentialId);
-    const nextVersionNum = versions.length > 0 ? Math.max(...versions.map(v => v.version)) + 1 : 1;
+    const nextVersionNum =
+      versions.length > 0 ? Math.max(...versions.map((v) => v.version)) + 1 : 1;
 
     const now = new Date();
     const versionId = `pcver_${createPublicId("key").slice(4)}`;
@@ -129,7 +147,8 @@ export class ProviderCredentialVaultService {
       createdAt: now,
     };
 
-    const createdVersion = await this.repository.createCredentialVersion(version);
+    const createdVersion =
+      await this.repository.createCredentialVersion(version);
 
     if (input.autoActivate) {
       await this.activateVersion(versionId, operatorId, requestId);
@@ -137,7 +156,7 @@ export class ProviderCredentialVaultService {
       await this.events.emitSecurityEvent(
         "provider.credential.version_created",
         { credentialId, versionId, version: nextVersionNum, fingerprint },
-        requestId
+        requestId,
       );
     }
 
@@ -147,37 +166,63 @@ export class ProviderCredentialVaultService {
   public async activateVersion(
     versionId: string,
     operatorId: string,
-    requestId?: string
-  ): Promise<{ activatedVersion: ProviderCredentialVersion; previousActiveVersion?: ProviderCredentialVersion | undefined }> {
+    requestId?: string,
+  ): Promise<{
+    activatedVersion: ProviderCredentialVersion;
+    previousActiveVersion?: ProviderCredentialVersion | undefined;
+  }> {
     const version = await this.repository.getCredentialVersionById(versionId);
     if (!version) {
-      throw new GrowXProviderError("provider_invalid_request", `Credential version '${versionId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Credential version '${versionId}' not found`,
+        false,
+        404,
+      );
     }
 
-    const credential = await this.repository.getCredentialById(version.credentialId);
+    const credential = await this.repository.getCredentialById(
+      version.credentialId,
+    );
     if (!credential) {
-      throw new GrowXProviderError("provider_invalid_request", `Credential '${version.credentialId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Credential '${version.credentialId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
     let previousActive: ProviderCredentialVersion | undefined;
 
     // 1. Drain/retire previous active version
-    if (credential.activeVersionId && credential.activeVersionId !== versionId) {
-      const prev = await this.repository.getCredentialVersionById(credential.activeVersionId);
+    if (
+      credential.activeVersionId &&
+      credential.activeVersionId !== versionId
+    ) {
+      const prev = await this.repository.getCredentialVersionById(
+        credential.activeVersionId,
+      );
       if (prev && prev.status === "active") {
-        previousActive = await this.repository.updateCredentialVersion(prev.id, {
-          status: "draining",
-          retiredAt: now,
-        });
+        previousActive = await this.repository.updateCredentialVersion(
+          prev.id,
+          {
+            status: "draining",
+            retiredAt: now,
+          },
+        );
       }
     }
 
     // 2. Activate new version
-    const activatedVersion = await this.repository.updateCredentialVersion(versionId, {
-      status: "active",
-      activatedAt: now,
-    });
+    const activatedVersion = await this.repository.updateCredentialVersion(
+      versionId,
+      {
+        status: "active",
+        activatedAt: now,
+      },
+    );
 
     // 3. Update active version on parent credential
     await this.repository.updateCredential(credential.id, {
@@ -191,8 +236,12 @@ export class ProviderCredentialVaultService {
 
     await this.events.emitSecurityEvent(
       "provider.credential.activated",
-      { credentialId: credential.id, versionId, previousVersionId: previousActive?.id },
-      requestId
+      {
+        credentialId: credential.id,
+        versionId,
+        previousVersionId: previousActive?.id,
+      },
+      requestId,
     );
 
     return { activatedVersion, previousActiveVersion: previousActive };
@@ -202,11 +251,19 @@ export class ProviderCredentialVaultService {
     credentialId: string,
     input: RotateProviderCredentialRequestV2,
     operatorId: string,
-    requestId?: string
-  ): Promise<{ newVersion: ProviderCredentialVersion; retiredVersion?: ProviderCredentialVersion | undefined }> {
+    requestId?: string,
+  ): Promise<{
+    newVersion: ProviderCredentialVersion;
+    retiredVersion?: ProviderCredentialVersion | undefined;
+  }> {
     const credential = await this.repository.getCredentialById(credentialId);
     if (!credential) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider credential '${credentialId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider credential '${credentialId}' not found`,
+        false,
+        404,
+      );
     }
 
     // Create new version with automatic activation
@@ -220,13 +277,13 @@ export class ProviderCredentialVaultService {
         metadata: { rotationReason: input.reason },
       },
       operatorId,
-      requestId
+      requestId,
     );
 
     await this.events.emitSecurityEvent(
       "provider.credential.rotated",
       { credentialId, newVersionId: newVersion.id, reason: input.reason },
-      requestId
+      requestId,
     );
 
     return { newVersion };
@@ -236,14 +293,24 @@ export class ProviderCredentialVaultService {
     credentialId: string,
     targetVersionId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialVersion> {
-    const target = await this.repository.getCredentialVersionById(targetVersionId);
+    const target =
+      await this.repository.getCredentialVersionById(targetVersionId);
     if (!target || target.credentialId !== credentialId) {
-      throw new GrowXProviderError("provider_invalid_request", `Target version '${targetVersionId}' does not belong to credential '${credentialId}'`, false, 400);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Target version '${targetVersionId}' does not belong to credential '${credentialId}'`,
+        false,
+        400,
+      );
     }
 
-    const { activatedVersion } = await this.activateVersion(targetVersionId, operatorId, requestId);
+    const { activatedVersion } = await this.activateVersion(
+      targetVersionId,
+      operatorId,
+      requestId,
+    );
     return activatedVersion;
   }
 
@@ -251,11 +318,16 @@ export class ProviderCredentialVaultService {
     credentialId: string,
     reason: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredential> {
     const credential = await this.repository.getCredentialById(credentialId);
     if (!credential) {
-      throw new GrowXProviderError("provider_invalid_request", `Provider credential '${credentialId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Provider credential '${credentialId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -271,13 +343,15 @@ export class ProviderCredentialVaultService {
     await this.events.emitSecurityEvent(
       "provider.credential.revoked",
       { credentialId, reason, operatorId },
-      requestId
+      requestId,
     );
 
     return updated as unknown as ProviderCredential;
   }
 
-  public async checkExpiringCredentials(windowDays = 14): Promise<ProviderCredential[]> {
+  public async checkExpiringCredentials(
+    windowDays = 14,
+  ): Promise<ProviderCredential[]> {
     const threshold = new Date(Date.now() + windowDays * 24 * 60 * 60 * 1000);
     return this.repository.listExpiringCredentials(threshold);
   }

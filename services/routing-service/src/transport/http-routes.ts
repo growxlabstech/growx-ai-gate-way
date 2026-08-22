@@ -27,7 +27,11 @@ export interface CreateRoutingHttpAppOptions {
   simulationService?: RoutingSimulationService | undefined;
 }
 
-function sendJson(res: ServerResponse, statusCode: number, data: unknown): void {
+function sendJson(
+  res: ServerResponse,
+  statusCode: number,
+  data: unknown,
+): void {
   res.writeHead(statusCode, { "content-type": "application/json" });
   res.end(JSON.stringify(data));
 }
@@ -36,7 +40,7 @@ function sendError(
   res: ServerResponse,
   statusCode: number,
   code: string,
-  message: string
+  message: string,
 ): void {
   sendJson(res, statusCode, {
     error: {
@@ -80,13 +84,20 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
   } = options;
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const url = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = url.pathname;
     const method = req.method?.toUpperCase() ?? "GET";
 
     try {
       // 1. Health Checks
-      if (pathname === "/health" || pathname === "/live" || pathname === "/ready") {
+      if (
+        pathname === "/health" ||
+        pathname === "/live" ||
+        pathname === "/ready"
+      ) {
         sendJson(res, 200, {
           status: "ok",
           service: "routing-service",
@@ -97,11 +108,16 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
       }
 
       // 2. Customer Workspace Policy: GET /v1/workspaces/:workspaceId/routing-policy
-      const wsPolicyMatch = pathname.match(/^\/v1\/workspaces\/([^/]+)\/routing-policy$/);
+      const wsPolicyMatch = pathname.match(
+        /^\/v1\/workspaces\/([^/]+)\/routing-policy$/,
+      );
       if (wsPolicyMatch) {
         const workspaceId = wsPolicyMatch[1]!;
 
-        const customerSession = await customerAuth.resolveCustomerSession(req, workspaceId);
+        const customerSession = await customerAuth.resolveCustomerSession(
+          req,
+          workspaceId,
+        );
         if (!customerSession) {
           sendError(res, 401, "unauthorized", "Authentication required");
           return;
@@ -113,14 +129,19 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
           customerSession.permissions.includes("routing.manage");
 
         if (!hasPermission) {
-          sendError(res, 403, "forbidden", "Insufficient permissions to access routing policy");
+          sendError(
+            res,
+            403,
+            "forbidden",
+            "Insufficient permissions to access routing policy",
+          );
           return;
         }
 
         if (method === "GET") {
           const policy = await repository.getPolicy(
             customerSession.organizationId,
-            workspaceId
+            workspaceId,
           );
           if (!policy) {
             const global = await repository.getGlobalPolicy();
@@ -155,29 +176,39 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
             customerSession.permissions.includes("workspace.routing.manage") ||
             customerSession.permissions.includes("routing.manage");
           if (!canManage) {
-            sendError(res, 403, "forbidden", "Permission 'workspace.routing.manage' required");
+            sendError(
+              res,
+              403,
+              "forbidden",
+              "Permission 'workspace.routing.manage' required",
+            );
             return;
           }
 
           const body = await readBodyJson(req);
           const existing = await repository.getPolicy(
             customerSession.organizationId,
-            workspaceId
+            workspaceId,
           );
 
           if (existing) {
             await repository.updatePolicy(existing.id, {
               strategy: body.strategy ?? existing.strategy,
-              allowedProviders: body.allowedProviders ?? existing.allowedProviders,
+              allowedProviders:
+                body.allowedProviders ?? existing.allowedProviders,
               deniedProviders: body.deniedProviders ?? existing.deniedProviders,
               allowedRegions: body.allowedRegions ?? existing.allowedRegions,
               deniedRegions: body.deniedRegions ?? existing.deniedRegions,
-              preferredProviders: body.preferredProviders ?? existing.preferredProviders,
+              preferredProviders:
+                body.preferredProviders ?? existing.preferredProviders,
               dataRegion: body.dataRegion ?? existing.dataRegion,
-              maxEstimatedProviderCost: body.maxEstimatedProviderCost ?? existing.maxEstimatedProviderCost,
+              maxEstimatedProviderCost:
+                body.maxEstimatedProviderCost ??
+                existing.maxEstimatedProviderCost,
               weights: body.weights ?? existing.weights,
               sticky: body.sticky ?? existing.sticky,
-              enabled: body.enabled !== undefined ? body.enabled : existing.enabled,
+              enabled:
+                body.enabled !== undefined ? body.enabled : existing.enabled,
             });
 
             const updated = await repository.getPolicyById(existing.id);
@@ -207,7 +238,10 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
               updatedAt: new Date(),
             };
             await repository.savePolicy(created as any);
-            await events.emitPolicyCreated(created as any, customerSession.userId);
+            await events.emitPolicyCreated(
+              created as any,
+              customerSession.userId,
+            );
             sendJson(res, 201, { policy: created });
             return;
           }
@@ -218,19 +252,34 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
       if (pathname.startsWith("/internal/routing")) {
         const privSession = await privilegedAuth.resolvePrivilegedSession(req);
         if (!privSession) {
-          sendError(res, 401, "unauthorized", "Strong operator authentication required for /internal/routing/*");
+          sendError(
+            res,
+            401,
+            "unauthorized",
+            "Strong operator authentication required for /internal/routing/*",
+          );
           return;
         }
 
-        const hasManage = privSession.capabilities?.includes("ops.routing.manage");
-        const hasRead = privSession.capabilities?.includes("ops.routing.read") || hasManage;
+        const hasManage =
+          privSession.capabilities?.includes("ops.routing.manage");
+        const hasRead =
+          privSession.capabilities?.includes("ops.routing.read") || hasManage;
 
         if (!hasRead && !hasManage) {
-          await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-            userId: privSession.userId,
-            capabilities: privSession.capabilities,
-          });
-          sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' or 'ops.routing.read' required");
+          await events.emitSecurityEvent?.(
+            "security.privileged.unauthorized_routing_access",
+            {
+              userId: privSession.userId,
+              capabilities: privSession.capabilities,
+            },
+          );
+          sendError(
+            res,
+            403,
+            "forbidden",
+            "Permission 'ops.routing.manage' or 'ops.routing.read' required",
+          );
           return;
         }
 
@@ -243,11 +292,19 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
           }
           if (method === "PATCH" || method === "PUT") {
             if (!hasManage) {
-              await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-                userId: privSession.userId,
-                capabilities: privSession.capabilities,
-              });
-              sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' required");
+              await events.emitSecurityEvent?.(
+                "security.privileged.unauthorized_routing_access",
+                {
+                  userId: privSession.userId,
+                  capabilities: privSession.capabilities,
+                },
+              );
+              sendError(
+                res,
+                403,
+                "forbidden",
+                "Permission 'ops.routing.manage' required",
+              );
               return;
             }
             const body = await readBodyJson(req);
@@ -256,21 +313,30 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
               const updated = {
                 ...existing,
                 strategy: body.strategy ?? existing.strategy,
-                allowedProviders: body.allowedProviders ?? existing.allowedProviders,
-                deniedProviders: body.deniedProviders ?? existing.deniedProviders,
+                allowedProviders:
+                  body.allowedProviders ?? existing.allowedProviders,
+                deniedProviders:
+                  body.deniedProviders ?? existing.deniedProviders,
                 allowedRegions: body.allowedRegions ?? existing.allowedRegions,
                 deniedRegions: body.deniedRegions ?? existing.deniedRegions,
-                preferredProviders: body.preferredProviders ?? existing.preferredProviders,
+                preferredProviders:
+                  body.preferredProviders ?? existing.preferredProviders,
                 dataRegion: body.dataRegion ?? existing.dataRegion,
-                maxEstimatedProviderCost: body.maxEstimatedProviderCost ?? existing.maxEstimatedProviderCost,
+                maxEstimatedProviderCost:
+                  body.maxEstimatedProviderCost ??
+                  existing.maxEstimatedProviderCost,
                 weights: body.weights ?? existing.weights,
                 sticky: body.sticky ?? existing.sticky,
-                enabled: body.enabled !== undefined ? body.enabled : existing.enabled,
+                enabled:
+                  body.enabled !== undefined ? body.enabled : existing.enabled,
                 version: (existing.version ?? 0) + 1,
                 updatedAt: new Date(),
               };
               await repository.saveGlobalPolicy(updated as any);
-              await events.emitGlobalPolicyUpdated(updated as any, privSession.userId);
+              await events.emitGlobalPolicyUpdated(
+                updated as any,
+                privSession.userId,
+              );
               sendJson(res, 200, { policy: updated });
               return;
             } else {
@@ -294,7 +360,10 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
                 updatedAt: new Date(),
               };
               await repository.saveGlobalPolicy(created as any);
-              await events.emitGlobalPolicyUpdated(created as any, privSession.userId);
+              await events.emitGlobalPolicyUpdated(
+                created as any,
+                privSession.userId,
+              );
               sendJson(res, 200, { policy: created });
               return;
             }
@@ -309,7 +378,10 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
           environmentId: "env_prod",
           environment: "production",
           name: "Ops Auth",
-          permissions: privSession.capabilities || ["ops.routing.read", "ops.routing.manage"],
+          permissions: privSession.capabilities || [
+            "ops.routing.read",
+            "ops.routing.manage",
+          ],
           modelRules: [],
           ipAllowlist: [],
           rateLimits: [],
@@ -322,17 +394,27 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
         // A. Policies list & create: /internal/routing/policies
         if (pathname === "/internal/routing/policies") {
           if (method === "GET") {
-            const policies = policyService ? await policyService.listPolicies(authContext) : [];
+            const policies = policyService
+              ? await policyService.listPolicies(authContext)
+              : [];
             sendJson(res, 200, { data: policies });
             return;
           }
           if (method === "POST") {
             if (!hasManage) {
-              await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-                userId: privSession.userId,
-                capabilities: privSession.capabilities,
-              });
-              sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' required");
+              await events.emitSecurityEvent?.(
+                "security.privileged.unauthorized_routing_access",
+                {
+                  userId: privSession.userId,
+                  capabilities: privSession.capabilities,
+                },
+              );
+              sendError(
+                res,
+                403,
+                "forbidden",
+                "Permission 'ops.routing.manage' required",
+              );
               return;
             }
             const body = await readBodyJson(req);
@@ -346,13 +428,22 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
         }
 
         // B. Single policy: /internal/routing/policies/:id
-        const singlePolMatch = pathname.match(/^\/internal\/routing\/policies\/([^/]+)$/);
+        const singlePolMatch = pathname.match(
+          /^\/internal\/routing\/policies\/([^/]+)$/,
+        );
         if (singlePolMatch) {
           const polId = singlePolMatch[1]!;
           if (method === "GET") {
-            const pol = policyService ? await policyService.getPolicy(authContext, polId) : null;
+            const pol = policyService
+              ? await policyService.getPolicy(authContext, polId)
+              : null;
             if (!pol) {
-              sendError(res, 404, "POLICY_NOT_FOUND", `Policy '${polId}' not found`);
+              sendError(
+                res,
+                404,
+                "POLICY_NOT_FOUND",
+                `Policy '${polId}' not found`,
+              );
               return;
             }
             sendJson(res, 200, pol);
@@ -360,11 +451,19 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
           }
           if (method === "PATCH") {
             if (!hasManage) {
-              await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-                userId: privSession.userId,
-                capabilities: privSession.capabilities,
-              });
-              sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' required");
+              await events.emitSecurityEvent?.(
+                "security.privileged.unauthorized_routing_access",
+                {
+                  userId: privSession.userId,
+                  capabilities: privSession.capabilities,
+                },
+              );
+              sendError(
+                res,
+                403,
+                "forbidden",
+                "Permission 'ops.routing.manage' required",
+              );
               return;
             }
             const body = await readBodyJson(req);
@@ -378,14 +477,24 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
         }
 
         // C. Activate / Retire policy: /internal/routing/policies/:id/activate | retire
-        const polActionMatch = pathname.match(/^\/internal\/routing\/policies\/([^/]+)\/(activate|retire)$/);
+        const polActionMatch = pathname.match(
+          /^\/internal\/routing\/policies\/([^/]+)\/(activate|retire)$/,
+        );
         if (polActionMatch && method === "POST") {
           if (!hasManage) {
-            await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-              userId: privSession.userId,
-              capabilities: privSession.capabilities,
-            });
-            sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' required");
+            await events.emitSecurityEvent?.(
+              "security.privileged.unauthorized_routing_access",
+              {
+                userId: privSession.userId,
+                capabilities: privSession.capabilities,
+              },
+            );
+            sendError(
+              res,
+              403,
+              "forbidden",
+              "Permission 'ops.routing.manage' required",
+            );
             return;
           }
           const polId = polActionMatch[1]!;
@@ -400,20 +509,32 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
 
         // D. Route controls: /internal/routing/routes
         if (pathname === "/internal/routing/routes" && method === "GET") {
-          const controls = routeControlService ? await routeControlService.listRouteControls() : [];
+          const controls = routeControlService
+            ? await routeControlService.listRouteControls()
+            : [];
           sendJson(res, 200, { data: controls });
           return;
         }
 
         // E. Route Actions: /internal/routing/routes/:id/drain | disable | enable
-        const routeActionMatch = pathname.match(/^\/internal\/routing\/routes\/([^/]+)\/(drain|disable|enable)$/);
+        const routeActionMatch = pathname.match(
+          /^\/internal\/routing\/routes\/([^/]+)\/(drain|disable|enable)$/,
+        );
         if (routeActionMatch && method === "POST") {
           if (!hasManage) {
-            await events.emitSecurityEvent?.("security.privileged.unauthorized_routing_access", {
-              userId: privSession.userId,
-              capabilities: privSession.capabilities,
-            });
-            sendError(res, 403, "forbidden", "Permission 'ops.routing.manage' required");
+            await events.emitSecurityEvent?.(
+              "security.privileged.unauthorized_routing_access",
+              {
+                userId: privSession.userId,
+                capabilities: privSession.capabilities,
+              },
+            );
+            sendError(
+              res,
+              403,
+              "forbidden",
+              "Permission 'ops.routing.manage' required",
+            );
             return;
           }
           const routeId = routeActionMatch[1]!;
@@ -422,11 +543,22 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
 
           let result;
           if (action === "drain") {
-            result = await routeControlService?.drainRoute(authContext, routeId, body?.reason);
+            result = await routeControlService?.drainRoute(
+              authContext,
+              routeId,
+              body?.reason,
+            );
           } else if (action === "disable") {
-            result = await routeControlService?.disableRoute(authContext, routeId, body?.reason);
+            result = await routeControlService?.disableRoute(
+              authContext,
+              routeId,
+              body?.reason,
+            );
           } else if (action === "enable") {
-            result = await routeControlService?.enableRoute(authContext, routeId);
+            result = await routeControlService?.enableRoute(
+              authContext,
+              routeId,
+            );
           }
           sendJson(res, 200, result);
           return;
@@ -451,7 +583,12 @@ export function createRoutingHttpApp(options: CreateRoutingHttpAppOptions) {
         sendError(res, 400, "invalid_request", err.message);
         return;
       }
-      sendError(res, 500, "internal_error", err.message || "Internal server error");
+      sendError(
+        res,
+        500,
+        "internal_error",
+        err.message || "Internal server error",
+      );
     }
   };
 }

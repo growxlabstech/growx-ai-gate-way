@@ -1,38 +1,38 @@
-import { describe, it, expect } from 'vitest';
-import { analyzeSchemaFeatures } from '../src/schema-analyzer.js';
+import { describe, it, expect } from "vitest";
+import { analyzeSchemaFeatures } from "../src/schema-analyzer.js";
 
-describe('Schema Analyzer', () => {
-  it('analyzes simple schema features', () => {
+describe("Schema Analyzer", () => {
+  it("analyzes simple schema features", () => {
     const schema = {
-      type: 'object',
+      type: "object",
       properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
+        id: { type: "string" },
+        name: { type: "string" },
       },
-      required: ['id'],
+      required: ["id"],
     };
 
     const profile = analyzeSchemaFeatures(schema);
     expect(profile.propertyCount).toBe(2);
     expect(profile.requiredCount).toBe(1);
     expect(profile.depth).toBeGreaterThanOrEqual(1);
-    expect(profile.complexityBucket).toBe('simple');
+    expect(profile.complexityBucket).toBe("simple");
   });
 
-  it('analyzes nested and complex schema features', () => {
+  it("analyzes nested and complex schema features", () => {
     const complexSchema = {
-      type: 'object',
+      type: "object",
       properties: {
         users: {
-          type: 'array',
+          type: "array",
           items: {
-            type: 'object',
+            type: "object",
             properties: {
-              id: { type: 'string', pattern: '^[0-9]+$' },
-              status: { enum: ['active', 'inactive', 'pending'] },
+              id: { type: "string", pattern: "^[0-9]+$" },
+              status: { enum: ["active", "inactive", "pending"] },
               nestedArray: {
-                type: 'array',
-                items: { type: 'string' },
+                type: "array",
+                items: { type: "string" },
               },
             },
           },

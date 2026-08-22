@@ -32,7 +32,7 @@ describe("Provider Routes & Pricing Integration Tests", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming"],
       },
-      "usr_admin"
+      "usr_admin",
     );
   });
 
@@ -49,12 +49,14 @@ describe("Provider Routes & Pricing Integration Tests", () => {
         routingEligible: true,
         priority: 100,
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     expect(route.id).toBeDefined();
     expect(route.providerModelId).toBe("gpt-4o-2024-08-06");
-    expect(events.outbox.some((e) => e.topic === "model.route.created")).toBe(true);
+    expect(events.outbox.some((e) => e.topic === "model.route.created")).toBe(
+      true,
+    );
 
     const detail = await service.getAdminModelDetail(model.id);
     expect(detail.routes).toHaveLength(1);
@@ -74,7 +76,7 @@ describe("Provider Routes & Pricing Integration Tests", () => {
         currency: "USD",
         effectiveFrom: pastDate,
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     expect(pricing.id).toBeDefined();

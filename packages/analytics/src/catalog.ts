@@ -3,7 +3,8 @@
  * Standardizes definitions, aggregation rules, dimensions, and customer visibility.
  */
 
-export type MetricUnit = "count" | "tokens" | "milliseconds" | "ratio" | "rate" | "percentage";
+export type MetricUnit =
+  "count" | "tokens" | "milliseconds" | "ratio" | "rate" | "percentage";
 export type MetricType = "counter" | "gauge" | "histogram" | "derived";
 export type MetricDimension =
   | "organizationId"
@@ -32,7 +33,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "count",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   requests_completed: {
     name: "requests_completed",
@@ -40,7 +46,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "count",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   requests_failed: {
     name: "requests_failed",
@@ -48,23 +59,41 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "count",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId", "errorCode"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+      "errorCode",
+    ],
   },
   requests_cancelled: {
     name: "requests_cancelled",
-    description: "Requests aborted or cancelled by client before full completion",
+    description:
+      "Requests aborted or cancelled by client before full completion",
     unit: "count",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   requests_rejected: {
     name: "requests_rejected",
-    description: "Requests rejected pre-execution due to quota or policy denial",
+    description:
+      "Requests rejected pre-execution due to quota or policy denial",
     unit: "count",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   input_tokens: {
     name: "input_tokens",
@@ -72,7 +101,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "tokens",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   output_tokens: {
     name: "output_tokens",
@@ -80,7 +114,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "tokens",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   total_tokens: {
     name: "total_tokens",
@@ -88,7 +127,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "tokens",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   cached_input_tokens: {
     name: "cached_input_tokens",
@@ -96,7 +140,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "tokens",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   reasoning_tokens: {
     name: "reasoning_tokens",
@@ -104,7 +153,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "tokens",
     type: "counter",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   provider_input_tokens: {
     name: "provider_input_tokens",
@@ -124,7 +178,8 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
   },
   provider_total_tokens: {
     name: "provider_total_tokens",
-    description: "Total tokens consumed across all attempts including retries and fallbacks",
+    description:
+      "Total tokens consumed across all attempts including retries and fallbacks",
     unit: "tokens",
     type: "counter",
     customerVisible: false,
@@ -196,7 +251,8 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
   },
   recovery_rate: {
     name: "recovery_rate",
-    description: "Proportion of initially failed requests rescued by retry or fallback",
+    description:
+      "Proportion of initially failed requests rescued by retry or fallback",
     unit: "rate",
     type: "derived",
     customerVisible: false,
@@ -204,7 +260,8 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
   },
   retry_amplification: {
     name: "retry_amplification",
-    description: "Ratio of total provider attempts to logical customer requests",
+    description:
+      "Ratio of total provider attempts to logical customer requests",
     unit: "ratio",
     type: "derived",
     customerVisible: false,
@@ -216,7 +273,12 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "percentage",
     type: "derived",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
   error_rate: {
     name: "error_rate",
@@ -224,11 +286,19 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
     unit: "percentage",
     type: "derived",
     customerVisible: true,
-    supportedDimensions: ["organizationId", "workspaceId", "apiKeyId", "canonicalModelId"],
+    supportedDimensions: [
+      "organizationId",
+      "workspaceId",
+      "apiKeyId",
+      "canonicalModelId",
+    ],
   },
 };
 
-export function isValidMetric(metricName: string, customerOnly = false): boolean {
+export function isValidMetric(
+  metricName: string,
+  customerOnly = false,
+): boolean {
   const metric = METRIC_CATALOG[metricName];
   if (!metric) return false;
   if (customerOnly && !metric.customerVisible) return false;

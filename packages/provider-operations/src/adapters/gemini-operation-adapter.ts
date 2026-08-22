@@ -11,7 +11,7 @@ export class GeminiOperationAdapter implements ProviderOperationAdapter {
 
   public async getOperationStatus(
     providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationStatusResult> {
     return {
       status: "running",
@@ -22,7 +22,7 @@ export class GeminiOperationAdapter implements ProviderOperationAdapter {
 
   public async cancelOperation(
     _providerOperationId: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationCancelResult> {
     return {
       cancelled: true,
@@ -32,17 +32,20 @@ export class GeminiOperationAdapter implements ProviderOperationAdapter {
 
   public async fetchResult(
     resultReference: string,
-    _credentials?: unknown
+    _credentials?: unknown,
   ): Promise<ProviderOperationResultData> {
     return {
-      data: { result: "Gemini async operation completed successfully", ref: resultReference },
+      data: {
+        result: "Gemini async operation completed successfully",
+        ref: resultReference,
+      },
       outputFileMime: "application/json",
     };
   }
 
   public parseCallback(
     payload: Record<string, unknown>,
-    _headers: Record<string, string>
+    _headers: Record<string, string>,
   ): {
     providerOperationId: string;
     status: ProviderOperationStatus;
@@ -52,7 +55,11 @@ export class GeminiOperationAdapter implements ProviderOperationAdapter {
   } {
     const isDone = payload.done === true;
     const hasError = !!payload.error;
-    const status: ProviderOperationStatus = hasError ? "failed" : isDone ? "completed" : "running";
+    const status: ProviderOperationStatus = hasError
+      ? "failed"
+      : isDone
+        ? "completed"
+        : "running";
 
     return {
       providerOperationId: (payload.name as string) || "unknown_gemini_op",

@@ -10,7 +10,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "docker compose up -d postgres redis && turbo run dev --filter='./apps/*' --filter='./workers/*' --parallel",
-    "dev:apps": "turbo run dev --filter='./apps/*' --parallel",
+    "dev:apps": "turbo run dev --filter=@growx/console --filter=@growx/admin --filter=@growx/docs --filter=@growx/www",
     "infra:up": "docker compose up -d postgres redis",
     "infra:down": "docker compose down",
     "lint": "turbo run lint",
@@ -38,6 +38,6 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "*.{ts,tsx,mjs,json,md,yml,yaml}": "prettier --check"
+    "*.{ts,tsx,mjs,json,md,yml,yaml}": "prettier --write"
   }
 }

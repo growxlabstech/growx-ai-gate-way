@@ -92,13 +92,12 @@ export class SecurityService {
     await this.repository.createSecurityEvent(securityEvent);
 
     // 2. Evaluate detection rules and signal correlation
-    const existingSignal = await this.repository.getSecuritySignalByFingerprint(
-      fingerprint
-    );
+    const existingSignal =
+      await this.repository.getSecuritySignalByFingerprint(fingerprint);
 
     const signalResult = this.detectionEngine.processEvent(
       securityEvent,
-      existingSignal
+      existingSignal,
     );
 
     let signal: SecuritySignal | undefined;
@@ -106,7 +105,7 @@ export class SecurityService {
       if (existingSignal) {
         signal = await this.repository.updateSecuritySignal(
           existingSignal.id,
-          signalResult
+          signalResult,
         );
       } else {
         signal = await this.repository.createSecuritySignal(signalResult);
@@ -118,7 +117,7 @@ export class SecurityService {
 
   async listSecurityEvents(
     organizationId?: string | undefined,
-    filters?: Omit<ListSecurityEventsParams, "organizationId"> | undefined
+    filters?: Omit<ListSecurityEventsParams, "organizationId"> | undefined,
   ): Promise<SecurityEvent[]> {
     return this.repository.listSecurityEvents({
       ...filters,
@@ -128,7 +127,7 @@ export class SecurityService {
 
   async listSecuritySignals(
     organizationId?: string | undefined,
-    filters?: Omit<ListSecuritySignalsParams, "organizationId"> | undefined
+    filters?: Omit<ListSecuritySignalsParams, "organizationId"> | undefined,
   ): Promise<SecuritySignal[]> {
     return this.repository.listSecuritySignals({
       ...filters,
@@ -138,7 +137,7 @@ export class SecurityService {
 
   async updateSignalStatus(
     id: string,
-    status: SecurityEventStatus
+    status: SecurityEventStatus,
   ): Promise<SecuritySignal> {
     return this.repository.updateSecuritySignal(id, { status });
   }

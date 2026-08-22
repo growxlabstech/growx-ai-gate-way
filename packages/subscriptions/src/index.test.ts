@@ -34,7 +34,11 @@ function makePlanVersion(overrides: Partial<PlanVersion> = {}): PlanVersion {
       { key: "streaming_enabled", type: "boolean", value: "true" },
       { key: "max_spend_per_request", type: "decimal", value: "5.00" },
       { key: "tier", type: "string", value: "pro" },
-      { key: "allowed_features", type: "set", value: "cache,streaming,analytics" },
+      {
+        key: "allowed_features",
+        type: "set",
+        value: "cache,streaming,analytics",
+      },
     ],
     modelAccessRules: [
       { pattern: "openai/*", effect: "allow" },
@@ -122,7 +126,9 @@ describe("Entitlement Resolver", () => {
     expect(resolved.getBoolean("streaming_enabled")).toBe(true);
     expect(resolved.getDecimal("max_spend_per_request").toString()).toBe("5");
     expect(resolved.getString("tier")).toBe("pro");
-    expect(resolved.getSet("allowed_features")).toEqual(new Set(["cache", "streaming", "analytics"]));
+    expect(resolved.getSet("allowed_features")).toEqual(
+      new Set(["cache", "streaming", "analytics"]),
+    );
   });
 
   it("overrides take precedence over plan defaults", () => {
@@ -226,7 +232,9 @@ describe("Model Access Rules", () => {
 
     expect(resolved.checkModelAccess("openai/gpt-4o").allowed).toBe(true);
     expect(resolved.checkModelAccess("openai/gpt-4o-mini").allowed).toBe(true);
-    expect(resolved.checkModelAccess("anthropic/claude-3.5-sonnet").allowed).toBe(true);
+    expect(
+      resolved.checkModelAccess("anthropic/claude-3.5-sonnet").allowed,
+    ).toBe(true);
   });
 
   it("deny rules override allow rules", () => {
@@ -234,7 +242,9 @@ describe("Model Access Rules", () => {
     const resolved = resolveEntitlements(pv, []);
 
     // claude-3-opus matches deny rule, even though anthropic/* could match an allow
-    const result = resolved.checkModelAccess("anthropic/claude-3-opus-20240229");
+    const result = resolved.checkModelAccess(
+      "anthropic/claude-3-opus-20240229",
+    );
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain("denied by plan rule");
   });
@@ -270,8 +280,12 @@ describe("Glob Matching", () => {
   });
 
   it("matches partial wildcard", () => {
-    expect(globMatch("anthropic/claude-3.5-*", "anthropic/claude-3.5-sonnet")).toBe(true);
-    expect(globMatch("anthropic/claude-3.5-*", "anthropic/claude-3-opus")).toBe(false);
+    expect(
+      globMatch("anthropic/claude-3.5-*", "anthropic/claude-3.5-sonnet"),
+    ).toBe(true);
+    expect(globMatch("anthropic/claude-3.5-*", "anthropic/claude-3-opus")).toBe(
+      false,
+    );
   });
 });
 
@@ -340,7 +354,9 @@ describe("Period Calculator", () => {
 
   it("isPeriodExpired returns false when period is active", () => {
     const future = { periodEnd: new Date("2030-01-01T00:00:00Z") };
-    expect(isPeriodExpired(future, new Date("2024-06-01T00:00:00Z"))).toBe(false);
+    expect(isPeriodExpired(future, new Date("2024-06-01T00:00:00Z"))).toBe(
+      false,
+    );
   });
 
   it("isWithinPeriod checks date boundaries correctly", () => {
@@ -351,7 +367,11 @@ describe("Period Calculator", () => {
 
     expect(isWithinPeriod(new Date("2024-01-15T00:00:00Z"), period)).toBe(true);
     expect(isWithinPeriod(new Date("2024-01-01T00:00:00Z"), period)).toBe(true); // inclusive start
-    expect(isWithinPeriod(new Date("2024-02-01T00:00:00Z"), period)).toBe(false); // exclusive end
-    expect(isWithinPeriod(new Date("2023-12-31T00:00:00Z"), period)).toBe(false);
+    expect(isWithinPeriod(new Date("2024-02-01T00:00:00Z"), period)).toBe(
+      false,
+    ); // exclusive end
+    expect(isWithinPeriod(new Date("2023-12-31T00:00:00Z"), period)).toBe(
+      false,
+    );
   });
 });

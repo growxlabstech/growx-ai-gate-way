@@ -15,7 +15,11 @@ import {
   OperationalSignalService,
 } from "@growx/analytics";
 import { createAnalyticsServer } from "../../src/http-server.js";
-import type { GatewayRequestRecord, GatewayAttemptRecord, UsageEvent } from "@growx/metering";
+import type {
+  GatewayRequestRecord,
+  GatewayAttemptRecord,
+  UsageEvent,
+} from "@growx/metering";
 
 const TEST_PEPPER = "test_analytics_pepper_1234567890";
 const INTERNAL_OPS_KEY = "growx_ops_sec_token_secret";
@@ -45,7 +49,9 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
     // 1. Setup API Key Service
     const apiKeyRepo = new InMemoryApiKeyRepository();
     const apiKeyEvents = new InMemoryLifecycleEvents();
-    apiKeyService = new ApiKeyService(apiKeyRepo, apiKeyEvents, { pepper: TEST_PEPPER });
+    apiKeyService = new ApiKeyService(apiKeyRepo, apiKeyEvents, {
+      pepper: TEST_PEPPER,
+    });
 
     const credsA = generateApiKeyCredentials("production");
     rawApiKeyOrgA = credsA.fullSecret;
@@ -59,7 +65,12 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
       prefix: credsA.prefix,
       secretHash: hashApiKey(credsA.secretPart, TEST_PEPPER),
       status: "active",
-      permissions: ["chat.completions.create", "models.read", "usage.read", "analytics.read"],
+      permissions: [
+        "chat.completions.create",
+        "models.read",
+        "usage.read",
+        "analytics.read",
+      ],
       modelRules: [],
       ipAllowlist: [],
       rateLimits: [],
@@ -89,7 +100,12 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
       prefix: credsB.prefix,
       secretHash: hashApiKey(credsB.secretPart, TEST_PEPPER),
       status: "active",
-      permissions: ["chat.completions.create", "models.read", "usage.read", "analytics.read"],
+      permissions: [
+        "chat.completions.create",
+        "models.read",
+        "usage.read",
+        "analytics.read",
+      ],
       modelRules: [],
       ipAllowlist: [],
       rateLimits: [],
@@ -125,7 +141,7 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
         apiKeyId: credsA.id,
         canonicalModelId: i <= 6 ? "gpt-4o" : "claude-3-5-sonnet",
         operation: "chat_completion",
-      workloadType: "customer",
+        workloadType: "customer",
         streaming: i % 2 === 0,
         status: "completed",
         meteringQuality: "provider_reported",
@@ -136,8 +152,20 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
         ttftMs: 40,
         logicalUsage: { inputTokens: 60, outputTokens: 30, totalTokens: 90 },
         providerConsumption: isFallback
-          ? { inputTokens: 120, outputTokens: 30, totalTokens: 150, attemptCount: 2, failedAttemptCount: 1 } // 2 attempts
-          : { inputTokens: 60, outputTokens: 30, totalTokens: 90, attemptCount: 1, failedAttemptCount: 0 },
+          ? {
+              inputTokens: 120,
+              outputTokens: 30,
+              totalTokens: 150,
+              attemptCount: 2,
+              failedAttemptCount: 1,
+            } // 2 attempts
+          : {
+              inputTokens: 60,
+              outputTokens: 30,
+              totalTokens: 90,
+              attemptCount: 1,
+              failedAttemptCount: 0,
+            },
         attemptCount: isFallback ? 2 : 1,
         retryCount: 0,
         fallbackCount: isFallback ? 1 : 0,
@@ -282,24 +310,34 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
     });
     expect(keysRes.status).toBe(200);
     const keysData = await keysRes.json();
-    expect(keysData.items[0].apiKeyId).toBe(rawApiKeyOrgA.split(".")[0]?.replace("gx_live_", "key_") ? keysData.items[0].apiKeyId : keysData.items[0].apiKeyId);
+    expect(keysData.items[0].apiKeyId).toBe(
+      rawApiKeyOrgA.split(".")[0]?.replace("gx_live_", "key_")
+        ? keysData.items[0].apiKeyId
+        : keysData.items[0].apiKeyId,
+    );
     expect(keysData.items[0].requestCount).toBe(10);
     expect(keysData.items[0].name).toBeDefined();
   });
 
   it("4. GET /v1/analytics/requests and /requests/:id support pagination and detail drilldown", async () => {
-    const drilldownRes = await fetch(`${serverUrl}/v1/analytics/requests?limit=5`, {
-      headers: { authorization: `Bearer ${rawApiKeyOrgA}` },
-    });
+    const drilldownRes = await fetch(
+      `${serverUrl}/v1/analytics/requests?limit=5`,
+      {
+        headers: { authorization: `Bearer ${rawApiKeyOrgA}` },
+      },
+    );
     expect(drilldownRes.status).toBe(200);
     const drilldownData = await drilldownRes.json();
     expect(drilldownData.items).toHaveLength(5);
     expect(drilldownData.hasMore).toBe(true);
 
     const firstReqId = drilldownData.items[0].requestId;
-    const detailRes = await fetch(`${serverUrl}/v1/analytics/requests/${firstReqId}`, {
-      headers: { authorization: `Bearer ${rawApiKeyOrgA}` },
-    });
+    const detailRes = await fetch(
+      `${serverUrl}/v1/analytics/requests/${firstReqId}`,
+      {
+        headers: { authorization: `Bearer ${rawApiKeyOrgA}` },
+      },
+    );
     expect(detailRes.status).toBe(200);
     const detailData = await detailRes.json();
     expect(detailData.request.id).toBe(firstReqId);
@@ -317,9 +355,12 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
     expect(dataB.tokens.totalTokens).toBe("0");
 
     // Org B attempts to query Org A's request detail -> 404
-    const detailResB = await fetch(`${serverUrl}/v1/analytics/requests/req_e2e_1`, {
-      headers: { authorization: `Bearer ${rawApiKeyOrgB}` },
-    });
+    const detailResB = await fetch(
+      `${serverUrl}/v1/analytics/requests/req_e2e_1`,
+      {
+        headers: { authorization: `Bearer ${rawApiKeyOrgB}` },
+      },
+    );
     expect(detailResB.status).toBe(404);
   });
 
@@ -347,10 +388,13 @@ describe("Phase 14 — Usage Analytics & Observability Intelligence End-to-End T
     expect(relData.retryAmplificationAttempts).toBeGreaterThanOrEqual(1.1);
 
     // Rebuild projections
-    const rebuildRes = await fetch(`${serverUrl}/internal/analytics/projections/rebuild`, {
-      method: "POST",
-      headers: { "x-growx-internal-key": INTERNAL_OPS_KEY },
-    });
+    const rebuildRes = await fetch(
+      `${serverUrl}/internal/analytics/projections/rebuild`,
+      {
+        method: "POST",
+        headers: { "x-growx-internal-key": INTERNAL_OPS_KEY },
+      },
+    );
     expect(rebuildRes.status).toBe(200);
     const rebuildData = await rebuildRes.json();
     expect(rebuildData.processedRequests).toBe(10);

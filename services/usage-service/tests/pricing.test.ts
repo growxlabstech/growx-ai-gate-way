@@ -1,1 +1,41 @@
-import { describe, expect, it } from "vitest"; import { priceUsage } from "../src/pricing.js"; describe("usage pricing", () => { it("retains every commercial version", () => { const value = priceUsage({ inputTokens: 1_000_000n, outputTokens: 0n, cachedInputTokens: 0n, reasoningTokens: 0n }, { id: "provider-v1", currency: "USD", inputPerMillion: 100n, outputPerMillion: 200n, cachedPerMillion: 0n, reasoningPerMillion: 0n }, { id: "r", versionId: "customer-v2", level: "plan", method: "markup", markupBasisPoints: 3000n, minimumMarginBasisPoints: 0n }, { id: "credit-v3", creditsNumerator: 10n, moneyMinorDenominator: 1n, effectiveFrom: new Date(0), effectiveUntil: null }); expect(value.providerCost.amountMinor).toBe(100n); expect(value.customerCharge.amountMinor).toBe(130n); expect(value.creditsConsumed).toBe(1300n); expect(value.providerPricingVersionId).toBe("provider-v1"); }); });
+import { describe, expect, it } from "vitest";
+import { priceUsage } from "../src/pricing.js";
+describe("usage pricing", () => {
+  it("retains every commercial version", () => {
+    const value = priceUsage(
+      {
+        inputTokens: 1_000_000n,
+        outputTokens: 0n,
+        cachedInputTokens: 0n,
+        reasoningTokens: 0n,
+      },
+      {
+        id: "provider-v1",
+        currency: "USD",
+        inputPerMillion: 100n,
+        outputPerMillion: 200n,
+        cachedPerMillion: 0n,
+        reasoningPerMillion: 0n,
+      },
+      {
+        id: "r",
+        versionId: "customer-v2",
+        level: "plan",
+        method: "markup",
+        markupBasisPoints: 3000n,
+        minimumMarginBasisPoints: 0n,
+      },
+      {
+        id: "credit-v3",
+        creditsNumerator: 10n,
+        moneyMinorDenominator: 1n,
+        effectiveFrom: new Date(0),
+        effectiveUntil: null,
+      },
+    );
+    expect(value.providerCost.amountMinor).toBe(100n);
+    expect(value.customerCharge.amountMinor).toBe(130n);
+    expect(value.creditsConsumed).toBe(1300n);
+    expect(value.providerPricingVersionId).toBe("provider-v1");
+  });
+});

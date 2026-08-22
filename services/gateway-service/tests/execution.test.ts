@@ -1,3 +1,97 @@
-import { describe, expect, it } from "vitest"; import { GatewayExecutionEngine } from "../src/execution.js"; import { ModelRegistry, type ModelRecord } from "@growx/model-registry-service"; import { RoutingService } from "@growx/routing-service"; import { ProviderRegistry, type ProviderRecord } from "@growx/provider-service"; import { MockAIProvider } from "@growx/testing"; import type { GrowXModelRequest } from "@growx/contracts";
-const model = (providerId: string, publicModelId: string): ModelRecord => ({ id: `model_${providerId}`, providerId, providerModelId: "native", publicModelId, displayName: publicModelId, description: "", status: "active", contextWindow: 10, maxOutputTokens: 5, capabilities: new Set(["text", "streaming"]), createdAt: new Date(), updatedAt: new Date() }); const provider = (id: string): ProviderRecord => ({ id, name: id, slug: id, status: "active", adapterType: id, baseUrl: "https://example.invalid", region: "global", priority: 1, enabled: true, createdAt: new Date(), updatedAt: new Date() }); const request: GrowXModelRequest = { requestId: "req_a", organizationId: "o", workspaceId: "w", environmentId: "e", apiKeyId: "k", model: "growx/fast", input: "hello", stream: false, generation: {} };
-describe("execution engine", () => { it("falls back only within a bounded route", async () => { const registry = new ModelRegistry([model("bad", "bad/m"), model("good", "good/m")], [{ alias: "growx/fast", version: "1", targets: ["bad/m", "good/m"], effectiveFrom: new Date(0), effectiveUntil: null, status: "active" }]); const routing = new RoutingService(registry, [{ id: "bad", health: "healthy", enabled: true, priority: 1 }, { id: "good", health: "healthy", enabled: true, priority: 2 }], () => "route_a"); const providers = new ProviderRegistry([provider("bad"), provider("good")], new Map([["bad", new MockAIProvider({ failure: "server" })], ["good", new MockAIProvider({ text: "fallback" })]]), { async resolve() { return "secret"; } }); const emitted: string[] = []; const engine = new GatewayExecutionEngine(routing, providers, { async emit(type) { emitted.push(type); } }, { requestTimeoutMs: 100, maxAttempts: 2, retryBaseMs: 1 }); expect((await engine.execute(request, ["text"])).output[0]?.content).toBe("fallback"); expect(emitted).toContain("gateway.provider.fallback"); }); });
+import { describe, expect, it } from "vitest";
+import { GatewayExecutionEngine } from "../src/execution.js";
+import { ModelRegistry, type ModelRecord } from "@growx/model-registry-service";
+import { RoutingService } from "@growx/routing-service";
+import { ProviderRegistry, type ProviderRecord } from "@growx/provider-service";
+import { MockAIProvider } from "@growx/testing";
+import type { GrowXModelRequest } from "@growx/contracts";
+const model = (providerId: string, publicModelId: string): ModelRecord => ({
+  id: `model_${providerId}`,
+  providerId,
+  providerModelId: "native",
+  publicModelId,
+  displayName: publicModelId,
+  description: "",
+  status: "active",
+  contextWindow: 10,
+  maxOutputTokens: 5,
+  capabilities: new Set(["text", "streaming"]),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+const provider = (id: string): ProviderRecord => ({
+  id,
+  name: id,
+  slug: id,
+  status: "active",
+  adapterType: id,
+  baseUrl: "https://example.invalid",
+  region: "global",
+  priority: 1,
+  enabled: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+const request: GrowXModelRequest = {
+  requestId: "req_a",
+  organizationId: "o",
+  workspaceId: "w",
+  environmentId: "e",
+  apiKeyId: "k",
+  model: "growx/fast",
+  input: "hello",
+  stream: false,
+  generation: {},
+};
+describe("execution engine", () => {
+  it("falls back only within a bounded route", async () => {
+    const registry = new ModelRegistry(
+      [model("bad", "bad/m"), model("good", "good/m")],
+      [
+        {
+          alias: "growx/fast",
+          version: "1",
+          targets: ["bad/m", "good/m"],
+          effectiveFrom: new Date(0),
+          effectiveUntil: null,
+          status: "active",
+        },
+      ],
+    );
+    const routing = new RoutingService(
+      registry,
+      [
+        { id: "bad", health: "healthy", enabled: true, priority: 1 },
+        { id: "good", health: "healthy", enabled: true, priority: 2 },
+      ],
+      () => "route_a",
+    );
+    const providers = new ProviderRegistry(
+      [provider("bad"), provider("good")],
+      new Map([
+        ["bad", new MockAIProvider({ failure: "server" })],
+        ["good", new MockAIProvider({ text: "fallback" })],
+      ]),
+      {
+        async resolve() {
+          return "secret";
+        },
+      },
+    );
+    const emitted: string[] = [];
+    const engine = new GatewayExecutionEngine(
+      routing,
+      providers,
+      {
+        async emit(type) {
+          emitted.push(type);
+        },
+      },
+      { requestTimeoutMs: 100, maxAttempts: 2, retryBaseMs: 1 },
+    );
+    expect((await engine.execute(request, ["text"])).output[0]?.content).toBe(
+      "fallback",
+    );
+    expect(emitted).toContain("gateway.provider.fallback");
+  });
+});

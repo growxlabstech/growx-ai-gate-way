@@ -116,7 +116,9 @@ describe("Phase 20 — Invoice Lifecycle & Immutability", () => {
     });
 
     const invoice = await invoiceService.issueInvoice({ draft });
-    expect(invoice.billingProfileSnapshot.legalName).toBe("Bengaluru Tech Corp");
+    expect(invoice.billingProfileSnapshot.legalName).toBe(
+      "Bengaluru Tech Corp",
+    );
 
     // Customer changes legal name and address in billing profile
     await taxService.upsertBillingProfile("org_test_life", {
@@ -126,8 +128,13 @@ describe("Phase 20 — Invoice Lifecycle & Immutability", () => {
     });
 
     // Issued invoice snapshot remains untouched!
-    const reFetched = await invoiceService.getInvoice("org_test_life", invoice.id);
-    expect(reFetched!.billingProfileSnapshot.legalName).toBe("Bengaluru Tech Corp");
+    const reFetched = await invoiceService.getInvoice(
+      "org_test_life",
+      invoice.id,
+    );
+    expect(reFetched!.billingProfileSnapshot.legalName).toBe(
+      "Bengaluru Tech Corp",
+    );
   });
 
   it("voids an issued unpaid invoice", async () => {
@@ -151,7 +158,11 @@ describe("Phase 20 — Invoice Lifecycle & Immutability", () => {
     const invoice = await invoiceService.issueInvoice({ draft });
     expect(invoice.status).toBe("issued");
 
-    const voided = await invoiceService.voidInvoice("org_test_life", invoice.id, "Customer cancelled contract");
+    const voided = await invoiceService.voidInvoice(
+      "org_test_life",
+      invoice.id,
+      "Customer cancelled contract",
+    );
     expect(voided.status).toBe("void");
     expect(voided.voidedAt).toBeDefined();
   });

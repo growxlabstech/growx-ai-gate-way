@@ -4,12 +4,12 @@ import type {
   ProviderRouteEntity,
 } from "@growx/model-registry-service";
 import type { ProviderService } from "@growx/provider-service";
-import type {
-  RouteTrafficControl,
-  RoutingPolicyV2,
-} from "@growx/contracts";
+import type { RouteTrafficControl, RoutingPolicyV2 } from "@growx/contracts";
 import type { IRouteHealthStore } from "@growx/routing";
-import type { ICapacitySignalProvider, ILatencySignalProvider } from "../domain/signals.js";
+import type {
+  ICapacitySignalProvider,
+  ILatencySignalProvider,
+} from "../domain/signals.js";
 
 export interface RoutingStateSnapshot {
   version: number;
@@ -46,7 +46,7 @@ export class RoutingStateSnapshotService {
   constructor(
     private readonly modelRegistry: ModelRegistryService,
     private readonly providerService: ProviderService,
-    options: SnapshotServiceOptions = {}
+    options: SnapshotServiceOptions = {},
   ) {
     this.ttlMs = options.ttlMs ?? 15_000;
     this.healthStore = options.routeHealthStore;
@@ -79,7 +79,9 @@ export class RoutingStateSnapshotService {
       for (const m of modelsList) {
         modelsMap.set(m.canonicalId, m);
         modelsMap.set(m.id, m);
-        const routes = repo?.listRoutes ? await repo.listRoutes(m.id).catch(() => []) : [];
+        const routes = repo?.listRoutes
+          ? await repo.listRoutes(m.id).catch(() => [])
+          : [];
         routesMap.set(m.canonicalId, routes);
         routesMap.set(m.id, routes);
       }
@@ -87,7 +89,9 @@ export class RoutingStateSnapshotService {
       // Graceful fallback
     }
 
-    const providersList = await this.providerService.listProviders().catch(() => []);
+    const providersList = await this.providerService
+      .listProviders()
+      .catch(() => []);
     const providersMap = new Map<string, any>();
     const credentialsMap = new Map<string, any[]>();
     const accountsMap = new Map<string, any[]>();
@@ -95,7 +99,9 @@ export class RoutingStateSnapshotService {
 
     for (const p of providersList) {
       providersMap.set(p.id, p);
-      const creds = await this.providerService.listCredentials(p.id).catch(() => []);
+      const creds = await this.providerService
+        .listCredentials(p.id)
+        .catch(() => []);
       credentialsMap.set(p.id, creds);
     }
 
@@ -144,7 +150,10 @@ export class RoutingStateSnapshotService {
     this.invalidate();
   }
 
-  public setTrafficControl(routeId: string, control: RouteTrafficControl): void {
+  public setTrafficControl(
+    routeId: string,
+    control: RouteTrafficControl,
+  ): void {
     this.inMemoryTrafficControls.set(routeId, control);
     this.invalidate();
   }

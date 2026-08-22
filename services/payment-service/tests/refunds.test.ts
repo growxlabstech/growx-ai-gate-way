@@ -19,7 +19,10 @@ describe("Phase 19 — Refunds & Amount Invariants", () => {
     });
   });
 
-  async function seedSucceededPayment(amount = "100.00", orgId = "org_refund_1") {
+  async function seedSucceededPayment(
+    amount = "100.00",
+    orgId = "org_refund_1",
+  ) {
     const payment = await paymentService.createRenewalPayment({
       organizationId: orgId,
       subscriptionId: "sub_123",
@@ -44,7 +47,10 @@ describe("Phase 19 — Refunds & Amount Invariants", () => {
     expect(refund.status).toBe("succeeded");
     expect(refund.amount.toString()).toBe("100");
 
-    const updatedPayment = await paymentService.getPayment("org_refund_1", payment.id);
+    const updatedPayment = await paymentService.getPayment(
+      "org_refund_1",
+      payment.id,
+    );
     expect(updatedPayment!.status).toBe("refunded");
     expect(updatedPayment!.refundedAmount.toString()).toBe("100");
   });
@@ -92,7 +98,7 @@ describe("Phase 19 — Refunds & Amount Invariants", () => {
         reason: "Excess refund",
         createdBy: "ops_admin_1",
         idempotencyKey: "ref_excess_1",
-      })
+      }),
     ).rejects.toThrow("exceeds available refundable amount");
   });
 
@@ -133,7 +139,7 @@ describe("Phase 19 — Refunds & Amount Invariants", () => {
         reason: "Attack attempt",
         createdBy: "attacker",
         idempotencyKey: "ref_attack",
-      })
+      }),
     ).rejects.toThrow("Payment does not belong to this organization");
   });
 });

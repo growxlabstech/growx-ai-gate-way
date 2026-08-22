@@ -14,7 +14,10 @@ import type {
   UsageType,
   WorkloadType,
 } from "./types.js";
-import type { AggregateQueryOptions, IUsageLedgerRepository } from "./repository.js";
+import type {
+  AggregateQueryOptions,
+  IUsageLedgerRepository,
+} from "./repository.js";
 import { TokenEstimator } from "@growx/rate-limits";
 
 export interface OutboxEventEmitter {
@@ -80,7 +83,13 @@ export class UsageMeteringService {
       meteringStatus: "pending",
       meteringQuality: "provider_reported",
       logicalUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
-      providerConsumption: { inputTokens: 0, outputTokens: 0, totalTokens: 0, attemptCount: 0, failedAttemptCount: 0 },
+      providerConsumption: {
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        attemptCount: 0,
+        failedAttemptCount: 0,
+      },
       requestMetadata: params.metadata,
       createdAt: now,
       updatedAt: now,
@@ -146,7 +155,8 @@ export class UsageMeteringService {
     }
 
     const completedAt = params.completedAt ?? new Date();
-    const durationMs = params.durationMs ?? (completedAt.getTime() - attempt.startedAt.getTime());
+    const durationMs =
+      params.durationMs ?? completedAt.getTime() - attempt.startedAt.getTime();
 
     const inputTokens = params.usage.inputTokens ?? 0;
     const outputTokens = params.usage.outputTokens ?? 0;
@@ -176,7 +186,11 @@ export class UsageMeteringService {
     // Look up parent request for tenant context
     const req = await this.repository.getRequestRecord(params.requestId);
     if (req) {
-      await this.appendAttemptUsageEvents(req, updatedAttempt, params.usage.confidence ?? "exact");
+      await this.appendAttemptUsageEvents(
+        req,
+        updatedAttempt,
+        params.usage.confidence ?? "exact",
+      );
     }
 
     return updatedAttempt;
@@ -200,7 +214,8 @@ export class UsageMeteringService {
     }
 
     const completedAt = params.completedAt ?? new Date();
-    const durationMs = params.durationMs ?? (completedAt.getTime() - attempt.startedAt.getTime());
+    const durationMs =
+      params.durationMs ?? completedAt.getTime() - attempt.startedAt.getTime();
 
     const inputTokens = params.usage?.inputTokens ?? 0;
     const outputTokens = params.usage?.outputTokens ?? 0;
@@ -228,7 +243,11 @@ export class UsageMeteringService {
     // If tokens were consumed prior to failure, ledger them!
     const req = await this.repository.getRequestRecord(params.requestId);
     if (req && (inputTokens > 0 || outputTokens > 0)) {
-      await this.appendAttemptUsageEvents(req, updatedAttempt, params.usage?.confidence ?? "exact");
+      await this.appendAttemptUsageEvents(
+        req,
+        updatedAttempt,
+        params.usage?.confidence ?? "exact",
+      );
     }
 
     return updatedAttempt;
@@ -250,7 +269,8 @@ export class UsageMeteringService {
     }
 
     const completedAt = params.completedAt ?? new Date();
-    const durationMs = params.durationMs ?? (completedAt.getTime() - attempt.startedAt.getTime());
+    const durationMs =
+      params.durationMs ?? completedAt.getTime() - attempt.startedAt.getTime();
 
     const inputTokens = params.usage?.inputTokens ?? 0;
     const outputTokens = params.usage?.outputTokens ?? 0;
@@ -275,7 +295,11 @@ export class UsageMeteringService {
 
     const req = await this.repository.getRequestRecord(params.requestId);
     if (req && (inputTokens > 0 || outputTokens > 0)) {
-      await this.appendAttemptUsageEvents(req, updatedAttempt, params.usage?.confidence ?? "exact");
+      await this.appendAttemptUsageEvents(
+        req,
+        updatedAttempt,
+        params.usage?.confidence ?? "exact",
+      );
     }
 
     return updatedAttempt;
@@ -287,7 +311,7 @@ export class UsageMeteringService {
   private async appendAttemptUsageEvents(
     req: GatewayRequestRecord,
     attempt: GatewayAttemptRecord,
-    confidence: UsageConfidence
+    confidence: UsageConfidence,
   ): Promise<void> {
     const eventsToAppend: UsageEvent[] = [];
     const now = new Date();
@@ -321,8 +345,10 @@ export class UsageMeteringService {
     pushEvent("input_tokens", attempt.usage.inputTokens);
     pushEvent("output_tokens", attempt.usage.outputTokens);
     pushEvent("total_tokens", attempt.usage.totalTokens);
-    if (attempt.usage.cachedInputTokens) pushEvent("cached_input_tokens", attempt.usage.cachedInputTokens);
-    if (attempt.usage.reasoningTokens) pushEvent("reasoning_tokens", attempt.usage.reasoningTokens);
+    if (attempt.usage.cachedInputTokens)
+      pushEvent("cached_input_tokens", attempt.usage.cachedInputTokens);
+    if (attempt.usage.reasoningTokens)
+      pushEvent("reasoning_tokens", attempt.usage.reasoningTokens);
 
     await this.repository.appendUsageEventsBatch(eventsToAppend);
   }
@@ -344,9 +370,12 @@ export class UsageMeteringService {
       throw new Error(`Request ${params.requestId} not found`);
     }
 
-    const attempts = await this.repository.listAttemptsForRequest(params.requestId);
+    const attempts = await this.repository.listAttemptsForRequest(
+      params.requestId,
+    );
     const completedAt = params.completedAt ?? new Date();
-    const durationMs = params.durationMs ?? (completedAt.getTime() - req.startedAt.getTime());
+    const durationMs =
+      params.durationMs ?? completedAt.getTime() - req.startedAt.getTime();
 
     // Compute retry and fallback counts
     const attemptCount = attempts.length;
@@ -366,19 +395,23 @@ export class UsageMeteringService {
     }
 
     // Identify final successful attempt
-    const successfulAttempt = attempts.find(
-      (a) => (params.finalAttemptId ? a.id === params.finalAttemptId : a.status === "completed")
-    ) ?? attempts[attempts.length - 1];
+    const successfulAttempt =
+      attempts.find((a) =>
+        params.finalAttemptId
+          ? a.id === params.finalAttemptId
+          : a.status === "completed",
+      ) ?? attempts[attempts.length - 1];
 
-    const logicalUsage: TokenUsageSummary = successfulAttempt && successfulAttempt.status === "completed"
-      ? {
-          inputTokens: successfulAttempt.usage.inputTokens,
-          outputTokens: successfulAttempt.usage.outputTokens,
-          totalTokens: successfulAttempt.usage.totalTokens,
-          cachedInputTokens: successfulAttempt.usage.cachedInputTokens,
-          reasoningTokens: successfulAttempt.usage.reasoningTokens,
-        }
-      : { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+    const logicalUsage: TokenUsageSummary =
+      successfulAttempt && successfulAttempt.status === "completed"
+        ? {
+            inputTokens: successfulAttempt.usage.inputTokens,
+            outputTokens: successfulAttempt.usage.outputTokens,
+            totalTokens: successfulAttempt.usage.totalTokens,
+            cachedInputTokens: successfulAttempt.usage.cachedInputTokens,
+            reasoningTokens: successfulAttempt.usage.reasoningTokens,
+          }
+        : { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
 
     // Compute total provider consumption across ALL attempts
     let totalInput = 0;
@@ -398,7 +431,10 @@ export class UsageMeteringService {
       if (a.usage.reasoningTokens) totalReasoning += a.usage.reasoningTokens;
       if (a.status === "failed") failedCount++;
 
-      if (a.usageSource === "provider_reported" || a.usageSource === "provider_stream_reported") {
+      if (
+        a.usageSource === "provider_reported" ||
+        a.usageSource === "provider_stream_reported"
+      ) {
         hasProviderReported = true;
       } else if (a.usageSource === "estimated") {
         hasEstimated = true;
@@ -416,7 +452,10 @@ export class UsageMeteringService {
       quality = "incomplete";
     }
 
-    const providerConsumption: TokenUsageSummary & { attemptCount: number; failedAttemptCount: number } = {
+    const providerConsumption: TokenUsageSummary & {
+      attemptCount: number;
+      failedAttemptCount: number;
+    } = {
       inputTokens: totalInput,
       outputTokens: totalOutput,
       totalTokens: totalInput + totalOutput,
@@ -502,7 +541,9 @@ export class UsageMeteringService {
         providerRouteId = att.providerRouteId;
       }
     } else {
-      const attempts = await this.repository.listAttemptsForRequest(req.requestId);
+      const attempts = await this.repository.listAttemptsForRequest(
+        req.requestId,
+      );
       const firstAtt = attempts[0];
       if (firstAtt) {
         providerId = firstAtt.providerId;
@@ -584,8 +625,10 @@ export class UsageMeteringService {
     const req = await this.repository.getRequestRecord(params.requestId);
     if (!req) throw new Error(`Request ${params.requestId} not found`);
 
-    const inputDiff = BigInt(params.actualInputTokens) - BigInt(req.logicalUsage.inputTokens);
-    const outputDiff = BigInt(params.actualOutputTokens) - BigInt(req.logicalUsage.outputTokens);
+    const inputDiff =
+      BigInt(params.actualInputTokens) - BigInt(req.logicalUsage.inputTokens);
+    const outputDiff =
+      BigInt(params.actualOutputTokens) - BigInt(req.logicalUsage.outputTokens);
 
     if (inputDiff !== 0n) {
       await this.recordAdjustment({
@@ -594,7 +637,9 @@ export class UsageMeteringService {
         differenceQuantity: inputDiff,
         previousQuantity: BigInt(req.logicalUsage.inputTokens),
         newQuantity: BigInt(params.actualInputTokens),
-        reason: params.reason ?? "Automated reconciliation with actual provider tokens",
+        reason:
+          params.reason ??
+          "Automated reconciliation with actual provider tokens",
         operatorId: params.operatorId ?? "system.reconciliation",
       });
     }
@@ -606,7 +651,9 @@ export class UsageMeteringService {
         differenceQuantity: outputDiff,
         previousQuantity: BigInt(req.logicalUsage.outputTokens),
         newQuantity: BigInt(params.actualOutputTokens),
-        reason: params.reason ?? "Automated reconciliation with actual provider tokens",
+        reason:
+          params.reason ??
+          "Automated reconciliation with actual provider tokens",
         operatorId: params.operatorId ?? "system.reconciliation",
       });
     }
@@ -634,14 +681,19 @@ export class UsageMeteringService {
     }
   }
 
-  public async getLogicalUsage(requestId: string): Promise<TokenUsageSummary | null> {
+  public async getLogicalUsage(
+    requestId: string,
+  ): Promise<TokenUsageSummary | null> {
     const req = await this.repository.getRequestRecord(requestId);
     return req ? req.logicalUsage : null;
   }
 
   public async getProviderConsumption(
-    requestId: string
-  ): Promise<(TokenUsageSummary & { attemptCount: number; failedAttemptCount: number }) | null> {
+    requestId: string,
+  ): Promise<
+    | (TokenUsageSummary & { attemptCount: number; failedAttemptCount: number })
+    | null
+  > {
     const req = await this.repository.getRequestRecord(requestId);
     return req ? req.providerConsumption : null;
   }

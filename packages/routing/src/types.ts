@@ -108,9 +108,22 @@ export interface RouteCandidate {
   streamFailureRate?: number | undefined;
   capacitySignal?: RouteCandidateCapacitySignal | undefined;
   capacityUtilization?: number | undefined;
-  capacityState?: "available" | "busy" | "near_limit" | "exhausted" | "unknown" | undefined;
-  health?: "healthy" | "degraded" | "unhealthy" | "unknown" | "maintenance" | undefined;
-  circuit?: "CLOSED" | "OPEN" | "HALF_OPEN" | "FORCED_OPEN" | "FORCED_CLOSED" | undefined;
+  capacityState?:
+    "available" | "busy" | "near_limit" | "exhausted" | "unknown" | undefined;
+  health?:
+    | "healthy"
+    | "degraded"
+    | "unhealthy"
+    | "unknown"
+    | "maintenance"
+    | undefined;
+  circuit?:
+    | "CLOSED"
+    | "OPEN"
+    | "HALF_OPEN"
+    | "FORCED_OPEN"
+    | "FORCED_CLOSED"
+    | undefined;
   policyAttributes?: Record<string, unknown> | undefined;
 }
 
@@ -209,7 +222,15 @@ export interface RoutingPolicy {
   organizationId?: string | null | undefined;
   workspaceId?: string | null | undefined;
   name: string;
-  level?: "global" | "plan" | "organization" | "workspace" | "environment" | "apiKey" | "request" | undefined;
+  level?:
+    | "global"
+    | "plan"
+    | "organization"
+    | "workspace"
+    | "environment"
+    | "apiKey"
+    | "request"
+    | undefined;
   strategy: RoutingStrategy;
   allowedProviders?: string[] | undefined;
   deniedProviders?: string[] | undefined;
@@ -233,7 +254,14 @@ export interface PolicyVersion {
   id: string;
   policyId: string;
   version: number;
-  level: "global" | "plan" | "organization" | "workspace" | "environment" | "apiKey" | "request";
+  level:
+    | "global"
+    | "plan"
+    | "organization"
+    | "workspace"
+    | "environment"
+    | "apiKey"
+    | "request";
   strategy: RoutingStrategy;
   weights: ScoreWeights;
   status: "draft" | "active" | "superseded" | "archived";
@@ -255,11 +283,13 @@ export interface RoutingRequest {
   requestedTokens?: number | undefined;
   stableKey?: string | undefined;
   constraints?: RoutingConstraints | undefined;
-  hints?: {
-    preferLowCost?: boolean | undefined;
-    preferLowLatency?: boolean | undefined;
-    preferredProvider?: string | undefined;
-  } | undefined;
+  hints?:
+    | {
+        preferLowCost?: boolean | undefined;
+        preferLowLatency?: boolean | undefined;
+        preferredProvider?: string | undefined;
+      }
+    | undefined;
 }
 
 export interface RankedCandidate {

@@ -1,1 +1,15 @@
-import { AdminShell, AdminTable } from "../../../../components/admin-shell"; export default function Page() { return <AdminShell title="Circuit breakers"><p>Closed, open, and half-open state. Manual overrides require dedicated permission, confirmation, reason, and audit.</p><AdminTable subject="Provider circuits" /></AdminShell>; }
+import { AdminShell } from "../../../../components/admin-shell";
+import { listAdminProviders } from "../../../../lib/admin-data";
+import { AdminProvidersView } from "../../../../components/admin-providers-view";
+
+export default async function AdminProvidersCircuitsPage() {
+  const providers = await listAdminProviders();
+  return (
+    <AdminShell
+      title="Provider Circuit Breakers"
+      description="Manage circuit trip thresholds, half-open recovery probes, and manual drain controls."
+    >
+      <AdminProvidersView initialProviders={providers} />
+    </AdminShell>
+  );
+}

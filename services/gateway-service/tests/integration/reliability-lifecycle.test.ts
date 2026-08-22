@@ -66,7 +66,9 @@ describe("Reliability Control Plane & Disaster Recovery (Phase 36)", () => {
     controlPlane.setMode("MAINTENANCE");
     expect(controlPlane.isHealthy()).toBe(false);
     expect(controlPlane.isReady()).toBe(false);
-    expect(controlPlane.getCapabilityReadiness().textInferenceReady).toBe(false);
+    expect(controlPlane.getCapabilityReadiness().textInferenceReady).toBe(
+      false,
+    );
   });
 
   it("executes an isolated database restore drill with measured RPO/RTO and invariant verification", async () => {
@@ -81,10 +83,21 @@ describe("Reliability Control Plane & Disaster Recovery (Phase 36)", () => {
           { accountId: "w_test_1", balance: "250.00", ledgerSum: "250.00" },
           { accountId: "w_test_2", balance: "1000.00", ledgerSum: "1000.00" },
         ],
-        apiKeys: [{ id: "key_live", secretHashPresent: true, orgId: "org_live" }],
+        apiKeys: [
+          { id: "key_live", secretHashPresent: true, orgId: "org_live" },
+        ],
         providerCredentials: [{ accountId: "acc_live", activeVersionCount: 1 }],
-        batches: [{ id: "bat_done", totalItems: 50, processedItems: 50, isTerminal: true }],
-        deletedResources: [{ id: "res_deleted", isDeleted: true, stillAccessible: false }],
+        batches: [
+          {
+            id: "bat_done",
+            totalItems: 50,
+            processedItems: 50,
+            isTerminal: true,
+          },
+        ],
+        deletedResources: [
+          { id: "res_deleted", isDeleted: true, stillAccessible: false },
+        ],
       },
     });
 
@@ -104,15 +117,28 @@ describe("Reliability Control Plane & Disaster Recovery (Phase 36)", () => {
     expect(inc.status).toBe("investigating");
 
     const report = await reconciler.reconcileAll([
-      { name: "wallet_settlements", reconcile: async () => ({ evaluated: 100, reconciled: 0 }) },
-      { name: "pending_batches", reconcile: async () => ({ evaluated: 10, reconciled: 0 }) },
-      { name: "outbox_events", reconcile: async () => ({ evaluated: 45, reconciled: 2 }) },
+      {
+        name: "wallet_settlements",
+        reconcile: async () => ({ evaluated: 100, reconciled: 0 }),
+      },
+      {
+        name: "pending_batches",
+        reconcile: async () => ({ evaluated: 10, reconciled: 0 }),
+      },
+      {
+        name: "outbox_events",
+        reconcile: async () => ({ evaluated: 45, reconciled: 2 }),
+      },
     ]);
 
     expect(report.overallStatus).toBe("COMPLETED");
     expect(report.domainResults.length).toBe(3);
 
-    const resolvedInc = incidentManager.updateStatus(inc.id, "resolved", "Reconciliation completed with 0 errors");
+    const resolvedInc = incidentManager.updateStatus(
+      inc.id,
+      "resolved",
+      "Reconciliation completed with 0 errors",
+    );
     expect(resolvedInc.status).toBe("resolved");
     expect(resolvedInc.resolvedAt).toBeDefined();
   });

@@ -77,7 +77,7 @@ export class WebhookEndpointService {
       eventTypes?: readonly string[] | undefined;
       status?: "active" | "disabled" | undefined;
       allowInsecureHttp?: boolean | undefined;
-    }
+    },
   ): Promise<WebhookEndpoint> {
     const existing = await this.repository.getEndpoint(organizationId, id);
     if (!existing) {
@@ -119,9 +119,12 @@ export class WebhookEndpointService {
   async rotateSecret(
     organizationId: string,
     endpointId: string,
-    overlapDurationMs: number = 24 * 60 * 60 * 1000 // 24 hour overlap
+    overlapDurationMs: number = 24 * 60 * 60 * 1000, // 24 hour overlap
   ): Promise<{ endpoint: WebhookEndpoint; newSecret: string }> {
-    const existing = await this.repository.getEndpoint(organizationId, endpointId);
+    const existing = await this.repository.getEndpoint(
+      organizationId,
+      endpointId,
+    );
     if (!existing) {
       throw new Error(`Webhook endpoint not found: ${endpointId}`);
     }
@@ -155,27 +158,37 @@ export class WebhookEndpointService {
     await this.repository.createSigningSecret(signingSecret);
 
     // Update endpoint
-    const updated = await this.repository.updateEndpoint(organizationId, endpointId, {
-      secretId: newSecretId,
-      secretEncrypted: encryptedSecret,
-      secretVersion: newVersion,
-    });
+    const updated = await this.repository.updateEndpoint(
+      organizationId,
+      endpointId,
+      {
+        secretId: newSecretId,
+        secretEncrypted: encryptedSecret,
+        secretVersion: newVersion,
+      },
+    );
 
     return { endpoint: updated, newSecret };
   }
 
-  async disableEndpoint(organizationId: string, id: string): Promise<WebhookEndpoint> {
+  async disableEndpoint(
+    organizationId: string,
+    id: string,
+  ): Promise<WebhookEndpoint> {
     return this.updateEndpoint(organizationId, id, { status: "disabled" });
   }
 
-  async enableEndpoint(organizationId: string, id: string): Promise<WebhookEndpoint> {
+  async enableEndpoint(
+    organizationId: string,
+    id: string,
+  ): Promise<WebhookEndpoint> {
     return this.updateEndpoint(organizationId, id, { status: "active" });
   }
 
   async recordEndpointOutcome(
     organizationId: string,
     id: string,
-    success: boolean
+    success: boolean,
   ): Promise<WebhookEndpoint> {
     const existing = await this.repository.getEndpoint(organizationId, id);
     if (!existing) throw new Error(`Endpoint not found: ${id}`);
@@ -204,14 +217,14 @@ export class WebhookEndpointService {
 
   async getEndpoint(
     organizationId: string,
-    id: string
+    id: string,
   ): Promise<WebhookEndpoint | undefined> {
     return this.repository.getEndpoint(organizationId, id);
   }
 
   async listEndpoints(
     organizationId: string,
-    workspaceId?: string | undefined
+    workspaceId?: string | undefined,
   ): Promise<WebhookEndpoint[]> {
     return this.repository.listEndpoints(organizationId, workspaceId);
   }

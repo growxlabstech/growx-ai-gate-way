@@ -5,7 +5,7 @@ export class EmbeddingBatchPlanner {
   public static plan(
     inputs: readonly string[],
     maxChunkSize: number = 2048,
-    maxTokensPerChunk: number = 100_000
+    maxTokensPerChunk: number = 100_000,
   ): EmbeddingBatchPlan {
     const chunks: EmbeddingBatchChunk[] = [];
     let currentInputs: string[] = [];
@@ -20,7 +20,9 @@ export class EmbeddingBatchPlanner {
       totalTokensEstimated += tokens;
 
       const wouldExceedSize = currentInputs.length >= maxChunkSize;
-      const wouldExceedTokens = currentInputs.length > 0 && currentTokenEstimate + tokens > maxTokensPerChunk;
+      const wouldExceedTokens =
+        currentInputs.length > 0 &&
+        currentTokenEstimate + tokens > maxTokensPerChunk;
 
       if (wouldExceedSize || wouldExceedTokens) {
         chunks.push({

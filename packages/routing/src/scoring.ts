@@ -33,15 +33,22 @@ export function healthScore(input: {
           (1 - input.rateLimitRate) * 0.05 +
           (1 - input.streamFailureRate) * 0.05 +
           input.latencyScore * 0.1 +
-          input.capacityScore * 0.1
-      )
+          input.capacityScore * 0.1,
+      ),
   );
 }
 
 export function validateWeights(weights: ScoreWeights): void {
-  const values = [weights.cost, weights.latency, weights.availability, weights.priority];
+  const values = [
+    weights.cost,
+    weights.latency,
+    weights.availability,
+    weights.priority,
+  ];
   if (values.some((v) => v < 0 || v > 1 || isNaN(v))) {
-    throw new Error("Routing score weights must be non-negative numbers between 0 and 1");
+    throw new Error(
+      "Routing score weights must be non-negative numbers between 0 and 1",
+    );
   }
   const sum = values.reduce((a, b) => a + b, 0);
   if (sum <= 0) {
@@ -49,15 +56,21 @@ export function validateWeights(weights: ScoreWeights): void {
   }
 }
 
-export function normalizeWeights(weights?: Partial<ScoreWeights> | undefined): ScoreWeights {
+export function normalizeWeights(
+  weights?: Partial<ScoreWeights> | undefined,
+): ScoreWeights {
   const merged: ScoreWeights = {
     cost: weights?.cost ?? DEFAULT_WEIGHTS.cost,
     latency: weights?.latency ?? DEFAULT_WEIGHTS.latency,
-    availability: weights?.availability ?? weights?.reliability ?? DEFAULT_WEIGHTS.availability,
+    availability:
+      weights?.availability ??
+      weights?.reliability ??
+      DEFAULT_WEIGHTS.availability,
     priority: weights?.priority ?? DEFAULT_WEIGHTS.priority,
   };
   validateWeights(merged);
-  const sum = merged.cost + merged.latency + merged.availability + merged.priority;
+  const sum =
+    merged.cost + merged.latency + merged.availability + merged.priority;
   return {
     cost: merged.cost / sum,
     latency: merged.latency / sum,
@@ -76,7 +89,7 @@ export function calculateEstimatedCost(
   candidate: RouteCandidate,
   estimatedInputTokens = 1000,
   estimatedOutputTokens = 500,
-  estimator?: ProviderCostEstimator | undefined
+  estimator?: ProviderCostEstimator | undefined,
 ): number | undefined {
   if (estimator) {
     const estimated = estimator.estimateRouteCost(candidate, {
@@ -122,7 +135,7 @@ export function scoreCandidate(
   maxLatency: number,
   weights: ScoreWeights,
   strategy: string,
-  estimatedCost?: number | undefined
+  estimatedCost?: number | undefined,
 ): RouteScore {
   const hasPricing = estimatedCost !== undefined;
 
@@ -139,22 +152,20 @@ export function scoreCandidate(
 
   // 2. Latency Score: lower latency = higher score
   const latencyMs =
-    candidate.latencySignal?.p95LatencyMs ??
-    candidate.p95LatencyMs ??
-    50;
-  const latencyScore =
-    maxLatency > 0 ? clamp(1 - latencyMs / maxLatency) : 0.5;
+    candidate.latencySignal?.p95LatencyMs ?? candidate.p95LatencyMs ?? 50;
+  const latencyScore = maxLatency > 0 ? clamp(1 - latencyMs / maxLatency) : 0.5;
 
   // 3. Availability / Reliability Score
   const availabilityScore = clamp(
-    candidate.availabilitySignal?.successRate ??
-    candidate.reliability ??
-    1.0
+    candidate.availabilitySignal?.successRate ?? candidate.reliability ?? 1.0,
   );
 
   // 4. Capacity Score
   const capacityScore = clamp(
-    1 - (candidate.capacitySignal?.utilization ?? candidate.capacityUtilization ?? 0)
+    1 -
+      (candidate.capacitySignal?.utilization ??
+        candidate.capacityUtilization ??
+        0),
   );
 
   // 5. Priority Score: lower priority number = higher score
@@ -175,10 +186,10 @@ export function scoreCandidate(
     // "balanced" or default multi-factor
     finalScore = clamp(
       weights.cost * costScore +
-      weights.latency * latencyScore +
-      weights.availability * availabilityScore +
-      weights.priority * priorityScore +
-      (weights.capacity ?? 0) * capacityScore
+        weights.latency * latencyScore +
+        weights.availability * availabilityScore +
+        weights.priority * priorityScore +
+        (weights.capacity ?? 0) * capacityScore,
     );
   }
 
@@ -195,7 +206,9 @@ export function scoreCandidate(
     preferenceScore: priorityScore,
     finalScore,
     eligible: true,
-    estimatedCostMinor: hasPricing ? BigInt(Math.floor(estimatedCost * 100)) : undefined,
+    estimatedCostMinor: hasPricing
+      ? BigInt(Math.floor(estimatedCost * 100))
+      : undefined,
   };
 }
 
@@ -206,7 +219,7 @@ export function generateExplanations(
   candidate: RouteCandidate,
   score: RouteScore,
   strategy: string,
-  policy?: RoutingPolicy | undefined
+  policy?: RoutingPolicy | undefined,
 ): string[] {
   const reasons: string[] = ["policy_allowed", "capabilities_matched"];
 
@@ -222,11 +235,13 @@ export function generateExplanations(
       reasons.push(`weighted_selection (weight: ${candidate.weight})`);
       break;
     case "lowest_cost":
-      reasons.push(`lowest_estimated_cost ($${(Number(score.estimatedCostMinor ?? 0) / 100).toFixed(6)})`);
+      reasons.push(
+        `lowest_estimated_cost ($${(Number(score.estimatedCostMinor ?? 0) / 100).toFixed(6)})`,
+      );
       break;
     case "lowest_latency":
       reasons.push(
-        `lowest_p95_latency (${candidate.latencySignal?.p95LatencyMs ?? candidate.p95LatencyMs ?? 50}ms)`
+        `lowest_p95_latency (${candidate.latencySignal?.p95LatencyMs ?? candidate.p95LatencyMs ?? 50}ms)`,
       );
       break;
     case "balanced":
@@ -234,7 +249,7 @@ export function generateExplanations(
         `highest_balanced_score (${score.finalScore.toFixed(3)})`,
         `cost_score: ${score.costScore.toFixed(2)}`,
         `latency_score: ${score.latencyScore.toFixed(2)}`,
-        `availability_score: ${(score.availabilityScore ?? 1).toFixed(2)}`
+        `availability_score: ${(score.availabilityScore ?? 1).toFixed(2)}`,
       );
       break;
     default:

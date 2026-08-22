@@ -40,20 +40,32 @@ describe("Machine Principal Domain Rules", () => {
     });
 
     it("returns revoked if revokedAt or status is revoked", () => {
-      expect(resolveEffectiveStatus(makeRecord({ status: "revoked" }))).toBe("revoked");
-      expect(resolveEffectiveStatus(makeRecord({ revokedAt: new Date() }))).toBe("revoked");
+      expect(resolveEffectiveStatus(makeRecord({ status: "revoked" }))).toBe(
+        "revoked",
+      );
+      expect(
+        resolveEffectiveStatus(makeRecord({ revokedAt: new Date() })),
+      ).toBe("revoked");
     });
 
     it("returns disabled if status is disabled", () => {
-      expect(resolveEffectiveStatus(makeRecord({ status: "disabled" }))).toBe("disabled");
+      expect(resolveEffectiveStatus(makeRecord({ status: "disabled" }))).toBe(
+        "disabled",
+      );
     });
 
     it("returns expired if status is expired or expiresAt is past", () => {
-      expect(resolveEffectiveStatus(makeRecord({ status: "expired" }))).toBe("expired");
+      expect(resolveEffectiveStatus(makeRecord({ status: "expired" }))).toBe(
+        "expired",
+      );
       const past = new Date(Date.now() - 60000);
-      expect(resolveEffectiveStatus(makeRecord({ expiresAt: past }))).toBe("expired");
+      expect(resolveEffectiveStatus(makeRecord({ expiresAt: past }))).toBe(
+        "expired",
+      );
       const future = new Date(Date.now() + 60000);
-      expect(resolveEffectiveStatus(makeRecord({ expiresAt: future }))).toBe("active");
+      expect(resolveEffectiveStatus(makeRecord({ expiresAt: future }))).toBe(
+        "active",
+      );
     });
   });
 
@@ -73,8 +85,18 @@ describe("Machine Principal Domain Rules", () => {
     });
 
     it("handles wildcard matching correctly", () => {
-      expect(modelAllowed([{ effect: "allow" as const, pattern: "*" }], "anthropic/claude-3-5-sonnet")).toBe(true);
-      expect(modelAllowed([{ effect: "deny" as const, pattern: "*" }], "anthropic/claude-3-5-sonnet")).toBe(false);
+      expect(
+        modelAllowed(
+          [{ effect: "allow" as const, pattern: "*" }],
+          "anthropic/claude-3-5-sonnet",
+        ),
+      ).toBe(true);
+      expect(
+        modelAllowed(
+          [{ effect: "deny" as const, pattern: "*" }],
+          "anthropic/claude-3-5-sonnet",
+        ),
+      ).toBe(false);
     });
   });
 
@@ -103,8 +125,16 @@ describe("Machine Principal Domain Rules", () => {
 
   describe("Delegation Protection", () => {
     it("allows delegation when creator has all required permissions", () => {
-      const creatorPerms = new Set(["apiKey.create", "model.read", "usage.read"]);
-      const requestedScopes = ["models.read", "usage.read", "responses.create"] as const;
+      const creatorPerms = new Set([
+        "apiKey.create",
+        "model.read",
+        "usage.read",
+      ]);
+      const requestedScopes = [
+        "models.read",
+        "usage.read",
+        "responses.create",
+      ] as const;
       const result = validateDelegation(creatorPerms, requestedScopes);
       expect(result.valid).toBe(true);
       expect(result.unauthorizedScopes).toHaveLength(0);

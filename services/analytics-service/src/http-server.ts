@@ -1,4 +1,9 @@
-import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+  type Server,
+} from "node:http";
 import { URL } from "node:url";
 import {
   AnalyticsQueryService,
@@ -31,7 +36,8 @@ function parseDate(value: string | null | undefined, defaultDate: Date): Date {
 }
 
 export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
-  const internalAdminKey = options.internalAdminKey ?? "growx_ops_internal_sec_token";
+  const internalAdminKey =
+    options.internalAdminKey ?? "growx_ops_internal_sec_token";
 
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
     const requestId =
@@ -43,12 +49,24 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
 
     // 1. Health probes
     if (req.url === "/health" || req.url === "/live" || req.url === "/ready") {
-      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-      res.end(JSON.stringify({ status: "ok", service: "analytics-service", timestamp: new Date().toISOString() }));
+      res.writeHead(200, {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      });
+      res.end(
+        JSON.stringify({
+          status: "ok",
+          service: "analytics-service",
+          timestamp: new Date().toISOString(),
+        }),
+      );
       return;
     }
 
-    const parsedUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+    const parsedUrl = new URL(
+      req.url ?? "/",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
     const pathname = parsedUrl.pathname;
 
     try {
@@ -57,63 +75,117 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
       // -------------------------------------------------------------
       if (pathname.startsWith("/internal/analytics")) {
         const authHeader = req.headers.authorization ?? "";
-        const internalKeyHeader = (req.headers["x-growx-internal-key"] as string) ?? "";
+        const internalKeyHeader =
+          (req.headers["x-growx-internal-key"] as string) ?? "";
         const isAuthorized =
           internalKeyHeader === internalAdminKey ||
           authHeader === `Bearer ${internalAdminKey}` ||
           authHeader.includes("ops_admin");
 
         if (!isAuthorized) {
-          res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
-          res.end(JSON.stringify({ error: { code: "forbidden", message: "Privileged capability required (ops.analytics.read)" } }));
+          res.writeHead(403, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          res.end(
+            JSON.stringify({
+              error: {
+                code: "forbidden",
+                message: "Privileged capability required (ops.analytics.read)",
+              },
+            }),
+          );
           return;
         }
 
         const now = new Date();
         const defaultStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const startTime = parseDate(parsedUrl.searchParams.get("from"), defaultStart);
+        const startTime = parseDate(
+          parsedUrl.searchParams.get("from"),
+          defaultStart,
+        );
         const endTime = parseDate(parsedUrl.searchParams.get("to"), now);
 
         // GET /internal/analytics/providers
-        if (req.method === "GET" && pathname === "/internal/analytics/providers") {
-          const data = await options.queryService.getInternalProviderAnalytics({ startTime, endTime });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+        if (
+          req.method === "GET" &&
+          pathname === "/internal/analytics/providers"
+        ) {
+          const data = await options.queryService.getInternalProviderAnalytics({
+            startTime,
+            endTime,
+          });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(data));
           return;
         }
 
         // GET /internal/analytics/reliability
-        if (req.method === "GET" && pathname === "/internal/analytics/reliability") {
-          const data = await options.queryService.getInternalReliabilityAnalytics({ startTime, endTime });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+        if (
+          req.method === "GET" &&
+          pathname === "/internal/analytics/reliability"
+        ) {
+          const data =
+            await options.queryService.getInternalReliabilityAnalytics({
+              startTime,
+              endTime,
+            });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(data));
           return;
         }
 
         // GET /internal/analytics/anomalies
-        if (req.method === "GET" && pathname === "/internal/analytics/anomalies") {
+        if (
+          req.method === "GET" &&
+          pathname === "/internal/analytics/anomalies"
+        ) {
           const orgIdParam = parsedUrl.searchParams.get("organizationId");
           const provIdParam = parsedUrl.searchParams.get("providerId");
-          const anomalies = await options.anomalyService.evaluateOperationalHealth({
-            ...(orgIdParam ? { organizationId: orgIdParam } : {}),
-            ...(provIdParam ? { providerId: provIdParam } : {}),
-            now,
+          const anomalies =
+            await options.anomalyService.evaluateOperationalHealth({
+              ...(orgIdParam ? { organizationId: orgIdParam } : {}),
+              ...(provIdParam ? { providerId: provIdParam } : {}),
+              now,
+            });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
           res.end(JSON.stringify({ anomalies }));
           return;
         }
 
         // POST /internal/analytics/projections/rebuild
-        if (req.method === "POST" && pathname === "/internal/analytics/projections/rebuild") {
-          const result = await options.rebuildService.rebuildFromAuthoritativeLedger();
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+        if (
+          req.method === "POST" &&
+          pathname === "/internal/analytics/projections/rebuild"
+        ) {
+          const result =
+            await options.rebuildService.rebuildFromAuthoritativeLedger();
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify({ status: "completed", ...result }));
           return;
         }
 
-        res.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
-        res.end(JSON.stringify({ error: { code: "not_found", message: "Internal route not found" } }));
+        res.writeHead(404, {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+        });
+        res.end(
+          JSON.stringify({
+            error: { code: "not_found", message: "Internal route not found" },
+          }),
+        );
         return;
       }
 
@@ -123,18 +195,44 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
       if (pathname.startsWith("/v1/analytics")) {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          res.writeHead(401, { "content-type": "application/json", "cache-control": "no-store" });
-          res.end(JSON.stringify({ error: { code: "unauthorized", message: "Missing or invalid Authorization header" } }));
+          res.writeHead(401, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          res.end(
+            JSON.stringify({
+              error: {
+                code: "unauthorized",
+                message: "Missing or invalid Authorization header",
+              },
+            }),
+          );
           return;
         }
 
         const rawSecret = authHeader.slice(7).trim();
-        const clientIp = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "127.0.0.1";
-        const authDecision = await options.apiKeyService.authenticate(rawSecret, { clientIp });
+        const clientIp =
+          (req.headers["x-forwarded-for"] as string) ||
+          req.socket.remoteAddress ||
+          "127.0.0.1";
+        const authDecision = await options.apiKeyService.authenticate(
+          rawSecret,
+          { clientIp },
+        );
 
         if (!authDecision.allowed) {
-          res.writeHead(authDecision.status ?? 401, { "content-type": "application/json", "cache-control": "no-store" });
-          res.end(JSON.stringify({ error: { code: authDecision.code, message: "Authentication failed" } }));
+          res.writeHead(authDecision.status ?? 401, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          res.end(
+            JSON.stringify({
+              error: {
+                code: authDecision.code,
+                message: "Authentication failed",
+              },
+            }),
+          );
           return;
         }
 
@@ -145,8 +243,18 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
           auth.permissions.includes("chat.completions.create");
 
         if (!hasScope) {
-          res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
-          res.end(JSON.stringify({ error: { code: "forbidden", message: "API key lacks analytics.read permission" } }));
+          res.writeHead(403, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          res.end(
+            JSON.stringify({
+              error: {
+                code: "forbidden",
+                message: "API key lacks analytics.read permission",
+              },
+            }),
+          );
           return;
         }
 
@@ -156,20 +264,41 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
         let endTime: Date;
 
         try {
-          startTime = parseDate(parsedUrl.searchParams.get("from"), defaultStart);
+          startTime = parseDate(
+            parsedUrl.searchParams.get("from"),
+            defaultStart,
+          );
           endTime = parseDate(parsedUrl.searchParams.get("to"), now);
           if (startTime > endTime) {
-            res.writeHead(400, { "content-type": "application/json", "cache-control": "no-store" });
-            res.end(JSON.stringify({ error: { code: "invalid_range", message: "'from' date cannot be after 'to' date" } }));
+            res.writeHead(400, {
+              "content-type": "application/json",
+              "cache-control": "no-store",
+            });
+            res.end(
+              JSON.stringify({
+                error: {
+                  code: "invalid_range",
+                  message: "'from' date cannot be after 'to' date",
+                },
+              }),
+            );
             return;
           }
         } catch (e: any) {
-          res.writeHead(400, { "content-type": "application/json", "cache-control": "no-store" });
-          res.end(JSON.stringify({ error: { code: "invalid_date", message: e.message } }));
+          res.writeHead(400, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
+          res.end(
+            JSON.stringify({
+              error: { code: "invalid_date", message: e.message },
+            }),
+          );
           return;
         }
 
-        const granularity = (parsedUrl.searchParams.get("granularity") as any) ?? "auto";
+        const granularity =
+          (parsedUrl.searchParams.get("granularity") as any) ?? "auto";
         const apiKeyParam = parsedUrl.searchParams.get("apiKeyId") ?? undefined;
         const modelParam = parsedUrl.searchParams.get("model") ?? undefined;
 
@@ -183,7 +312,10 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             endTime,
             granularity,
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(summary));
           return;
         }
@@ -199,7 +331,10 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             endTime,
             granularity,
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(series));
           return;
         }
@@ -213,7 +348,10 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             endTime,
             limit: Number(parsedUrl.searchParams.get("limit") ?? 20),
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(models));
           return;
         }
@@ -227,7 +365,10 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             endTime,
             limit: Number(parsedUrl.searchParams.get("limit") ?? 20),
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(keys));
           return;
         }
@@ -239,7 +380,10 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             startTime,
             endTime,
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(workspaces));
           return;
         }
@@ -258,25 +402,43 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
             limit: Number(parsedUrl.searchParams.get("limit") ?? 20),
             ...(cursorParam ? { cursor: cursorParam } : {}),
           });
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(JSON.stringify(drilldown));
           return;
         }
 
         // GET /v1/analytics/requests/:requestId
-        if (req.method === "GET" && pathname.startsWith("/v1/analytics/requests/")) {
+        if (
+          req.method === "GET" &&
+          pathname.startsWith("/v1/analytics/requests/")
+        ) {
           const targetReqId = pathname.slice("/v1/analytics/requests/".length);
-          const reqRecord = await options.repository.getRequestRecord(targetReqId);
+          const reqRecord =
+            await options.repository.getRequestRecord(targetReqId);
 
           if (!reqRecord || reqRecord.organizationId !== auth.organizationId) {
-            res.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
-            res.end(JSON.stringify({ error: { code: "not_found", message: "Request not found" } }));
+            res.writeHead(404, {
+              "content-type": "application/json",
+              "cache-control": "no-store",
+            });
+            res.end(
+              JSON.stringify({
+                error: { code: "not_found", message: "Request not found" },
+              }),
+            );
             return;
           }
 
-          const attempts = await options.repository.listAttemptsForRequest(targetReqId);
+          const attempts =
+            await options.repository.listAttemptsForRequest(targetReqId);
 
-          res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+          res.writeHead(200, {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          });
           res.end(
             JSON.stringify({
               request: {
@@ -300,17 +462,34 @@ export function createAnalyticsServer(options: AnalyticsServerOptions): Server {
                 ttftMs: a.ttftMs,
                 usage: a.usage,
               })),
-            })
+            }),
           );
           return;
         }
       }
 
-      res.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
-      res.end(JSON.stringify({ error: { code: "not_found", message: "Route not found" } }));
+      res.writeHead(404, {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      });
+      res.end(
+        JSON.stringify({
+          error: { code: "not_found", message: "Route not found" },
+        }),
+      );
     } catch (err: any) {
-      res.writeHead(500, { "content-type": "application/json", "cache-control": "no-store" });
-      res.end(JSON.stringify({ error: { code: "internal_error", message: err.message ?? "Internal server error" } }));
+      res.writeHead(500, {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      });
+      res.end(
+        JSON.stringify({
+          error: {
+            code: "internal_error",
+            message: err.message ?? "Internal server error",
+          },
+        }),
+      );
     }
   });
 }

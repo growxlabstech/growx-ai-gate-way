@@ -32,11 +32,19 @@ describe("Phase 21 — Multi-Worker Claiming & Lease Expiry", () => {
     }
 
     // Worker 1 claims 5
-    const worker1Claimed = await repository.claimPendingDeliveries(5, 30_000, "worker_1");
+    const worker1Claimed = await repository.claimPendingDeliveries(
+      5,
+      30_000,
+      "worker_1",
+    );
     expect(worker1Claimed.length).toBe(5);
 
     // Worker 2 claims next 5
-    const worker2Claimed = await repository.claimPendingDeliveries(5, 30_000, "worker_2");
+    const worker2Claimed = await repository.claimPendingDeliveries(
+      5,
+      30_000,
+      "worker_2",
+    );
     expect(worker2Claimed.length).toBe(5);
 
     // Verify disjoint IDs
@@ -47,7 +55,11 @@ describe("Phase 21 — Multi-Worker Claiming & Lease Expiry", () => {
     }
 
     // Worker 3 finds 0 left
-    const worker3Claimed = await repository.claimPendingDeliveries(5, 30_000, "worker_3");
+    const worker3Claimed = await repository.claimPendingDeliveries(
+      5,
+      30_000,
+      "worker_3",
+    );
     expect(worker3Claimed.length).toBe(0);
   });
 
@@ -60,7 +72,11 @@ describe("Phase 21 — Multi-Worker Claiming & Lease Expiry", () => {
     });
 
     // Claim with expired lease
-    const claimed = await repository.claimPendingDeliveries(1, 100, "worker_crashed");
+    const claimed = await repository.claimPendingDeliveries(
+      1,
+      100,
+      "worker_crashed",
+    );
     expect(claimed.length).toBe(1);
 
     // Manually expire lease in past
@@ -69,7 +85,11 @@ describe("Phase 21 — Multi-Worker Claiming & Lease Expiry", () => {
     });
 
     // Recovery worker claims the abandoned job
-    const recovered = await repository.claimPendingDeliveries(1, 30_000, "worker_recovery");
+    const recovered = await repository.claimPendingDeliveries(
+      1,
+      30_000,
+      "worker_recovery",
+    );
     expect(recovered.length).toBe(1);
     expect(recovered[0]!.id).toBe(claimed[0]!.id);
     expect(recovered[0]!.claimedBy).toBe("worker_recovery");

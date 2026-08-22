@@ -9,19 +9,19 @@ export class EmbeddingResponseValidator {
   public static validate(
     items: readonly ProviderRawEmbeddingItem[],
     expectedCount: number,
-    expectedDimensions: number
+    expectedDimensions: number,
   ): void {
     if (!Array.isArray(items)) {
       throw new EmbeddingProviderInvalidResponseError(
         "EMBEDDING_PROVIDER_RESPONSE_MALFORMED",
-        "Provider response data must be an array"
+        "Provider response data must be an array",
       );
     }
 
     if (items.length !== expectedCount) {
       throw new EmbeddingProviderInvalidResponseError(
         "EMBEDDING_PROVIDER_COUNT_MISMATCH",
-        `Provider returned ${items.length} embeddings, but ${expectedCount} were requested`
+        `Provider returned ${items.length} embeddings, but ${expectedCount} were requested`,
       );
     }
 
@@ -32,14 +32,14 @@ export class EmbeddingResponseValidator {
       if (!item || typeof item.index !== "number") {
         throw new EmbeddingProviderInvalidResponseError(
           "EMBEDDING_PROVIDER_INVALID_ITEM",
-          `Item at position ${i} is missing numeric index`
+          `Item at position ${i} is missing numeric index`,
         );
       }
 
       if (seenIndices.has(item.index)) {
         throw new EmbeddingProviderInvalidResponseError(
           "EMBEDDING_PROVIDER_DUPLICATE_INDEX",
-          `Duplicate index ${item.index} encountered in provider response`
+          `Duplicate index ${item.index} encountered in provider response`,
         );
       }
       seenIndices.add(item.index);
@@ -47,7 +47,7 @@ export class EmbeddingResponseValidator {
       if (item.index < 0 || item.index >= expectedCount) {
         throw new EmbeddingProviderInvalidResponseError(
           "EMBEDDING_PROVIDER_INDEX_OUT_OF_BOUNDS",
-          `Index ${item.index} is out of bounds [0, ${expectedCount - 1}]`
+          `Index ${item.index} is out of bounds [0, ${expectedCount - 1}]`,
         );
       }
 
@@ -56,7 +56,7 @@ export class EmbeddingResponseValidator {
         if (vec.length !== expectedDimensions) {
           throw new EmbeddingProviderInvalidResponseError(
             "EMBEDDING_PROVIDER_DIMENSION_MISMATCH",
-            `Vector at index ${item.index} has dimension ${vec.length}, expected ${expectedDimensions}`
+            `Vector at index ${item.index} has dimension ${vec.length}, expected ${expectedDimensions}`,
           );
         }
 
@@ -65,7 +65,7 @@ export class EmbeddingResponseValidator {
           if (typeof val !== "number" || !Number.isFinite(val)) {
             throw new EmbeddingProviderInvalidResponseError(
               "EMBEDDING_PROVIDER_NON_FINITE_VALUE",
-              `Non-finite numeric value (${val}) detected at vector index ${item.index}, dimension ${d}`
+              `Non-finite numeric value (${val}) detected at vector index ${item.index}, dimension ${d}`,
             );
           }
         }
@@ -73,19 +73,21 @@ export class EmbeddingResponseValidator {
         if (item.embedding.length === 0) {
           throw new EmbeddingProviderInvalidResponseError(
             "EMBEDDING_PROVIDER_EMPTY_BASE64",
-            `Base64 embedding at index ${item.index} is empty`
+            `Base64 embedding at index ${item.index} is empty`,
           );
         }
       } else {
         throw new EmbeddingProviderInvalidResponseError(
           "EMBEDDING_PROVIDER_INVALID_VECTOR_TYPE",
-          `Embedding at index ${item.index} must be array of numbers or base64 string`
+          `Embedding at index ${item.index} must be array of numbers or base64 string`,
         );
       }
     }
   }
 
-  public static sortByIndex<T extends { index: number }>(items: readonly T[]): T[] {
+  public static sortByIndex<T extends { index: number }>(
+    items: readonly T[],
+  ): T[] {
     return [...items].sort((a, b) => a.index - b.index);
   }
 }

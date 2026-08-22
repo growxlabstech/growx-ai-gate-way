@@ -38,12 +38,12 @@ export class OpenAIEmbeddingAdapter implements ProviderEmbeddingAdapter {
   public parseResponse(
     rawResponse: unknown,
     request: NormalizedEmbeddingRequest,
-    dimensions: number
+    dimensions: number,
   ): NormalizedEmbeddingResponse {
     if (!rawResponse || typeof rawResponse !== "object") {
       throw new EmbeddingProviderInvalidResponseError(
         "OPENAI_MALFORMED_RESPONSE",
-        "OpenAI embeddings response is not a valid JSON object"
+        "OpenAI embeddings response is not a valid JSON object",
       );
     }
 
@@ -51,7 +51,7 @@ export class OpenAIEmbeddingAdapter implements ProviderEmbeddingAdapter {
     if (!Array.isArray(data.data)) {
       throw new EmbeddingProviderInvalidResponseError(
         "OPENAI_MISSING_DATA",
-        "OpenAI response is missing 'data' array"
+        "OpenAI response is missing 'data' array",
       );
     }
 
@@ -67,7 +67,7 @@ export class OpenAIEmbeddingAdapter implements ProviderEmbeddingAdapter {
       } else {
         throw new EmbeddingProviderInvalidResponseError(
           "OPENAI_INVALID_EMBEDDING",
-          `Item at index ${item.index} has invalid embedding format`
+          `Item at index ${item.index} has invalid embedding format`,
         );
       }
 

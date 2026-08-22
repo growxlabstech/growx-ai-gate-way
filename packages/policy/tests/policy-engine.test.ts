@@ -46,7 +46,11 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
               target: "model" as const,
               effect: "allow" as const,
               operator: "in" as const,
-              value: ["openai/gpt-4o", "anthropic/claude-3-5-sonnet", "google/gemini-1.5-pro"],
+              value: [
+                "openai/gpt-4o",
+                "anthropic/claude-3-5-sonnet",
+                "google/gemini-1.5-pro",
+              ],
             },
             {
               target: "provider" as const,
@@ -102,7 +106,9 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
     // Model allowlist was intersected: Global [A, B, C] ∩ Org [A, B] ∩ Ws [A] = [A]
     expect(effective.constraints.allowedModels).toEqual(["openai/gpt-4o"]);
     // Provider deny was inherited from Global
-    expect(effective.constraints.deniedProviders).toEqual(["untrusted_provider"]);
+    expect(effective.constraints.deniedProviders).toEqual([
+      "untrusted_provider",
+    ]);
     // Strictest output ceiling
     expect(effective.constraints.maxOutputTokens).toBe(2048);
     // Version fingerprint is stable
@@ -165,7 +171,9 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
     expect(routeDecision.eligible.map((r) => r.providerId)).toEqual(["openai"]);
     expect(routeDecision.excluded).toHaveLength(1);
     expect(routeDecision.excluded[0]?.denialCode).toBe("PROVIDER_DENIED");
-    expect(routeDecision.excluded[0]?.reason).toContain("explicitly denied by provider governance policy");
+    expect(routeDecision.excluded[0]?.reason).toContain(
+      "explicitly denied by provider governance policy",
+    );
   });
 
   it("3. denies request when canonical model is not in approved allowlist or is denied", async () => {
@@ -192,7 +200,9 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
     const decision = await engine.evaluateRequest(baseContext);
     expect(decision.allowed).toBe(false);
     expect(decision.denialCode).toBe("MODEL_DENIED");
-    expect(decision.reasons[0]).toContain("not in the approved model allowlist");
+    expect(decision.reasons[0]).toContain(
+      "not in the approved model allowlist",
+    );
   });
 
   it("4. enforces model category and family governance", async () => {
@@ -425,7 +435,9 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
     expect(routeRes.eligible).toHaveLength(1);
     expect(routeRes.eligible[0]?.routeId).toBe("rt_cheap");
     expect(routeRes.excluded).toHaveLength(2);
-    expect(routeRes.excluded.every((e) => e.denialCode === "COST_POLICY_DENIED")).toBe(true);
+    expect(
+      routeRes.excluded.every((e) => e.denialCode === "COST_POLICY_DENIED"),
+    ).toBe(true);
   });
 
   it("9. provides caching with automatic scope invalidation on policy mutations", async () => {
@@ -461,7 +473,7 @@ describe("Phase 12 — Policy Engine Unit & Precedence Tests", () => {
           ],
         },
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 4. Third Evaluation -> Cache was invalidated -> Evaluates fresh policy -> Immediately denied!

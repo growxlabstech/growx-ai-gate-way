@@ -29,18 +29,16 @@ describe("Phase 23 — Preferences & Mandatory Policy Enforcement", () => {
     });
 
     // Ingest subscription.updated (optional)
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_sub_up_1",
-        type: "subscription.updated.v1",
-        organizationId: "org_pref_test",
-        data: {
-          planName: "Pro Tier",
-          email: "user@example.com",
-          userId: "usr_opt_out",
-        },
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_sub_up_1",
+      type: "subscription.updated.v1",
+      organizationId: "org_pref_test",
+      data: {
+        planName: "Pro Tier",
+        email: "user@example.com",
+        userId: "usr_opt_out",
+      },
+    });
 
     // Email delivery was suppressed by preference; in-app still created
     expect(result.deliveries.length).toBe(0);
@@ -59,18 +57,16 @@ describe("Phase 23 — Preferences & Mandatory Policy Enforcement", () => {
     });
 
     // Ingest auth.otp.v1 (mandatory)
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_otp_mand_1",
-        type: "auth.otp.v1",
-        data: {
-          otp: "888999",
-          expiresInMinutes: 10,
-          recipientEmail: "user@example.com",
-          userId: "usr_mandatory_test",
-        },
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_otp_mand_1",
+      type: "auth.otp.v1",
+      data: {
+        otp: "888999",
+        expiresInMinutes: 10,
+        recipientEmail: "user@example.com",
+        userId: "usr_mandatory_test",
+      },
+    });
 
     // Delivery must be created regardless of user preference
     expect(result.deliveries.length).toBe(1);

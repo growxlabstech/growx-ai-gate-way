@@ -1,3 +1,54 @@
-import Link from "next/link"; import { AppShell } from "../../../../components/app-shell";
-const models = [{ id: "growx/fast", provider: "GrowX alias", capabilities: "Text · Streaming · Tools", context: "128K", status: "Active" }, { id: "openai/gpt-4.1-mini", provider: "OpenAI", capabilities: "Text · Vision · Streaming · Tools", context: "1M", status: "Active" }, { id: "anthropic/claude-sonnet", provider: "Anthropic", capabilities: "Text · Vision · Streaming · Tools", context: "200K", status: "Active" }];
-export default async function ModelsPage({ params }: { params: Promise<{ organizationSlug: string; workspaceSlug: string }> }) { const { organizationSlug, workspaceSlug } = await params; return <AppShell organizationSlug={organizationSlug} workspaceSlug={workspaceSlug} title="Models"><table className="data-table"><thead><tr><th>Model</th><th>Provider</th><th>Capabilities</th><th>Context</th><th>Status</th></tr></thead><tbody>{models.map((model) => <tr key={model.id}><td><Link href={`/${organizationSlug}/${workspaceSlug}/models/${encodeURIComponent(model.id)}`}>{model.id}</Link></td><td>{model.provider}</td><td>{model.capabilities}</td><td>{model.context}</td><td>{model.status}</td></tr>)}</tbody></table></AppShell>; }
+import { AppShell } from "../../../../components/app-shell";
+import { loadTenantContext } from "../../../../lib/load-tenant-context";
+import { loadWorkspaceModels } from "../../../../lib/models-data";
+import { ModelCatalogGrid } from "../../../../components/models/model-catalog-grid";
+
+interface ModelsPageProps {
+  params: Promise<{
+    organizationSlug: string;
+    workspaceSlug: string;
+  }>;
+}
+
+export default async function ModelsPage({ params }: ModelsPageProps) {
+  const { organizationSlug, workspaceSlug } = await params;
+  const contextResult = await loadTenantContext();
+
+  const organization =
+    contextResult.status === "ready"
+      ? contextResult.context.organizations.find(
+          (o) => o.organizationSlug === organizationSlug,
+        )
+      : undefined;
+  const workspace =
+    contextResult.status === "ready"
+      ? contextResult.context.workspaces.find(
+          (w) =>
+            w.workspaceSlug === workspaceSlug &&
+            (!organization || w.organizationId === organization.organizationId),
+        )
+      : undefined;
+
+  const workspaceId = workspace?.workspaceId ?? "ws_production";
+  const organizationId = organization?.organizationId ?? "org_northstar";
+
+  const models = await loadWorkspaceModels({
+    organizationId,
+    workspaceId,
+  });
+
+  return (
+    <AppShell
+      organizationSlug={organizationSlug}
+      workspaceSlug={workspaceSlug}
+      title="Models"
+      description="Discover canonical models, multimodal capabilities, context windows, and availability."
+    >
+      <ModelCatalogGrid
+        initialModels={models}
+        organizationSlug={organizationSlug}
+        workspaceSlug={workspaceSlug}
+      />
+    </AppShell>
+  );
+}

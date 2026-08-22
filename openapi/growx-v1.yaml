@@ -20,7 +20,11 @@ paths:
                 required: [object, data]
                 properties:
                   object: { const: list }
-                  data: { type: array, items: { $ref: "#/components/schemas/Model" } }
+                  data:
+                    {
+                      type: array,
+                      items: { $ref: "#/components/schemas/Model" },
+                    }
         default: { $ref: "#/components/responses/Error" }
   /v1/responses:
     post:
@@ -36,7 +40,8 @@ paths:
           headers:
             X-Request-Id: { schema: { type: string } }
           content:
-            application/json: { schema: { $ref: "#/components/schemas/Response" } }
+            application/json:
+              { schema: { $ref: "#/components/schemas/Response" } }
             text/event-stream: { schema: { type: string } }
         default: { $ref: "#/components/responses/Error" }
   /v1/embeddings:
@@ -51,7 +56,14 @@ paths:
               required: [model, input]
               properties:
                 model: { type: string }
-                input: { oneOf: [{ type: string }, { type: array, items: { type: string } }] }
+                input:
+                  {
+                    oneOf:
+                      [
+                        { type: string },
+                        { type: array, items: { type: string } },
+                      ],
+                  }
       responses:
         "200": { description: Embeddings created }
         default: { $ref: "#/components/responses/Error" }

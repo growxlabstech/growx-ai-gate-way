@@ -1,6 +1,9 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { createTestGatewayFixture } from "../helpers/test-fixture.js";
-import { EntitlementGate, type IEntitlementResolver } from "../../src/application/entitlement-gate.js";
+import {
+  EntitlementGate,
+  type IEntitlementResolver,
+} from "../../src/application/entitlement-gate.js";
 import { ResolvedEntitlements } from "@growx/subscriptions";
 
 describe("Phase 18 — Gateway Entitlement Gate Integration", () => {
@@ -16,7 +19,7 @@ describe("Phase 18 — Gateway Entitlement Gate Integration", () => {
           [],
           new Set(),
           "pv_1",
-          "free_plan"
+          "free_plan",
         );
       },
     };
@@ -43,8 +46,8 @@ describe("Phase 18 — Gateway Entitlement Gate Integration", () => {
         {
           model: "openai/gpt-4o-mini",
           messages: [{ role: "user", content: "hello" }],
-        } as any
-      )
+        } as any,
+      ),
     ).rejects.toThrow("denied by plan rule: openai/*");
   });
 
@@ -53,13 +56,11 @@ describe("Phase 18 — Gateway Entitlement Gate Integration", () => {
       async resolveEntitlements(_orgId: string) {
         return new ResolvedEntitlements(
           new Map(),
-          [
-            { pattern: "openai/*", effect: "allow" },
-          ],
+          [{ pattern: "openai/*", effect: "allow" }],
           [],
           new Set(),
           "pv_2",
-          "pro_plan"
+          "pro_plan",
         );
       },
     };
@@ -84,10 +85,12 @@ describe("Phase 18 — Gateway Entitlement Gate Integration", () => {
       {
         model: "openai/gpt-4o-mini",
         messages: [{ role: "user", content: "hello" }],
-      } as any
+      } as any,
     );
 
     expect(response).toBeDefined();
-    expect(response.choices[0]?.message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    expect(response.choices[0]?.message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
   });
 });

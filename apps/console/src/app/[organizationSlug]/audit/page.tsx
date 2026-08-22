@@ -1,2 +1,20 @@
 import { AppShell, StatePanel } from "../../../components/app-shell";
-export default async function Page({ params }: { params: Promise<{ organizationSlug: string }> }) { const { organizationSlug } = await params; return <AppShell organizationSlug={organizationSlug} title="Audit activity"><div className="toolbar"><button type="button">Create</button><button type="button">Filter</button></div><StatePanel title="Audit activity" detail="An immutable record of security and control-plane actions." /></AppShell>; }
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ organizationSlug: string }>;
+}) {
+  const { organizationSlug } = await params;
+  return (
+    <AppShell organizationSlug={organizationSlug} title="Audit activity">
+      <div className="toolbar">
+        <button type="button">Create</button>
+        <button type="button">Filter</button>
+      </div>
+      <StatePanel
+        title="Audit activity"
+        detail="An immutable record of security and control-plane actions."
+      />
+    </AppShell>
+  );
+}

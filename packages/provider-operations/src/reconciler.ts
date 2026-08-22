@@ -4,10 +4,12 @@ import type { ProviderOperationFinalizer } from "./finalizer.js";
 export class ProviderOperationReconciler {
   constructor(
     private repository: IProviderOperationRepository,
-    private finalizer?: ProviderOperationFinalizer
+    private finalizer?: ProviderOperationFinalizer,
   ) {}
 
-  public async reconcileStuckOperations(stuckThresholdMs: number = 300_000): Promise<number> {
+  public async reconcileStuckOperations(
+    stuckThresholdMs: number = 300_000,
+  ): Promise<number> {
     const stuckBefore = new Date(Date.now() - stuckThresholdMs);
     const stuck = await this.repository.findStuckOperations({
       statuses: ["submitted", "running", "finalizing", "queued"],
@@ -21,7 +23,11 @@ export class ProviderOperationReconciler {
         // Retry stalled finalization without resubmitting provider job
         await this.finalizer.finalize(op.id).catch(() => {});
         reconciled++;
-      } else if (op.leaseOwner && op.leaseExpiresAt && op.leaseExpiresAt < new Date()) {
+      } else if (
+        op.leaseOwner &&
+        op.leaseExpiresAt &&
+        op.leaseExpiresAt < new Date()
+      ) {
         // Expired lease recovery
         await this.repository.update(op.id, {
           leaseOwner: null,

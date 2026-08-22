@@ -4,7 +4,7 @@ import type { CacheEligibilityDecision, CachePolicyConfig } from "./types.js";
 export function evaluateCacheEligibility(
   request: OpenAIChatCompletionRequest,
   policyConfig: CachePolicyConfig,
-  modelContext?: { supportsStreaming?: boolean; category?: string } | undefined
+  modelContext?: { supportsStreaming?: boolean; category?: string } | undefined,
 ): CacheEligibilityDecision {
   if (!policyConfig.enabled) {
     return { eligible: false, reason: "DISABLED", scope: "none" };

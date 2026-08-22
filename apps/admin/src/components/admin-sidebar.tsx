@@ -35,7 +35,12 @@ const navigation: readonly NavigationSection[] = [
     id: "access",
     label: "Access",
     items: [
-      { id: "users", label: "Users", href: "/admin/users", icon: "organization" },
+      {
+        id: "users",
+        label: "Users",
+        href: "/admin/users",
+        icon: "organization",
+      },
       {
         id: "organizations",
         label: "Organizations",

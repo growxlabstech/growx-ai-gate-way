@@ -1,7 +1,16 @@
 import crypto from "node:crypto";
 import { Readable } from "node:stream";
-import { StorageObjectMetadata, SignedUrlOptions, UploadPartDescriptor, StorageError } from "../domain/types.js";
-import { ObjectStorageProvider, PutObjectOptions, GetObjectResult } from "./storage-provider.js";
+import {
+  StorageObjectMetadata,
+  SignedUrlOptions,
+  UploadPartDescriptor,
+  StorageError,
+} from "../domain/types.js";
+import {
+  ObjectStorageProvider,
+  PutObjectOptions,
+  GetObjectResult,
+} from "./storage-provider.js";
 
 interface StoredItem {
   data: Buffer;
@@ -32,14 +41,17 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
 
   private checkHealth(): void {
     if (this.outageSimulated) {
-      throw new StorageError("STORAGE_PROVIDER_ERROR", "Simulated storage provider outage");
+      throw new StorageError(
+        "STORAGE_PROVIDER_ERROR",
+        "Simulated storage provider outage",
+      );
     }
   }
 
   async putObject(
     key: string,
     data: Buffer | Uint8Array | Readable,
-    options?: PutObjectOptions
+    options?: PutObjectOptions,
   ): Promise<StorageObjectMetadata> {
     this.checkHealth();
     let buf: Buffer;
@@ -78,17 +90,26 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     return metadata;
   }
 
-  async getObject(key: string, range?: { start: number; end?: number }): Promise<GetObjectResult> {
+  async getObject(
+    key: string,
+    range?: { start: number; end?: number },
+  ): Promise<GetObjectResult> {
     this.checkHealth();
     const item = this.objects.get(key);
     if (!item) {
-      throw new StorageError("FILE_NOT_FOUND", `Object not found at key: ${key}`);
+      throw new StorageError(
+        "FILE_NOT_FOUND",
+        `Object not found at key: ${key}`,
+      );
     }
 
     let payload = item.data;
     if (range) {
       const start = Math.max(0, range.start);
-      const end = range.end !== undefined ? Math.min(item.data.length - 1, range.end) : item.data.length - 1;
+      const end =
+        range.end !== undefined
+          ? Math.min(item.data.length - 1, range.end)
+          : item.data.length - 1;
       payload = item.data.subarray(start, end + 1);
     }
 
@@ -126,7 +147,7 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
 
   async createSignedUploadUrl(
     key: string,
-    options?: SignedUrlOptions
+    options?: SignedUrlOptions,
   ): Promise<{ uploadUrl: string; expiresAt: Date }> {
     this.checkHealth();
     const ttl = options?.expiresInSeconds || 900;
@@ -138,12 +159,15 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
 
   async createSignedDownloadUrl(
     key: string,
-    options?: SignedUrlOptions
+    options?: SignedUrlOptions,
   ): Promise<{ downloadUrl: string; expiresAt: Date }> {
     this.checkHealth();
     const item = this.objects.get(key);
     if (!item) {
-      throw new StorageError("FILE_NOT_FOUND", `Object not found at key: ${key}`);
+      throw new StorageError(
+        "FILE_NOT_FOUND",
+        `Object not found at key: ${key}`,
+      );
     }
     const ttl = options?.expiresInSeconds || 900;
     const expiresAt = new Date(Date.now() + ttl * 1000);
@@ -152,7 +176,10 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     return { downloadUrl, expiresAt };
   }
 
-  async createMultipartUpload(key: string, options?: PutObjectOptions): Promise<{ uploadId: string }> {
+  async createMultipartUpload(
+    key: string,
+    options?: PutObjectOptions,
+  ): Promise<{ uploadId: string }> {
     this.checkHealth();
     const uploadId = `mp_${crypto.randomBytes(12).toString("hex")}`;
     this.multiparts.set(uploadId, {
@@ -169,12 +196,15 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     key: string,
     uploadId: string,
     partNumber: number,
-    options?: SignedUrlOptions
+    options?: SignedUrlOptions,
   ): Promise<{ uploadUrl: string; expiresAt: Date }> {
     this.checkHealth();
     const mp = this.multiparts.get(uploadId);
     if (!mp || mp.key !== key) {
-      throw new StorageError("UPLOAD_SESSION_INVALID", `Multipart upload ${uploadId} is invalid for key ${key}`);
+      throw new StorageError(
+        "UPLOAD_SESSION_INVALID",
+        `Multipart upload ${uploadId} is invalid for key ${key}`,
+      );
     }
     const ttl = options?.expiresInSeconds || 900;
     const expiresAt = new Date(Date.now() + ttl * 1000);
@@ -187,14 +217,19 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     key: string,
     uploadId: string,
     partNumber: number,
-    data: Buffer | Uint8Array
+    data: Buffer | Uint8Array,
   ): Promise<UploadPartDescriptor> {
     this.checkHealth();
     const mp = this.multiparts.get(uploadId);
     if (!mp || mp.key !== key) {
-      throw new StorageError("UPLOAD_SESSION_INVALID", `Multipart upload ${uploadId} not found`);
+      throw new StorageError(
+        "UPLOAD_SESSION_INVALID",
+        `Multipart upload ${uploadId} not found`,
+      );
     }
-    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+    const buf = Buffer.isBuffer(data)
+      ? data
+      : Buffer.from(data.buffer, data.byteOffset, data.byteLength);
     const etag = `"${crypto.createHash("md5").update(buf).digest("hex")}"`;
     mp.parts.set(partNumber, { data: buf, etag });
     return { partNumber, etag, sizeBytes: buf.length };
@@ -203,12 +238,15 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
   async completeMultipartUpload(
     key: string,
     uploadId: string,
-    parts: UploadPartDescriptor[]
+    parts: UploadPartDescriptor[],
   ): Promise<StorageObjectMetadata> {
     this.checkHealth();
     const mp = this.multiparts.get(uploadId);
     if (!mp || mp.key !== key) {
-      throw new StorageError("UPLOAD_SESSION_INVALID", `Multipart upload ${uploadId} not found`);
+      throw new StorageError(
+        "UPLOAD_SESSION_INVALID",
+        `Multipart upload ${uploadId} not found`,
+      );
     }
 
     const sorted = [...parts].sort((a, b) => a.partNumber - b.partNumber);
@@ -216,7 +254,10 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     for (const p of sorted) {
       const stored = mp.parts.get(p.partNumber);
       if (!stored) {
-        throw new StorageError("UPLOAD_SESSION_INVALID", `Part ${p.partNumber} is missing in multipart upload`);
+        throw new StorageError(
+          "UPLOAD_SESSION_INVALID",
+          `Part ${p.partNumber} is missing in multipart upload`,
+        );
       }
       buffers.push(stored.data);
     }
@@ -237,11 +278,17 @@ export class InMemoryObjectStorageProvider implements ObjectStorageProvider {
     return this.multiparts.delete(uploadId);
   }
 
-  async copyObject(sourceKey: string, destKey: string): Promise<StorageObjectMetadata> {
+  async copyObject(
+    sourceKey: string,
+    destKey: string,
+  ): Promise<StorageObjectMetadata> {
     this.checkHealth();
     const item = this.objects.get(sourceKey);
     if (!item) {
-      throw new StorageError("FILE_NOT_FOUND", `Source object ${sourceKey} not found`);
+      throw new StorageError(
+        "FILE_NOT_FOUND",
+        `Source object ${sourceKey} not found`,
+      );
     }
     return this.putObject(destKey, item.data, {
       contentType: item.contentType,

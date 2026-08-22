@@ -16,9 +16,15 @@ describe("Phase 23 — Notification Load, Concurrency & Provider Outage Tests", 
 
   it("handles high volume ingestion and batch claiming without losing messages", async () => {
     const emailAdapter: EmailProviderAdapter = {
-      sendEmail: async () => ({ providerStatus: 200, providerMessageId: "msg_ok" }),
+      sendEmail: async () => ({
+        providerStatus: 200,
+        providerMessageId: "msg_ok",
+      }),
     };
-    const deliveryService = new NotificationDeliveryService({ repository, emailAdapter });
+    const deliveryService = new NotificationDeliveryService({
+      repository,
+      emailAdapter,
+    });
 
     // Ingest 100 notifications across 10 organizations
     for (let i = 0; i < 100; i++) {
@@ -54,9 +60,15 @@ describe("Phase 23 — Notification Load, Concurrency & Provider Outage Tests", 
 
   it("prioritizes critical OTP jobs ahead of low-priority summaries in queue", async () => {
     const emailAdapter: EmailProviderAdapter = {
-      sendEmail: async () => ({ providerStatus: 200, providerMessageId: "msg_ok" }),
+      sendEmail: async () => ({
+        providerStatus: 200,
+        providerMessageId: "msg_ok",
+      }),
     };
-    const deliveryService = new NotificationDeliveryService({ repository, emailAdapter });
+    const deliveryService = new NotificationDeliveryService({
+      repository,
+      emailAdapter,
+    });
 
     // 1. Ingest 5 normal-priority billing notifications
     for (let i = 0; i < 5; i++) {
@@ -71,11 +83,19 @@ describe("Phase 23 — Notification Load, Concurrency & Provider Outage Tests", 
     await deliveryService.ingestAndFanout({
       id: "evt_otp_urgent",
       type: "auth.otp.v1",
-      data: { otp: "987654", expiresInMinutes: 10, recipientEmail: "urgent@org.com" },
+      data: {
+        otp: "987654",
+        expiresInMinutes: 10,
+        recipientEmail: "urgent@org.com",
+      },
     });
 
     // 3. Claim batch of 1
-    const claimed = await repository.claimPendingDeliveries(1, 30_000, "wrk_priority");
+    const claimed = await repository.claimPendingDeliveries(
+      1,
+      30_000,
+      "wrk_priority",
+    );
     expect(claimed.length).toBe(1);
     expect(claimed[0]!.priority).toBe("high");
     expect(claimed[0]!.recipientSnapshot).toBe("urgent@org.com");

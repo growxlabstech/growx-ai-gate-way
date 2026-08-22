@@ -26,7 +26,12 @@ describe("RetryClassifier", () => {
 
   describe("classifyRetry", () => {
     it("CRITICAL INVARIANT: denies fallback and retry if client-visible output was emitted", () => {
-      const err = new GrowXProviderError("provider_rate_limit", "Rate limit", true, 429);
+      const err = new GrowXProviderError(
+        "provider_rate_limit",
+        "Rate limit",
+        true,
+        429,
+      );
       const res = classifyRetry(err, { emittedOutput: true });
       expect(res.retryable).toBe(false);
       expect(res.fallbackAllowed).toBe(false);
@@ -34,7 +39,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider_rate_limit (429) as retryable rate limit", () => {
-      const err = new GrowXProviderError("provider_rate_limit", "Rate limit", true, 429);
+      const err = new GrowXProviderError(
+        "provider_rate_limit",
+        "Rate limit",
+        true,
+        429,
+      );
       const res = classifyRetry(err, { retryAfterHeader: "3" });
       expect(res.retryable).toBe(true);
       expect(res.errorClass).toBe("RETRYABLE_RATE_LIMIT");
@@ -45,7 +55,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider_timeout / gateway_timeout as retryable timeout", () => {
-      const err = new GrowXProviderError("provider_timeout", "Timeout", true, 504);
+      const err = new GrowXProviderError(
+        "provider_timeout",
+        "Timeout",
+        true,
+        504,
+      );
       const res = classifyRetry(err);
       expect(res.retryable).toBe(true);
       expect(res.errorClass).toBe("RETRYABLE_TIMEOUT");
@@ -53,7 +68,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider 5xx as retryable transient", () => {
-      const err = new GrowXProviderError("provider_unavailable", "Service down", true, 503);
+      const err = new GrowXProviderError(
+        "provider_unavailable",
+        "Service down",
+        true,
+        503,
+      );
       const res = classifyRetry(err);
       expect(res.retryable).toBe(true);
       expect(res.errorClass).toBe("RETRYABLE_TRANSIENT");
@@ -61,7 +81,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider_authentication_error as NON_RETRYABLE_AUTH (allows fallback to other route, denies same-route retry)", () => {
-      const err = new GrowXProviderError("provider_authentication_error", "Bad api key", false, 401);
+      const err = new GrowXProviderError(
+        "provider_authentication_error",
+        "Bad api key",
+        false,
+        401,
+      );
       const res = classifyRetry(err);
       expect(res.retryable).toBe(false);
       expect(res.errorClass).toBe("NON_RETRYABLE_AUTH");
@@ -71,7 +96,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider_invalid_request (400) as NON_RETRYABLE_REQUEST (no retry, no fallback)", () => {
-      const err = new GrowXProviderError("provider_invalid_request", "Bad payload", false, 400);
+      const err = new GrowXProviderError(
+        "provider_invalid_request",
+        "Bad payload",
+        false,
+        400,
+      );
       const res = classifyRetry(err);
       expect(res.retryable).toBe(false);
       expect(res.errorClass).toBe("NON_RETRYABLE_REQUEST");
@@ -80,7 +110,12 @@ describe("RetryClassifier", () => {
     });
 
     it("classifies provider_content_policy as NON_RETRYABLE_CONTENT (safety invariant: no bypass via fallback)", () => {
-      const err = new GrowXProviderError("provider_content_policy", "Content flagged", false, 400);
+      const err = new GrowXProviderError(
+        "provider_content_policy",
+        "Content flagged",
+        false,
+        400,
+      );
       const res = classifyRetry(err);
       expect(res.retryable).toBe(false);
       expect(res.errorClass).toBe("NON_RETRYABLE_CONTENT");

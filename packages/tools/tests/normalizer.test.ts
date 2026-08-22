@@ -26,7 +26,11 @@ describe("Tool Call Normalizer", () => {
       arguments: '{"city":"Tokyo","unit":"celsius"}',
     };
 
-    const normalized = normalizer.normalizeToolCall(raw, [weatherTool], "req_123");
+    const normalized = normalizer.normalizeToolCall(
+      raw,
+      [weatherTool],
+      "req_123",
+    );
     expect(normalized.id).toBeDefined();
     expect(normalized.name).toBe("get_weather");
     expect(normalized.arguments).toEqual({ city: "Tokyo", unit: "celsius" });

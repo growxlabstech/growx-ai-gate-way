@@ -17,17 +17,15 @@ describe("Phase 23 — OTP Delivery & Expiration Safety", () => {
   });
 
   it("fans out high-priority email delivery for auth.otp.v1 and completes delivery", async () => {
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_otp_1",
-        type: "auth.otp.v1",
-        data: {
-          otp: "654321",
-          expiresInMinutes: 10,
-          recipientEmail: "user@example.com",
-        },
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_otp_1",
+      type: "auth.otp.v1",
+      data: {
+        otp: "654321",
+        expiresInMinutes: 10,
+        recipientEmail: "user@example.com",
+      },
+    });
 
     expect(result.intent.priority).toBe("high");
     expect(result.intent.preferenceMode).toBe("mandatory");
@@ -44,18 +42,16 @@ describe("Phase 23 — OTP Delivery & Expiration Safety", () => {
   it("marks delivery expired and skips sending if OTP validity has expired", async () => {
     const expiredTime = new Date(Date.now() - 15 * 60 * 1000); // 15 mins ago in past (exceeding 10m TTL)
 
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_otp_expired",
-        type: "auth.otp.v1",
-        data: {
-          otp: "999999",
-          expiresInMinutes: 0,
-          recipientEmail: "late@example.com",
-        },
-        createdAt: expiredTime,
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_otp_expired",
+      type: "auth.otp.v1",
+      data: {
+        otp: "999999",
+        expiresInMinutes: 0,
+        recipientEmail: "late@example.com",
+      },
+      createdAt: expiredTime,
+    });
 
     const outcome = await deliveryService.processBatch({ batchSize: 5 });
     expect(outcome.delivered).toBe(0);
@@ -66,20 +62,20 @@ describe("Phase 23 — OTP Delivery & Expiration Safety", () => {
   });
 
   it("forbids replaying OTP notifications", async () => {
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_otp_replay",
-        type: "auth.otp.v1",
-        data: {
-          otp: "111222",
-          expiresInMinutes: 10,
-          recipientEmail: "replay@example.com",
-        },
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_otp_replay",
+      type: "auth.otp.v1",
+      data: {
+        otp: "111222",
+        expiresInMinutes: 10,
+        recipientEmail: "replay@example.com",
+      },
+    });
 
     await expect(
-      deliveryService.replayDelivery(result.deliveries[0]!.id)
-    ).rejects.toThrow("Expired or completed OTP notifications cannot be replayed");
+      deliveryService.replayDelivery(result.deliveries[0]!.id),
+    ).rejects.toThrow(
+      "Expired or completed OTP notifications cannot be replayed",
+    );
   });
 });

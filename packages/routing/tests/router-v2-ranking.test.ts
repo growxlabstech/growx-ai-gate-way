@@ -49,7 +49,7 @@ describe("Router V2 - Deterministic Ranking", () => {
     const { topChoice } = DeterministicCandidateRanker.rank(
       [candFastExpensive, candSlowCheap],
       profile,
-      { objective: "lowest_latency" }
+      { objective: "lowest_latency" },
     );
     expect(topChoice.routeId).toBe("fast_exp");
   });
@@ -58,7 +58,7 @@ describe("Router V2 - Deterministic Ranking", () => {
     const { topChoice } = DeterministicCandidateRanker.rank(
       [candFastExpensive, candSlowCheap],
       profile,
-      { objective: "lowest_cost" }
+      { objective: "lowest_cost" },
     );
     expect(topChoice.routeId).toBe("slow_cheap");
   });
@@ -72,7 +72,7 @@ describe("Router V2 - Deterministic Ranking", () => {
     const { topChoice } = DeterministicCandidateRanker.rank(
       [candFastExpensive, candSlowCheap],
       preferredProfile,
-      { objective: "balanced" }
+      { objective: "balanced" },
     );
     expect(topChoice.providerId).toBe("anthropic");
     expect(topChoice.score?.reasons).toContain("PREFERRED_PROVIDER_BONUS");
@@ -86,17 +86,29 @@ describe("Router V2 - Deterministic Ranking", () => {
         objective: "balanced",
         currentActiveRouteId: "fast_exp",
         hysteresisPenalty: 15,
-      }
+      },
     );
     expect(topChoice.routeId).toBe("fast_exp");
   });
 
   it("produces deterministic tie-breaks across identical routes", () => {
-    const identical1: RouteCandidate = { ...candFastExpensive, routeId: "route_b" };
-    const identical2: RouteCandidate = { ...candFastExpensive, routeId: "route_a" };
+    const identical1: RouteCandidate = {
+      ...candFastExpensive,
+      routeId: "route_b",
+    };
+    const identical2: RouteCandidate = {
+      ...candFastExpensive,
+      routeId: "route_a",
+    };
 
-    const r1 = DeterministicCandidateRanker.rank([identical1, identical2], profile);
-    const r2 = DeterministicCandidateRanker.rank([identical2, identical1], profile);
+    const r1 = DeterministicCandidateRanker.rank(
+      [identical1, identical2],
+      profile,
+    );
+    const r2 = DeterministicCandidateRanker.rank(
+      [identical2, identical1],
+      profile,
+    );
 
     expect(r1.topChoice.routeId).toBe(r2.topChoice.routeId);
   });

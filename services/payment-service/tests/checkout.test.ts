@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { Decimal } from "@growx/money";
 import { CreditService, InMemoryCreditRepository } from "@growx/credit-service";
-import { SubscriptionService, InMemorySubscriptionRepository } from "@growx/subscription-service";
+import {
+  SubscriptionService,
+  InMemorySubscriptionRepository,
+} from "@growx/subscription-service";
 import { PaymentService } from "../src/application/payment-service.js";
 import { InMemoryPaymentRepository } from "../src/infrastructure/in-memory-repository.js";
 import { MockPaymentProviderAdapter } from "@growx/payments";
@@ -28,7 +31,10 @@ describe("Phase 19 — Subscription Checkout", () => {
     });
 
     // Seed a plan
-    const plan = await subscriptionService.createPlan({ slug: "pro", displayName: "Pro Plan" });
+    const plan = await subscriptionService.createPlan({
+      slug: "pro",
+      displayName: "Pro Plan",
+    });
     const version = await subscriptionService.createPlanVersion({
       planId: plan.id,
       billingInterval: "monthly",
@@ -101,8 +107,16 @@ describe("Phase 19 — Subscription Checkout", () => {
   });
 
   it("creates and maps provider customer idempotently", async () => {
-    const cus1 = await paymentService.getOrCreateCustomer("org_cus_test", "mock", "billing@org.test");
-    const cus2 = await paymentService.getOrCreateCustomer("org_cus_test", "mock", "billing@org.test");
+    const cus1 = await paymentService.getOrCreateCustomer(
+      "org_cus_test",
+      "mock",
+      "billing@org.test",
+    );
+    const cus2 = await paymentService.getOrCreateCustomer(
+      "org_cus_test",
+      "mock",
+      "billing@org.test",
+    );
 
     expect(cus1.id).toBe(cus2.id);
     expect(cus1.providerCustomerId).toBe(cus2.providerCustomerId);

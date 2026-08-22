@@ -15,7 +15,7 @@ function createLot(
   lotType: CreditLot["lotType"],
   amount: string,
   expiresAt: Date | null = null,
-  grantedAt: Date = new Date("2026-01-01T00:00:00Z")
+  grantedAt: Date = new Date("2026-01-01T00:00:00Z"),
 ): CreditLot {
   const dec = new Decimal(amount);
   return {
@@ -38,11 +38,30 @@ function createLot(
 describe("Credit Domain Engine", () => {
   it("orders credit lots by earliest expiry, priority type, then grant date", () => {
     const lot1 = createLot("lot_purchased", "purchased", "100.00", null);
-    const lot2 = createLot("lot_promo_expiring", "promotional", "20.00", new Date("2026-06-01T00:00:00Z"));
-    const lot3 = createLot("lot_trial_expiring_earlier", "trial", "10.00", new Date("2026-03-01T00:00:00Z"));
-    const lot4 = createLot("lot_subscription", "subscription", "50.00", null, new Date("2026-01-02T00:00:00Z"));
+    const lot2 = createLot(
+      "lot_promo_expiring",
+      "promotional",
+      "20.00",
+      new Date("2026-06-01T00:00:00Z"),
+    );
+    const lot3 = createLot(
+      "lot_trial_expiring_earlier",
+      "trial",
+      "10.00",
+      new Date("2026-03-01T00:00:00Z"),
+    );
+    const lot4 = createLot(
+      "lot_subscription",
+      "subscription",
+      "50.00",
+      null,
+      new Date("2026-01-02T00:00:00Z"),
+    );
 
-    const ordered = consumptionOrder([lot1, lot2, lot3, lot4], new Date("2026-01-01T00:00:00Z"));
+    const ordered = consumptionOrder(
+      [lot1, lot2, lot3, lot4],
+      new Date("2026-01-01T00:00:00Z"),
+    );
 
     // 1. Earlier expiry first: lot3 (March)
     // 2. Later expiry next: lot2 (June)
@@ -57,19 +76,37 @@ describe("Credit Domain Engine", () => {
   });
 
   it("filters out expired lots from consumption order", () => {
-    const expiredLot = createLot("lot_expired", "promotional", "10.00", new Date("2025-12-31T00:00:00Z"));
+    const expiredLot = createLot(
+      "lot_expired",
+      "promotional",
+      "10.00",
+      new Date("2025-12-31T00:00:00Z"),
+    );
     const validLot = createLot("lot_valid", "purchased", "50.00", null);
 
-    const ordered = consumptionOrder([expiredLot, validLot], new Date("2026-01-01T00:00:00Z"));
+    const ordered = consumptionOrder(
+      [expiredLot, validLot],
+      new Date("2026-01-01T00:00:00Z"),
+    );
     expect(ordered.length).toBe(1);
     expect(ordered[0]?.id).toBe("lot_valid");
   });
 
   it("allocates credit lots across multiple lots deterministically", () => {
-    const lotA = createLot("lot_a", "promotional", "15.00", new Date("2027-04-01T00:00:00Z"));
+    const lotA = createLot(
+      "lot_a",
+      "promotional",
+      "15.00",
+      new Date("2027-04-01T00:00:00Z"),
+    );
     const lotB = createLot("lot_b", "purchased", "50.00", null);
 
-    const result = allocateCreditLots([lotA, lotB], new Decimal("20.00"), "res_100", new Date("2026-01-01T00:00:00Z"));
+    const result = allocateCreditLots(
+      [lotA, lotB],
+      new Decimal("20.00"),
+      "res_100",
+      new Date("2026-01-01T00:00:00Z"),
+    );
 
     expect(result.allocations.length).toBe(2);
     // Takes all 15.00 from lotA
@@ -90,16 +127,21 @@ describe("Credit Domain Engine", () => {
   it("throws insufficient_credits error when available credits are lower than required", () => {
     const lot = createLot("lot_1", "trial", "5.00", null);
 
-    expect(() => allocateCreditLots([lot], new Decimal("10.00"), "res_fail")).toThrowError(
-      /Insufficient credits/
-    );
+    expect(() =>
+      allocateCreditLots([lot], new Decimal("10.00"), "res_fail"),
+    ).toThrowError(/Insufficient credits/);
   });
 
   it("calculates balance projections correctly from credit lots", () => {
     const lot1 = createLot("lot_1", "purchased", "100.00", null);
     lot1.reservedAmount = new Decimal("25.00");
 
-    const lot2 = createLot("lot_2", "promotional", "50.00", new Date("2026-12-31T00:00:00Z"));
+    const lot2 = createLot(
+      "lot_2",
+      "promotional",
+      "50.00",
+      new Date("2026-12-31T00:00:00Z"),
+    );
     lot2.reservedAmount = new Decimal("10.00");
 
     const proj = calculateBalanceFromLots([lot1, lot2]);

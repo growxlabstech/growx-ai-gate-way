@@ -4,9 +4,16 @@ export class CapacityScorer {
   /**
    * Computes capacity headroom score (0 - 100).
    */
-  public static score(candidate: RouteCandidate): { score: number; utilization: number } {
-    const util = candidate.capacityUtilization ?? candidate.capacitySignal?.utilization ?? 0.2;
-    const state = candidate.capacityState ?? candidate.capacitySignal?.state ?? "available";
+  public static score(candidate: RouteCandidate): {
+    score: number;
+    utilization: number;
+  } {
+    const util =
+      candidate.capacityUtilization ??
+      candidate.capacitySignal?.utilization ??
+      0.2;
+    const state =
+      candidate.capacityState ?? candidate.capacitySignal?.state ?? "available";
 
     let score = (1 - util) * 100;
     if (state === "busy") score -= 15;

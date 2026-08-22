@@ -15,14 +15,17 @@ export class ProviderOperationPoller {
 
   constructor(
     private repository: IProviderOperationRepository,
-    private options: PollerOptions = {}
+    private options: PollerOptions = {},
   ) {}
 
   public registerAdapter(adapter: ProviderOperationAdapter): void {
     this.adapters.set(adapter.providerId, adapter);
   }
 
-  public calculateNextPoll(attemptCount: number, retryAfterSeconds?: number): Date {
+  public calculateNextPoll(
+    attemptCount: number,
+    retryAfterSeconds?: number,
+  ): Date {
     if (retryAfterSeconds && retryAfterSeconds > 0) {
       return new Date(Date.now() + retryAfterSeconds * 1000);
     }
@@ -32,7 +35,10 @@ export class ProviderOperationPoller {
     const jitterFactor = this.options.jitterFactor || 0.2;
 
     // Exponential backoff
-    const expMs = Math.min(baseMs * Math.pow(1.5, Math.min(attemptCount, 8)), maxMs);
+    const expMs = Math.min(
+      baseMs * Math.pow(1.5, Math.min(attemptCount, 8)),
+      maxMs,
+    );
     const jitter = expMs * jitterFactor * (Math.random() * 2 - 1);
     const totalDelayMs = Math.max(1000, Math.round(expMs + jitter));
 
@@ -62,12 +68,17 @@ export class ProviderOperationPoller {
           continue;
         }
 
-        const statusRes = await adapter.getOperationStatus(op.providerOperationId);
+        const statusRes = await adapter.getOperationStatus(
+          op.providerOperationId,
+        );
         const nextAttempt = op.attemptCount + 1;
 
         if (statusRes.status === "completed") {
           // Move to finalizing so finalizer can import artifacts & settle billing
-          ProviderOperationStateMachine.assertCanTransition(op.status, "finalizing");
+          ProviderOperationStateMachine.assertCanTransition(
+            op.status,
+            "finalizing",
+          );
           await this.repository.update(op.id, {
             status: "finalizing",
             resultReference: statusRes.resultReference || op.resultReference,

@@ -12,8 +12,15 @@ import {
 export class RoutingSimulationService {
   constructor(private readonly routerV2: RoutingEngineV2) {}
 
-  public async simulate(request: RoutingSimulationRequest): Promise<RoutingSimulationResponse> {
-    const { profile, objective = "balanced", customWeights, customConstraints } = request;
+  public async simulate(
+    request: RoutingSimulationRequest,
+  ): Promise<RoutingSimulationResponse> {
+    const {
+      profile,
+      objective = "balanced",
+      customWeights,
+      customConstraints,
+    } = request;
     const snapshot = await this.routerV2.snapshotService.getSnapshot();
 
     const model = snapshot.models.get(profile.canonicalModelId);
@@ -33,18 +40,33 @@ export class RoutingSimulationService {
       };
     }
 
-    const routes = snapshot.routes.get(model.canonicalId) || snapshot.routes.get(model.id) || [];
-    const candidates = await this.routerV2.buildCandidateRecords(routes, model, snapshot, profile);
+    const routes =
+      snapshot.routes.get(model.canonicalId) ||
+      snapshot.routes.get(model.id) ||
+      [];
+    const candidates = await this.routerV2.buildCandidateRecords(
+      routes,
+      model,
+      snapshot,
+      profile,
+    );
 
     const filterOptions = {
       allowedProviders: customConstraints?.allowedProviders,
       deniedProviders: customConstraints?.deniedProviders,
       allowedRegions: customConstraints?.allowedRegions,
-      dataResidency: customConstraints?.dataResidency || profile.dataResidencyRequirement,
-      maxExecutionCostMinor: customConstraints?.maxExecutionCostMinor || profile.maxExecutionCostMinor,
+      dataResidency:
+        customConstraints?.dataResidency || profile.dataResidencyRequirement,
+      maxExecutionCostMinor:
+        customConstraints?.maxExecutionCostMinor ||
+        profile.maxExecutionCostMinor,
     };
 
-    const { eligible, rejected } = HardConstraintFilter.filterCandidates(candidates, profile, filterOptions);
+    const { eligible, rejected } = HardConstraintFilter.filterCandidates(
+      candidates,
+      profile,
+      filterOptions,
+    );
 
     if (eligible.length === 0) {
       const topReason = rejected[0]?.rejectionReason || "NO_ELIGIBLE_ROUTE";
@@ -63,10 +85,14 @@ export class RoutingSimulationService {
       };
     }
 
-    const { ranked, topChoice } = DeterministicCandidateRanker.rank(eligible, profile, {
-      objective,
-      weights: customWeights,
-    });
+    const { ranked, topChoice } = DeterministicCandidateRanker.rank(
+      eligible,
+      profile,
+      {
+        objective,
+        weights: customWeights,
+      },
+    );
 
     const plan = FallbackPlanBuilder.buildPlan({
       rankedCandidates: ranked,

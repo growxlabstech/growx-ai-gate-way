@@ -33,14 +33,23 @@ export class OpenAIImageAdapter implements ProviderImageAdapter {
     };
   }
 
-  public parseGenerationResponse(rawResponse: unknown, request: ImageGenerationRequest): ImageGenerationResponse {
+  public parseGenerationResponse(
+    rawResponse: unknown,
+    request: ImageGenerationRequest,
+  ): ImageGenerationResponse {
     if (!rawResponse || typeof rawResponse !== "object") {
-      throw new MediaValidationError("OPENAI_IMAGE_MALFORMED", "OpenAI image response is not an object");
+      throw new MediaValidationError(
+        "OPENAI_IMAGE_MALFORMED",
+        "OpenAI image response is not an object",
+      );
     }
 
     const data = rawResponse as any;
     if (!Array.isArray(data.data)) {
-      throw new MediaValidationError("OPENAI_IMAGE_MISSING_DATA", "OpenAI image response missing 'data' array");
+      throw new MediaValidationError(
+        "OPENAI_IMAGE_MISSING_DATA",
+        "OpenAI image response missing 'data' array",
+      );
     }
 
     return {
@@ -72,7 +81,10 @@ export class OpenAIImageAdapter implements ProviderImageAdapter {
     };
   }
 
-  public parseEditResponse(rawResponse: unknown, request: ImageEditRequest): ImageGenerationResponse {
+  public parseEditResponse(
+    rawResponse: unknown,
+    request: ImageEditRequest,
+  ): ImageGenerationResponse {
     return this.parseGenerationResponse(rawResponse, request as any);
   }
 }

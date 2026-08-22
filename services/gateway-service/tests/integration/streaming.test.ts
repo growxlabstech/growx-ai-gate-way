@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Streaming Chat Completions Integration Tests", () => {
   let fixture: TestGatewayFixture;
@@ -29,7 +32,7 @@ describe("Streaming Chat Completions Integration Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -55,7 +58,11 @@ describe("Streaming Chat Completions Integration Tests", () => {
     const parsedChunks = lines.map((l) => JSON.parse(l.slice(6)));
 
     expect(parsedChunks[0].object).toBe("chat.completion.chunk");
-    expect(parsedChunks.some((c) => c.choices[0]?.delta?.content === "Hello from stream!")).toBe(true);
+    expect(
+      parsedChunks.some(
+        (c) => c.choices[0]?.delta?.content === "Hello from stream!",
+      ),
+    ).toBe(true);
 
     // Verify stream call happened
     expect(fixture.mockAdapter.streamCalls).toHaveLength(1);

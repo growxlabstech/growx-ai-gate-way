@@ -44,13 +44,13 @@ describe("RoutingEngine", () => {
     providerRepo = new InMemoryProviderRepository();
     providerEvents = new InMemoryProviderEvents();
     const crypto = new ProviderCredentialCrypto(
-      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     );
     providerService = new ProviderService(
       providerRepo,
       providerEvents,
       crypto,
-      new AdapterRegistry()
+      new AdapterRegistry(),
     );
 
     routingRepo = new InMemoryRoutingRepository();
@@ -66,7 +66,7 @@ describe("RoutingEngine", () => {
       {
         latencySignalProvider: latencyStore,
         availabilitySignalProvider: availabilityStore,
-      }
+      },
     );
 
     // 1. Create Providers: OpenAI and Anthropic
@@ -81,7 +81,7 @@ describe("RoutingEngine", () => {
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const provAnthropic = await providerService.createProvider(
@@ -95,7 +95,7 @@ describe("RoutingEngine", () => {
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 2. Create Credentials for both
@@ -106,7 +106,7 @@ describe("RoutingEngine", () => {
         environment: "production",
         rawSecret: "sk-openai-test-key",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     await providerService.createCredential(
@@ -116,7 +116,7 @@ describe("RoutingEngine", () => {
         environment: "production",
         rawSecret: "sk-ant-test-key",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 3. Create Canonical Model: growx/smart
@@ -139,7 +139,7 @@ describe("RoutingEngine", () => {
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming", "tools.call"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 4. Create Provider Routes for the model
@@ -154,7 +154,7 @@ describe("RoutingEngine", () => {
         routingEligible: true,
         priority: 20,
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // Route 2: Anthropic (priority 10 - higher priority by default)
@@ -168,7 +168,7 @@ describe("RoutingEngine", () => {
         routingEligible: true,
         priority: 10,
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 5. Create Pricing for model
@@ -180,12 +180,12 @@ describe("RoutingEngine", () => {
         currency: "USD",
         source: "manual",
       },
-      "usr_admin"
+      "usr_admin",
     );
   });
 
   const createContext = (
-    overrides: Partial<RoutingEngineContext> = {}
+    overrides: Partial<RoutingEngineContext> = {},
   ): RoutingEngineContext => {
     return {
       requestId: "req_test_123",
@@ -226,7 +226,11 @@ describe("RoutingEngine", () => {
           updatedAt: new Date(),
         } as any,
         capabilities: ["text.generate", "streaming", "tools.call"],
-        limits: { contextWindow: 128_000, maxInputTokens: null, maxOutputTokens: 8_192 },
+        limits: {
+          contextWindow: 128_000,
+          maxInputTokens: null,
+          maxOutputTokens: 8_192,
+        },
         eligibleConfiguredRoutes: [],
         isExecutable: true,
       },
@@ -274,10 +278,16 @@ describe("RoutingEngine", () => {
     // Record latency signals: OpenAI is 25ms, Anthropic is 180ms
     const routes = resolvedContext.eligibleConfiguredRoutes;
     const openAIRoute = routes.find((r) => r.providerModelId === "gpt-4o")!;
-    const anthropicRoute = routes.find((r) => r.providerModelId === "claude-3-5-sonnet")!;
+    const anthropicRoute = routes.find(
+      (r) => r.providerModelId === "claude-3-5-sonnet",
+    )!;
 
     latencyStore.recordLatency(openAIRoute.providerId, "gpt-4o", 25);
-    latencyStore.recordLatency(anthropicRoute.providerId, "claude-3-5-sonnet", 180);
+    latencyStore.recordLatency(
+      anthropicRoute.providerId,
+      "claude-3-5-sonnet",
+      180,
+    );
 
     const ctx = createContext({ resolvedModel: resolvedContext });
     const result = await engine.route(ctx);
@@ -289,7 +299,9 @@ describe("RoutingEngine", () => {
   it("enforces tenant deniedProviders policy", async () => {
     const resolvedContext = await modelRegistry.resolve("growx/smart");
     const routes = resolvedContext.eligibleConfiguredRoutes;
-    const anthropicRoute = routes.find((r) => r.providerModelId === "claude-3-5-sonnet")!;
+    const anthropicRoute = routes.find(
+      (r) => r.providerModelId === "claude-3-5-sonnet",
+    )!;
 
     // Deny Anthropic in workspace policy
     await routingRepo.savePolicy({
@@ -312,7 +324,7 @@ describe("RoutingEngine", () => {
     expect(result.selectedRoute.providerModelId).toBe("gpt-4o");
 
     const considered = result.decision.consideredRoutes.find(
-      (c) => c.providerId === anthropicRoute.providerId
+      (c) => c.providerId === anthropicRoute.providerId,
     );
     expect(considered?.eligible).toBe(false);
     expect(considered?.exclusionReason).toBe("PROVIDER_DENIED");
@@ -337,7 +349,9 @@ describe("RoutingEngine", () => {
     });
 
     const ctx = createContext({ resolvedModel: resolvedContext });
-    await expect(engine.route(ctx)).rejects.toThrow("No eligible provider routes available");
+    await expect(engine.route(ctx)).rejects.toThrow(
+      "No eligible provider routes available",
+    );
   });
 
   it("supports simulation without side effects", async () => {

@@ -1,2 +1,10 @@
-import { AppShell, IpAllowListEditor, ModelAccessEditor, PermissionEditor, RateLimitEditor, SpendingLimitEditor } from "../../../../../components/app-shell";
-export default async function NewApiKeyPage({ params }: { params: Promise<{ organizationSlug: string; workspaceSlug: string }> }) { const { organizationSlug, workspaceSlug } = await params; return <AppShell organizationSlug={organizationSlug} workspaceSlug={workspaceSlug} title="Create API key"><form className="key-form"><fieldset><legend>Basics</legend><label>Name<input required name="name" maxLength={100} placeholder="Production app" /></label><div className="form-grid"><label>Environment<select name="environment"><option value="development">Development</option><option value="staging">Staging</option><option value="production">Production</option></select></label><label>Expiration<select name="expiration"><option value="never">Never</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label></div></fieldset><PermissionEditor /><details><summary>Advanced access controls</summary><div className="key-form"><ModelAccessEditor /><RateLimitEditor /><SpendingLimitEditor /><IpAllowListEditor /></div></details><button className="primary" type="submit">Create API key</button></form></AppShell>; }
+import { redirect } from "next/navigation";
+
+export default async function NewApiKeyPage({
+  params,
+}: {
+  params: Promise<{ organizationSlug: string; workspaceSlug: string }>;
+}) {
+  const { organizationSlug, workspaceSlug } = await params;
+  redirect(`/${organizationSlug}/${workspaceSlug}/api-keys`);
+}

@@ -32,11 +32,14 @@ describe("Secret Provider Infrastructure", () => {
   });
 
   it("encrypts and decrypts secrets with AES-256-GCM in EnvelopeEncryptionSecretProvider", async () => {
-    const key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const key =
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const provider = new EnvelopeEncryptionSecretProvider(key);
     const ref = "vault/anthropic/pacc_2/pcred_2/v1";
 
-    await provider.putSecret(ref, "mock-ant-secret-payload", { account: "anthropic-enterprise" });
+    await provider.putSecret(ref, "mock-ant-secret-payload", {
+      account: "anthropic-enterprise",
+    });
 
     const decrypted = await provider.getSecret(ref);
     expect(decrypted).toBe("mock-ant-secret-payload");

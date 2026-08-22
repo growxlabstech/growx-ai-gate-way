@@ -12,13 +12,13 @@ import type { IProviderEvents } from "../application/events.js";
 export class ProviderPoolService {
   constructor(
     private readonly repository: IProviderRepository,
-    private readonly events: IProviderEvents
+    private readonly events: IProviderEvents,
   ) {}
 
   public async createPool(
     input: CreateProviderPoolRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialPool> {
     const now = new Date();
     const pool: ProviderCredentialPool = {
@@ -36,7 +36,11 @@ export class ProviderPoolService {
     };
 
     const created = await this.repository.createPool(pool);
-    await this.events.emitSecurityEvent("provider.pool.created", { poolId: created.id, providerId: pool.providerId }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.pool.created",
+      { poolId: created.id, providerId: pool.providerId },
+      requestId,
+    );
     return created;
   }
 
@@ -44,11 +48,16 @@ export class ProviderPoolService {
     poolId: string,
     input: AddPoolMemberRequest,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<ProviderCredentialPoolMember> {
     const pool = await this.repository.getPoolById(poolId);
     if (!pool) {
-      throw new GrowXProviderError("provider_invalid_request", `Pool '${poolId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Pool '${poolId}' not found`,
+        false,
+        404,
+      );
     }
 
     const now = new Date();
@@ -66,7 +75,11 @@ export class ProviderPoolService {
     };
 
     const created = await this.repository.addPoolMember(member);
-    await this.events.emitSecurityEvent("provider.pool.member_added", { poolId, memberId: created.id }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.pool.member_added",
+      { poolId, memberId: created.id },
+      requestId,
+    );
     return created;
   }
 
@@ -74,22 +87,33 @@ export class ProviderPoolService {
     poolId: string,
     memberId: string,
     operatorId: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<void> {
     await this.repository.removePoolMember(memberId);
-    await this.events.emitSecurityEvent("provider.pool.member_removed", { poolId, memberId }, requestId);
+    await this.events.emitSecurityEvent(
+      "provider.pool.member_removed",
+      { poolId, memberId },
+      requestId,
+    );
   }
 
   public async getPool(poolId: string): Promise<ProviderCredentialPool> {
     const pool = await this.repository.getPoolById(poolId);
     if (!pool) {
-      throw new GrowXProviderError("provider_invalid_request", `Pool '${poolId}' not found`, false, 404);
+      throw new GrowXProviderError(
+        "provider_invalid_request",
+        `Pool '${poolId}' not found`,
+        false,
+        404,
+      );
     }
     const members = await this.repository.listPoolMembers(poolId);
     return { ...pool, members };
   }
 
-  public async listPools(providerId?: string): Promise<ProviderCredentialPool[]> {
+  public async listPools(
+    providerId?: string,
+  ): Promise<ProviderCredentialPool[]> {
     return this.repository.listPools(providerId);
   }
 }

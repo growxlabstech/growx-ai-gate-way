@@ -1,10 +1,5 @@
 export type RoundingMode =
-  | "HALF_UP"
-  | "HALF_EVEN"
-  | "UP"
-  | "DOWN"
-  | "CEIL"
-  | "FLOOR";
+  "HALF_UP" | "HALF_EVEN" | "UP" | "DOWN" | "CEIL" | "FLOOR";
 
 /**
  * Standard internal arithmetic scale for high-precision financial operations.
@@ -78,7 +73,9 @@ export class Decimal {
       if (exp >= 0) {
         return coeff.mul(Decimal.raw(10n ** BigInt(exp) * INTERNAL_FACTOR));
       } else {
-        return coeff.div(Decimal.raw(10n ** BigInt(Math.abs(exp)) * INTERNAL_FACTOR));
+        return coeff.div(
+          Decimal.raw(10n ** BigInt(Math.abs(exp)) * INTERNAL_FACTOR),
+        );
       }
     }
 
@@ -105,7 +102,7 @@ export class Decimal {
   public static fromUnits(
     quantity: bigint | number | Decimal,
     price: Decimal | string | number | bigint,
-    perUnits: bigint | number | Decimal = 1_000_000n
+    perUnits: bigint | number | Decimal = 1_000_000n,
   ): Decimal {
     const qDec = Decimal.from(quantity);
     const pDec = Decimal.from(price);
@@ -145,7 +142,7 @@ export class Decimal {
     }
     // Scale numerator up by 10^18 before dividing with HALF_UP rounding
     const scaledNum = this._value * INTERNAL_FACTOR;
-    const isNeg = (scaledNum < 0n) !== (o._value < 0n);
+    const isNeg = scaledNum < 0n !== o._value < 0n;
     const absNum = scaledNum < 0n ? -scaledNum : scaledNum;
     const absDen = o._value < 0n ? -o._value : o._value;
 
@@ -193,7 +190,9 @@ export class Decimal {
     return this._value >= Decimal.from(other)._value;
   }
 
-  public static min(...values: (Decimal | string | number | bigint)[]): Decimal {
+  public static min(
+    ...values: (Decimal | string | number | bigint)[]
+  ): Decimal {
     if (values.length === 0) {
       throw new Error("Decimal.min requires at least one argument");
     }
@@ -207,7 +206,9 @@ export class Decimal {
     return minVal;
   }
 
-  public static max(...values: (Decimal | string | number | bigint)[]): Decimal {
+  public static max(
+    ...values: (Decimal | string | number | bigint)[]
+  ): Decimal {
     if (values.length === 0) {
       throw new Error("Decimal.max requires at least one argument");
     }
@@ -221,7 +222,9 @@ export class Decimal {
     return maxVal;
   }
 
-  public static sum(...values: (Decimal | string | number | bigint)[]): Decimal {
+  public static sum(
+    ...values: (Decimal | string | number | bigint)[]
+  ): Decimal {
     let total = Decimal.ZERO;
     for (const v of values) {
       total = total.add(v);
@@ -232,7 +235,10 @@ export class Decimal {
   /**
    * Converts the Decimal to minor currency units (e.g. cents for USD, paise for INR).
    */
-  public toMinorUnits(minorDigits: number = 2, rounding: RoundingMode = "HALF_UP"): bigint {
+  public toMinorUnits(
+    minorDigits: number = 2,
+    rounding: RoundingMode = "HALF_UP",
+  ): bigint {
     const scaleFactor = 10n ** BigInt(DECIMAL_INTERNAL_SCALE - minorDigits);
     const isNeg = this._value < 0n;
     const absVal = isNeg ? -this._value : this._value;
@@ -290,7 +296,10 @@ export class Decimal {
   /**
    * Rounds the Decimal to the specified number of decimal places.
    */
-  public round(decimalPlaces: number = 0, rounding: RoundingMode = "HALF_UP"): Decimal {
+  public round(
+    decimalPlaces: number = 0,
+    rounding: RoundingMode = "HALF_UP",
+  ): Decimal {
     const minor = this.toMinorUnits(decimalPlaces, rounding);
     return Decimal.fromMinorUnits(minor, decimalPlaces);
   }
@@ -298,7 +307,10 @@ export class Decimal {
   /**
    * Constructs a Decimal from minor currency units.
    */
-  public static fromMinorUnits(minorUnits: bigint | number, minorDigits: number = 2): Decimal {
+  public static fromMinorUnits(
+    minorUnits: bigint | number,
+    minorDigits: number = 2,
+  ): Decimal {
     const m = BigInt(minorUnits);
     const scaleFactor = 10n ** BigInt(DECIMAL_INTERNAL_SCALE - minorDigits);
     return Decimal.raw(m * scaleFactor);
@@ -307,7 +319,10 @@ export class Decimal {
   /**
    * Rounds the Decimal to the specified number of decimal places.
    */
-  public toFixed(decimalPlaces: number = 2, rounding: RoundingMode = "HALF_UP"): string {
+  public toFixed(
+    decimalPlaces: number = 2,
+    rounding: RoundingMode = "HALF_UP",
+  ): string {
     if (decimalPlaces < 0) {
       throw new Error("Decimal places must be non-negative");
     }

@@ -7,10 +7,22 @@ import type {
 } from "./types.js";
 
 export interface RedisClientInterface {
-  eval(script: string, numkeys: number, ...args: (string | number)[]): Promise<any>;
+  eval(
+    script: string,
+    numkeys: number,
+    ...args: (string | number)[]
+  ): Promise<any>;
   zadd(key: string, score: number, member: string): Promise<number>;
-  zremrangebyscore(key: string, min: number | string, max: number | string): Promise<number>;
-  zrangebyscore(key: string, min: number | string, max: number | string): Promise<string[]>;
+  zremrangebyscore(
+    key: string,
+    min: number | string,
+    max: number | string,
+  ): Promise<number>;
+  zrangebyscore(
+    key: string,
+    min: number | string,
+    max: number | string,
+  ): Promise<string[]>;
   del(...keys: string[]): Promise<number>;
   expire(key: string, seconds: number): Promise<number>;
   hset(key: string, ...fieldValues: (string | number)[]): Promise<number>;
@@ -25,7 +37,7 @@ export interface RedisClientInterface {
 export class RedisCounterStore implements IRuntimeCounterStore {
   constructor(
     private readonly redis: RedisClientInterface,
-    private readonly keyPrefix = "quota:v1:"
+    private readonly keyPrefix = "quota:v1:",
   ) {}
 
   private qualify(key: string): string {
@@ -79,7 +91,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
 
   async checkAndReserveAtomic(
     reservations: AtomicReservationRequest[],
-    now = new Date()
+    now = new Date(),
   ): Promise<AtomicReservationResult> {
     if (reservations.length === 0) return { allowed: true };
 
@@ -93,7 +105,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
         r.burst ?? 0,
         r.windowSeconds,
         r.amount,
-        r.hard ? 1 : 0
+        r.hard ? 1 : 0,
       );
     }
 
@@ -102,7 +114,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
         this.checkAndReserveLua,
         keys.length,
         ...keys,
-        ...args
+        ...args,
       )) as [number, number, number, number];
 
       const allowed = res[0] === 1;
@@ -135,7 +147,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
     key: string,
     limit: number,
     ttlSeconds: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<{ acquired: boolean; permitId?: string; current: number }> {
     const qKey = this.qualify(key);
     const nowMs = now.getTime();
@@ -179,7 +191,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
       expiresAt,
       limit,
       nowMs,
-      ttlSeconds
+      ttlSeconds,
     )) as [number, number];
 
     const acquired = res[0] === 1;
@@ -196,7 +208,10 @@ export class RedisCounterStore implements IRuntimeCounterStore {
     };
   }
 
-  async releaseConcurrencyPermit(key: string, permitId: string): Promise<boolean> {
+  async releaseConcurrencyPermit(
+    key: string,
+    permitId: string,
+  ): Promise<boolean> {
     const qKey = this.qualify(key);
     const deleted = await this.redis.hdel(qKey, permitId);
     return deleted > 0;
@@ -206,7 +221,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
     key: string,
     permitId: string,
     ttlSeconds: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<boolean> {
     const qKey = this.qualify(key);
     const nowMs = now.getTime();
@@ -237,7 +252,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
       permitId,
       expiresAt,
       nowMs,
-      ttlSeconds
+      ttlSeconds,
     );
     return res === 1;
   }
@@ -247,7 +262,7 @@ export class RedisCounterStore implements IRuntimeCounterStore {
     windowSeconds: number,
     reservedAmount: number,
     actualAmount: number,
-    now = new Date()
+    now = new Date(),
   ): Promise<void> {
     const diff = actualAmount - reservedAmount;
     if (diff === 0) return;
@@ -265,14 +280,14 @@ export class RedisCounterStore implements IRuntimeCounterStore {
 
   async rollbackReservation(
     _scopes: ReservedScopeAmount[],
-    _now = new Date()
+    _now = new Date(),
   ): Promise<void> {
     // Best-effort rollback
   }
 
   async getCapacityMetrics(
     keys: string[],
-    now = new Date()
+    now = new Date(),
   ): Promise<
     Record<
       string,

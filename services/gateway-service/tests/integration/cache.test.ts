@@ -1,5 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 import type { OpenAIChatCompletionRequest } from "@growx/contracts";
 import type { MachineAuthContext } from "@growx/api-key-service";
 
@@ -26,19 +29,25 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
     const auth = await getAuth();
     const req: OpenAIChatCompletionRequest = {
       model: "growx/fast",
-      messages: [{ role: "user", content: "What is the boiling point of water?" }],
+      messages: [
+        { role: "user", content: "What is the boiling point of water?" },
+      ],
       temperature: 0,
       stream: false,
     };
 
     // First request: Cold cache -> Provider execution
     const res1 = await fixture.gatewayEngine.executeChatCompletion(auth, req);
-    expect(res1.choices[0]?.message.content).toContain("Hello from GrowX AI Gateway mock provider!");
+    expect(res1.choices[0]?.message.content).toContain(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(1);
 
     // Second request: Cache HIT -> 0 additional provider calls
     const res2 = await fixture.gatewayEngine.executeChatCompletion(auth, req);
-    expect(res2.choices[0]?.message.content).toContain("Hello from GrowX AI Gateway mock provider!");
+    expect(res2.choices[0]?.message.content).toContain(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(fixture.mockAdapter.calls).toHaveLength(1); // Provider NOT called again!
 
     // Verify usage ledger recorded 0 provider attempts for the cache hit
@@ -73,8 +82,14 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
   });
 
   it("enforces strict tenant isolation across workspaces", async () => {
-    const authA = await getAuth({ organizationId: "org_alpha", workspaceId: "ws_alpha" });
-    const authB = await getAuth({ organizationId: "org_beta", workspaceId: "ws_beta" });
+    const authA = await getAuth({
+      organizationId: "org_alpha",
+      workspaceId: "ws_alpha",
+    });
+    const authB = await getAuth({
+      organizationId: "org_beta",
+      workspaceId: "ws_beta",
+    });
 
     const req: OpenAIChatCompletionRequest = {
       model: "growx/fast",
@@ -124,11 +139,13 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
           ],
         },
       },
-      "usr_operator"
+      "usr_operator",
     );
 
     // 3. Request must fail with 403 policy denial, not replay stale cache
-    await expect(fixture.gatewayEngine.executeChatCompletion(auth, req)).rejects.toThrow();
+    await expect(
+      fixture.gatewayEngine.executeChatCompletion(auth, req),
+    ).rejects.toThrow();
   });
 
   it("replays cached responses as SSE chunks for streaming requests", async () => {
@@ -141,20 +158,31 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
     };
 
     // First: populate cache via non-streaming
-    await fixture.gatewayEngine.executeChatCompletion(auth, { ...req, stream: false });
+    await fixture.gatewayEngine.executeChatCompletion(auth, {
+      ...req,
+      stream: false,
+    });
     expect(fixture.mockAdapter.calls).toHaveLength(1);
 
     // Streaming request: hits cache, replays chunks without calling provider stream
     const chunks: any[] = [];
-    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(auth, req)) {
+    for await (const chunk of fixture.gatewayEngine.streamChatCompletion(
+      auth,
+      req,
+    )) {
       chunks.push(chunk);
     }
 
     expect(chunks.length).toBeGreaterThanOrEqual(2);
-    expect(chunks.some((c) => {
-      const deltaContent = c.choices?.[0]?.delta?.content;
-      return typeof deltaContent === "string" && deltaContent.includes("mock provider");
-    })).toBe(true);
+    expect(
+      chunks.some((c) => {
+        const deltaContent = c.choices?.[0]?.delta?.content;
+        return (
+          typeof deltaContent === "string" &&
+          deltaContent.includes("mock provider")
+        );
+      }),
+    ).toBe(true);
     expect(fixture.mockAdapter.streamCalls).toHaveLength(0); // Provider stream was never called!
   });
 
@@ -169,15 +197,17 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
 
     // 30 concurrent identical requests on a cold cache
     const promises = Array.from({ length: 30 }, () =>
-      fixture.gatewayEngine.executeChatCompletion(auth, req)
+      fixture.gatewayEngine.executeChatCompletion(auth, req),
     );
 
     const results = await Promise.all(promises);
     expect(results).toHaveLength(30);
-    expect(results.every((r) => {
-      const content = r.choices[0]?.message.content;
-      return typeof content === "string" && content.includes("mock provider");
-    })).toBe(true);
+    expect(
+      results.every((r) => {
+        const content = r.choices[0]?.message.content;
+        return typeof content === "string" && content.includes("mock provider");
+      }),
+    ).toBe(true);
 
     // Only 1 provider execution happened despite 30 concurrent callers
     expect(fixture.mockAdapter.calls).toHaveLength(1);
@@ -196,10 +226,11 @@ describe("Phase 15: Exact Prompt / Response Cache Integration", () => {
     expect(fixture.mockAdapter.calls).toHaveLength(1);
 
     // Invalidate workspace cache
-    const invalidatedCount = await fixture.gatewayEngine.cacheService.invalidate({
-      organizationId: auth.organizationId,
-      workspaceId: auth.workspaceId,
-    });
+    const invalidatedCount =
+      await fixture.gatewayEngine.cacheService.invalidate({
+        organizationId: auth.organizationId,
+        workspaceId: auth.workspaceId,
+      });
     await fixture.gatewayEngine.semanticCacheService.invalidate({
       organizationId: auth.organizationId,
       workspaceId: auth.workspaceId,

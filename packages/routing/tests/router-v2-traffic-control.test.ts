@@ -33,7 +33,11 @@ describe("Router V2 - Traffic Controls & Canary", () => {
       updatedAt: new Date(),
     });
 
-    const eligible = TrafficControlEvaluator.applyControls([candidate], controls, "org_1");
+    const eligible = TrafficControlEvaluator.applyControls(
+      [candidate],
+      controls,
+      "org_1",
+    );
     expect(eligible.length).toBe(0);
   });
 
@@ -50,7 +54,11 @@ describe("Router V2 - Traffic Controls & Canary", () => {
       updatedAt: new Date(),
     });
 
-    const eligible = TrafficControlEvaluator.applyControls([candidate], controls, "org_1");
+    const eligible = TrafficControlEvaluator.applyControls(
+      [candidate],
+      controls,
+      "org_1",
+    );
     expect(eligible.length).toBe(0);
   });
 
@@ -68,7 +76,11 @@ describe("Router V2 - Traffic Controls & Canary", () => {
 
     let allowed = 0;
     for (let i = 0; i < 100; i++) {
-      const el = TrafficControlEvaluator.applyControls([candidate], controls, `org_test_${i}`);
+      const el = TrafficControlEvaluator.applyControls(
+        [candidate],
+        controls,
+        `org_test_${i}`,
+      );
       if (el.length > 0) allowed++;
     }
 

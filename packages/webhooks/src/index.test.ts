@@ -36,22 +36,30 @@ describe("Phase 21 — @growx/webhooks Package", () => {
 
     it("validates webhook URLs and rejects insecure or dangerous configurations", () => {
       // Insecure HTTP in production
-      expect(() => validateWebhookUrl("http://example.com/webhook")).toThrow("must use HTTPS");
+      expect(() => validateWebhookUrl("http://example.com/webhook")).toThrow(
+        "must use HTTPS",
+      );
 
       // Embedded credentials
-      expect(() => validateWebhookUrl("https://admin:pass@example.com/webhook")).toThrow(
-        "embedded user/password credentials"
-      );
+      expect(() =>
+        validateWebhookUrl("https://admin:pass@example.com/webhook"),
+      ).toThrow("embedded user/password credentials");
 
       // Forbidden hostnames
-      expect(() => validateWebhookUrl("https://localhost/webhook")).toThrow("forbidden");
-      expect(() => validateWebhookUrl("https://test.local/webhook")).toThrow("forbidden");
-      expect(() => validateWebhookUrl("https://metadata.google.internal/webhook")).toThrow(
-        "forbidden"
+      expect(() => validateWebhookUrl("https://localhost/webhook")).toThrow(
+        "forbidden",
       );
+      expect(() => validateWebhookUrl("https://test.local/webhook")).toThrow(
+        "forbidden",
+      );
+      expect(() =>
+        validateWebhookUrl("https://metadata.google.internal/webhook"),
+      ).toThrow("forbidden");
 
       // Forbidden ports
-      expect(() => validateWebhookUrl("https://example.com:22/webhook")).toThrow("port is not allowed");
+      expect(() =>
+        validateWebhookUrl("https://example.com:22/webhook"),
+      ).toThrow("port is not allowed");
 
       // Valid HTTPS URL
       const valid = validateWebhookUrl("https://api.example.com/webhook/growx");
@@ -64,7 +72,7 @@ describe("Phase 21 — @growx/webhooks Package", () => {
       };
 
       await expect(
-        resolveAndValidateDns("rebind-attack.example.com", mockDns)
+        resolveAndValidateDns("rebind-attack.example.com", mockDns),
       ).rejects.toThrow("SSRF / DNS Rebinding blocked");
     });
   });
@@ -73,7 +81,10 @@ describe("Phase 21 — @growx/webhooks Package", () => {
     const secret = "whsec_0123456789abcdef0123456789abcdef";
     const eventId = "evt_test_123";
     const timestamp = Math.floor(Date.now() / 1000);
-    const body = JSON.stringify({ type: "payment.succeeded.v1", data: { id: "pay_1" } });
+    const body = JSON.stringify({
+      type: "payment.succeeded.v1",
+      data: { id: "pay_1" },
+    });
 
     it("signs canonical payload deterministically", () => {
       const signature = signWebhook({ id: eventId, timestamp, body, secret });
@@ -95,7 +106,10 @@ describe("Phase 21 — @growx/webhooks Package", () => {
       const signature = signWebhook({ id: eventId, timestamp, body, secret });
 
       // Mutated body by 1 character
-      const mutatedBody = JSON.stringify({ type: "payment.succeeded.v1", data: { id: "pay_2" } });
+      const mutatedBody = JSON.stringify({
+        type: "payment.succeeded.v1",
+        data: { id: "pay_2" },
+      });
       const invalidBody = verifyWebhookSignature({
         id: eventId,
         timestamp,
@@ -160,7 +174,11 @@ describe("Phase 21 — @growx/webhooks Package", () => {
       const policy = DEFAULT_WEBHOOK_RETRY_POLICY;
 
       // Attempt 1 without Retry-After (jitter disabled for test predictability)
-      const delay1 = calculateNextAttemptMs(1, { ...policy, jitter: false }, undefined);
+      const delay1 = calculateNextAttemptMs(
+        1,
+        { ...policy, jitter: false },
+        undefined,
+      );
       expect(delay1).toBeGreaterThanOrEqual(1000);
 
       // Retry-After header parsing
@@ -173,16 +191,40 @@ describe("Phase 21 — @growx/webhooks Package", () => {
 
     it("classifies HTTP responses into appropriate delivery outcomes", () => {
       // 200 OK
-      expect(classifyDeliveryOutcome({ responseStatus: 200, currentAttempt: 1, maxAttempts: 5 }).status).toBe("succeeded");
+      expect(
+        classifyDeliveryOutcome({
+          responseStatus: 200,
+          currentAttempt: 1,
+          maxAttempts: 5,
+        }).status,
+      ).toBe("succeeded");
 
       // 500 Server Error on attempt 1 -> retrying
-      expect(classifyDeliveryOutcome({ responseStatus: 500, currentAttempt: 1, maxAttempts: 5 }).status).toBe("retrying");
+      expect(
+        classifyDeliveryOutcome({
+          responseStatus: 500,
+          currentAttempt: 1,
+          maxAttempts: 5,
+        }).status,
+      ).toBe("retrying");
 
       // 500 Server Error on max attempt 5 -> dead_letter
-      expect(classifyDeliveryOutcome({ responseStatus: 500, currentAttempt: 5, maxAttempts: 5 }).status).toBe("dead_letter");
+      expect(
+        classifyDeliveryOutcome({
+          responseStatus: 500,
+          currentAttempt: 5,
+          maxAttempts: 5,
+        }).status,
+      ).toBe("dead_letter");
 
       // 404 Client Error -> permanent dead_letter
-      expect(classifyDeliveryOutcome({ responseStatus: 404, currentAttempt: 1, maxAttempts: 5 }).status).toBe("dead_letter");
+      expect(
+        classifyDeliveryOutcome({
+          responseStatus: 404,
+          currentAttempt: 1,
+          maxAttempts: 5,
+        }).status,
+      ).toBe("dead_letter");
     });
   });
 });

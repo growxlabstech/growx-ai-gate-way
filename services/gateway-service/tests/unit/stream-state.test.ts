@@ -37,89 +37,127 @@ describe("StreamState", () => {
 
   describe("isValidTransition", () => {
     it("allows INITIAL → VALIDATED", () => {
-      expect(isValidTransition(StreamState.INITIAL, StreamState.VALIDATED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.INITIAL, StreamState.VALIDATED),
+      ).toBe(true);
     });
 
     it("allows INITIAL → FAILED", () => {
-      expect(isValidTransition(StreamState.INITIAL, StreamState.FAILED)).toBe(true);
+      expect(isValidTransition(StreamState.INITIAL, StreamState.FAILED)).toBe(
+        true,
+      );
     });
 
     it("allows INITIAL → CANCELLED", () => {
-      expect(isValidTransition(StreamState.INITIAL, StreamState.CANCELLED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.INITIAL, StreamState.CANCELLED),
+      ).toBe(true);
     });
 
     it("allows VALIDATED → CONNECTING", () => {
-      expect(isValidTransition(StreamState.VALIDATED, StreamState.CONNECTING)).toBe(true);
+      expect(
+        isValidTransition(StreamState.VALIDATED, StreamState.CONNECTING),
+      ).toBe(true);
     });
 
     it("allows CONNECTING → STREAMING", () => {
-      expect(isValidTransition(StreamState.CONNECTING, StreamState.STREAMING)).toBe(true);
+      expect(
+        isValidTransition(StreamState.CONNECTING, StreamState.STREAMING),
+      ).toBe(true);
     });
 
     it("allows CONNECTING → FAILED", () => {
-      expect(isValidTransition(StreamState.CONNECTING, StreamState.FAILED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.CONNECTING, StreamState.FAILED),
+      ).toBe(true);
     });
 
     it("allows CONNECTING → TIMED_OUT", () => {
-      expect(isValidTransition(StreamState.CONNECTING, StreamState.TIMED_OUT)).toBe(true);
+      expect(
+        isValidTransition(StreamState.CONNECTING, StreamState.TIMED_OUT),
+      ).toBe(true);
     });
 
     it("allows STREAMING → COMPLETING", () => {
-      expect(isValidTransition(StreamState.STREAMING, StreamState.COMPLETING)).toBe(true);
+      expect(
+        isValidTransition(StreamState.STREAMING, StreamState.COMPLETING),
+      ).toBe(true);
     });
 
     it("allows STREAMING → FAILED", () => {
-      expect(isValidTransition(StreamState.STREAMING, StreamState.FAILED)).toBe(true);
+      expect(isValidTransition(StreamState.STREAMING, StreamState.FAILED)).toBe(
+        true,
+      );
     });
 
     it("allows STREAMING → CANCELLED", () => {
-      expect(isValidTransition(StreamState.STREAMING, StreamState.CANCELLED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.STREAMING, StreamState.CANCELLED),
+      ).toBe(true);
     });
 
     it("allows STREAMING → TIMED_OUT", () => {
-      expect(isValidTransition(StreamState.STREAMING, StreamState.TIMED_OUT)).toBe(true);
+      expect(
+        isValidTransition(StreamState.STREAMING, StreamState.TIMED_OUT),
+      ).toBe(true);
     });
 
     it("allows COMPLETING → COMPLETED", () => {
-      expect(isValidTransition(StreamState.COMPLETING, StreamState.COMPLETED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.COMPLETING, StreamState.COMPLETED),
+      ).toBe(true);
     });
 
     it("allows COMPLETING → FAILED", () => {
-      expect(isValidTransition(StreamState.COMPLETING, StreamState.FAILED)).toBe(true);
+      expect(
+        isValidTransition(StreamState.COMPLETING, StreamState.FAILED),
+      ).toBe(true);
     });
 
     it("disallows INITIAL → STREAMING (skip)", () => {
-      expect(isValidTransition(StreamState.INITIAL, StreamState.STREAMING)).toBe(false);
+      expect(
+        isValidTransition(StreamState.INITIAL, StreamState.STREAMING),
+      ).toBe(false);
     });
 
     it("disallows COMPLETED → anything (terminal)", () => {
-      expect(isValidTransition(StreamState.COMPLETED, StreamState.FAILED)).toBe(false);
-      expect(isValidTransition(StreamState.COMPLETED, StreamState.INITIAL)).toBe(false);
+      expect(isValidTransition(StreamState.COMPLETED, StreamState.FAILED)).toBe(
+        false,
+      );
+      expect(
+        isValidTransition(StreamState.COMPLETED, StreamState.INITIAL),
+      ).toBe(false);
     });
 
     it("disallows FAILED → anything (terminal)", () => {
-      expect(isValidTransition(StreamState.FAILED, StreamState.COMPLETED)).toBe(false);
+      expect(isValidTransition(StreamState.FAILED, StreamState.COMPLETED)).toBe(
+        false,
+      );
     });
 
     it("disallows CANCELLED → anything (terminal)", () => {
-      expect(isValidTransition(StreamState.CANCELLED, StreamState.STREAMING)).toBe(false);
+      expect(
+        isValidTransition(StreamState.CANCELLED, StreamState.STREAMING),
+      ).toBe(false);
     });
 
     it("disallows TIMED_OUT → anything (terminal)", () => {
-      expect(isValidTransition(StreamState.TIMED_OUT, StreamState.COMPLETED)).toBe(false);
+      expect(
+        isValidTransition(StreamState.TIMED_OUT, StreamState.COMPLETED),
+      ).toBe(false);
     });
   });
 
   describe("assertTransition", () => {
     it("returns the target state on valid transition", () => {
       expect(assertTransition(StreamState.INITIAL, StreamState.VALIDATED)).toBe(
-        StreamState.VALIDATED
+        StreamState.VALIDATED,
       );
     });
 
     it("throws StreamTransitionError on invalid transition", () => {
       expect(() =>
-        assertTransition(StreamState.INITIAL, StreamState.COMPLETED)
+        assertTransition(StreamState.INITIAL, StreamState.COMPLETED),
       ).toThrow(StreamTransitionError);
     });
 
@@ -156,7 +194,10 @@ describe("StreamState", () => {
     });
 
     it("INITIAL → CANCELLED", () => {
-      const state = assertTransition(StreamState.INITIAL, StreamState.CANCELLED);
+      const state = assertTransition(
+        StreamState.INITIAL,
+        StreamState.CANCELLED,
+      );
       expect(isTerminal(state)).toBe(true);
     });
 
@@ -166,12 +207,18 @@ describe("StreamState", () => {
     });
 
     it("CONNECTING → FAILED", () => {
-      const state = assertTransition(StreamState.CONNECTING, StreamState.FAILED);
+      const state = assertTransition(
+        StreamState.CONNECTING,
+        StreamState.FAILED,
+      );
       expect(isTerminal(state)).toBe(true);
     });
 
     it("CONNECTING → TIMED_OUT", () => {
-      const state = assertTransition(StreamState.CONNECTING, StreamState.TIMED_OUT);
+      const state = assertTransition(
+        StreamState.CONNECTING,
+        StreamState.TIMED_OUT,
+      );
       expect(isTerminal(state)).toBe(true);
     });
 
@@ -181,12 +228,18 @@ describe("StreamState", () => {
     });
 
     it("STREAMING → CANCELLED", () => {
-      const state = assertTransition(StreamState.STREAMING, StreamState.CANCELLED);
+      const state = assertTransition(
+        StreamState.STREAMING,
+        StreamState.CANCELLED,
+      );
       expect(isTerminal(state)).toBe(true);
     });
 
     it("STREAMING → TIMED_OUT", () => {
-      const state = assertTransition(StreamState.STREAMING, StreamState.TIMED_OUT);
+      const state = assertTransition(
+        StreamState.STREAMING,
+        StreamState.TIMED_OUT,
+      );
       expect(isTerminal(state)).toBe(true);
     });
   });

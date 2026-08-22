@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { RUNBOOKS } from '../src/runbooks/index.js';
+import { describe, it, expect } from "vitest";
+import { RUNBOOKS } from "../src/runbooks/index.js";
 
-describe('Runbooks', () => {
-  it('contains all 10 canonical operational runbooks with executable steps', () => {
+describe("Runbooks", () => {
+  it("contains all 10 canonical operational runbooks with executable steps", () => {
     const expectedRunbookIds = [
-      'rb_postgres_outage',
-      'rb_redis_outage',
-      'rb_object_storage_outage',
-      'rb_region_outage',
-      'rb_provider_mass_outage',
-      'rb_secret_vault_failure',
-      'rb_bad_deployment',
-      'rb_bad_migration',
-      'rb_queue_backlog',
-      'rb_billing_outage',
+      "rb_postgres_outage",
+      "rb_redis_outage",
+      "rb_object_storage_outage",
+      "rb_region_outage",
+      "rb_provider_mass_outage",
+      "rb_secret_vault_failure",
+      "rb_bad_deployment",
+      "rb_bad_migration",
+      "rb_queue_backlog",
+      "rb_billing_outage",
     ];
 
     for (const id of expectedRunbookIds) {

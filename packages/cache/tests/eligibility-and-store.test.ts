@@ -5,7 +5,10 @@ import {
   InMemoryExactCacheStore,
   CacheService,
 } from "../src/index.js";
-import type { OpenAIChatCompletionRequest, OpenAIChatCompletionResponse } from "@growx/contracts";
+import type {
+  OpenAIChatCompletionRequest,
+  OpenAIChatCompletionResponse,
+} from "@growx/contracts";
 
 describe("Cache Eligibility & Store Operations", () => {
   it("enforces deterministic-only default rules", () => {
@@ -21,9 +24,18 @@ describe("Cache Eligibility & Store Operations", () => {
       temperature: 0.7,
     };
 
-    expect(evaluateCacheEligibility(deterministicReq, DEFAULT_CACHE_POLICY_CONFIG).eligible).toBe(true);
-    expect(evaluateCacheEligibility(nonDeterministicReq, DEFAULT_CACHE_POLICY_CONFIG).eligible).toBe(false);
-    expect(evaluateCacheEligibility(nonDeterministicReq, DEFAULT_CACHE_POLICY_CONFIG).reason).toBe("NON_DETERMINISTIC");
+    expect(
+      evaluateCacheEligibility(deterministicReq, DEFAULT_CACHE_POLICY_CONFIG)
+        .eligible,
+    ).toBe(true);
+    expect(
+      evaluateCacheEligibility(nonDeterministicReq, DEFAULT_CACHE_POLICY_CONFIG)
+        .eligible,
+    ).toBe(false);
+    expect(
+      evaluateCacheEligibility(nonDeterministicReq, DEFAULT_CACHE_POLICY_CONFIG)
+        .reason,
+    ).toBe("NON_DETERMINISTIC");
   });
 
   it("bypasses requests declaring unsafe tools by default", () => {
@@ -34,7 +46,10 @@ describe("Cache Eligibility & Store Operations", () => {
       temperature: 0,
     };
 
-    const decision = evaluateCacheEligibility(toolReq, DEFAULT_CACHE_POLICY_CONFIG);
+    const decision = evaluateCacheEligibility(
+      toolReq,
+      DEFAULT_CACHE_POLICY_CONFIG,
+    );
     expect(decision.eligible).toBe(false);
     expect(decision.reason).toBe("TOOLS_UNSAFE");
   });
@@ -99,7 +114,9 @@ describe("Cache Eligibility & Store Operations", () => {
       request: req,
     });
     expect(lookup2.status).toBe("HIT");
-    expect(lookup2.entry?.responsePayload.choices[0]?.message.content).toBe("Paris");
+    expect(lookup2.entry?.responsePayload.choices[0]?.message.content).toBe(
+      "Paris",
+    );
     expect(lookup2.entry?.responseMetadata.logicalUsage.totalTokens).toBe(12);
   });
 
@@ -118,7 +135,13 @@ describe("Cache Eligibility & Store Operations", () => {
       object: "chat.completion",
       created: 1720000000,
       model: "gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Result" }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: "Result" },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     await service.admitAndStore({

@@ -1,9 +1,27 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import { toNodeHandler } from "better-auth/node";
 import { loadEnvironment } from "@growx/configuration";
 import { createDatabase } from "@growx/database";
-import { listUserSessions, revokeUserSession, revokeAllUserSessions, getUserTenantContext } from "./session-management";
-import { createJitPrivilegedSession, revokeJitPrivilegedSession } from "./privileged-handler";
+import {
+  listUserSessions,
+  revokeUserSession,
+  revokeAllUserSessions,
+  getUserTenantContext,
+} from "./session-management";
+import {
+  createJitPrivilegedSession,
+  revokeJitPrivilegedSession,
+  type StepUpRequest,
+} from "./privileged-handler";
+import {
+  acceptOrganizationInvitation,
+  createFirstOrganization,
+  createFirstWorkspace,
+} from "./tenancy-handler";
 
 export const serviceName = "identity-service";
 
@@ -50,11 +68,17 @@ export function createApp() {
     const method = request.method ?? "GET";
 
     if (["/health", "/live", "/ready"].includes(url)) {
-      sendJson(response, 200, { status: "ok", service: serviceName, timestamp: new Date().toISOString() });
+      sendJson(response, 200, {
+        status: "ok",
+        service: serviceName,
+        timestamp: new Date().toISOString(),
+      });
       return;
     }
 
-    const requestId = (request.headers["x-request-id"] as string) ?? `req_${crypto.randomUUID().replace(/-/g, "")}`;
+    const requestId =
+      (request.headers["x-request-id"] as string) ??
+      `req_${crypto.randomUUID().replace(/-/g, "")}`;
 
     // Custom Session & Context endpoints
     if (url === "/v1/auth/sessions" && method === "GET") {
@@ -64,11 +88,17 @@ export function createApp() {
           sendJson(response, 401, { error: "Authentication required" });
           return;
         }
-        const sessions = await listUserSessions(database.db, sessionState.user.id, sessionState.session.id);
+        const sessions = await listUserSessions(
+          database.db,
+          sessionState.user.id,
+          sessionState.session.id,
+        );
         sendJson(response, 200, { sessions });
         return;
       } catch (err) {
-        sendJson(response, 500, { error: err instanceof Error ? err.message : "Internal error" });
+        sendJson(response, 500, {
+          error: err instanceof Error ? err.message : "Internal error",
+        });
         return;
       }
     }
@@ -81,15 +111,27 @@ export function createApp() {
           return;
         }
         const sessionId = url.replace("/v1/auth/sessions/", "");
-        const revoked = await revokeUserSession(database.db, sessionState.user.id, sessionId, requestId);
+        const revoked = await revokeUserSession(
+          database.db,
+          sessionState.user.id,
+          sessionId,
+          requestId,
+        );
         if (!revoked) {
-          sendJson(response, 404, { error: "Session not found or already revoked" });
+          sendJson(response, 404, {
+            error: "Session not found or already revoked",
+          });
           return;
         }
-        sendJson(response, 200, { success: true, message: "Session revoked successfully" });
+        sendJson(response, 200, {
+          success: true,
+          message: "Session revoked successfully",
+        });
         return;
       } catch (err) {
-        sendJson(response, 500, { error: err instanceof Error ? err.message : "Internal error" });
+        sendJson(response, 500, {
+          error: err instanceof Error ? err.message : "Internal error",
+        });
         return;
       }
     }
@@ -101,11 +143,18 @@ export function createApp() {
           sendJson(response, 401, { error: "Authentication required" });
           return;
         }
-        const count = await revokeAllUserSessions(database.db, sessionState.user.id, undefined, requestId);
+        const count = await revokeAllUserSessions(
+          database.db,
+          sessionState.user.id,
+          undefined,
+          requestId,
+        );
         sendJson(response, 200, { success: true, revokedCount: count });
         return;
       } catch (err) {
-        sendJson(response, 500, { error: err instanceof Error ? err.message : "Internal error" });
+        sendJson(response, 500, {
+          error: err instanceof Error ? err.message : "Internal error",
+        });
         return;
       }
     }
@@ -117,7 +166,10 @@ export function createApp() {
           sendJson(response, 401, { error: "Authentication required" });
           return;
         }
-        const tenantContext = await getUserTenantContext(database.db, sessionState.user.id);
+        const tenantContext = await getUserTenantContext(
+          database.db,
+          sessionState.user.id,
+        );
         if (!tenantContext) {
           sendJson(response, 404, { error: "User tenant context not found" });
           return;
@@ -130,7 +182,140 @@ export function createApp() {
         });
         return;
       } catch (err) {
-        sendJson(response, 500, { error: err instanceof Error ? err.message : "Internal error" });
+        sendJson(response, 500, {
+          error: err instanceof Error ? err.message : "Internal error",
+        });
+        return;
+      }
+    }
+
+    if (url === "/v1/onboarding/organization" && method === "POST") {
+      try {
+        const sessionState = await getAuthenticatedUserSession(request);
+        if (!sessionState?.user?.id) {
+          sendJson(response, 401, {
+            error: {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Authentication required",
+              requestId,
+            },
+          });
+          return;
+        }
+        const result = await createFirstOrganization(
+          database.db,
+          sessionState.user.id,
+          await parseBody<unknown>(request),
+          requestId,
+        );
+        sendJson(response, result.replayed ? 200 : 201, result);
+        return;
+      } catch (err) {
+        const message =
+          err instanceof Error && err.name === "ZodError"
+            ? "Organization details are invalid."
+            : "Organization could not be created.";
+        sendJson(
+          response,
+          err instanceof Error && err.name === "ZodError" ? 400 : 409,
+          { error: { code: "ORGANIZATION_CREATE_FAILED", message, requestId } },
+        );
+        return;
+      }
+    }
+
+    if (url === "/v1/onboarding/workspace" && method === "POST") {
+      try {
+        const sessionState = await getAuthenticatedUserSession(request);
+        if (!sessionState?.user?.id) {
+          sendJson(response, 401, {
+            error: {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Authentication required",
+              requestId,
+            },
+          });
+          return;
+        }
+        const body = await parseBody<Record<string, unknown>>(request);
+        const organizationId =
+          typeof body.organizationId === "string" ? body.organizationId : "";
+        const result = await createFirstWorkspace(
+          database.db,
+          sessionState.user.id,
+          organizationId,
+          body,
+          requestId,
+        );
+        sendJson(response, result.replayed ? 200 : 201, result);
+        return;
+      } catch (err) {
+        const denied =
+          err instanceof Error && err.message === "WORKSPACE_CREATE_DENIED";
+        const invalid = err instanceof Error && err.name === "ZodError";
+        sendJson(response, denied ? 403 : invalid ? 400 : 409, {
+          error: {
+            code: denied
+              ? "WORKSPACE_CREATE_DENIED"
+              : "WORKSPACE_CREATE_FAILED",
+            message: denied
+              ? "Workspace creation is not permitted."
+              : invalid
+                ? "Workspace details are invalid."
+                : "Workspace could not be created.",
+            requestId,
+          },
+        });
+        return;
+      }
+    }
+
+    if (url === "/v1/invitations/accept" && method === "POST") {
+      try {
+        const sessionState = await getAuthenticatedUserSession(request);
+        if (!sessionState?.user?.id || !sessionState.user.email) {
+          sendJson(response, 401, {
+            error: {
+              code: "AUTHENTICATION_REQUIRED",
+              message: "Authentication required",
+              requestId,
+            },
+          });
+          return;
+        }
+        const body = await parseBody<{ token?: unknown }>(request);
+        if (
+          typeof body.token !== "string" ||
+          body.token.length < 16 ||
+          body.token.length > 512
+        )
+          throw new Error("INVITATION_INVALID");
+        sendJson(
+          response,
+          200,
+          await acceptOrganizationInvitation(
+            database.db,
+            { id: sessionState.user.id, email: sessionState.user.email },
+            body.token,
+            requestId,
+          ),
+        );
+        return;
+      } catch (err) {
+        const code = err instanceof Error ? err.message : "INVITATION_INVALID";
+        const status =
+          code === "INVITATION_EMAIL_MISMATCH"
+            ? 403
+            : code === "INVITATION_EXPIRED"
+              ? 410
+              : 400;
+        const message =
+          code === "INVITATION_EMAIL_MISMATCH"
+            ? "Sign in with the email address that received this invitation."
+            : code === "INVITATION_EXPIRED"
+              ? "This invitation has expired."
+              : "This invitation is invalid or has already been used.";
+        sendJson(response, status, { error: { code, message, requestId } });
         return;
       }
     }
@@ -140,28 +325,42 @@ export function createApp() {
       try {
         const sessionState = await getAuthenticatedUserSession(request);
         if (!sessionState?.user?.id) {
-          sendJson(response, 401, { error: "Operator authentication required for step-up" });
+          sendJson(response, 401, {
+            error: "Operator authentication required for step-up",
+          });
           return;
         }
-        const body = await parseBody<any>(request);
+        const body =
+          await parseBody<Omit<StepUpRequest, "operatorId" | "requestId">>(
+            request,
+          );
         const jitSession = await createJitPrivilegedSession(database.db, {
           operatorId: sessionState.user.id,
           reason: body.reason,
           capabilities: body.capabilities,
-          approvalReference: body.approvalReference,
-          breakGlass: body.breakGlass,
-          scope: body.scope,
+          ...(body.approvalReference !== undefined
+            ? { approvalReference: body.approvalReference }
+            : {}),
+          ...(body.breakGlass !== undefined
+            ? { breakGlass: body.breakGlass }
+            : {}),
+          ...(body.scope !== undefined ? { scope: body.scope } : {}),
           requestId,
         });
         sendJson(response, 200, jitSession);
         return;
       } catch (err) {
-        sendJson(response, 400, { error: err instanceof Error ? err.message : "Step-up failed" });
+        sendJson(response, 400, {
+          error: err instanceof Error ? err.message : "Step-up failed",
+        });
         return;
       }
     }
 
-    if (url.startsWith("/v1/auth/privileged/sessions/") && method === "DELETE") {
+    if (
+      url.startsWith("/v1/auth/privileged/sessions/") &&
+      method === "DELETE"
+    ) {
       try {
         const sessionState = await getAuthenticatedUserSession(request);
         if (!sessionState?.user?.id) {
@@ -169,15 +368,27 @@ export function createApp() {
           return;
         }
         const sessionId = url.replace("/v1/auth/privileged/sessions/", "");
-        const revoked = await revokeJitPrivilegedSession(database.db, sessionState.user.id, sessionId, requestId);
+        const revoked = await revokeJitPrivilegedSession(
+          database.db,
+          sessionState.user.id,
+          sessionId,
+          requestId,
+        );
         if (!revoked) {
-          sendJson(response, 404, { error: "Privileged session not found or already revoked" });
+          sendJson(response, 404, {
+            error: "Privileged session not found or already revoked",
+          });
           return;
         }
-        sendJson(response, 200, { success: true, message: "Privileged session revoked" });
+        sendJson(response, 200, {
+          success: true,
+          message: "Privileged session revoked",
+        });
         return;
       } catch (err) {
-        sendJson(response, 500, { error: err instanceof Error ? err.message : "Internal error" });
+        sendJson(response, 500, {
+          error: err instanceof Error ? err.message : "Internal error",
+        });
         return;
       }
     }
@@ -188,4 +399,5 @@ export function createApp() {
   });
 }
 
-if (process.env.NODE_ENV !== "test") createApp().listen(Number(process.env.PORT ?? 4000));
+if (process.env.NODE_ENV !== "test")
+  createApp().listen(Number(process.env.PORT ?? 4000));

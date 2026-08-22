@@ -12,7 +12,9 @@ import {
 } from "@growx/prompt-service";
 import type { MachineAuthContext } from "@growx/api-key-service";
 
-function createMockAuth(overrides: Partial<MachineAuthContext> = {}): MachineAuthContext {
+function createMockAuth(
+  overrides: Partial<MachineAuthContext> = {},
+): MachineAuthContext {
   return {
     actorType: "apiKey",
     apiKeyId: "key_test_123",
@@ -60,7 +62,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
       undefined,
       undefined,
       undefined,
-      promptResolver
+      promptResolver,
     );
   });
 
@@ -75,7 +77,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         key: "support.reply",
         name: "Support Auto Reply",
       },
-      "usr_test"
+      "usr_test",
     );
 
     const v1 = await promptService.createVersion(
@@ -83,17 +85,28 @@ describe("Gateway Engine Prompt Management Integration", () => {
       prompt.id,
       {
         messages: [
-          { role: "system", contentTemplate: "You are support agent for {{company}}." },
-          { role: "user", contentTemplate: "Help {{customer_name}} with: {{issue}}" },
+          {
+            role: "system",
+            contentTemplate: "You are support agent for {{company}}.",
+          },
+          {
+            role: "user",
+            contentTemplate: "Help {{customer_name}} with: {{issue}}",
+          },
         ],
         variableSchema: [
-          { name: "company", type: "string", required: true, defaultValue: "GrowX" },
+          {
+            name: "company",
+            type: "string",
+            required: true,
+            defaultValue: "GrowX",
+          },
           { name: "customer_name", type: "string", required: true },
           { name: "issue", type: "string", required: true },
         ],
         preferredModelFamily: "gpt-4o",
       },
-      "usr_test"
+      "usr_test",
     );
 
     await promptService.createRelease(
@@ -104,7 +117,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         environment: "production",
       },
       "usr_test",
-      true
+      true,
     );
 
     // 2. Execute Gateway request with prompt binding
@@ -137,7 +150,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         key: "strict.prompt",
         name: "Strict Prompt",
       },
-      "usr_test"
+      "usr_test",
     );
 
     const v1 = await promptService.createVersion(
@@ -147,7 +160,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         messages: [{ role: "user", contentTemplate: "Code: {{code}}" }],
         variableSchema: [{ name: "code", type: "string", required: true }],
       },
-      "usr_test"
+      "usr_test",
     );
 
     await promptService.createRelease(
@@ -158,7 +171,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         environment: "production",
       },
       "usr_test",
-      true
+      true,
     );
 
     // Missing 'code' variable
@@ -171,7 +184,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
           key: "strict.prompt",
           variables: {},
         },
-      })
+      }),
     ).rejects.toThrow();
   });
 
@@ -185,7 +198,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         key: "versioned.agent",
         name: "Versioned Agent",
       },
-      "usr_test"
+      "usr_test",
     );
 
     const v1 = await promptService.createVersion(
@@ -195,7 +208,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         messages: [{ role: "user", contentTemplate: "V1: {{input}}" }],
         variableSchema: [{ name: "input", type: "string", required: true }],
       },
-      "usr_test"
+      "usr_test",
     );
 
     const v2 = await promptService.createVersion(
@@ -205,7 +218,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         messages: [{ role: "user", contentTemplate: "V2: {{input}}" }],
         variableSchema: [{ name: "input", type: "string", required: true }],
       },
-      "usr_test"
+      "usr_test",
     );
 
     await promptService.createRelease(
@@ -216,7 +229,7 @@ describe("Gateway Engine Prompt Management Integration", () => {
         environment: "production",
       },
       "usr_test",
-      true
+      true,
     );
 
     // Explicitly pin to Version 1
@@ -251,7 +264,9 @@ describe("Gateway Engine Prompt Management Integration", () => {
     const response = await engine.executeChatCompletion(auth, {
       model: "openai/gpt-4o-mini",
       stream: false,
-      messages: [{ role: "user", content: "Direct raw message without registry" }],
+      messages: [
+        { role: "user", content: "Direct raw message without registry" },
+      ],
     });
 
     expect(response).toBeDefined();

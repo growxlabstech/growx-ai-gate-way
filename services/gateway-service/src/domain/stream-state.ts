@@ -43,14 +43,21 @@ const TERMINAL_STATES: ReadonlySet<StreamState> = new Set([
  * Valid state transitions. Each key maps to the set of states it can
  * transition to. Terminal states have no outgoing transitions.
  */
-const VALID_TRANSITIONS: ReadonlyMap<StreamState, ReadonlySet<StreamState>> = new Map([
+const VALID_TRANSITIONS: ReadonlyMap<
+  StreamState,
+  ReadonlySet<StreamState>
+> = new Map([
   [
     StreamState.INITIAL,
     new Set([StreamState.VALIDATED, StreamState.FAILED, StreamState.CANCELLED]),
   ],
   [
     StreamState.VALIDATED,
-    new Set([StreamState.CONNECTING, StreamState.FAILED, StreamState.CANCELLED]),
+    new Set([
+      StreamState.CONNECTING,
+      StreamState.FAILED,
+      StreamState.CANCELLED,
+    ]),
   ],
   [
     StreamState.CONNECTING,
@@ -96,7 +103,10 @@ export function isValidTransition(from: StreamState, to: StreamState): boolean {
  * Validates and returns the target state if the transition is valid.
  * Throws StreamTransitionError if the transition is invalid.
  */
-export function assertTransition(from: StreamState, to: StreamState): StreamState {
+export function assertTransition(
+  from: StreamState,
+  to: StreamState,
+): StreamState {
   if (!isValidTransition(from, to)) {
     throw new StreamTransitionError(from, to);
   }
@@ -111,7 +121,7 @@ export class StreamTransitionError extends Error {
   constructor(from: StreamState, to: StreamState) {
     super(
       `Invalid stream state transition: ${from} → ${to}` +
-        (isTerminal(from) ? ` (${from} is a terminal state)` : "")
+        (isTerminal(from) ? ` (${from} is a terminal state)` : ""),
     );
     this.name = "StreamTransitionError";
     this.from = from;

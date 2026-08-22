@@ -5,7 +5,10 @@ import {
   AnalyticsQueryService,
   OperationalSignalService,
 } from "../src/index.js";
-import type { GatewayRequestRecord, GatewayAttemptRecord } from "@growx/metering";
+import type {
+  GatewayRequestRecord,
+  GatewayAttemptRecord,
+} from "@growx/metering";
 
 describe("Analytics Query Service & Operational Intelligence", () => {
   let repository: InMemoryAnalyticsRepository;
@@ -34,7 +37,7 @@ describe("Analytics Query Service & Operational Intelligence", () => {
         apiKeyId: i <= 5 ? "key_alpha" : "key_beta",
         canonicalModelId: i <= 6 ? "gpt-4o" : "claude-3-5-sonnet",
         operation: "chat_completion",
-      workloadType: "customer",
+        workloadType: "customer",
         streaming: i % 2 === 0,
         status: "completed",
         meteringQuality: "provider_reported",
@@ -44,7 +47,13 @@ describe("Analytics Query Service & Operational Intelligence", () => {
         durationMs: 80 + i * 5,
         ttftMs: 25,
         logicalUsage: { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
-        providerConsumption: { inputTokens: 100, outputTokens: 50, totalTokens: 150, attemptCount: 1, failedAttemptCount: 0 },
+        providerConsumption: {
+          inputTokens: 100,
+          outputTokens: 50,
+          totalTokens: 150,
+          attemptCount: 1,
+          failedAttemptCount: 0,
+        },
         attemptCount: 1,
         retryCount: 0,
         fallbackCount: 0,
@@ -102,8 +111,12 @@ describe("Analytics Query Service & Operational Intelligence", () => {
     });
 
     expect(breakdown.items).toHaveLength(2);
-    expect(breakdown.items.find((k) => k.apiKeyId === "key_alpha")?.requestCount).toBe(5);
-    expect(breakdown.items.find((k) => k.apiKeyId === "key_beta")?.requestCount).toBe(5);
+    expect(
+      breakdown.items.find((k) => k.apiKeyId === "key_alpha")?.requestCount,
+    ).toBe(5);
+    expect(
+      breakdown.items.find((k) => k.apiKeyId === "key_beta")?.requestCount,
+    ).toBe(5);
   });
 
   it("supports paginated request drilldown with cursor", async () => {
@@ -136,7 +149,7 @@ describe("Analytics Query Service & Operational Intelligence", () => {
         workspaceId: "ws_default",
         canonicalModelId: "gpt-4o",
         operation: "chat_completion",
-      workloadType: "customer",
+        workloadType: "customer",
         streaming: false,
         status: "failed",
         errorCode: "provider_5xx",
@@ -146,7 +159,13 @@ describe("Analytics Query Service & Operational Intelligence", () => {
         completedAt: new Date(now.getTime() - 50 * 1000),
         durationMs: 50,
         logicalUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
-        providerConsumption: { inputTokens: 0, outputTokens: 0, totalTokens: 0, attemptCount: 1, failedAttemptCount: 1 },
+        providerConsumption: {
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          attemptCount: 1,
+          failedAttemptCount: 1,
+        },
         attemptCount: 1,
         retryCount: 0,
         fallbackCount: 0,

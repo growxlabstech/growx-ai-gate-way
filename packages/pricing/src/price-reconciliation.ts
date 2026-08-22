@@ -11,7 +11,9 @@ import { CustomerPriceCalculator } from "./customer-price-calculator.js";
 
 export interface ReconcileProviderCostParams {
   existingCostRecord: ProviderCostRecord;
-  updatedAttempts: Parameters<ProviderCostCalculator["calculateRequestCost"]>[0]["attempts"];
+  updatedAttempts: Parameters<
+    ProviderCostCalculator["calculateRequestCost"]
+  >[0]["attempts"];
   canonicalModelId: string;
   reason: string;
   operatorId: string;
@@ -20,7 +22,9 @@ export interface ReconcileProviderCostParams {
 
 export interface ReconcileCustomerPriceParams {
   existingPriceRecord: CustomerPriceRecord;
-  updatedLogicalUsage: Parameters<CustomerPriceCalculator["calculateRequestPrice"]>[0]["logicalUsage"];
+  updatedLogicalUsage: Parameters<
+    CustomerPriceCalculator["calculateRequestPrice"]
+  >[0]["logicalUsage"];
   canonicalModelId: string;
   updatedProviderCost: Decimal;
   reason: string;
@@ -34,15 +38,13 @@ export class PriceReconciliationEngine {
 
   constructor(
     costCalculator: ProviderCostCalculator,
-    priceCalculator: CustomerPriceCalculator
+    priceCalculator: CustomerPriceCalculator,
   ) {
     this.costCalculator = costCalculator;
     this.priceCalculator = priceCalculator;
   }
 
-  public createProviderCostAdjustment(
-    params: ReconcileProviderCostParams
-  ): {
+  public createProviderCostAdjustment(params: ReconcileProviderCostParams): {
     adjustment: PricingAdjustmentRecord;
     newCostSubtotal: Decimal;
   } {
@@ -84,9 +86,7 @@ export class PriceReconciliationEngine {
     };
   }
 
-  public createCustomerPriceAdjustment(
-    params: ReconcileCustomerPriceParams
-  ): {
+  public createCustomerPriceAdjustment(params: ReconcileCustomerPriceParams): {
     adjustment: PricingAdjustmentRecord;
     newPriceSubtotal: Decimal;
   } {

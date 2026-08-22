@@ -1,10 +1,5 @@
 export type AuditActorType =
-  | "user"
-  | "api_key"
-  | "service"
-  | "operator"
-  | "system"
-  | "worker";
+  "user" | "api_key" | "service" | "operator" | "system" | "worker";
 
 export type AuditOutcome = "success" | "denied" | "failed" | "partial";
 
@@ -75,11 +70,7 @@ export type SecurityEventCategory =
 export type SecuritySeverity = "info" | "low" | "medium" | "high" | "critical";
 
 export type SecurityEventStatus =
-  | "new"
-  | "acknowledged"
-  | "investigating"
-  | "resolved"
-  | "false_positive";
+  "new" | "acknowledged" | "investigating" | "resolved" | "false_positive";
 
 export interface SecurityEvent {
   id: string;

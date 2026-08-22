@@ -34,7 +34,8 @@ export class SubscriptionService {
     private readonly repository: ISubscriptionRepository,
     private readonly creditService: CreditService,
     private readonly idGenerator: (prefix: string) => string = (p) =>
-      createPublicId(p as any) || `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      createPublicId(p as any) ||
+      `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   ) {}
 
   // ─── Plan CRUD ───────────────────────────────────────────────
@@ -47,7 +48,8 @@ export class SubscriptionService {
     sortOrder?: number;
   }): Promise<Plan> {
     const existing = await this.repository.getPlanBySlug(params.slug);
-    if (existing) throw new Error(`Plan with slug '${params.slug}' already exists`);
+    if (existing)
+      throw new Error(`Plan with slug '${params.slug}' already exists`);
 
     const now = new Date();
     const plan: Plan = {
@@ -83,7 +85,8 @@ export class SubscriptionService {
 
     // Determine next version number
     const versions = await this.repository.listPlanVersions(params.planId);
-    const nextVersion = versions.length > 0 ? Math.max(...versions.map((v) => v.version)) + 1 : 1;
+    const nextVersion =
+      versions.length > 0 ? Math.max(...versions.map((v) => v.version)) + 1 : 1;
 
     const now = new Date();
     const planVersion: PlanVersion = {
@@ -113,13 +116,19 @@ export class SubscriptionService {
     const version = await this.repository.getPlanVersionById(planVersionId);
     if (!version) throw new Error(`PlanVersion ${planVersionId} not found`);
     if (version.status !== "draft") {
-      throw new Error(`Cannot activate plan version in '${version.status}' status; must be 'draft'`);
+      throw new Error(
+        `Cannot activate plan version in '${version.status}' status; must be 'draft'`,
+      );
     }
 
     // Archive any currently active version for this plan
-    const currentActive = await this.repository.getActivePlanVersion(version.planId);
+    const currentActive = await this.repository.getActivePlanVersion(
+      version.planId,
+    );
     if (currentActive) {
-      await this.repository.updatePlanVersion(currentActive.id, { status: "archived" as PlanVersionStatus });
+      await this.repository.updatePlanVersion(currentActive.id, {
+        status: "archived" as PlanVersionStatus,
+      });
     }
 
     const now = new Date();
@@ -134,14 +143,22 @@ export class SubscriptionService {
   async archivePlanVersion(planVersionId: string): Promise<void> {
     const version = await this.repository.getPlanVersionById(planVersionId);
     if (!version) throw new Error(`PlanVersion ${planVersionId} not found`);
-    await this.repository.updatePlanVersion(planVersionId, { status: "archived" as PlanVersionStatus });
+    await this.repository.updatePlanVersion(planVersionId, {
+      status: "archived" as PlanVersionStatus,
+    });
   }
 
-  async listPlans(filter?: { status?: string; isPublic?: boolean }): Promise<Plan[]> {
+  async listPlans(filter?: {
+    status?: string;
+    isPublic?: boolean;
+  }): Promise<Plan[]> {
     return this.repository.listPlans(filter);
   }
 
-  async getPlanVersion(planId: string, version: number): Promise<PlanVersion | undefined> {
+  async getPlanVersion(
+    planId: string,
+    version: number,
+  ): Promise<PlanVersion | undefined> {
     return this.repository.getPlanVersion(planId, version);
   }
 
@@ -152,9 +169,13 @@ export class SubscriptionService {
     period: SubscriptionPeriod;
   }> {
     // Check for existing active subscription
-    const existing = await this.repository.getActiveSubscription(params.organizationId);
+    const existing = await this.repository.getActiveSubscription(
+      params.organizationId,
+    );
     if (existing) {
-      throw new Error(`Organization ${params.organizationId} already has an active subscription (${existing.id})`);
+      throw new Error(
+        `Organization ${params.organizationId} already has an active subscription (${existing.id})`,
+      );
     }
 
     const plan = await this.repository.getPlanById(params.planId);
@@ -163,22 +184,29 @@ export class SubscriptionService {
     // Resolve plan version
     let planVersion: PlanVersion | undefined;
     if (params.planVersionId) {
-      planVersion = await this.repository.getPlanVersionById(params.planVersionId);
+      planVersion = await this.repository.getPlanVersionById(
+        params.planVersionId,
+      );
     } else {
       planVersion = await this.repository.getActivePlanVersion(params.planId);
     }
-    if (!planVersion) throw new Error(`No active plan version found for plan ${params.planId}`);
-    if (planVersion.status !== "active") throw new Error(`Plan version ${planVersion.id} is not active`);
+    if (!planVersion)
+      throw new Error(`No active plan version found for plan ${params.planId}`);
+    if (planVersion.status !== "active")
+      throw new Error(`Plan version ${planVersion.id} is not active`);
 
     const now = new Date();
     const isTrialing = (params.trialDays ?? 0) > 0;
     const status: SubscriptionStatus = isTrialing ? "trialing" : "active";
 
     // Calculate initial period
-    const { periodStart, periodEnd, periodNumber } = calculateInitialPeriod(now, planVersion.billingInterval);
+    const { periodStart, periodEnd, periodNumber } = calculateInitialPeriod(
+      now,
+      planVersion.billingInterval,
+    );
 
     const trialEnd = isTrialing
-      ? new Date(now.getTime() + (params.trialDays! * 86400000))
+      ? new Date(now.getTime() + params.trialDays! * 86400000)
       : undefined;
 
     const subscription: OrganizationSubscription = {
@@ -240,7 +268,8 @@ export class SubscriptionService {
   ): Promise<OrganizationSubscription> {
     const sub = await this.repository.getSubscriptionById(subscriptionId);
     if (!sub) throw new Error(`Subscription ${subscriptionId} not found`);
-    if (sub.organizationId !== organizationId) throw new Error("Subscription does not belong to this organization");
+    if (sub.organizationId !== organizationId)
+      throw new Error("Subscription does not belong to this organization");
 
     const transition = validateTransition(sub.status, "cancelled");
     if (!transition.valid) throw new Error(transition.reason);
@@ -262,10 +291,14 @@ export class SubscriptionService {
     return (await this.repository.getSubscriptionById(subscriptionId))!;
   }
 
-  async pauseSubscription(organizationId: string, subscriptionId: string): Promise<OrganizationSubscription> {
+  async pauseSubscription(
+    organizationId: string,
+    subscriptionId: string,
+  ): Promise<OrganizationSubscription> {
     const sub = await this.repository.getSubscriptionById(subscriptionId);
     if (!sub) throw new Error(`Subscription ${subscriptionId} not found`);
-    if (sub.organizationId !== organizationId) throw new Error("Subscription does not belong to this organization");
+    if (sub.organizationId !== organizationId)
+      throw new Error("Subscription does not belong to this organization");
 
     const transition = validateTransition(sub.status, "paused");
     if (!transition.valid) throw new Error(transition.reason);
@@ -278,10 +311,14 @@ export class SubscriptionService {
     return (await this.repository.getSubscriptionById(subscriptionId))!;
   }
 
-  async resumeSubscription(organizationId: string, subscriptionId: string): Promise<OrganizationSubscription> {
+  async resumeSubscription(
+    organizationId: string,
+    subscriptionId: string,
+  ): Promise<OrganizationSubscription> {
     const sub = await this.repository.getSubscriptionById(subscriptionId);
     if (!sub) throw new Error(`Subscription ${subscriptionId} not found`);
-    if (sub.organizationId !== organizationId) throw new Error("Subscription does not belong to this organization");
+    if (sub.organizationId !== organizationId)
+      throw new Error("Subscription does not belong to this organization");
 
     const transition = validateTransition(sub.status, "active");
     if (!transition.valid) throw new Error(transition.reason);
@@ -295,12 +332,20 @@ export class SubscriptionService {
     return (await this.repository.getSubscriptionById(subscriptionId))!;
   }
 
-  async changePlan(params: ChangePlanParams): Promise<OrganizationSubscription> {
-    const sub = await this.repository.getSubscriptionById(params.subscriptionId);
-    if (!sub) throw new Error(`Subscription ${params.subscriptionId} not found`);
-    if (sub.organizationId !== params.organizationId) throw new Error("Subscription does not belong to this organization");
+  async changePlan(
+    params: ChangePlanParams,
+  ): Promise<OrganizationSubscription> {
+    const sub = await this.repository.getSubscriptionById(
+      params.subscriptionId,
+    );
+    if (!sub)
+      throw new Error(`Subscription ${params.subscriptionId} not found`);
+    if (sub.organizationId !== params.organizationId)
+      throw new Error("Subscription does not belong to this organization");
     if (sub.status !== "active" && sub.status !== "trialing") {
-      throw new Error(`Cannot change plan while subscription is in '${sub.status}' state`);
+      throw new Error(
+        `Cannot change plan while subscription is in '${sub.status}' state`,
+      );
     }
 
     const newPlan = await this.repository.getPlanById(params.newPlanId);
@@ -308,7 +353,9 @@ export class SubscriptionService {
 
     let newVersion: PlanVersion | undefined;
     if (params.newPlanVersionId) {
-      newVersion = await this.repository.getPlanVersionById(params.newPlanVersionId);
+      newVersion = await this.repository.getPlanVersionById(
+        params.newPlanVersionId,
+      );
     } else {
       newVersion = await this.repository.getActivePlanVersion(params.newPlanId);
     }
@@ -319,7 +366,10 @@ export class SubscriptionService {
     const now = new Date();
     if (params.immediate) {
       // Immediate plan change: new period starts now
-      const { periodStart, periodEnd, periodNumber } = calculateInitialPeriod(now, newVersion.billingInterval);
+      const { periodStart, periodEnd, periodNumber } = calculateInitialPeriod(
+        now,
+        newVersion.billingInterval,
+      );
 
       await this.repository.updateSubscription(params.subscriptionId, {
         planId: params.newPlanId,
@@ -371,15 +421,20 @@ export class SubscriptionService {
 
   // ─── Entitlement Resolution ──────────────────────────────────
 
-  async resolveEntitlements(organizationId: string): Promise<ResolvedEntitlements> {
+  async resolveEntitlements(
+    organizationId: string,
+  ): Promise<ResolvedEntitlements> {
     try {
       const sub = await this.repository.getActiveSubscription(organizationId);
       if (!sub) return DENY_ALL_ENTITLEMENTS;
 
-      const planVersion = await this.repository.getPlanVersionById(sub.planVersionId);
+      const planVersion = await this.repository.getPlanVersionById(
+        sub.planVersionId,
+      );
       if (!planVersion) return DENY_ALL_ENTITLEMENTS;
 
-      const overrides = await this.repository.getEntitlementOverrides(organizationId);
+      const overrides =
+        await this.repository.getEntitlementOverrides(organizationId);
 
       return resolveEntitlements(planVersion, overrides);
     } catch {
@@ -405,7 +460,8 @@ export class SubscriptionService {
         cancelledAt: new Date(),
       });
       return {
-        subscription: (await this.repository.getSubscriptionById(subscriptionId))!,
+        subscription:
+          (await this.repository.getSubscriptionById(subscriptionId))!,
         newPeriod: null as any,
         creditGranted: false,
       };
@@ -415,14 +471,19 @@ export class SubscriptionService {
       throw new Error(`Cannot renew subscription in '${sub.status}' state`);
     }
 
-    const planVersion = await this.repository.getPlanVersionById(sub.planVersionId);
-    if (!planVersion) throw new Error(`PlanVersion ${sub.planVersionId} not found`);
+    const planVersion = await this.repository.getPlanVersionById(
+      sub.planVersionId,
+    );
+    if (!planVersion)
+      throw new Error(`PlanVersion ${sub.planVersionId} not found`);
 
     // Check for pending plan change
     const pendingChange = (sub.metadata as any)?.pendingPlanChange;
     let effectiveVersion = planVersion;
     if (pendingChange) {
-      const newVersion = await this.repository.getPlanVersionById(pendingChange.newPlanVersionId);
+      const newVersion = await this.repository.getPlanVersionById(
+        pendingChange.newPlanVersionId,
+      );
       if (newVersion && newVersion.status === "active") {
         effectiveVersion = newVersion;
         await this.repository.updateSubscription(subscriptionId, {
@@ -447,7 +508,10 @@ export class SubscriptionService {
     );
 
     // Idempotency check: if period already exists, return it
-    const existingPeriod = await this.repository.getSubscriptionPeriod(subscriptionId, periodNumber);
+    const existingPeriod = await this.repository.getSubscriptionPeriod(
+      subscriptionId,
+      periodNumber,
+    );
     if (existingPeriod) {
       return {
         subscription: sub,
@@ -458,7 +522,9 @@ export class SubscriptionService {
 
     // Mark old period as renewed
     if (latestPeriod) {
-      await this.repository.updateSubscriptionPeriod(latestPeriod.id, { status: "renewed" });
+      await this.repository.updateSubscriptionPeriod(latestPeriod.id, {
+        status: "renewed",
+      });
     }
 
     // Handle trial-to-active transition
@@ -508,8 +574,12 @@ export class SubscriptionService {
     }
 
     return {
-      subscription: (await this.repository.getSubscriptionById(subscriptionId))!,
-      newPeriod: (await this.repository.getSubscriptionPeriod(subscriptionId, periodNumber))!,
+      subscription:
+        (await this.repository.getSubscriptionById(subscriptionId))!,
+      newPeriod: (await this.repository.getSubscriptionPeriod(
+        subscriptionId,
+        periodNumber,
+      ))!,
       creditGranted,
     };
   }
@@ -543,17 +613,24 @@ export class SubscriptionService {
     return override;
   }
 
-  async removeEntitlementOverride(organizationId: string, key: string): Promise<void> {
+  async removeEntitlementOverride(
+    organizationId: string,
+    key: string,
+  ): Promise<void> {
     await this.repository.deleteEntitlementOverride(organizationId, key);
   }
 
   // ─── Queries ─────────────────────────────────────────────────
 
-  async getActiveSubscription(organizationId: string): Promise<OrganizationSubscription | undefined> {
+  async getActiveSubscription(
+    organizationId: string,
+  ): Promise<OrganizationSubscription | undefined> {
     return this.repository.getActiveSubscription(organizationId);
   }
 
-  async getSubscriptionsDueForRenewal(limit: number = 100): Promise<OrganizationSubscription[]> {
+  async getSubscriptionsDueForRenewal(
+    limit: number = 100,
+  ): Promise<OrganizationSubscription[]> {
     return this.repository.listSubscriptionsDueForRenewal(new Date(), limit);
   }
 }

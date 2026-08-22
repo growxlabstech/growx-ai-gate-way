@@ -9,6 +9,33 @@ export interface AuditActionMetadata {
 }
 
 export const AUDIT_ACTION_CATALOG: readonly AuditActionMetadata[] = [
+  {
+    action: "organization.created",
+    sourceService: "organization-service",
+    resourceType: "organization",
+    securityRelevant: true,
+    customerVisible: true,
+    retentionClass: "standard",
+    description: "Organization and initial tenant context created",
+  },
+  {
+    action: "workspace.created",
+    sourceService: "workspace-service",
+    resourceType: "workspace",
+    securityRelevant: true,
+    customerVisible: true,
+    retentionClass: "standard",
+    description: "Workspace created within an organization",
+  },
+  {
+    action: "organization.invitation.accepted",
+    sourceService: "organization-service",
+    resourceType: "organization_invitation",
+    securityRelevant: true,
+    customerVisible: true,
+    retentionClass: "security",
+    description: "Email-bound organization invitation accepted",
+  },
   // ─── Authentication & Identity ───────────────────────────────
   {
     action: "auth.sign_in",
@@ -183,6 +210,8 @@ export const AUDIT_ACTION_CATALOG: readonly AuditActionMetadata[] = [
   },
 ];
 
-export function getAuditActionMetadata(action: string): AuditActionMetadata | undefined {
+export function getAuditActionMetadata(
+  action: string,
+): AuditActionMetadata | undefined {
   return AUDIT_ACTION_CATALOG.find((a) => a.action === action);
 }

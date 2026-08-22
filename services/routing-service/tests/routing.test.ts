@@ -1,3 +1,49 @@
-import { describe, expect, it } from "vitest"; import { ModelRegistry, type ModelRecord } from "@growx/model-registry-service"; import { RoutingService } from "../src/routing.js";
-const base = { id: "m", providerModelId: "native", displayName: "M", description: "", status: "active" as const, contextWindow: 10, maxOutputTokens: 5, capabilities: new Set(["text" as const]), createdAt: new Date(), updatedAt: new Date() };
-describe("routing", () => { it("selects healthy priority and preserves fallback", () => { const models: ModelRecord[] = [{ ...base, providerId: "p1", publicModelId: "p1/m" }, { ...base, id: "m2", providerId: "p2", publicModelId: "p2/m" }]; const registry = new ModelRegistry(models, [{ alias: "growx/fast", version: "1", targets: ["p1/m", "p2/m"], effectiveFrom: new Date(0), effectiveUntil: null, status: "active" }]); const decision = new RoutingService(registry, [{ id: "p1", health: "healthy", enabled: true, priority: 1 }, { id: "p2", health: "healthy", enabled: true, priority: 2 }], () => "route_a").decide({ organizationId: "o", workspaceId: "w", environmentId: "e", requestedModel: "growx/fast", requiredCapabilities: ["text"] }); expect(decision.providerId).toBe("p1"); expect(decision.fallbackChain).toHaveLength(1); }); });
+import { describe, expect, it } from "vitest";
+import { ModelRegistry, type ModelRecord } from "@growx/model-registry-service";
+import { RoutingService } from "../src/routing.js";
+const base = {
+  id: "m",
+  providerModelId: "native",
+  displayName: "M",
+  description: "",
+  status: "active" as const,
+  contextWindow: 10,
+  maxOutputTokens: 5,
+  capabilities: new Set(["text" as const]),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+describe("routing", () => {
+  it("selects healthy priority and preserves fallback", () => {
+    const models: ModelRecord[] = [
+      { ...base, providerId: "p1", publicModelId: "p1/m" },
+      { ...base, id: "m2", providerId: "p2", publicModelId: "p2/m" },
+    ];
+    const registry = new ModelRegistry(models, [
+      {
+        alias: "growx/fast",
+        version: "1",
+        targets: ["p1/m", "p2/m"],
+        effectiveFrom: new Date(0),
+        effectiveUntil: null,
+        status: "active",
+      },
+    ]);
+    const decision = new RoutingService(
+      registry,
+      [
+        { id: "p1", health: "healthy", enabled: true, priority: 1 },
+        { id: "p2", health: "healthy", enabled: true, priority: 2 },
+      ],
+      () => "route_a",
+    ).decide({
+      organizationId: "o",
+      workspaceId: "w",
+      environmentId: "e",
+      requestedModel: "growx/fast",
+      requiredCapabilities: ["text"],
+    });
+    expect(decision.providerId).toBe("p1");
+    expect(decision.fallbackChain).toHaveLength(1);
+  });
+});

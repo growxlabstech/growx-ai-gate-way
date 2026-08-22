@@ -9,7 +9,7 @@ export class TrafficControlEvaluator {
   public static applyControls(
     candidates: RouteCandidate[],
     controls: Map<string, RouteTrafficControl>,
-    requestPartitionKey: string = ""
+    requestPartitionKey: string = "",
   ): RouteCandidate[] {
     const result: RouteCandidate[] = [];
 
@@ -34,7 +34,11 @@ export class TrafficControlEvaluator {
       if (ctrl.mode === "canary" && ctrl.maxTrafficPercent < 100) {
         const hash = crypto
           .createHash("md5")
-          .update(cand.routeId + ":" + (requestPartitionKey || Math.random().toString()))
+          .update(
+            cand.routeId +
+              ":" +
+              (requestPartitionKey || Math.random().toString()),
+          )
           .digest("hex");
         const hashInt = parseInt(hash.substring(0, 4), 16) % 100;
 

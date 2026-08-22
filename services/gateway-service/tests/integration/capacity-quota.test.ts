@@ -38,7 +38,11 @@ import { GatewayResilienceController } from "../../src/application/resilience-co
 import { InMemoryGatewayRepository } from "../../src/infrastructure/in-memory-repository.js";
 import { InMemoryGatewayEvents } from "../../src/infrastructure/events.js";
 import { createGatewayServer } from "../../src/transport/http-server.js";
-import { MockAdapter, TEST_ENCRYPTION_KEY, TEST_PEPPER } from "../helpers/test-fixture.js";
+import {
+  MockAdapter,
+  TEST_ENCRYPTION_KEY,
+  TEST_PEPPER,
+} from "../helpers/test-fixture.js";
 import { GrowXProviderError } from "@growx/contracts";
 
 class CapacityTestMockAdapter extends MockAdapter {
@@ -149,14 +153,17 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
       providerRepo,
       providerEvents,
       crypto,
-      adapterRegistry
+      adapterRegistry,
     );
 
     // 4. Rate Limits & Quota Engine
     counterStore = new InMemoryCounterStore();
     quotaPolicyRepo = new InMemoryQuotaPolicyRepository();
     tokenEstimator = new TokenEstimator();
-    capacitySignalProvider = new RouteCapacitySignalProvider(counterStore, quotaPolicyRepo);
+    capacitySignalProvider = new RouteCapacitySignalProvider(
+      counterStore,
+      quotaPolicyRepo,
+    );
     quotaEngine = new QuotaEngine(counterStore, quotaPolicyRepo);
 
     // 5. Health Store & Routing Engine
@@ -172,7 +179,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
       {
         routeHealthStore: healthStore,
         capacitySignalProvider: capacitySignalProvider as any,
-      }
+      },
     );
 
     // 6. Gateway Engine & Resilience Controller
@@ -188,7 +195,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         routeHealthStore: healthStore,
         quotaEngine,
         tokenEstimator,
-      }
+      },
     );
 
     const routeResolver = new RoutingEngineRouteResolver(routingEngine);
@@ -202,7 +209,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
       undefined,
       resilienceController,
       quotaEngine,
-      tokenEstimator
+      tokenEstimator,
     );
 
     // 7. HTTP Server
@@ -231,7 +238,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     await providerService.createCredential(
@@ -242,7 +249,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         rawSecret: "sk-openai-test-key",
         encryptionKeyVersion: "v1",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const anthropicProvider = await providerService.createProvider(
@@ -255,7 +262,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         enabled: true,
         status: "active",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     await providerService.createCredential(
@@ -266,7 +273,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         rawSecret: "sk-ant-test-key",
         encryptionKeyVersion: "v1",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 9. Seed Canonical Model & Routes
@@ -289,7 +296,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         outputModalities: ["text"],
         capabilities: ["text.generate", "streaming"],
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     const r1 = await modelService.addProviderRoute(
@@ -302,7 +309,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         routingEligible: true,
         priority: 1,
       },
-      "usr_admin"
+      "usr_admin",
     );
     openAIRouteId = r1.id;
 
@@ -316,7 +323,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         routingEligible: true,
         priority: 2,
       },
-      "usr_admin"
+      "usr_admin",
     );
     anthropicRouteId = r2.id;
 
@@ -328,7 +335,7 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
         type: "product",
         description: "Primary Smart Route",
       },
-      "usr_admin"
+      "usr_admin",
     );
 
     // 11. Create Test API Key
@@ -598,13 +605,17 @@ describe("Phase 11 — Gateway Capacity & Quota Engine Integration Tests", () =>
     expect(postBody.policy.id).toBeDefined();
 
     // 2. List policies via GET /internal/quota/policies
-    const listRes = await fetch(`${baseUrl}/internal/quota/policies?scopeType=organization`);
+    const listRes = await fetch(
+      `${baseUrl}/internal/quota/policies?scopeType=organization`,
+    );
     expect(listRes.status).toBe(200);
     const listBody = (await listRes.json()) as any;
     expect(listBody.policies.length).toBeGreaterThan(0);
 
     // 3. Inspect route capacity metrics via GET /internal/capacity/routes/:id
-    const capRes = await fetch(`${baseUrl}/internal/capacity/routes/${openAIRouteId}`);
+    const capRes = await fetch(
+      `${baseUrl}/internal/capacity/routes/${openAIRouteId}`,
+    );
     expect(capRes.status).toBe(200);
     const capBody = (await capRes.json()) as any;
     expect(capBody.routeId).toBe(openAIRouteId);

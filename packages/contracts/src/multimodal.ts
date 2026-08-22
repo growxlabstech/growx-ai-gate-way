@@ -59,7 +59,9 @@ export const imageGenerationRequestSchema = z.object({
   style: imageStyleSchema.optional(),
   user: z.string().max(256).optional(),
 });
-export type ImageGenerationRequest = z.input<typeof imageGenerationRequestSchema>;
+export type ImageGenerationRequest = z.input<
+  typeof imageGenerationRequestSchema
+>;
 
 export const imageGenerationDataItemSchema = z.object({
   url: z.string().optional(),
@@ -67,16 +69,22 @@ export const imageGenerationDataItemSchema = z.object({
   file_id: z.string().optional(),
   revised_prompt: z.string().optional(),
 });
-export type ImageGenerationDataItem = z.infer<typeof imageGenerationDataItemSchema>;
+export type ImageGenerationDataItem = z.infer<
+  typeof imageGenerationDataItemSchema
+>;
 
 export const imageGenerationResponseSchema = z.object({
   created: z.number().int().nonnegative(),
   data: z.array(imageGenerationDataItemSchema),
-  usage: z.object({
-    images_generated: z.number().int().nonnegative(),
-  }).optional(),
+  usage: z
+    .object({
+      images_generated: z.number().int().nonnegative(),
+    })
+    .optional(),
 });
-export type ImageGenerationResponse = z.infer<typeof imageGenerationResponseSchema>;
+export type ImageGenerationResponse = z.infer<
+  typeof imageGenerationResponseSchema
+>;
 
 export const imageEditRequestSchema = z.object({
   model: z.string().min(1).max(200),
@@ -101,10 +109,17 @@ export const transcriptionResponseFormatSchema = z.enum([
   "verbose_json",
   "vtt",
 ]);
-export type TranscriptionResponseFormat = z.infer<typeof transcriptionResponseFormatSchema>;
+export type TranscriptionResponseFormat = z.infer<
+  typeof transcriptionResponseFormatSchema
+>;
 
-export const transcriptionTimestampGranularitySchema = z.enum(["segment", "word"]);
-export type TranscriptionTimestampGranularity = z.infer<typeof transcriptionTimestampGranularitySchema>;
+export const transcriptionTimestampGranularitySchema = z.enum([
+  "segment",
+  "word",
+]);
+export type TranscriptionTimestampGranularity = z.infer<
+  typeof transcriptionTimestampGranularitySchema
+>;
 
 export const transcriptionRequestSchema = z.object({
   model: z.string().min(1).max(200),
@@ -114,7 +129,9 @@ export const transcriptionRequestSchema = z.object({
   prompt: z.string().max(1000).optional(),
   response_format: transcriptionResponseFormatSchema.optional().default("json"),
   temperature: z.number().min(0).max(1).optional().default(0),
-  timestamp_granularities: z.array(transcriptionTimestampGranularitySchema).optional(),
+  timestamp_granularities: z
+    .array(transcriptionTimestampGranularitySchema)
+    .optional(),
 });
 export type TranscriptionRequest = z.input<typeof transcriptionRequestSchema>;
 
@@ -203,14 +220,34 @@ export const multimodalModelMetadataSchema = z.object({
   supportsTranscription: z.boolean().default(false),
   supportsSpeech: z.boolean().default(false),
   maxImageCount: z.number().int().positive().default(10),
-  maxImageBytes: z.number().int().positive().default(20 * 1024 * 1024),
-  supportedImageFormats: z.array(z.string()).default(["image/jpeg", "image/png", "image/webp"]),
+  maxImageBytes: z
+    .number()
+    .int()
+    .positive()
+    .default(20 * 1024 * 1024),
+  supportedImageFormats: z
+    .array(z.string())
+    .default(["image/jpeg", "image/png", "image/webp"]),
   supportedImageSizes: z.array(imageSizeSchema).optional(),
   supportedImageQualities: z.array(imageQualitySchema).optional(),
   maxAudioSeconds: z.number().int().positive().default(3600),
-  maxAudioBytes: z.number().int().positive().default(25 * 1024 * 1024),
-  supportedAudioFormats: z.array(z.string()).default(["audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/flac"]),
+  maxAudioBytes: z
+    .number()
+    .int()
+    .positive()
+    .default(25 * 1024 * 1024),
+  supportedAudioFormats: z
+    .array(z.string())
+    .default([
+      "audio/mp3",
+      "audio/wav",
+      "audio/ogg",
+      "audio/m4a",
+      "audio/flac",
+    ]),
   supportedVoices: z.array(z.string()).optional(),
   supportedSpeechFormats: z.array(speechAudioFormatSchema).optional(),
 });
-export type MultimodalModelMetadata = z.infer<typeof multimodalModelMetadataSchema>;
+export type MultimodalModelMetadata = z.infer<
+  typeof multimodalModelMetadataSchema
+>;

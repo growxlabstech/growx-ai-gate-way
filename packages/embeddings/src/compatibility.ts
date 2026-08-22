@@ -13,7 +13,10 @@ export class EmbeddingCompatibilityManager {
    * 1. They serve the exact same canonicalModelId, OR
    * 2. They belong to an explicitly verified identical compatibilityGroup.
    */
-  public static isCompatible(primary: RouteVectorIdentity, candidate: RouteVectorIdentity): boolean {
+  public static isCompatible(
+    primary: RouteVectorIdentity,
+    candidate: RouteVectorIdentity,
+  ): boolean {
     if (primary.canonicalModelId === candidate.canonicalModelId) {
       return true;
     }
@@ -29,10 +32,13 @@ export class EmbeddingCompatibilityManager {
     return false;
   }
 
-  public static assertCompatible(primary: RouteVectorIdentity, candidate: RouteVectorIdentity): void {
+  public static assertCompatible(
+    primary: RouteVectorIdentity,
+    candidate: RouteVectorIdentity,
+  ): void {
     if (!this.isCompatible(primary, candidate)) {
       throw new EmbeddingVectorSpaceIncompatibleError(
-        `Cannot fallback between incompatible vector spaces: Primary (${primary.canonicalModelId}) vs Candidate (${candidate.canonicalModelId})`
+        `Cannot fallback between incompatible vector spaces: Primary (${primary.canonicalModelId}) vs Candidate (${candidate.canonicalModelId})`,
       );
     }
   }

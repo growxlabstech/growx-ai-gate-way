@@ -8,4 +8,3 @@ export * from "./application/reconciliation-worker.js";
 export * from "./transport/http-server.js";
 
 export const serviceName = "credit-service";
-

@@ -79,7 +79,7 @@ describe("API Key Service Lifecycle and Domain Operations", () => {
         environment: "production",
         name: "Key 3 Exceeds",
         createdBy: userId,
-      })
+      }),
     ).rejects.toThrow("Workspace active API key limit (2) reached");
   });
 
@@ -252,35 +252,51 @@ describe("API Key Service Lifecycle and Domain Operations", () => {
       createdBy: userId,
     });
 
-    await service.updatePermissions(orgId, wsId, record.id, ["models.read", "usage.read"], userId);
+    await service.updatePermissions(
+      orgId,
+      wsId,
+      record.id,
+      ["models.read", "usage.read"],
+      userId,
+    );
     await service.updateModelRules(
       orgId,
       wsId,
       record.id,
       [{ effect: "deny", pattern: "deepseek/*" }],
-      userId
+      userId,
     );
-    await service.updateIpAllowlist(orgId, wsId, record.id, ["10.0.0.0/8"], userId);
+    await service.updateIpAllowlist(
+      orgId,
+      wsId,
+      record.id,
+      ["10.0.0.0/8"],
+      userId,
+    );
     await service.updateRateLimits(
       orgId,
       wsId,
       record.id,
       [{ window: "minute", requestLimit: 120 }],
-      userId
+      userId,
     );
     await service.updateSpendingLimit(
       orgId,
       wsId,
       record.id,
       { mode: "hard", monthlyMinor: 500000, currency: "USD", policyVersion: 1 },
-      userId
+      userId,
     );
 
     const updated = await service.get(orgId, wsId, record.id);
     expect(updated?.permissions).toEqual(["models.read", "usage.read"]);
-    expect(updated?.modelRules).toEqual([{ effect: "deny", pattern: "deepseek/*" }]);
+    expect(updated?.modelRules).toEqual([
+      { effect: "deny", pattern: "deepseek/*" },
+    ]);
     expect(updated?.ipAllowlist).toEqual(["10.0.0.0/8"]);
-    expect(updated?.rateLimits).toEqual([{ window: "minute", requestLimit: 120 }]);
+    expect(updated?.rateLimits).toEqual([
+      { window: "minute", requestLimit: 120 },
+    ]);
     expect(updated?.spendingLimit?.monthlyMinor).toBe(500000);
   });
 

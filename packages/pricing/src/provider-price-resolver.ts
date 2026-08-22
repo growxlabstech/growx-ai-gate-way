@@ -19,7 +19,8 @@ export interface ResolveProviderPriceParams {
 }
 
 export class ProviderPriceResolver {
-  private readonly schedules: Map<string, ProviderScheduleWithRates> = new Map();
+  private readonly schedules: Map<string, ProviderScheduleWithRates> =
+    new Map();
 
   constructor(initialSchedules?: ProviderScheduleWithRates[]) {
     if (initialSchedules) {
@@ -56,14 +57,19 @@ export class ProviderPriceResolver {
    * 5. Canonical Model ID + Provider ID
    * 6. Provider ID generic default
    */
-  public resolveSchedule(params: ResolveProviderPriceParams): ProviderScheduleWithRates | undefined {
+  public resolveSchedule(
+    params: ResolveProviderPriceParams,
+  ): ProviderScheduleWithRates | undefined {
     const targetDate = params.targetDate ?? new Date();
 
     // 1. Direct snapshot lookup if scheduleId is provided
     if (params.scheduleId) {
       const found = this.schedules.get(params.scheduleId);
       if (found) {
-        if (params.version !== undefined && found.schedule.version !== params.version) {
+        if (
+          params.version !== undefined &&
+          found.schedule.version !== params.version
+        ) {
           // Version mismatch on direct lookup
           return undefined;
         }
@@ -72,23 +78,25 @@ export class ProviderPriceResolver {
       return undefined;
     }
 
-    const activeSchedules = Array.from(this.schedules.values()).filter((item) => {
-      const s = item.schedule;
-      if (s.providerId.toLowerCase() !== params.providerId.toLowerCase()) {
-        return false;
-      }
-      if (params.currency && s.currency !== params.currency) {
-        return false;
-      }
-      if (s.status !== "active") {
-        return false;
-      }
-      // Check effective dating: [effectiveFrom, effectiveTo)
-      const from = s.effectiveFrom.getTime();
-      const to = s.effectiveTo ? s.effectiveTo.getTime() : Infinity;
-      const target = targetDate.getTime();
-      return target >= from && target < to;
-    });
+    const activeSchedules = Array.from(this.schedules.values()).filter(
+      (item) => {
+        const s = item.schedule;
+        if (s.providerId.toLowerCase() !== params.providerId.toLowerCase()) {
+          return false;
+        }
+        if (params.currency && s.currency !== params.currency) {
+          return false;
+        }
+        if (s.status !== "active") {
+          return false;
+        }
+        // Check effective dating: [effectiveFrom, effectiveTo)
+        const from = s.effectiveFrom.getTime();
+        const to = s.effectiveTo ? s.effectiveTo.getTime() : Infinity;
+        const target = targetDate.getTime();
+        return target >= from && target < to;
+      },
+    );
 
     if (activeSchedules.length === 0) {
       return undefined;
@@ -111,10 +119,11 @@ export class ProviderPriceResolver {
     if (
       scoredCandidates.length > 1 &&
       scoredCandidates[0]!.score === scoredCandidates[1]!.score &&
-      scoredCandidates[0]!.item.schedule.id !== scoredCandidates[1]!.item.schedule.id
+      scoredCandidates[0]!.item.schedule.id !==
+        scoredCandidates[1]!.item.schedule.id
     ) {
       throw new Error(
-        `Ambiguous provider pricing schedules detected with identical precedence score (${scoredCandidates[0]!.score}) for provider '${params.providerId}'`
+        `Ambiguous provider pricing schedules detected with identical precedence score (${scoredCandidates[0]!.score}) for provider '${params.providerId}'`,
       );
     }
 
@@ -123,7 +132,7 @@ export class ProviderPriceResolver {
 
   private calculateSpecificityScore(
     schedule: ProviderPriceSchedule,
-    params: ResolveProviderPriceParams
+    params: ResolveProviderPriceParams,
   ): number {
     let score = 0;
 
@@ -151,7 +160,10 @@ export class ProviderPriceResolver {
 
     // 3. Provider Model ID match (2,000)
     if (schedule.providerModelId && params.providerModelId) {
-      if (schedule.providerModelId.toLowerCase() === params.providerModelId.toLowerCase()) {
+      if (
+        schedule.providerModelId.toLowerCase() ===
+        params.providerModelId.toLowerCase()
+      ) {
         score += 2000;
       } else {
         return 0;
@@ -160,7 +172,10 @@ export class ProviderPriceResolver {
 
     // 4. Region match (1,000)
     if (schedule.region && schedule.region !== "global") {
-      if (params.region && schedule.region.toLowerCase() === params.region.toLowerCase()) {
+      if (
+        params.region &&
+        schedule.region.toLowerCase() === params.region.toLowerCase()
+      ) {
         score += 1000;
       } else {
         return 0;
@@ -169,7 +184,10 @@ export class ProviderPriceResolver {
 
     // 5. Canonical Model ID match (500)
     if (schedule.canonicalModelId && params.canonicalModelId) {
-      if (schedule.canonicalModelId.toLowerCase() === params.canonicalModelId.toLowerCase()) {
+      if (
+        schedule.canonicalModelId.toLowerCase() ===
+        params.canonicalModelId.toLowerCase()
+      ) {
         score += 500;
       }
     }
@@ -184,9 +202,12 @@ export class ProviderPriceResolver {
     if (!schedule.id || !schedule.providerId) {
       throw new Error("ProviderPriceSchedule must have id and providerId");
     }
-    if (schedule.effectiveTo && schedule.effectiveTo <= schedule.effectiveFrom) {
+    if (
+      schedule.effectiveTo &&
+      schedule.effectiveTo <= schedule.effectiveFrom
+    ) {
       throw new Error(
-        `effectiveTo (${schedule.effectiveTo.toISOString()}) must be after effectiveFrom (${schedule.effectiveFrom.toISOString()})`
+        `effectiveTo (${schedule.effectiveTo.toISOString()}) must be after effectiveFrom (${schedule.effectiveFrom.toISOString()})`,
       );
     }
     if (schedule.version <= 0) {

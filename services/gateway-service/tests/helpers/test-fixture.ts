@@ -24,17 +24,15 @@ import {
   ProviderCredentialCrypto,
   ProviderService,
 } from "@growx/provider-service";
-import {
-  AdapterRegistry,
-  type ProviderAdapter,
-} from "@growx/provider-sdk";
+import { AdapterRegistry, type ProviderAdapter } from "@growx/provider-sdk";
 import { GatewayEngine } from "../../src/application/gateway-engine.js";
 import { InMemoryGatewayRepository } from "../../src/infrastructure/in-memory-repository.js";
 import { InMemoryGatewayEvents } from "../../src/infrastructure/events.js";
 import { createGatewayServer } from "../../src/transport/http-server.js";
 
 export const TEST_PEPPER = "growx-secret-pepper-32-bytes-long-string!!";
-export const TEST_ENCRYPTION_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+export const TEST_ENCRYPTION_KEY =
+  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 export class MockAdapter implements ProviderAdapter {
   readonly providerId: string = "mock-openai";
@@ -42,11 +40,11 @@ export class MockAdapter implements ProviderAdapter {
   public streamCalls: NormalizedGenerationRequest[] = [];
   public executeMock?: (
     req: NormalizedGenerationRequest,
-    ctx: ProviderExecutionContext
+    ctx: ProviderExecutionContext,
   ) => Promise<NormalizedGenerationResponse>;
   public streamMock?: (
     req: NormalizedGenerationRequest,
-    ctx: ProviderExecutionContext
+    ctx: ProviderExecutionContext,
   ) => AsyncIterable<NormalizedStreamEvent>;
 
   async validateConfiguration(): Promise<boolean> {
@@ -54,11 +52,19 @@ export class MockAdapter implements ProviderAdapter {
   }
 
   async healthProbe(context?: any): Promise<any> {
-    return { state: "healthy", latencyMs: 5, checkedAt: new Date().toISOString() };
+    return {
+      state: "healthy",
+      latencyMs: 5,
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   async health(options?: any): Promise<any> {
-    return { state: "healthy", latencyMs: 5, checkedAt: new Date().toISOString() };
+    return {
+      state: "healthy",
+      latencyMs: 5,
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   supports(capability: CanonicalCapability): boolean {
@@ -70,12 +76,17 @@ export class MockAdapter implements ProviderAdapter {
   }
 
   extractUsage(raw: unknown) {
-    return { inputTokens: 10, outputTokens: 15, totalTokens: 25, source: "provider_reported" as const };
+    return {
+      inputTokens: 10,
+      outputTokens: 15,
+      totalTokens: 25,
+      source: "provider_reported" as const,
+    };
   }
 
   async execute(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): Promise<NormalizedGenerationResponse> {
     this.calls.push(request);
     if (this.executeMock) {
@@ -114,7 +125,7 @@ export class MockAdapter implements ProviderAdapter {
 
   async *stream(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): AsyncIterable<NormalizedStreamEvent> {
     this.streamCalls.push(request);
     if (this.streamMock) {
@@ -203,9 +214,17 @@ export interface TestGatewayFixture {
     environmentId?: string;
     environment?: "development" | "production" | "staging";
     status?: "active" | "revoked" | "expired" | "disabled";
-    permissions?: Array<"chat.completions.create" | "responses.create" | "models.read">;
+    permissions?: Array<
+      "chat.completions.create" | "responses.create" | "models.read"
+    >;
     modelRules?: Array<{ effect: "allow" | "deny"; pattern: string }>;
-  }): Promise<{ secret: string; key: string; rawKey: string; keyId: string; record: any }>;
+  }): Promise<{
+    secret: string;
+    key: string;
+    rawKey: string;
+    keyId: string;
+    record: any;
+  }>;
 }
 
 export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
@@ -231,7 +250,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
     providerRepo,
     providerEvents,
     crypto,
-    adapterRegistry
+    adapterRegistry,
   );
 
   const gatewayRepo = new InMemoryGatewayRepository();
@@ -240,7 +259,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
     modelService,
     providerService,
     gatewayRepo,
-    gatewayEvents
+    gatewayEvents,
   );
 
   const server = createGatewayServer({
@@ -260,7 +279,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
       enabled: true,
       status: "active",
     },
-    "usr_operator"
+    "usr_operator",
   );
 
   // Seed default Credential
@@ -272,7 +291,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
       rawSecret: "sk-mock-key-1234567890",
       encryptionKeyVersion: "v1",
     },
-    "usr_operator"
+    "usr_operator",
   );
 
   // Seed default Canonical Model (gpt-4o-mini)
@@ -302,7 +321,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
         "text.reason",
       ],
     },
-    "usr_operator"
+    "usr_operator",
   );
 
   // Seed Provider Route for gpt-4o-mini
@@ -316,7 +335,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
       routingEligible: true,
       priority: 100,
     },
-    "usr_operator"
+    "usr_operator",
   );
 
   // Seed Model Alias: growx/fast -> openai/gpt-4o-mini
@@ -327,7 +346,7 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
       type: "product",
       description: "Default fast model",
     },
-    "usr_operator"
+    "usr_operator",
   );
 
   // Helper to create API keys
@@ -344,7 +363,9 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
     ];
     const modelRules = (overrides as any).modelRules ?? [];
 
-    const creds = generateApiKeyCredentials(envType === "production" ? "production" : "development");
+    const creds = generateApiKeyCredentials(
+      envType === "production" ? "production" : "development",
+    );
     const secretHash = hashApiKey(creds.secretPart, TEST_PEPPER);
 
     const record = {
@@ -377,7 +398,13 @@ export async function createTestGatewayFixture(): Promise<TestGatewayFixture> {
       environmentStatus: "active",
     });
 
-    return { secret: creds.secretPart, key: creds.fullSecret, rawKey: creds.fullSecret, keyId: creds.id, record };
+    return {
+      secret: creds.secretPart,
+      key: creds.fullSecret,
+      rawKey: creds.fullSecret,
+      keyId: creds.id,
+      record,
+    };
   };
 
   return {

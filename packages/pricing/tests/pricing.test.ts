@@ -156,7 +156,10 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
   };
 
   describe("ProviderCostCalculator", () => {
-    const resolver = new ProviderPriceResolver([sampleProviderSchedule, sampleAnthropicSchedule]);
+    const resolver = new ProviderPriceResolver([
+      sampleProviderSchedule,
+      sampleAnthropicSchedule,
+    ]);
     const calculator = new ProviderCostCalculator(resolver);
 
     it("calculates simple provider cost with exact precision", () => {
@@ -527,7 +530,10 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
   });
 
   describe("ProviderCostEstimator for Routing and Policy Engine", () => {
-    const resolver = new ProviderPriceResolver([sampleProviderSchedule, sampleAnthropicSchedule]);
+    const resolver = new ProviderPriceResolver([
+      sampleProviderSchedule,
+      sampleAnthropicSchedule,
+    ]);
     const estimator = new ProviderCostEstimator(resolver);
 
     it("estimates route cost fast and accurately in memory", () => {
@@ -538,7 +544,7 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
           providerId: "openai",
           providerModelId: "gpt-4o",
         },
-        { inputTokens: 1000, outputTokens: 500 }
+        { inputTokens: 1000, outputTokens: 500 },
       );
 
       expect(cost?.toString()).toBe("0.0125");
@@ -558,7 +564,10 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
         },
       ];
 
-      const batch = estimator.estimateBatch(candidates, { inputTokens: 1000, outputTokens: 500 });
+      const batch = estimator.estimateBatch(candidates, {
+        inputTokens: 1000,
+        outputTokens: 500,
+      });
       expect(batch.size).toBe(2);
 
       // OpenAI: 1000 in ($0.005) + 500 out ($0.0075) = $0.0125
@@ -567,14 +576,20 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
       expect(batch.get("route_anthropic")?.toString()).toBe("0.0105");
 
       // Claude is cheaper ($0.0105 < $0.0125) -> lowest_cost routing strategy will choose Anthropic
-      expect(batch.get("route_anthropic")!.lt(batch.get("route_openai")!)).toBe(true);
+      expect(batch.get("route_anthropic")!.lt(batch.get("route_openai")!)).toBe(
+        true,
+      );
     });
   });
 
   describe("PriceReconciliationEngine", () => {
-    const providerResolver = new ProviderPriceResolver([sampleProviderSchedule]);
+    const providerResolver = new ProviderPriceResolver([
+      sampleProviderSchedule,
+    ]);
     const costCalc = new ProviderCostCalculator(providerResolver);
-    const customerResolver = new CustomerPricingResolver([sampleCustomerPolicy]);
+    const customerResolver = new CustomerPricingResolver([
+      sampleCustomerPolicy,
+    ]);
     const priceCalc = new CustomerPriceCalculator(customerResolver);
 
     const reconciler = new PriceReconciliationEngine(costCalc, priceCalc);
@@ -596,22 +611,23 @@ describe("Phase 16 — Provider Cost & Pricing Engine", () => {
       };
 
       // Corrected usage: 1M input ($5) + 500k output ($7.50) = $12.50
-      const { adjustment, newCostSubtotal } = reconciler.createProviderCostAdjustment({
-        existingCostRecord,
-        canonicalModelId: "gpt-4o",
-        updatedAttempts: [
-          {
-            id: "att_1",
-            attemptNumber: 1,
-            providerId: "openai",
-            providerModelId: "gpt-4o",
-            status: "completed",
-            usage: { inputTokens: 1_000_000, outputTokens: 500_000 },
-          },
-        ],
-        reason: "Late provider stream usage adjustment",
-        operatorId: "usr_admin",
-      });
+      const { adjustment, newCostSubtotal } =
+        reconciler.createProviderCostAdjustment({
+          existingCostRecord,
+          canonicalModelId: "gpt-4o",
+          updatedAttempts: [
+            {
+              id: "att_1",
+              attemptNumber: 1,
+              providerId: "openai",
+              providerModelId: "gpt-4o",
+              status: "completed",
+              usage: { inputTokens: 1_000_000, outputTokens: 500_000 },
+            },
+          ],
+          reason: "Late provider stream usage adjustment",
+          operatorId: "usr_admin",
+        });
 
       expect(newCostSubtotal.toString()).toBe("12.5");
       expect(adjustment.previousAmount.toString()).toBe("10");

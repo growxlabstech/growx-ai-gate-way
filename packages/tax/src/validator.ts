@@ -19,7 +19,11 @@ export class TaxIdentifierValidator {
   /**
    * Validate syntax of a tax identifier.
    */
-  static validate(type: TaxIdentifierType, value: string, country: string): {
+  static validate(
+    type: TaxIdentifierType,
+    value: string,
+    country: string,
+  ): {
     isValid: boolean;
     status: TaxIdentifierValidationStatus;
     normalizedValue: string;
@@ -51,7 +55,9 @@ export class TaxIdentifierValidator {
           isValid: matches,
           status: matches ? "syntactically_valid" : "invalid",
           normalizedValue: trimmed,
-          error: matches ? undefined : "Invalid GSTIN format (15 characters: 2 state digits + 10 PAN chars + entity/check chars)",
+          error: matches
+            ? undefined
+            : "Invalid GSTIN format (15 characters: 2 state digits + 10 PAN chars + entity/check chars)",
         };
       }
 
@@ -69,7 +75,9 @@ export class TaxIdentifierValidator {
           isValid: matches,
           status: matches ? "syntactically_valid" : "invalid",
           normalizedValue: trimmed,
-          error: matches ? undefined : "Invalid PAN format (10 characters: 5 letters + 4 digits + 1 letter)",
+          error: matches
+            ? undefined
+            : "Invalid PAN format (10 characters: 5 letters + 4 digits + 1 letter)",
         };
       }
 
@@ -122,7 +130,11 @@ export class TaxIdentifierValidator {
     country: string;
     verified?: boolean;
   }): TaxIdentifier {
-    const res = TaxIdentifierValidator.validate(params.type, params.value, params.country);
+    const res = TaxIdentifierValidator.validate(
+      params.type,
+      params.value,
+      params.country,
+    );
     return {
       type: params.type,
       value: res.normalizedValue,

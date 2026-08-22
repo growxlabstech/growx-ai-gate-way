@@ -12,7 +12,9 @@ export interface CalculateBackoffOptions {
  * Calculates backoff delay with jitter, bounded by maxBackoffMs, Retry-After header,
  * and remaining request deadline.
  */
-export function calculateBackoffDelay(options: CalculateBackoffOptions): number {
+export function calculateBackoffDelay(
+  options: CalculateBackoffOptions,
+): number {
   const {
     attemptNumber,
     policy,
@@ -26,7 +28,10 @@ export function calculateBackoffDelay(options: CalculateBackoffOptions): number 
     let delay = Math.min(policy.maxBackoffMs, suggestedDelayMs);
     if (remainingDeadlineMs !== undefined) {
       // Leave at least policy.minimumRemainingDeadlineMs for the actual attempt
-      const usableTime = Math.max(0, remainingDeadlineMs - policy.minimumRemainingDeadlineMs);
+      const usableTime = Math.max(
+        0,
+        remainingDeadlineMs - policy.minimumRemainingDeadlineMs,
+      );
       delay = Math.min(delay, usableTime);
     }
     return Math.max(0, Math.round(delay));
@@ -36,7 +41,7 @@ export function calculateBackoffDelay(options: CalculateBackoffOptions): number 
   const exponent = Math.max(0, attemptNumber - 1);
   const exponentialDelay = Math.min(
     policy.maxBackoffMs,
-    policy.baseBackoffMs * 2 ** exponent
+    policy.baseBackoffMs * 2 ** exponent,
   );
 
   // 3. Jitter Application
@@ -57,7 +62,10 @@ export function calculateBackoffDelay(options: CalculateBackoffOptions): number 
 
     case "decorrelated":
       // Decorrelated Jitter: Sleep between base and 3 * previous
-      delay = Math.min(policy.maxBackoffMs, policy.baseBackoffMs + rand * exponentialDelay * 2);
+      delay = Math.min(
+        policy.maxBackoffMs,
+        policy.baseBackoffMs + rand * exponentialDelay * 2,
+      );
       break;
 
     case "none":
@@ -68,7 +76,10 @@ export function calculateBackoffDelay(options: CalculateBackoffOptions): number 
 
   // 4. Bound by remaining deadline
   if (remainingDeadlineMs !== undefined) {
-    const usableTime = Math.max(0, remainingDeadlineMs - policy.minimumRemainingDeadlineMs);
+    const usableTime = Math.max(
+      0,
+      remainingDeadlineMs - policy.minimumRemainingDeadlineMs,
+    );
     delay = Math.min(delay, usableTime);
   }
 
@@ -80,7 +91,7 @@ export function calculateBackoffDelay(options: CalculateBackoffOptions): number 
  */
 export function cancellableSleep(
   ms: number,
-  signal?: AbortSignal | undefined
+  signal?: AbortSignal | undefined,
 ): Promise<void> {
   if (ms <= 0) return Promise.resolve();
 

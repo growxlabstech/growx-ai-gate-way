@@ -37,7 +37,7 @@ describe("Phase 21 — Webhook Endpoint Lifecycle & Health", () => {
         organizationId: "org_ep_1",
         url: "http://api.customer.com/webhooks",
         eventTypes: ["*.*"],
-      })
+      }),
     ).rejects.toThrow("must use HTTPS");
 
     // Embedded credentials
@@ -46,7 +46,7 @@ describe("Phase 21 — Webhook Endpoint Lifecycle & Health", () => {
         organizationId: "org_ep_1",
         url: "https://user:pass@api.customer.com/webhooks",
         eventTypes: ["*.*"],
-      })
+      }),
     ).rejects.toThrow("embedded user/password");
 
     // Localhost / private hostname
@@ -55,22 +55,23 @@ describe("Phase 21 — Webhook Endpoint Lifecycle & Health", () => {
         organizationId: "org_ep_1",
         url: "https://localhost/webhooks",
         eventTypes: ["*.*"],
-      })
+      }),
     ).rejects.toThrow("forbidden");
   });
 
   it("rotates signing secret with version increment and overlap window", async () => {
-    const { endpoint, secret: initialSecret } = await endpointService.createEndpoint({
-      organizationId: "org_ep_1",
-      url: "https://api.customer.com/webhooks/growx",
-      eventTypes: ["*.*"],
-    });
+    const { endpoint, secret: initialSecret } =
+      await endpointService.createEndpoint({
+        organizationId: "org_ep_1",
+        url: "https://api.customer.com/webhooks/growx",
+        eventTypes: ["*.*"],
+      });
 
     expect(endpoint.secretVersion).toBe(1);
 
     const { endpoint: rotated, newSecret } = await endpointService.rotateSecret(
       "org_ep_1",
-      endpoint.id
+      endpoint.id,
     );
 
     expect(rotated.secretVersion).toBe(2);
@@ -95,7 +96,11 @@ describe("Phase 21 — Webhook Endpoint Lifecycle & Health", () => {
     });
 
     for (let i = 1; i <= 9; i++) {
-      await endpointService.recordEndpointOutcome("org_ep_1", endpoint.id, false);
+      await endpointService.recordEndpointOutcome(
+        "org_ep_1",
+        endpoint.id,
+        false,
+      );
     }
     const after9 = await endpointService.getEndpoint("org_ep_1", endpoint.id);
     expect(after9!.consecutiveFailures).toBe(9);
@@ -109,7 +114,10 @@ describe("Phase 21 — Webhook Endpoint Lifecycle & Health", () => {
 
     // 1 success resets health
     await endpointService.recordEndpointOutcome("org_ep_1", endpoint.id, true);
-    const afterSuccess = await endpointService.getEndpoint("org_ep_1", endpoint.id);
+    const afterSuccess = await endpointService.getEndpoint(
+      "org_ep_1",
+      endpoint.id,
+    );
     expect(afterSuccess!.consecutiveFailures).toBe(0);
     expect(afterSuccess!.status).toBe("active");
   });

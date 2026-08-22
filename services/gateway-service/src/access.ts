@@ -1,19 +1,141 @@
-import { modelAllowed, parseApiKey, type ApiKeyRecord, type ApiKeyScope } from "@growx/api-key-service";
+import {
+  modelAllowed,
+  parseApiKey,
+  type ApiKeyRecord,
+  type ApiKeyScope,
+} from "@growx/api-key-service";
 
-export type DenialCode = "missing_api_key" | "invalid_api_key" | "expired_api_key" | "revoked_api_key" | "organization_suspended" | "workspace_suspended" | "environment_disabled" | "permission_denied" | "model_not_allowed" | "ip_not_allowed" | "rate_limit_exceeded" | "concurrency_limit_exceeded" | "budget_exceeded";
-export interface TenantState { organizationStatus: "active" | "trial" | "restricted" | "suspended" | "archived"; workspaceStatus: "active" | "restricted" | "suspended" | "archived"; environmentStatus: "active" | "restricted" | "suspended" | "archived"; }
-export interface AccessInput { authorization?: string; clientIp: string; permission: ApiKeyScope; model?: string; now?: Date; }
-export interface AccessDependencies { findKey(id: string): Promise<ApiKeyRecord | null>; verify(record: ApiKeyRecord, secret: string): boolean; tenant(record: ApiKeyRecord): Promise<TenantState>; ipAllowed(ip: string, cidrs: readonly string[]): boolean; rateLimit(record: ApiKeyRecord, ip: string): Promise<boolean>; concurrencyAvailable(record: ApiKeyRecord): Promise<boolean>; budgetAvailable(record: ApiKeyRecord): Promise<boolean>; securityEvent(code: DenialCode, keyId?: string): Promise<void>; }
-export type AccessDecision = { allowed: true; record: ApiKeyRecord } | { allowed: false; code: DenialCode; status: 401 | 403 | 429 };
-const statuses: Record<DenialCode, 401 | 403 | 429> = { missing_api_key: 401, invalid_api_key: 401, expired_api_key: 401, revoked_api_key: 401, organization_suspended: 403, workspace_suspended: 403, environment_disabled: 403, permission_denied: 403, model_not_allowed: 403, ip_not_allowed: 403, rate_limit_exceeded: 429, concurrency_limit_exceeded: 429, budget_exceeded: 429 };
-async function deny(deps: AccessDependencies, code: DenialCode, id?: string): Promise<AccessDecision> { await deps.securityEvent(code, id); return { allowed: false, code, status: statuses[code] }; }
-export async function authorizeGatewayRequest(input: AccessInput, deps: AccessDependencies): Promise<AccessDecision> {
-  if (!input.authorization) return deny(deps, "missing_api_key");
-  if (!input.authorization.startsWith("Bearer ") || input.authorization.includes("\r") || input.authorization.includes("\n")) return deny(deps, "invalid_api_key");
-  const parsed = parseApiKey(input.authorization.slice(7)); if (!parsed) return deny(deps, "invalid_api_key");
-  const record = await deps.findKey(parsed.keyId); if (!record || !deps.verify(record, parsed.secret) || record.environment !== parsed.environment) return deny(deps, "invalid_api_key", parsed.keyId);
-  const now = input.now ?? new Date(); if (record.status === "revoked") return deny(deps, "revoked_api_key", record.id); if (record.status === "expired" || (record.expiresAt && record.expiresAt <= now)) return deny(deps, "expired_api_key", record.id); if (record.status !== "active") return deny(deps, "invalid_api_key", record.id);
-  const tenant = await deps.tenant(record); if (["suspended", "archived"].includes(tenant.organizationStatus)) return deny(deps, "organization_suspended", record.id); if (["suspended", "archived"].includes(tenant.workspaceStatus)) return deny(deps, "workspace_suspended", record.id); if (tenant.environmentStatus !== "active") return deny(deps, "environment_disabled", record.id);
-  if (!record.permissions.includes(input.permission)) return deny(deps, "permission_denied", record.id); if (input.model && !modelAllowed(record.modelRules, input.model)) return deny(deps, "model_not_allowed", record.id); if (!deps.ipAllowed(input.clientIp, record.ipAllowlist)) return deny(deps, "ip_not_allowed", record.id); if (!await deps.rateLimit(record, input.clientIp)) return deny(deps, "rate_limit_exceeded", record.id); if (!await deps.concurrencyAvailable(record)) return deny(deps, "concurrency_limit_exceeded", record.id); if (!await deps.budgetAvailable(record)) return deny(deps, "budget_exceeded", record.id); return { allowed: true, record };
+export type DenialCode =
+  | "missing_api_key"
+  | "invalid_api_key"
+  | "expired_api_key"
+  | "revoked_api_key"
+  | "organization_suspended"
+  | "workspace_suspended"
+  | "environment_disabled"
+  | "permission_denied"
+  | "model_not_allowed"
+  | "ip_not_allowed"
+  | "rate_limit_exceeded"
+  | "concurrency_limit_exceeded"
+  | "budget_exceeded";
+export interface TenantState {
+  organizationStatus:
+    "active" | "trial" | "restricted" | "suspended" | "archived";
+  workspaceStatus: "active" | "restricted" | "suspended" | "archived";
+  environmentStatus: "active" | "restricted" | "suspended" | "archived";
 }
-export function gatewayError(code: DenialCode, requestId: string) { const authentication = ["missing_api_key", "invalid_api_key", "expired_api_key", "revoked_api_key"].includes(code); return { error: { type: authentication ? "authentication_error" : code.endsWith("exceeded") ? "limit_error" : "authorization_error", code, message: code.replaceAll("_", " "), requestId } }; }
+export interface AccessInput {
+  authorization?: string;
+  clientIp: string;
+  permission: ApiKeyScope;
+  model?: string;
+  now?: Date;
+}
+export interface AccessDependencies {
+  findKey(id: string): Promise<ApiKeyRecord | null>;
+  verify(record: ApiKeyRecord, secret: string): boolean;
+  tenant(record: ApiKeyRecord): Promise<TenantState>;
+  ipAllowed(ip: string, cidrs: readonly string[]): boolean;
+  rateLimit(record: ApiKeyRecord, ip: string): Promise<boolean>;
+  concurrencyAvailable(record: ApiKeyRecord): Promise<boolean>;
+  budgetAvailable(record: ApiKeyRecord): Promise<boolean>;
+  securityEvent(code: DenialCode, keyId?: string): Promise<void>;
+}
+export type AccessDecision =
+  | { allowed: true; record: ApiKeyRecord }
+  | { allowed: false; code: DenialCode; status: 401 | 403 | 429 };
+const statuses: Record<DenialCode, 401 | 403 | 429> = {
+  missing_api_key: 401,
+  invalid_api_key: 401,
+  expired_api_key: 401,
+  revoked_api_key: 401,
+  organization_suspended: 403,
+  workspace_suspended: 403,
+  environment_disabled: 403,
+  permission_denied: 403,
+  model_not_allowed: 403,
+  ip_not_allowed: 403,
+  rate_limit_exceeded: 429,
+  concurrency_limit_exceeded: 429,
+  budget_exceeded: 429,
+};
+async function deny(
+  deps: AccessDependencies,
+  code: DenialCode,
+  id?: string,
+): Promise<AccessDecision> {
+  await deps.securityEvent(code, id);
+  return { allowed: false, code, status: statuses[code] };
+}
+export async function authorizeGatewayRequest(
+  input: AccessInput,
+  deps: AccessDependencies,
+): Promise<AccessDecision> {
+  if (!input.authorization) return deny(deps, "missing_api_key");
+  if (
+    !input.authorization.startsWith("Bearer ") ||
+    input.authorization.includes("\r") ||
+    input.authorization.includes("\n")
+  )
+    return deny(deps, "invalid_api_key");
+  const parsed = parseApiKey(input.authorization.slice(7));
+  if (!parsed) return deny(deps, "invalid_api_key");
+  const record = await deps.findKey(parsed.keyId);
+  if (
+    !record ||
+    !deps.verify(record, parsed.secret) ||
+    record.environment !== parsed.environment
+  )
+    return deny(deps, "invalid_api_key", parsed.keyId);
+  const now = input.now ?? new Date();
+  if (record.status === "revoked")
+    return deny(deps, "revoked_api_key", record.id);
+  if (
+    record.status === "expired" ||
+    (record.expiresAt && record.expiresAt <= now)
+  )
+    return deny(deps, "expired_api_key", record.id);
+  if (record.status !== "active")
+    return deny(deps, "invalid_api_key", record.id);
+  const tenant = await deps.tenant(record);
+  if (["suspended", "archived"].includes(tenant.organizationStatus))
+    return deny(deps, "organization_suspended", record.id);
+  if (["suspended", "archived"].includes(tenant.workspaceStatus))
+    return deny(deps, "workspace_suspended", record.id);
+  if (tenant.environmentStatus !== "active")
+    return deny(deps, "environment_disabled", record.id);
+  if (!record.permissions.includes(input.permission))
+    return deny(deps, "permission_denied", record.id);
+  if (input.model && !modelAllowed(record.modelRules, input.model))
+    return deny(deps, "model_not_allowed", record.id);
+  if (!deps.ipAllowed(input.clientIp, record.ipAllowlist))
+    return deny(deps, "ip_not_allowed", record.id);
+  if (!(await deps.rateLimit(record, input.clientIp)))
+    return deny(deps, "rate_limit_exceeded", record.id);
+  if (!(await deps.concurrencyAvailable(record)))
+    return deny(deps, "concurrency_limit_exceeded", record.id);
+  if (!(await deps.budgetAvailable(record)))
+    return deny(deps, "budget_exceeded", record.id);
+  return { allowed: true, record };
+}
+export function gatewayError(code: DenialCode, requestId: string) {
+  const authentication = [
+    "missing_api_key",
+    "invalid_api_key",
+    "expired_api_key",
+    "revoked_api_key",
+  ].includes(code);
+  return {
+    error: {
+      type: authentication
+        ? "authentication_error"
+        : code.endsWith("exceeded")
+          ? "limit_error"
+          : "authorization_error",
+      code,
+      message: code.replaceAll("_", " "),
+      requestId,
+    },
+  };
+}

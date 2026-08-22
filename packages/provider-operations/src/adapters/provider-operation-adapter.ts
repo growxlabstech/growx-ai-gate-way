@@ -30,22 +30,22 @@ export interface ProviderOperationAdapter {
 
   getOperationStatus(
     providerOperationId: string,
-    credentials?: unknown
+    credentials?: unknown,
   ): Promise<ProviderOperationStatusResult>;
 
   cancelOperation?(
     providerOperationId: string,
-    credentials?: unknown
+    credentials?: unknown,
   ): Promise<ProviderOperationCancelResult>;
 
   fetchResult(
     resultReference: string,
-    credentials?: unknown
+    credentials?: unknown,
   ): Promise<ProviderOperationResultData>;
 
   parseCallback?(
     payload: Record<string, unknown>,
-    headers: Record<string, string>
+    headers: Record<string, string>,
   ): {
     providerOperationId: string;
     status: ProviderOperationStatus;

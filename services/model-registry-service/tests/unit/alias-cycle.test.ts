@@ -71,7 +71,9 @@ describe("Alias Resolution & Cycle Detection Unit Tests", () => {
       },
     ];
 
-    expect(() => resolveAliasChain("alias-a", aliases)).toThrow(/Alias cycle detected/);
+    expect(() => resolveAliasChain("alias-a", aliases)).toThrow(
+      /Alias cycle detected/,
+    );
   });
 
   it("detects 3-node cycle (A -> B -> C -> A) and throws error", () => {
@@ -105,7 +107,9 @@ describe("Alias Resolution & Cycle Detection Unit Tests", () => {
       },
     ];
 
-    expect(() => resolveAliasChain("alias-a", aliases)).toThrow(/Alias cycle detected/);
+    expect(() => resolveAliasChain("alias-a", aliases)).toThrow(
+      /Alias cycle detected/,
+    );
   });
 
   it("ignores inactive or retired aliases in chain", () => {

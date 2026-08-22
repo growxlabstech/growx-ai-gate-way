@@ -1,6 +1,9 @@
 import type { EmbeddingProvider } from "./types.js";
 
-export function cosineSimilarity(vecA: readonly number[], vecB: readonly number[]): number {
+export function cosineSimilarity(
+  vecA: readonly number[],
+  vecB: readonly number[],
+): number {
   if (vecA.length !== vecB.length || vecA.length === 0) return 0;
   let dot = 0;
   let normA = 0;
@@ -33,7 +36,9 @@ export class DeterministicEmbeddingProvider implements EmbeddingProvider {
     return this.generateVector(text);
   }
 
-  async embedBatch(texts: readonly string[]): Promise<readonly (readonly number[])[]> {
+  async embedBatch(
+    texts: readonly string[],
+  ): Promise<readonly (readonly number[])[]> {
     return texts.map((t) => this.generateVector(t));
   }
 

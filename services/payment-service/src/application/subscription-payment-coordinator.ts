@@ -13,7 +13,10 @@ export class SubscriptionPaymentCoordinator {
   /**
    * Handle payment success event from webhook or manual reconciliation.
    */
-  async handlePaymentSuccess(event: NormalizedPaymentEvent, payment?: Payment): Promise<void> {
+  async handlePaymentSuccess(
+    event: NormalizedPaymentEvent,
+    payment?: Payment,
+  ): Promise<void> {
     if (!payment) return;
 
     const organizationId = payment.organizationId;
@@ -21,12 +24,14 @@ export class SubscriptionPaymentCoordinator {
 
     if (purpose === "subscription_start") {
       const planId = (payment.metadata.planId as string) ?? payment.referenceId;
-      const planVersionId = payment.metadata.planVersionId as string | undefined;
+      const planVersionId = payment.metadata.planVersionId as
+        string | undefined;
 
       if (!planId) return;
 
       // Check if org already has active subscription (idempotency guard)
-      const existingSub = await this.subscriptionService.getActiveSubscription(organizationId);
+      const existingSub =
+        await this.subscriptionService.getActiveSubscription(organizationId);
       if (existingSub) {
         return;
       }
@@ -43,7 +48,8 @@ export class SubscriptionPaymentCoordinator {
         },
       });
     } else if (purpose === "subscription_renewal") {
-      const subscriptionId = (payment.metadata.subscriptionId as string) ?? payment.referenceId;
+      const subscriptionId =
+        (payment.metadata.subscriptionId as string) ?? payment.referenceId;
       if (!subscriptionId) return;
 
       await this.subscriptionService.processRenewal(subscriptionId);

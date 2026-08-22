@@ -5,74 +5,75 @@ import type {
   SecuritySignal,
 } from "./types.js";
 
-export const DEFAULT_SECURITY_DETECTION_RULES: readonly SecurityDetectionRule[] = [
-  {
-    id: "rule_auth_failed_privileged",
-    type: "auth.failed_privileged_access",
-    enabled: true,
-    windowSeconds: 300, // 5 minutes
-    threshold: 3,
-    severity: "critical",
-    cooldownSeconds: 600, // 10 minutes
-    scope: "global",
-    version: 1,
-  },
-  {
-    id: "rule_cross_tenant_attempt",
-    type: "tenancy.cross_tenant_access",
-    enabled: true,
-    windowSeconds: 60,
-    threshold: 1,
-    severity: "high",
-    cooldownSeconds: 300,
-    scope: "organization",
-    version: 1,
-  },
-  {
-    id: "rule_webhook_ssrf",
-    type: "webhook.ssrf_attempt",
-    enabled: true,
-    windowSeconds: 60,
-    threshold: 1,
-    severity: "high",
-    cooldownSeconds: 300,
-    scope: "organization",
-    version: 1,
-  },
-  {
-    id: "rule_webhook_sig_fail",
-    type: "webhook.signature_failure_spike",
-    enabled: true,
-    windowSeconds: 120,
-    threshold: 5,
-    severity: "medium",
-    cooldownSeconds: 600,
-    scope: "organization",
-    version: 1,
-  },
-  {
-    id: "rule_api_key_revoked_abuse",
-    type: "api_key.revoked_usage_spike",
-    enabled: true,
-    windowSeconds: 300,
-    threshold: 10,
-    severity: "high",
-    cooldownSeconds: 600,
-    scope: "organization",
-    version: 1,
-  },
-  {
-    id: "rule_wallet_invariant",
-    type: "wallet.invariant_violation",
-    enabled: true,
-    windowSeconds: 60,
-    threshold: 1,
-    severity: "critical",
-    cooldownSeconds: 300,
-    scope: "organization",
-    version: 1,
-  },
-];
+export const DEFAULT_SECURITY_DETECTION_RULES: readonly SecurityDetectionRule[] =
+  [
+    {
+      id: "rule_auth_failed_privileged",
+      type: "auth.failed_privileged_access",
+      enabled: true,
+      windowSeconds: 300, // 5 minutes
+      threshold: 3,
+      severity: "critical",
+      cooldownSeconds: 600, // 10 minutes
+      scope: "global",
+      version: 1,
+    },
+    {
+      id: "rule_cross_tenant_attempt",
+      type: "tenancy.cross_tenant_access",
+      enabled: true,
+      windowSeconds: 60,
+      threshold: 1,
+      severity: "high",
+      cooldownSeconds: 300,
+      scope: "organization",
+      version: 1,
+    },
+    {
+      id: "rule_webhook_ssrf",
+      type: "webhook.ssrf_attempt",
+      enabled: true,
+      windowSeconds: 60,
+      threshold: 1,
+      severity: "high",
+      cooldownSeconds: 300,
+      scope: "organization",
+      version: 1,
+    },
+    {
+      id: "rule_webhook_sig_fail",
+      type: "webhook.signature_failure_spike",
+      enabled: true,
+      windowSeconds: 120,
+      threshold: 5,
+      severity: "medium",
+      cooldownSeconds: 600,
+      scope: "organization",
+      version: 1,
+    },
+    {
+      id: "rule_api_key_revoked_abuse",
+      type: "api_key.revoked_usage_spike",
+      enabled: true,
+      windowSeconds: 300,
+      threshold: 10,
+      severity: "high",
+      cooldownSeconds: 600,
+      scope: "organization",
+      version: 1,
+    },
+    {
+      id: "rule_wallet_invariant",
+      type: "wallet.invariant_violation",
+      enabled: true,
+      windowSeconds: 60,
+      threshold: 1,
+      severity: "critical",
+      cooldownSeconds: 300,
+      scope: "organization",
+      version: 1,
+    },
+  ];
 
 export interface WindowedEventState {
   timestamps: number[];
@@ -83,7 +84,9 @@ export class SecurityDetectionEngine {
   private readonly rules: Map<string, SecurityDetectionRule> = new Map();
   private readonly state: Map<string, WindowedEventState> = new Map();
 
-  constructor(rules: readonly SecurityDetectionRule[] = DEFAULT_SECURITY_DETECTION_RULES) {
+  constructor(
+    rules: readonly SecurityDetectionRule[] = DEFAULT_SECURITY_DETECTION_RULES,
+  ) {
     for (const rule of rules) {
       if (rule.enabled) {
         this.rules.set(rule.type, rule);
@@ -96,7 +99,7 @@ export class SecurityDetectionEngine {
    */
   processEvent(
     event: SecurityEvent,
-    existingSignal?: SecuritySignal | undefined
+    existingSignal?: SecuritySignal | undefined,
   ): SecuritySignal | undefined {
     const rule = this.rules.get(event.type);
     if (!rule) return undefined;
@@ -112,7 +115,9 @@ export class SecurityDetectionEngine {
 
     // Prune events outside window
     const windowStart = now - rule.windowSeconds * 1000;
-    itemState.timestamps = itemState.timestamps.filter((ts) => ts >= windowStart);
+    itemState.timestamps = itemState.timestamps.filter(
+      (ts) => ts >= windowStart,
+    );
     itemState.timestamps.push(now);
 
     const countInWindow = itemState.timestamps.length;

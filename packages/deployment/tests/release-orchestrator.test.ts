@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { ReleaseOrchestrator, SmokeValidator, DeploymentLockError } from "../src/index.js";
+import {
+  ReleaseOrchestrator,
+  SmokeValidator,
+  DeploymentLockError,
+} from "../src/index.js";
 
 describe("ReleaseOrchestrator & SmokeValidator", () => {
   it("executes synthetic smoke suite with zero customer billing contamination", async () => {
@@ -25,7 +29,10 @@ describe("ReleaseOrchestrator & SmokeValidator", () => {
     expect(release.smokeResults.length).toBeGreaterThan(0);
 
     // Rollback validation
-    const rolledBack = orchestrator.rollbackRelease(release.id, "Staging validation failure");
+    const rolledBack = orchestrator.rollbackRelease(
+      release.id,
+      "Staging validation failure",
+    );
     expect(rolledBack.status).toBe("rolled_back");
     expect(rolledBack.rollbackReason).toBe("Staging validation failure");
   });

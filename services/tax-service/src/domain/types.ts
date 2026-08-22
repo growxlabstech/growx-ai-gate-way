@@ -1,8 +1,4 @@
-import type {
-  BillingProfile,
-  LegalEntity,
-  TaxRule,
-} from "@growx/tax";
+import type { BillingProfile, LegalEntity, TaxRule } from "@growx/tax";
 
 export interface ITaxRepository {
   // Legal entities
@@ -10,12 +6,20 @@ export interface ITaxRepository {
   getLegalEntity(id: string): Promise<LegalEntity | undefined>;
   getLegalEntityByCode(code: string): Promise<LegalEntity | undefined>;
   listLegalEntities(): Promise<LegalEntity[]>;
-  updateLegalEntity(id: string, updates: Partial<LegalEntity>): Promise<LegalEntity>;
+  updateLegalEntity(
+    id: string,
+    updates: Partial<LegalEntity>,
+  ): Promise<LegalEntity>;
 
   // Customer billing profiles
   createBillingProfile(profile: BillingProfile): Promise<BillingProfile>;
-  getBillingProfile(organizationId: string): Promise<BillingProfile | undefined>;
-  updateBillingProfile(organizationId: string, updates: Partial<BillingProfile>): Promise<BillingProfile>;
+  getBillingProfile(
+    organizationId: string,
+  ): Promise<BillingProfile | undefined>;
+  updateBillingProfile(
+    organizationId: string,
+    updates: Partial<BillingProfile>,
+  ): Promise<BillingProfile>;
 
   // Tax rules
   createTaxRule(rule: TaxRule): Promise<TaxRule>;

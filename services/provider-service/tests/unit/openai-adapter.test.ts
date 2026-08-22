@@ -56,12 +56,14 @@ describe("OpenAIAdapter Unit Tests", () => {
               completion_tokens: 8,
               total_tokens: 20,
             },
-          })
+          }),
         );
       });
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -100,7 +102,9 @@ describe("OpenAIAdapter Unit Tests", () => {
 
       expect(capturedAuth).toBe("Bearer sk-test-mock-key-123");
       expect(capturedBody.messages[0]?.role).toBe("system");
-      expect(capturedBody.messages[0]?.content).toBe("You are a helpful assistant.");
+      expect(capturedBody.messages[0]?.content).toBe(
+        "You are a helpful assistant.",
+      );
       expect(capturedBody.messages[1]?.role).toBe("user");
       expect(capturedBody.messages[1]?.content).toBe("Say hello");
     } finally {
@@ -130,7 +134,9 @@ describe("OpenAIAdapter Unit Tests", () => {
       res.end();
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -166,7 +172,10 @@ describe("OpenAIAdapter Unit Tests", () => {
       expect(types).toContain("output_text.done");
       expect(types).toContain("response.completed");
 
-      const deltas = events.filter((e) => e.type === "output_text.delta").map((e) => e.delta).join("");
+      const deltas = events
+        .filter((e) => e.type === "output_text.delta")
+        .map((e) => e.delta)
+        .join("");
       expect(deltas).toBe("Hello world!");
 
       const completed = events.find((e) => e.type === "response.completed");
@@ -208,11 +217,13 @@ describe("OpenAIAdapter Unit Tests", () => {
             completion_tokens: 15,
             total_tokens: 40,
           },
-        })
+        }),
       );
     });
 
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
     const port = (server.address() as any).port;
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -252,7 +263,9 @@ describe("OpenAIAdapter Unit Tests", () => {
       expect(response.finishReason).toBe("tool_call");
       expect(response.toolCalls?.length).toBe(1);
       expect(response.toolCalls?.[0]?.name).toBe("get_weather");
-      expect(response.toolCalls?.[0]?.arguments).toBe('{"location":"San Francisco, CA"}');
+      expect(response.toolCalls?.[0]?.arguments).toBe(
+        '{"location":"San Francisco, CA"}',
+      );
     } finally {
       server.close();
     }

@@ -13,8 +13,12 @@
   },
   "dependencies": {
     "@growx/configuration": "workspace:*",
+    "@growx/authorization-service": "workspace:*",
     "@growx/cryptography": "workspace:*",
     "@growx/database": "workspace:*",
+    "@growx/contracts": "workspace:*",
+    "@growx/ids": "workspace:*",
+    "@growx/organization-service": "workspace:*",
     "@growx/privileged-access": "workspace:*",
     "@growx/rate-limits": "workspace:*",
     "better-auth": "^1.6.9"

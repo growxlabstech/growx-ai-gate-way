@@ -45,14 +45,7 @@ export const STANDARD_REGION_GROUPS: Record<string, string[]> = {
     "asia-southeast1",
     "asia-southeast2",
   ],
-  IN: [
-    "in",
-    "india",
-    "ap-south-1",
-    "ap-south-2",
-    "asia-south1",
-    "asia-south2",
-  ],
+  IN: ["in", "india", "ap-south-1", "ap-south-2", "asia-south1", "asia-south2"],
   GLOBAL: ["global"],
 };
 
@@ -70,7 +63,10 @@ export function expandRegionOrGroup(identifier: string): string[] {
 /**
  * Checks if a candidate region matches a target region or region group.
  */
-export function regionMatches(candidateRegion: string, targetRegionOrGroup: string): boolean {
+export function regionMatches(
+  candidateRegion: string,
+  targetRegionOrGroup: string,
+): boolean {
   const normCandidate = candidateRegion.toLowerCase();
   const upperTarget = targetRegionOrGroup.toUpperCase();
 
@@ -79,7 +75,11 @@ export function regionMatches(candidateRegion: string, targetRegionOrGroup: stri
   }
 
   const normTarget = targetRegionOrGroup.toLowerCase();
-  return normCandidate === normTarget || normTarget === "global" || normCandidate === "global";
+  return (
+    normCandidate === normTarget ||
+    normTarget === "global" ||
+    normCandidate === "global"
+  );
 }
 
 /**
@@ -91,8 +91,12 @@ export function isRegionAllowed(
     allowedRegions?: string[] | undefined;
     deniedRegions?: string[] | undefined;
     requiredDataResidency?: string | undefined;
-  }
-): { allowed: boolean; reason?: string; code?: "REGION_DENIED" | "DATA_RESIDENCY_DENIED" } {
+  },
+): {
+  allowed: boolean;
+  reason?: string;
+  code?: "REGION_DENIED" | "DATA_RESIDENCY_DENIED";
+} {
   const reg = candidateRegion ? candidateRegion.toLowerCase() : "global";
 
   // 1. Explicit deny list (Deny overrides allow)
@@ -121,7 +125,9 @@ export function isRegionAllowed(
 
   // 3. Allowed list (if specified, region must match at least one allowed entry)
   if (options.allowedRegions && options.allowedRegions.length > 0) {
-    const isAllowed = options.allowedRegions.some((allowed) => regionMatches(reg, allowed));
+    const isAllowed = options.allowedRegions.some((allowed) =>
+      regionMatches(reg, allowed),
+    );
     if (!isAllowed) {
       return {
         allowed: false,

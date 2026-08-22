@@ -109,10 +109,7 @@ export interface InAppNotification {
 }
 
 export type SuppressionReason =
-  | "hard_bounce"
-  | "complaint"
-  | "manual"
-  | "invalid_address";
+  "hard_bounce" | "complaint" | "manual" | "invalid_address";
 
 export interface NotificationSuppression {
   id: string;

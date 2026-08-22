@@ -16,7 +16,9 @@ describe("Batch State Machine", () => {
       expect(isValidJobTransition("queued", "running")).toBe(true);
       expect(isValidJobTransition("running", "finalizing")).toBe(true);
       expect(isValidJobTransition("finalizing", "completed")).toBe(true);
-      expect(isValidJobTransition("finalizing", "partially_completed")).toBe(true);
+      expect(isValidJobTransition("finalizing", "partially_completed")).toBe(
+        true,
+      );
       expect(isValidJobTransition("finalizing", "failed")).toBe(true);
       expect(isValidJobTransition("queued", "cancelling")).toBe(true);
       expect(isValidJobTransition("cancelling", "cancelled")).toBe(true);
@@ -26,7 +28,9 @@ describe("Batch State Machine", () => {
       expect(isValidJobTransition("completed", "running")).toBe(false);
       expect(isValidJobTransition("failed", "queued")).toBe(false);
       expect(isValidJobTransition("cancelled", "finalizing")).toBe(false);
-      expect(() => assertValidJobTransition("completed", "running", "b1")).toThrowError(BatchConcurrencyError);
+      expect(() =>
+        assertValidJobTransition("completed", "running", "b1"),
+      ).toThrowError(BatchConcurrencyError);
     });
 
     it("correctly identifies terminal job states", () => {
@@ -54,7 +58,9 @@ describe("Batch State Machine", () => {
     it("rejects invalid item transitions", () => {
       expect(isValidItemTransition("succeeded", "running")).toBe(false);
       expect(isValidItemTransition("failed", "succeeded")).toBe(false);
-      expect(() => assertValidItemTransition("succeeded", "queued", "item1")).toThrowError(BatchConcurrencyError);
+      expect(() =>
+        assertValidItemTransition("succeeded", "queued", "item1"),
+      ).toThrowError(BatchConcurrencyError);
     });
 
     it("correctly identifies terminal item states", () => {

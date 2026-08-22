@@ -46,18 +46,29 @@ export class OpenAIToolAdapter implements ProviderToolAdapter {
     return rawCalls.map((rc: any, idx: number) => {
       let argsObj: unknown = {};
       try {
-        argsObj = typeof rc.function?.arguments === "string" ? JSON.parse(rc.function.arguments) : rc.function?.arguments;
+        argsObj =
+          typeof rc.function?.arguments === "string"
+            ? JSON.parse(rc.function.arguments)
+            : rc.function?.arguments;
       } catch {
         argsObj = { raw: rc.function?.arguments };
       }
 
       return {
-        id: rc.id && rc.id.startsWith("tcall_") ? rc.id : `tcall_${rc.id ?? idx}`,
+        id:
+          rc.id && rc.id.startsWith("tcall_") ? rc.id : `tcall_${rc.id ?? idx}`,
         requestId,
         providerCallId: rc.id,
         name: rc.function?.name ?? "",
-        arguments: (argsObj && typeof argsObj === "object" && !Array.isArray(argsObj) ? argsObj : {}) as Record<string, unknown>,
-        rawArguments: typeof rc.function?.arguments === "string" ? rc.function.arguments : JSON.stringify(rc.function?.arguments),
+        arguments: (argsObj &&
+        typeof argsObj === "object" &&
+        !Array.isArray(argsObj)
+          ? argsObj
+          : {}) as Record<string, unknown>,
+        rawArguments:
+          typeof rc.function?.arguments === "string"
+            ? rc.function.arguments
+            : JSON.stringify(rc.function?.arguments),
         index: idx,
         status: "validated",
       };

@@ -43,7 +43,9 @@ describe("Security & Abuse Protections", () => {
 
     expect(decision.allowed).toBe(false);
     expect(events.securityEvents).toHaveLength(1);
-    expect(events.securityEvents[0]?.eventType).toBe("gateway.authentication.failed");
+    expect(events.securityEvents[0]?.eventType).toBe(
+      "gateway.authentication.failed",
+    );
     expect(events.securityEvents[0]?.details["reason"]).toBe("invalid_secret");
   });
 
@@ -70,7 +72,9 @@ describe("Security & Abuse Protections", () => {
     const decision = await service.authenticate(key.secret);
 
     expect(decision.allowed).toBe(false);
-    const revokedEvents = events.securityEvents.filter((e) => e.details["reason"] === "revoked_api_key");
+    const revokedEvents = events.securityEvents.filter(
+      (e) => e.details["reason"] === "revoked_api_key",
+    );
     expect(revokedEvents).toHaveLength(1);
   });
 
@@ -87,7 +91,9 @@ describe("Security & Abuse Protections", () => {
 
     const decision = await service.authenticate(key.secret);
     expect(decision.allowed).toBe(false);
-    const expiredEvents = events.securityEvents.filter((e) => e.details["reason"] === "expired_api_key");
+    const expiredEvents = events.securityEvents.filter(
+      (e) => e.details["reason"] === "expired_api_key",
+    );
     expect(expiredEvents).toHaveLength(1);
   });
 
@@ -101,7 +107,9 @@ describe("Security & Abuse Protections", () => {
       createdBy: "usr_1",
     });
 
-    const attempts = Array.from({ length: 50 }, () => service.authenticate(key.secret));
+    const attempts = Array.from({ length: 50 }, () =>
+      service.authenticate(key.secret),
+    );
     const results = await Promise.all(attempts);
 
     for (const result of results) {

@@ -27,9 +27,15 @@ export const providerOperationStatusSchema = z.enum([
   "expired",
   "unknown",
 ]);
-export type ProviderOperationStatus = z.infer<typeof providerOperationStatusSchema>;
+export type ProviderOperationStatus = z.infer<
+  typeof providerOperationStatusSchema
+>;
 
-export const providerPollStrategySchema = z.enum(["poll", "callback", "hybrid"]);
+export const providerPollStrategySchema = z.enum([
+  "poll",
+  "callback",
+  "hybrid",
+]);
 export type ProviderPollStrategy = z.infer<typeof providerPollStrategySchema>;
 
 // ==========================================
@@ -84,7 +90,9 @@ export const providerOperationAttemptTypeSchema = z.enum([
   "finalize",
   "reconcile",
 ]);
-export type ProviderOperationAttemptType = z.infer<typeof providerOperationAttemptTypeSchema>;
+export type ProviderOperationAttemptType = z.infer<
+  typeof providerOperationAttemptTypeSchema
+>;
 
 export const providerOperationAttemptSchema = z.object({
   id: z.string().min(1),
@@ -97,7 +105,9 @@ export const providerOperationAttemptSchema = z.object({
   errorCode: z.string().nullable().optional(),
   errorMessage: z.string().nullable().optional(),
 });
-export type ProviderOperationAttempt = z.infer<typeof providerOperationAttemptSchema>;
+export type ProviderOperationAttempt = z.infer<
+  typeof providerOperationAttemptSchema
+>;
 
 // ==========================================
 // 4. Provider Operation Callbacks
@@ -112,7 +122,9 @@ export const providerOperationCallbackSchema = z.object({
   signatureVerified: z.boolean().default(false),
   receivedAt: z.coerce.date(),
 });
-export type ProviderOperationCallback = z.infer<typeof providerOperationCallbackSchema>;
+export type ProviderOperationCallback = z.infer<
+  typeof providerOperationCallbackSchema
+>;
 
 // ==========================================
 // 5. Query / Filter Schemas
@@ -122,10 +134,17 @@ export const providerOperationFilterSchema = z.object({
   organizationId: z.string().optional(),
   workspaceId: z.string().optional(),
   providerId: z.string().optional(),
-  status: z.union([providerOperationStatusSchema, z.array(providerOperationStatusSchema)]).optional(),
+  status: z
+    .union([
+      providerOperationStatusSchema,
+      z.array(providerOperationStatusSchema),
+    ])
+    .optional(),
   operationType: providerOperationTypeSchema.optional(),
   dueBefore: z.coerce.date().optional(),
   stuckSince: z.coerce.date().optional(),
   limit: z.number().int().min(1).max(1000).default(50),
 });
-export type ProviderOperationFilter = z.infer<typeof providerOperationFilterSchema>;
+export type ProviderOperationFilter = z.infer<
+  typeof providerOperationFilterSchema
+>;

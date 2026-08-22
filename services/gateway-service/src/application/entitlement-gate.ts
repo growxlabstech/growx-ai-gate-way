@@ -27,9 +27,7 @@ export interface IEntitlementResolver {
  * Fail-closed: if entitlement resolution fails, access is denied.
  */
 export class EntitlementGate {
-  constructor(
-    private readonly resolver: IEntitlementResolver,
-  ) {}
+  constructor(private readonly resolver: IEntitlementResolver) {}
 
   /**
    * Check whether the organization's plan allows access to the requested model.
@@ -40,14 +38,18 @@ export class EntitlementGate {
     workspaceId?: string;
   }): Promise<EntitlementCheckResult> {
     try {
-      const entitlements = await this.resolver.resolveEntitlements(params.organizationId);
+      const entitlements = await this.resolver.resolveEntitlements(
+        params.organizationId,
+      );
 
       // Check model access rules
       const modelCheck = entitlements.checkModelAccess(params.canonicalModelId);
       if (!modelCheck.allowed) {
         return {
           allowed: false,
-          reason: modelCheck.reason ?? `Model ${params.canonicalModelId} is not available on your current plan`,
+          reason:
+            modelCheck.reason ??
+            `Model ${params.canonicalModelId} is not available on your current plan`,
           resolvedPlan: entitlements.planId,
           entitlements,
         };

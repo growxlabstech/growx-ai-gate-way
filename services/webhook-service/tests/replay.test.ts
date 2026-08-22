@@ -34,7 +34,10 @@ describe("Phase 21 — Webhook Replay & Bulk Replay Jobs", () => {
     const originalDelivery = deliveries[0];
 
     // Replay
-    const newDelivery = await replayService.replayDelivery("org_rpl_test", originalDelivery!.id);
+    const newDelivery = await replayService.replayDelivery(
+      "org_rpl_test",
+      originalDelivery!.id,
+    );
 
     expect(newDelivery.id).not.toBe(originalDelivery!.id); // New delivery ID
     expect(newDelivery.webhookEventId).toBe(outboundEvent.id); // Stable external event ID!
@@ -52,12 +55,13 @@ describe("Phase 21 — Webhook Replay & Bulk Replay Jobs", () => {
       });
     }
 
-    const { job, createdDeliveriesCount } = await replayService.createBulkReplayJob({
-      organizationId: "org_rpl_test",
-      filterConfig: {
-        eventTypes: ["payment.succeeded.v1"],
-      },
-    });
+    const { job, createdDeliveriesCount } =
+      await replayService.createBulkReplayJob({
+        organizationId: "org_rpl_test",
+        filterConfig: {
+          eventTypes: ["payment.succeeded.v1"],
+        },
+      });
 
     expect(job.status).toBe("completed");
     expect(job.totalEvents).toBe(5);

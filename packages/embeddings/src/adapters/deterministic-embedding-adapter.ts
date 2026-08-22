@@ -21,7 +21,7 @@ export class DeterministicEmbeddingAdapter implements ProviderEmbeddingAdapter {
   public parseResponse(
     rawResponse: unknown,
     request: NormalizedEmbeddingRequest,
-    dimensions: number
+    dimensions: number,
   ): NormalizedEmbeddingResponse {
     const dims = request.dimensions || dimensions || this.defaultDims;
     const embeddings = request.inputs.map((text: string, idx: number) => ({
@@ -29,7 +29,10 @@ export class DeterministicEmbeddingAdapter implements ProviderEmbeddingAdapter {
       embedding: this.generateVector(text, dims),
     }));
 
-    const promptTokens = request.inputs.reduce((acc: number, t: string) => acc + Math.max(Math.ceil(t.length / 4), 1), 0);
+    const promptTokens = request.inputs.reduce(
+      (acc: number, t: string) => acc + Math.max(Math.ceil(t.length / 4), 1),
+      0,
+    );
 
     return {
       model: request.canonicalModelId,

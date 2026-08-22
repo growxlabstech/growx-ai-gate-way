@@ -14,7 +14,7 @@ import type {
 } from "@growx/contracts";
 
 export function deriveRequiredCapabilities(
-  request: OpenAIChatCompletionRequest
+  request: OpenAIChatCompletionRequest,
 ): CanonicalCapability[] {
   const capabilities: CanonicalCapability[] = ["text.generate"];
 
@@ -67,7 +67,7 @@ export function deriveRequiredCapabilities(
 }
 
 export function translateOpenAIMessages(
-  messages: readonly OpenAIChatMessage[]
+  messages: readonly OpenAIChatMessage[],
 ): NormalizedMessage[] {
   return messages.map((msg) => {
     const normalized: NormalizedMessage = {
@@ -100,7 +100,7 @@ export function toNormalizedGenerationRequest(
   requestId: string,
   canonicalModelId: string,
   providerModelId: string,
-  timeoutMs = 60_000
+  timeoutMs = 60_000,
 ): NormalizedGenerationRequest {
   const normalizedMessages = translateOpenAIMessages(request.messages);
 
@@ -133,7 +133,9 @@ export function toNormalizedGenerationRequest(
     canonicalModelId,
     providerModelId,
     messages: normalizedMessages,
-    ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
+    ...(request.temperature !== undefined
+      ? { temperature: request.temperature }
+      : {}),
     ...(request.top_p !== undefined ? { topP: request.top_p } : {}),
     ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
     ...(stop ? { stop } : {}),
@@ -141,14 +143,16 @@ export function toNormalizedGenerationRequest(
     ...(request.tools ? { tools: request.tools } : {}),
     ...(request.tool_choice ? { toolChoice: request.tool_choice as any } : {}),
     ...(structuredOutput ? { structuredOutput } : {}),
-    ...(request.reasoning_effort ? { reasoning: { effort: request.reasoning_effort } } : {}),
+    ...(request.reasoning_effort
+      ? { reasoning: { effort: request.reasoning_effort } }
+      : {}),
     ...(request.user ? { metadata: { user: request.user } } : {}),
     timeoutMs,
   };
 }
 
 export function mapToOpenAIFinishReason(
-  reason: FinishReason
+  reason: FinishReason,
 ): "stop" | "length" | "tool_calls" | "content_filter" | null {
   switch (reason) {
     case "stop":
@@ -169,15 +173,15 @@ export function mapToOpenAIFinishReason(
 
 export function toOpenAIChatCompletionResponse(
   response: NormalizedGenerationResponse,
-  requestedModel: string
+  requestedModel: string,
 ): OpenAIChatCompletionResponse {
   const firstOutput = response.output[0];
   const content =
     typeof firstOutput?.content === "string"
       ? firstOutput.content
       : firstOutput?.content
-      ? JSON.stringify(firstOutput.content)
-      : null;
+        ? JSON.stringify(firstOutput.content)
+        : null;
 
   const toolCalls = response.toolCalls?.map((tc) => ({
     id: tc.id,
@@ -208,7 +212,7 @@ export function toOpenAIChatCompletionResponse(
   const created = Math.floor(
     (response.timing.startedAt instanceof Date
       ? response.timing.startedAt.getTime()
-      : Date.now()) / 1000
+      : Date.now()) / 1000,
   );
 
   return {
@@ -222,10 +226,18 @@ export function toOpenAIChatCompletionResponse(
       completion_tokens: response.usage.outputTokens,
       total_tokens: response.usage.totalTokens,
       ...(response.usage.cachedInputTokens !== undefined
-        ? { prompt_tokens_details: { cached_tokens: response.usage.cachedInputTokens } }
+        ? {
+            prompt_tokens_details: {
+              cached_tokens: response.usage.cachedInputTokens,
+            },
+          }
         : {}),
       ...(response.usage.reasoningTokens !== undefined
-        ? { completion_tokens_details: { reasoning_tokens: response.usage.reasoningTokens } }
+        ? {
+            completion_tokens_details: {
+              reasoning_tokens: response.usage.reasoningTokens,
+            },
+          }
         : {}),
     },
     system_fingerprint: `fp_growx_${response.providerId}`,
@@ -235,21 +247,26 @@ export function toOpenAIChatCompletionResponse(
 export function toOpenAIChatCompletionChunk(
   event: NormalizedStreamEvent,
   requestedModel: string,
-  created: number
+  created: number,
 ): OpenAIChatCompletionChunk {
   const choice: {
     index: number;
     delta: {
       role?: "system" | "user" | "assistant" | "tool" | undefined;
       content?: string | null | undefined;
-      tool_calls?: Array<{
-        index: number;
-        id?: string | undefined;
-        type?: "function" | undefined;
-        function?: { name?: string | undefined; arguments?: string | undefined } | undefined;
-      }> | undefined;
+      tool_calls?:
+        | Array<{
+            index: number;
+            id?: string | undefined;
+            type?: "function" | undefined;
+            function?:
+              | { name?: string | undefined; arguments?: string | undefined }
+              | undefined;
+          }>
+        | undefined;
     };
-    finish_reason?: "stop" | "length" | "tool_calls" | "content_filter" | null | undefined;
+    finish_reason?:
+      "stop" | "length" | "tool_calls" | "content_filter" | null | undefined;
   } = {
     index: 0,
     delta: {},
@@ -259,7 +276,10 @@ export function toOpenAIChatCompletionChunk(
     choice.delta = { role: "assistant" };
   } else if (event.type === "output_text.delta" && event.delta) {
     choice.delta = { content: event.delta };
-  } else if (event.type === "tool_call.started" || event.type === "tool_call.delta") {
+  } else if (
+    event.type === "tool_call.started" ||
+    event.type === "tool_call.delta"
+  ) {
     if (event.toolCall) {
       choice.delta = {
         tool_calls: [
@@ -298,7 +318,11 @@ export function toOpenAIChatCompletionChunk(
             completion_tokens: usageSource.outputTokens,
             total_tokens: usageSource.totalTokens,
             ...(usageSource.cachedInputTokens !== undefined
-              ? { prompt_tokens_details: { cached_tokens: usageSource.cachedInputTokens } }
+              ? {
+                  prompt_tokens_details: {
+                    cached_tokens: usageSource.cachedInputTokens,
+                  },
+                }
               : {}),
             ...(usageSource.reasoningTokens !== undefined
               ? {

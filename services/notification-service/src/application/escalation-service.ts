@@ -4,7 +4,7 @@ import type { NotificationDeliveryService } from "./notification-delivery-servic
 export class EscalationService {
   constructor(
     private readonly repository: INotificationRepository,
-    private readonly deliveryService: NotificationDeliveryService
+    private readonly deliveryService: NotificationDeliveryService,
   ) {}
 
   /**
@@ -12,7 +12,7 @@ export class EscalationService {
    */
   async processDueEscalations(
     now: Date = new Date(),
-    signalStatusChecker?: (signalId: string) => Promise<string | undefined>
+    signalStatusChecker?: (signalId: string) => Promise<string | undefined>,
   ): Promise<number> {
     const due = await this.repository.getPendingEscalations(now);
     let processed = 0;
@@ -60,7 +60,7 @@ export class EscalationService {
               role: "security_admin",
               email: `security-escalations@${intent.organizationId}.example.com`,
             },
-          ]
+          ],
         );
       }
 

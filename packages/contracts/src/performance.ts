@@ -20,7 +20,9 @@ export const performanceMetricSnapshotSchema = z.object({
   heapUsedMb: z.number().nonnegative().default(0),
   gcDurationMs: z.number().nonnegative().default(0),
 });
-export type PerformanceMetricSnapshot = z.infer<typeof performanceMetricSnapshotSchema>;
+export type PerformanceMetricSnapshot = z.infer<
+  typeof performanceMetricSnapshotSchema
+>;
 
 // ==========================================
 // 2. Performance Run & Benchmarks
@@ -82,7 +84,9 @@ export const languageMigrationEvaluationSchema = z.object({
   observedEventLoopLagMs: z.number().nonnegative().optional(),
   memoryPerConnKb: z.number().nonnegative().optional(),
 });
-export type LanguageMigrationEvaluation = z.infer<typeof languageMigrationEvaluationSchema>;
+export type LanguageMigrationEvaluation = z.infer<
+  typeof languageMigrationEvaluationSchema
+>;
 
 // ==========================================
 // 4. Admission Control
@@ -92,7 +96,9 @@ export const admissionDecisionSchema = z.object({
   allowed: z.boolean(),
   reason: z.string().optional(),
   tenantWeight: z.number().positive().default(1),
-  shedPriority: z.enum(["CRITICAL", "STANDARD", "BATCH", "BACKGROUND"]).default("STANDARD"),
+  shedPriority: z
+    .enum(["CRITICAL", "STANDARD", "BATCH", "BACKGROUND"])
+    .default("STANDARD"),
   retryAfterMs: z.number().int().nonnegative().optional(),
 });
 export type AdmissionDecision = z.infer<typeof admissionDecisionSchema>;

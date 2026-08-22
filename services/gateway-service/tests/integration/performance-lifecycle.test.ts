@@ -32,19 +32,25 @@ describe("Platform Performance & Scale Engineering Lifecycle (Phase 37)", () => 
 
     // Tenant A consumes its max concurrency allocation (5 slots)
     for (let i = 0; i < 5; i++) {
-      const decision = admissionController.evaluateAdmission({ organizationId: tenantA });
+      const decision = admissionController.evaluateAdmission({
+        organizationId: tenantA,
+      });
       expect(decision.allowed).toBe(true);
       admissionController.acquire(tenantA);
     }
 
     // 6th request from Tenant A is throttled with retry-after header metadata
-    const blockedDecisionA = admissionController.evaluateAdmission({ organizationId: tenantA });
+    const blockedDecisionA = admissionController.evaluateAdmission({
+      organizationId: tenantA,
+    });
     expect(blockedDecisionA.allowed).toBe(false);
     expect(blockedDecisionA.retryAfterMs).toBeGreaterThan(0);
     expect(blockedDecisionA.reason).toContain("Tenant concurrency limit");
 
     // Tenant B can still be admitted without interference
-    const decisionB = admissionController.evaluateAdmission({ organizationId: tenantB });
+    const decisionB = admissionController.evaluateAdmission({
+      organizationId: tenantB,
+    });
     expect(decisionB.allowed).toBe(true);
   });
 

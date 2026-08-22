@@ -20,20 +20,18 @@ describe("Phase 23 — Security Alerts & Escalation", () => {
   });
 
   it("creates critical security alert with scheduled escalation", async () => {
-    const result = await deliveryService.ingestAndFanout(
-      {
-        id: "evt_sec_sig_1",
-        type: "security.alert",
-        organizationId: "org_sec_alert",
-        data: {
-          signalId: "sig_critical_1",
-          title: "Cross-Tenant Access Attempt Detected",
-          description: "Multiple attempts to access victim tenant resources",
-          email: "secops@org.com",
-          userId: "usr_sec_1",
-        },
-      }
-    );
+    const result = await deliveryService.ingestAndFanout({
+      id: "evt_sec_sig_1",
+      type: "security.alert",
+      organizationId: "org_sec_alert",
+      data: {
+        signalId: "sig_critical_1",
+        title: "Cross-Tenant Access Attempt Detected",
+        description: "Multiple attempts to access victim tenant resources",
+        email: "secops@org.com",
+        userId: "usr_sec_1",
+      },
+    });
 
     expect(result.intent.priority).toBe("critical");
     expect(result.intent.preferenceMode).toBe("mandatory");
@@ -46,36 +44,41 @@ describe("Phase 23 — Security Alerts & Escalation", () => {
 
     // Advance time past escalation delay (15 mins)
     const future = new Date(Date.now() + 20 * 60 * 1000);
-    const escalatedCount = await escalationService.processDueEscalations(future);
+    const escalatedCount =
+      await escalationService.processDueEscalations(future);
     expect(escalatedCount).toBe(1);
 
     // Verify secondary notification was created
     const allDeliveries = Array.from(repository.deliveries.values());
     expect(allDeliveries.length).toBe(2);
-    expect(allDeliveries[1]!.recipientSnapshot).toContain("security-escalations");
+    expect(allDeliveries[1]!.recipientSnapshot).toContain(
+      "security-escalations",
+    );
   });
 
   it("cancels escalation when the underlying security signal is acknowledged/resolved", async () => {
-    await deliveryService.ingestAndFanout(
-      {
-        id: "evt_sec_sig_2",
-        type: "security.alert",
-        organizationId: "org_sec_alert",
-        data: {
-          signalId: "sig_critical_2",
-          title: "SSRF Attempt",
-          description: "Attempted to reach 169.254.169.254",
-          email: "secops@org.com",
-        },
-      }
-    );
+    await deliveryService.ingestAndFanout({
+      id: "evt_sec_sig_2",
+      type: "security.alert",
+      organizationId: "org_sec_alert",
+      data: {
+        signalId: "sig_critical_2",
+        title: "SSRF Attempt",
+        description: "Attempted to reach 169.254.169.254",
+        email: "secops@org.com",
+      },
+    });
 
     const future = new Date(Date.now() + 20 * 60 * 1000);
 
     // Mock signal status returning "acknowledged" from Phase 22 Security Operations
-    const mockChecker = async (id: string) => (id === "sig_critical_2" ? "acknowledged" : "new");
+    const mockChecker = async (id: string) =>
+      id === "sig_critical_2" ? "acknowledged" : "new";
 
-    const count = await escalationService.processDueEscalations(future, mockChecker);
+    const count = await escalationService.processDueEscalations(
+      future,
+      mockChecker,
+    );
     expect(count).toBe(0);
 
     const escalations = Array.from(repository.escalations.values());

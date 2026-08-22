@@ -31,7 +31,7 @@ export class SemanticCacheCandidateValidator {
    */
   static validate(
     candidate: SemanticCacheEntry,
-    context: CandidateValidationContext
+    context: CandidateValidationContext,
   ): { valid: boolean; reason?: SemanticMissReason | undefined } {
     const now = new Date();
 

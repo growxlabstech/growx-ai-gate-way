@@ -13,7 +13,11 @@ export class InMemoryLatencySignalStore implements ILatencySignalProvider {
     this.maxSamples = maxSamples;
   }
 
-  private getKey(providerId: string, providerModelId: string, region?: string): string {
+  private getKey(
+    providerId: string,
+    providerModelId: string,
+    region?: string,
+  ): string {
     return `${providerId}:${providerModelId}:${region ?? "global"}`;
   }
 
@@ -21,7 +25,7 @@ export class InMemoryLatencySignalStore implements ILatencySignalProvider {
     providerId: string,
     providerModelId: string,
     latencyMs: number,
-    region?: string
+    region?: string,
   ): void {
     const key = this.getKey(providerId, providerModelId, region);
     const existing = this.samples.get(key) || [];
@@ -34,7 +38,10 @@ export class InMemoryLatencySignalStore implements ILatencySignalProvider {
     // Compute p95 and p50
     const sorted = [...existing].sort((a, b) => a - b);
     const p50Idx = Math.floor(sorted.length * 0.5);
-    const p95Idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+    const p95Idx = Math.min(
+      sorted.length - 1,
+      Math.floor(sorted.length * 0.95),
+    );
 
     this.signals.set(key, {
       providerId,
@@ -48,14 +55,18 @@ export class InMemoryLatencySignalStore implements ILatencySignalProvider {
   }
 
   setSignal(signal: LatencySignal): void {
-    const key = this.getKey(signal.providerId, signal.providerModelId, signal.region);
+    const key = this.getKey(
+      signal.providerId,
+      signal.providerModelId,
+      signal.region,
+    );
     this.signals.set(key, { ...signal });
   }
 
   async getLatencySignal(
     providerId: string,
     providerModelId: string,
-    region?: string | undefined
+    region?: string | undefined,
   ): Promise<LatencySignal | null> {
     const key = this.getKey(providerId, providerModelId, region);
     const sig = this.signals.get(key);
@@ -89,7 +100,7 @@ export class InMemoryAvailabilitySignalStore implements IAvailabilitySignalProvi
 
   async getAvailabilitySignal(
     providerId: string,
-    providerModelId?: string | undefined
+    providerModelId?: string | undefined,
   ): Promise<AvailabilitySignal | null> {
     const key = this.getKey(providerId, providerModelId);
     const sig = this.signals.get(key);

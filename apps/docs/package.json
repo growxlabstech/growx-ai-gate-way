@@ -1,1 +1,26 @@
-{"name":"@growx/docs","version":"0.1.0","private":true,"scripts":{"build":"next build","dev":"next dev --port 3002","start":"next start --port 3002","lint":"eslint .","typecheck":"next typegen && tsc --noEmit","test":"vitest run --passWithNoTests"},"dependencies":{"@growx/ui":"workspace:*","next":"16.2.12","react":"19.2.4","react-dom":"19.2.4"},"devDependencies":{"@types/node":"^20.19.9","@types/react":"^19.1.9","@types/react-dom":"^19.1.7","typescript":"^5.8.3","vitest":"^3.2.4"}}
+{
+  "name": "@growx/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3002",
+    "start": "next start --port 3002",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@growx/ui": "workspace:*",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

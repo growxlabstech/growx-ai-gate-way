@@ -1,5 +1,9 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { WEBHOOK_HEADERS, WebhookSerializer, verifyWebhookSignature } from "@growx/webhooks";
+import {
+  WEBHOOK_HEADERS,
+  WebhookSerializer,
+  verifyWebhookSignature,
+} from "@growx/webhooks";
 import { InMemoryWebhookRepository } from "../src/infrastructure/in-memory-repository.js";
 import { WebhookEndpointService } from "../src/application/webhook-endpoint-service.js";
 import { WebhookEventRouter } from "../src/application/webhook-event-router.js";
@@ -59,7 +63,10 @@ describe("Phase 21 — Webhook Delivery Lifecycle, Retries & Dead Letter", () =>
     expect(outcome.status).toBe("succeeded");
 
     // Check delivery in DB
-    const updated = await repository.getDelivery("org_deliv_test", deliveries[0]!.id);
+    const updated = await repository.getDelivery(
+      "org_deliv_test",
+      deliveries[0]!.id,
+    );
     expect(updated!.status).toBe("succeeded");
     expect(updated!.deliveredAt).toBeDefined();
 
@@ -76,7 +83,7 @@ describe("Phase 21 — Webhook Delivery Lifecycle, Retries & Dead Letter", () =>
         body: receivedBody,
         signature: sig,
         secret: secretUsed,
-      })
+      }),
     ).toBe(true);
   });
 
@@ -104,7 +111,10 @@ describe("Phase 21 — Webhook Delivery Lifecycle, Retries & Dead Letter", () =>
     const outcome = await deliveryService.deliverSingle(deliveries[0]!);
     expect(outcome.status).toBe("retrying");
 
-    const updated = await repository.getDelivery("org_deliv_test", deliveries[0]!.id);
+    const updated = await repository.getDelivery(
+      "org_deliv_test",
+      deliveries[0]!.id,
+    );
     expect(updated!.status).toBe("retrying");
     expect(updated!.attemptCount).toBe(1);
     expect(updated!.nextAttemptAt).toBeDefined();
@@ -132,12 +142,18 @@ describe("Phase 21 — Webhook Delivery Lifecycle, Retries & Dead Letter", () =>
 
     // Simulate reaching attempt 5
     await repository.updateDelivery(deliveries[0]!.id, { attemptCount: 4 });
-    const claimed = await repository.getDelivery("org_deliv_test", deliveries[0]!.id);
+    const claimed = await repository.getDelivery(
+      "org_deliv_test",
+      deliveries[0]!.id,
+    );
 
     const outcome = await deliveryService.deliverSingle(claimed!);
     expect(outcome.status).toBe("dead_letter");
 
-    const updated = await repository.getDelivery("org_deliv_test", deliveries[0]!.id);
+    const updated = await repository.getDelivery(
+      "org_deliv_test",
+      deliveries[0]!.id,
+    );
     expect(updated!.status).toBe("dead_letter");
     expect(updated!.attemptCount).toBe(5);
   });

@@ -11,7 +11,12 @@ describe("Credential Rotation Integration Tests", () => {
   const repository = new InMemoryProviderRepository();
   const events = new InMemoryProviderEvents();
   const crypto = new ProviderCredentialCrypto();
-  const service = new ProviderService(repository, events, crypto, defaultAdapterRegistry);
+  const service = new ProviderService(
+    repository,
+    events,
+    crypto,
+    defaultAdapterRegistry,
+  );
 
   it("rotates credential and verifies updated encryption payload and timestamp", async () => {
     await service.createProvider(
@@ -21,7 +26,7 @@ describe("Credential Rotation Integration Tests", () => {
         adapterType: "anthropic",
         baseUrl: "https://api.anthropic.com",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const initial = await service.createCredential(
@@ -31,7 +36,7 @@ describe("Credential Rotation Integration Tests", () => {
         environment: "production",
         rawSecret: "mock-ant-initial-secret-key",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const rotated = await service.rotateCredential(
@@ -40,7 +45,7 @@ describe("Credential Rotation Integration Tests", () => {
         newRawSecret: "mock-ant-newly-rotated-secret-key-999",
         reason: "Quarterly key rotation",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     expect(rotated.id).toBe(initial.id);
@@ -48,7 +53,10 @@ describe("Credential Rotation Integration Tests", () => {
     expect(rotated.encryptedPayload).not.toBe(initial.encryptedPayload);
 
     // Decrypting rotated payload returns the new key
-    const decrypted = crypto.decrypt(rotated.encryptedPayload, rotated.encryptionKeyVersion);
+    const decrypted = crypto.decrypt(
+      rotated.encryptedPayload,
+      rotated.encryptionKeyVersion,
+    );
     expect(decrypted).toBe("mock-ant-newly-rotated-secret-key-999");
   });
 
@@ -60,7 +68,7 @@ describe("Credential Rotation Integration Tests", () => {
         environment: "production",
         rawSecret: "mock-ant-backup-secret",
       },
-      "usr_operator_1"
+      "usr_operator_1",
     );
 
     const disabled = await service.disableCredential(cred.id, "usr_operator_1");
@@ -81,8 +89,8 @@ describe("Credential Rotation Integration Tests", () => {
           canonicalModelId: "anthropic/claude-3-5-sonnet",
           providerModelId: "claude-3-5-sonnet-20241022",
           messages: [{ role: "user", content: "Hi" }],
-        }
-      )
+        },
+      ),
     ).rejects.toThrow(GrowXProviderError);
   });
 });

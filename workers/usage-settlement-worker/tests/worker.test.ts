@@ -1,1 +1,47 @@
-import { describe, expect, it } from "vitest"; import { settleUsage } from "../src/index.js"; describe("usage settlement", () => { it("requires one atomic balanced write", async () => { const result = await settleUsage({ idempotencyKey: "i", usageRecordId: "u", reservationId: "r", walletId: "w", credits: 10n, ledger: { id: "l", transactionType: "usage", referenceType: "usage", referenceId: "u", organizationId: "o", currency: "USD", status: "posted", occurredAt: new Date(), entries: [{ id: "a", accountId: "liability", direction: "debit", amountMinor: 1n, currency: "USD" }, { id: "b", accountId: "revenue", direction: "credit", amountMinor: 1n, currency: "USD" }] } }, { async atomic() { return "settled"; } }); expect(result).toBe("settled"); }); });
+import { describe, expect, it } from "vitest";
+import { settleUsage } from "../src/index.js";
+describe("usage settlement", () => {
+  it("requires one atomic balanced write", async () => {
+    const result = await settleUsage(
+      {
+        idempotencyKey: "i",
+        usageRecordId: "u",
+        reservationId: "r",
+        walletId: "w",
+        credits: 10n,
+        ledger: {
+          id: "l",
+          transactionType: "usage",
+          referenceType: "usage",
+          referenceId: "u",
+          organizationId: "o",
+          currency: "USD",
+          status: "posted",
+          occurredAt: new Date(),
+          entries: [
+            {
+              id: "a",
+              accountId: "liability",
+              direction: "debit",
+              amountMinor: 1n,
+              currency: "USD",
+            },
+            {
+              id: "b",
+              accountId: "revenue",
+              direction: "credit",
+              amountMinor: 1n,
+              currency: "USD",
+            },
+          ],
+        },
+      },
+      {
+        async atomic() {
+          return "settled";
+        },
+      },
+    );
+    expect(result).toBe("settled");
+  });
+});

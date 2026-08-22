@@ -23,7 +23,8 @@ export function parseUserAgent(ua: string | null): string {
   if (ua.includes("Firefox/")) browser = "Firefox";
   else if (ua.includes("Edg/")) browser = "Edge";
   else if (ua.includes("Chrome/")) browser = "Chrome";
-  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
+  else if (ua.includes("Safari/") && !ua.includes("Chrome/"))
+    browser = "Safari";
 
   return `${browser} on ${os}`;
 }
@@ -31,7 +32,7 @@ export function parseUserAgent(ua: string | null): string {
 export async function listUserSessions(
   db: any,
   userId: string,
-  currentSessionId: string
+  currentSessionId: string,
 ): Promise<SessionMetadata[]> {
   const now = new Date();
   const rows = await db
@@ -41,8 +42,8 @@ export async function listUserSessions(
       and(
         eq(schema.sessions.userId, userId),
         isNull(schema.sessions.revokedAt),
-        gt(schema.sessions.expiresAt, now)
-      )
+        gt(schema.sessions.expiresAt, now),
+      ),
     );
 
   return rows.map((s: any) => ({
@@ -60,13 +61,19 @@ export async function revokeUserSession(
   db: any,
   userId: string,
   sessionIdToRevoke: string,
-  requestId: string
+  requestId: string,
 ): Promise<boolean> {
   const now = new Date();
   const result = await db
     .update(schema.sessions)
     .set({ revokedAt: now })
-    .where(and(eq(schema.sessions.id, sessionIdToRevoke), eq(schema.sessions.userId, userId), isNull(schema.sessions.revokedAt)))
+    .where(
+      and(
+        eq(schema.sessions.id, sessionIdToRevoke),
+        eq(schema.sessions.userId, userId),
+        isNull(schema.sessions.revokedAt),
+      ),
+    )
     .returning({ id: schema.sessions.id });
 
   if (result.length > 0) {
@@ -90,10 +97,13 @@ export async function revokeAllUserSessions(
   db: any,
   userId: string,
   currentSessionIdToKeep: string | undefined,
-  requestId: string
+  requestId: string,
 ): Promise<number> {
   const now = new Date();
-  const conditions = [eq(schema.sessions.userId, userId), isNull(schema.sessions.revokedAt)];
+  const conditions = [
+    eq(schema.sessions.userId, userId),
+    isNull(schema.sessions.revokedAt),
+  ];
   if (currentSessionIdToKeep) {
     conditions.push(ne(schema.sessions.id, currentSessionIdToKeep));
   }
@@ -114,17 +124,17 @@ export async function revokeAllUserSessions(
       resourceId: userId,
       requestId,
       createdAt: now,
-      metadata: { revokedCount: result.length, keptSessionId: currentSessionIdToKeep ?? null },
+      metadata: {
+        revokedCount: result.length,
+        keptSessionId: currentSessionIdToKeep ?? null,
+      },
     });
   }
 
   return result.length;
 }
 
-export async function getUserTenantContext(
-  db: any,
-  userId: string
-) {
+export async function getUserTenantContext(db: any, userId: string) {
   const userRows = await db
     .select({
       id: schema.users.id,
@@ -151,13 +161,16 @@ export async function getUserTenantContext(
       status: schema.organizationMembers.status,
     })
     .from(schema.organizationMembers)
-    .innerJoin(schema.organizations, eq(schema.organizationMembers.organizationId, schema.organizations.id))
+    .innerJoin(
+      schema.organizations,
+      eq(schema.organizationMembers.organizationId, schema.organizations.id),
+    )
     .where(
       and(
         eq(schema.organizationMembers.userId, userId),
         eq(schema.organizationMembers.status, "active"),
-        eq(schema.organizations.status, "active")
-      )
+        eq(schema.organizations.status, "active"),
+      ),
     );
 
   const workspaceMemberships = await db
@@ -169,12 +182,15 @@ export async function getUserTenantContext(
       status: schema.workspaceMembers.status,
     })
     .from(schema.workspaceMembers)
-    .innerJoin(schema.workspaces, eq(schema.workspaceMembers.workspaceId, schema.workspaces.id))
+    .innerJoin(
+      schema.workspaces,
+      eq(schema.workspaceMembers.workspaceId, schema.workspaces.id),
+    )
     .where(
       and(
         eq(schema.workspaceMembers.userId, userId),
-        eq(schema.workspaces.status, "active")
-      )
+        eq(schema.workspaces.status, "active"),
+      ),
     );
 
   return {

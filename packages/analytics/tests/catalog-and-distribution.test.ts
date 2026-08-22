@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  METRIC_CATALOG,
-  isValidMetric,
-} from "../src/catalog.js";
+import { METRIC_CATALOG, isValidMetric } from "../src/catalog.js";
 import {
   LatencyDistributionSketch,
   LATENCY_BUCKET_UPPER_BOUNDS,
@@ -19,7 +16,9 @@ describe("Metric Catalog & Dimension Allowlist", () => {
     expect(METRIC_CATALOG["input_tokens"]?.customerVisible).toBe(true);
 
     expect(METRIC_CATALOG["provider_total_tokens"]).toBeDefined();
-    expect(METRIC_CATALOG["provider_total_tokens"]?.customerVisible).toBe(false);
+    expect(METRIC_CATALOG["provider_total_tokens"]?.customerVisible).toBe(
+      false,
+    );
 
     expect(METRIC_CATALOG["latency_p95"]).toBeDefined();
     expect(METRIC_CATALOG["latency_p95"]?.unit).toBe("milliseconds");

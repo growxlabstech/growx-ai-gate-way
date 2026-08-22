@@ -10,10 +10,21 @@ describe("redaction policy", () => {
       write(chunk, _encoding, callback) {
         output += chunk.toString();
         callback();
-      }
+      },
     });
-    const logger = pino({ redact: { censor: "[REDACTED]", paths: ["authorization", "payload.apiKey", "payload.webhookSecret"] } }, sink);
-    logger.info({ authorization: "Bearer secret", payload: { apiKey: "gx_live_secret", webhookSecret: "whsec_secret" } });
+    const logger = pino(
+      {
+        redact: {
+          censor: "[REDACTED]",
+          paths: ["authorization", "payload.apiKey", "payload.webhookSecret"],
+        },
+      },
+      sink,
+    );
+    logger.info({
+      authorization: "Bearer secret",
+      payload: { apiKey: "gx_live_secret", webhookSecret: "whsec_secret" },
+    });
     expect(output).not.toContain("gx_live_secret");
     expect(output).not.toContain("whsec_secret");
     expect(output).not.toContain("Bearer secret");
@@ -31,7 +42,9 @@ describe("redaction policy", () => {
     const keyId = "key_" + "b".repeat(32);
     const rawKey = "gx_live_" + keyId + "_" + "x".repeat(32);
     expect(maskApiKey(rawKey)).toBe(`gx_live_${keyId}_••••••••••••`);
-    expect(maskApiKey(`gx_test_${keyId}`)).toBe(`gx_test_${keyId}_••••••••••••`);
+    expect(maskApiKey(`gx_test_${keyId}`)).toBe(
+      `gx_test_${keyId}_••••••••••••`,
+    );
     expect(maskApiKey("")).toBe("••••••••");
   });
 
@@ -57,4 +70,3 @@ describe("redaction policy", () => {
     expect(snapshot.cacheMissesTotal).toBe(1);
   });
 });
-

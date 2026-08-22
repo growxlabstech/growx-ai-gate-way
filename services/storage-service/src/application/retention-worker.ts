@@ -3,9 +3,14 @@ import { FileService } from "./file-service.js";
 export class FileRetentionWorker {
   constructor(private readonly fileService: FileService) {}
 
-  async runRetentionPass(batchLimit = 50): Promise<{ expiredCount: number; deletedCount: number }> {
+  async runRetentionPass(
+    batchLimit = 50,
+  ): Promise<{ expiredCount: number; deletedCount: number }> {
     const now = new Date();
-    const expiredFiles = await this.fileService.repository.getExpiredFiles(now, batchLimit);
+    const expiredFiles = await this.fileService.repository.getExpiredFiles(
+      now,
+      batchLimit,
+    );
     let expiredCount = 0;
     let deletedCount = 0;
 
@@ -36,7 +41,10 @@ export class FileRetentionWorker {
 
   async runSessionCleanupPass(batchLimit = 50): Promise<number> {
     const now = new Date();
-    const sessions = await this.fileService.repository.getExpiredUploadSessions(now, batchLimit);
+    const sessions = await this.fileService.repository.getExpiredUploadSessions(
+      now,
+      batchLimit,
+    );
     let count = 0;
 
     for (const session of sessions) {

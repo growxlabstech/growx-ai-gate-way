@@ -8,7 +8,11 @@ import {
   MockDomainDeletionProcessor,
 } from "@growx/governance";
 import { HardConstraintFilter } from "@growx/routing";
-import type { DataResource, RetentionHold, RequestCapabilityProfile } from "@growx/contracts";
+import type {
+  DataResource,
+  RetentionHold,
+  RequestCapabilityProfile,
+} from "@growx/contracts";
 import {
   createTestGatewayFixture,
   type TestGatewayFixture,
@@ -27,9 +31,15 @@ describe("Data Governance & Privacy Lifecycle (Phase 35)", () => {
     repo = new InMemoryGovernanceRepository();
     policyResolver = new GovernancePolicyResolver(repo);
     deletionOrchestrator = new GovernanceDeletionOrchestrator(repo);
-    deletionOrchestrator.registerProcessor(new MockDomainDeletionProcessor("postgres"));
-    deletionOrchestrator.registerProcessor(new MockDomainDeletionProcessor("object_storage"));
-    deletionOrchestrator.registerProcessor(new MockDomainDeletionProcessor("vector_store"));
+    deletionOrchestrator.registerProcessor(
+      new MockDomainDeletionProcessor("postgres"),
+    );
+    deletionOrchestrator.registerProcessor(
+      new MockDomainDeletionProcessor("object_storage"),
+    );
+    deletionOrchestrator.registerProcessor(
+      new MockDomainDeletionProcessor("vector_store"),
+    );
 
     exportManager = new DataExportManager(repo);
     retentionScheduler = new RetentionScheduler(repo, deletionOrchestrator);
@@ -59,7 +69,9 @@ describe("Data Governance & Privacy Lifecycle (Phase 35)", () => {
     const exportResult = await exportManager.processExport("exp_int_1");
     expect(exportResult.status).toBe("completed");
     expect(exportResult.outputFileId).toBeDefined();
-    expect(exportResult.downloadUrl).toContain("exports.growx.internal/org_gov_int");
+    expect(exportResult.downloadUrl).toContain(
+      "exports.growx.internal/org_gov_int",
+    );
     expect(exportResult.expiresAt?.getTime()).toBeGreaterThan(Date.now());
   });
 
@@ -169,10 +181,15 @@ describe("Data Governance & Privacy Lifecycle (Phase 35)", () => {
       prohibitProviderTraining: true,
     } as any;
 
-    const resTraining = HardConstraintFilter.filterCandidates(candidates, profileTraining);
+    const resTraining = HardConstraintFilter.filterCandidates(
+      candidates,
+      profileTraining,
+    );
     expect(resTraining.eligible.length).toBe(1);
     expect(resTraining.eligible[0]!.routeId).toBe("rt_eu_compliant");
-    expect(resTraining.rejected[0]!.rejectionReason).toBe("PROVIDER_TRAINING_PROHIBITED");
+    expect(resTraining.rejected[0]!.rejectionReason).toBe(
+      "PROVIDER_TRAINING_PROHIBITED",
+    );
 
     // 3. Zero-retention capability check
     const profileZeroRet: RequestCapabilityProfile = {
@@ -182,9 +199,14 @@ describe("Data Governance & Privacy Lifecycle (Phase 35)", () => {
       zeroRetentionRequired: true,
     } as any;
 
-    const resZeroRet = HardConstraintFilter.filterCandidates(candidates, profileZeroRet);
+    const resZeroRet = HardConstraintFilter.filterCandidates(
+      candidates,
+      profileZeroRet,
+    );
     expect(resZeroRet.eligible.length).toBe(1);
     expect(resZeroRet.eligible[0]!.routeId).toBe("rt_eu_compliant");
-    expect(resZeroRet.rejected[0]!.rejectionReason).toBe("ZERO_RETENTION_NOT_SUPPORTED");
+    expect(resZeroRet.rejected[0]!.rejectionReason).toBe(
+      "ZERO_RETENTION_NOT_SUPPORTED",
+    );
   });
 });

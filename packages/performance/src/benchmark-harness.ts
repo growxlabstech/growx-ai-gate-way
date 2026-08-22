@@ -15,7 +15,9 @@ export interface BenchmarkRunnerConfig {
 }
 
 export class BenchmarkHarness {
-  public async runScenario(config: BenchmarkRunnerConfig): Promise<PerformanceRun> {
+  public async runScenario(
+    config: BenchmarkRunnerConfig,
+  ): Promise<PerformanceRun> {
     const startedAt = new Date();
     const runId = generateId("prun");
 
@@ -30,16 +32,21 @@ export class BenchmarkHarness {
     let completed = 0;
 
     while (completed < config.totalRequests) {
-      const currentBatch = Math.min(batchSize, config.totalRequests - completed);
+      const currentBatch = Math.min(
+        batchSize,
+        config.totalRequests - completed,
+      );
       const promises = Array.from({ length: currentBatch }, async () => {
         const reqStart = performance.now();
 
         // 1. Simulate GrowX gateway overhead (auth, policy, router scoring, hashing)
-        const overheadMs = (config.growxOverheadTargetMs ?? 4) + Math.random() * 2;
+        const overheadMs =
+          (config.growxOverheadTargetMs ?? 4) + Math.random() * 2;
         await new Promise((r) => setTimeout(r, overheadMs));
 
         // 2. Simulate upstream provider latency
-        const provMs = config.simulatedProviderLatencyMs + (Math.random() * 10 - 5);
+        const provMs =
+          config.simulatedProviderLatencyMs + (Math.random() * 10 - 5);
         await new Promise((r) => setTimeout(r, provMs));
 
         const totalReqDuration = performance.now() - reqStart;
@@ -52,8 +59,12 @@ export class BenchmarkHarness {
       completed += currentBatch;
     }
 
-    const totalDurationSeconds = Math.max(0.001, (performance.now() - startTime) / 1000);
-    const rps = Math.round((config.totalRequests / totalDurationSeconds) * 100) / 100;
+    const totalDurationSeconds = Math.max(
+      0.001,
+      (performance.now() - startTime) / 1000,
+    );
+    const rps =
+      Math.round((config.totalRequests / totalDurationSeconds) * 100) / 100;
 
     const latPct = PlatformProfiler.calculatePercentiles(latencies);
     const ovhPct = PlatformProfiler.calculatePercentiles(overheads);
@@ -87,8 +98,12 @@ export class BenchmarkHarness {
       startedAt,
       completedAt: new Date(),
       metrics,
-      bottlenecks: metrics.growxOverheadP95Ms > 25 ? ["GATEWAY_OVERHEAD_HIGH"] : [],
-      verdict: metrics.errorRate === 0 && metrics.growxOverheadP95Ms <= 25 ? "PASSED" : "DEGRADED",
+      bottlenecks:
+        metrics.growxOverheadP95Ms > 25 ? ["GATEWAY_OVERHEAD_HIGH"] : [],
+      verdict:
+        metrics.errorRate === 0 && metrics.growxOverheadP95Ms <= 25
+          ? "PASSED"
+          : "DEGRADED",
     };
   }
 }

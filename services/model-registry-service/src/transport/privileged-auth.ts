@@ -21,11 +21,14 @@ export interface IPrivilegedAuthResolver {
   authenticateAndAuthorize(
     req: IncomingMessage,
     requiredCapability: string,
-    requestId?: string
+    requestId?: string,
   ): Promise<PrivilegedAuthResult>;
 }
 
-function extractPrivilegedToken(req: IncomingMessage): { token: string | null; error?: string } {
+function extractPrivilegedToken(req: IncomingMessage): {
+  token: string | null;
+  error?: string;
+} {
   // Check URL query parameters - credential in URL is forbidden
   if (req.url && req.url.includes("?")) {
     const searchParams = new URL(req.url, "http://localhost").searchParams;
@@ -51,7 +54,11 @@ function extractPrivilegedToken(req: IncomingMessage): { token: string | null; e
     if (parts.length === 2 && parts[0]?.toLowerCase() === "bearer") {
       const token = parts[1]!.trim();
       // Machine API keys are explicitly forbidden on the privileged ops plane
-      if (token.startsWith("gx_live_") || token.startsWith("gx_test_") || token.startsWith("gx_")) {
+      if (
+        token.startsWith("gx_live_") ||
+        token.startsWith("gx_test_") ||
+        token.startsWith("gx_")
+      ) {
         return { token: null, error: "INVALID_PRINCIPAL" };
       }
       return { token };
@@ -64,13 +71,13 @@ function extractPrivilegedToken(req: IncomingMessage): { token: string | null; e
 export class DrizzlePrivilegedAuthResolver implements IPrivilegedAuthResolver {
   constructor(
     private readonly db: PostgresJsDatabase<typeof schema>,
-    private readonly events?: IModelRegistryEvents
+    private readonly events?: IModelRegistryEvents,
   ) {}
 
   async authenticateAndAuthorize(
     req: IncomingMessage,
     requiredCapability: string,
-    requestId = "req_unknown"
+    requestId = "req_unknown",
   ): Promise<PrivilegedAuthResult> {
     const { token, error } = extractPrivilegedToken(req);
 
@@ -79,7 +86,8 @@ export class DrizzlePrivilegedAuthResolver implements IPrivilegedAuthResolver {
         allowed: false,
         status: 400,
         code: "INVALID_CREDENTIAL_LOCATION",
-        message: "Privileged credentials must not be passed in URL query parameters",
+        message:
+          "Privileged credentials must not be passed in URL query parameters",
       };
     }
 
@@ -97,7 +105,8 @@ export class DrizzlePrivilegedAuthResolver implements IPrivilegedAuthResolver {
         allowed: false,
         status: 401,
         code: "UNAUTHENTICATED",
-        message: "Privileged JIT session token is required for internal operations",
+        message:
+          "Privileged JIT session token is required for internal operations",
       };
     }
 
@@ -154,7 +163,7 @@ export class DrizzlePrivilegedAuthResolver implements IPrivilegedAuthResolver {
             requiredCapability,
             heldCapabilities: capabilities,
           },
-          requestId
+          requestId,
         );
       }
 
@@ -195,7 +204,7 @@ export class InMemoryPrivilegedAuthResolver implements IPrivilegedAuthResolver {
   async authenticateAndAuthorize(
     req: IncomingMessage,
     requiredCapability: string,
-    requestId = "req_unknown"
+    requestId = "req_unknown",
   ): Promise<PrivilegedAuthResult> {
     const { token, error } = extractPrivilegedToken(req);
 
@@ -204,7 +213,8 @@ export class InMemoryPrivilegedAuthResolver implements IPrivilegedAuthResolver {
         allowed: false,
         status: 400,
         code: "INVALID_CREDENTIAL_LOCATION",
-        message: "Privileged credentials must not be passed in URL query parameters",
+        message:
+          "Privileged credentials must not be passed in URL query parameters",
       };
     }
 
@@ -222,7 +232,8 @@ export class InMemoryPrivilegedAuthResolver implements IPrivilegedAuthResolver {
         allowed: false,
         status: 401,
         code: "UNAUTHENTICATED",
-        message: "Privileged JIT session token is required for internal operations",
+        message:
+          "Privileged JIT session token is required for internal operations",
       };
     }
 
@@ -269,7 +280,7 @@ export class InMemoryPrivilegedAuthResolver implements IPrivilegedAuthResolver {
             requiredCapability,
             heldCapabilities: session.capabilities,
           },
-          requestId
+          requestId,
         );
       }
 

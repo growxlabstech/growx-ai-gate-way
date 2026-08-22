@@ -11,7 +11,10 @@ import { VoiceRegistry } from "../voice-registry.js";
 export class OpenAIAudioAdapter implements ProviderAudioAdapter {
   public readonly providerId = "openai";
 
-  public translateTranscriptionRequest(request: TranscriptionRequest, audioData?: string | Buffer) {
+  public translateTranscriptionRequest(
+    request: TranscriptionRequest,
+    audioData?: string | Buffer,
+  ) {
     const body: Record<string, unknown> = {
       model: request.model,
       response_format: request.response_format || "json",
@@ -24,7 +27,10 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
     if (request.prompt) {
       body.prompt = request.prompt;
     }
-    if (request.timestamp_granularities && request.timestamp_granularities.length > 0) {
+    if (
+      request.timestamp_granularities &&
+      request.timestamp_granularities.length > 0
+    ) {
       body.timestamp_granularities = request.timestamp_granularities;
     }
     if (audioData) {
@@ -38,7 +44,10 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
     };
   }
 
-  public parseTranscriptionResponse(rawResponse: unknown, request: TranscriptionRequest): TranscriptionResponse {
+  public parseTranscriptionResponse(
+    rawResponse: unknown,
+    request: TranscriptionRequest,
+  ): TranscriptionResponse {
     if (!rawResponse || typeof rawResponse !== "object") {
       if (typeof rawResponse === "string") {
         return {
@@ -46,7 +55,10 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
           task: "transcribe",
         };
       }
-      throw new MediaValidationError("OPENAI_TRANSCRIPTION_MALFORMED", "OpenAI transcription response is invalid");
+      throw new MediaValidationError(
+        "OPENAI_TRANSCRIPTION_MALFORMED",
+        "OpenAI transcription response is invalid",
+      );
     }
 
     const data = rawResponse as any;
@@ -77,7 +89,10 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
 
   public translateSpeechRequest(request: SpeechRequest) {
     VoiceRegistry.validateVoice(request.voice);
-    const providerVoice = VoiceRegistry.mapToProviderVoice(request.voice, this.providerId);
+    const providerVoice = VoiceRegistry.mapToProviderVoice(
+      request.voice,
+      this.providerId,
+    );
 
     const body: Record<string, unknown> = {
       model: request.model,
@@ -94,7 +109,10 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
     };
   }
 
-  public parseSpeechResponse(rawResponse: unknown, request: SpeechRequest): SpeechResponse {
+  public parseSpeechResponse(
+    rawResponse: unknown,
+    request: SpeechRequest,
+  ): SpeechResponse {
     if (Buffer.isBuffer(rawResponse)) {
       return {
         mimeType: `audio/${request.response_format || "mp3"}`,
@@ -103,7 +121,11 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
       };
     }
 
-    if (rawResponse && typeof rawResponse === "object" && (rawResponse as any).audioBase64) {
+    if (
+      rawResponse &&
+      typeof rawResponse === "object" &&
+      (rawResponse as any).audioBase64
+    ) {
       const b64 = (rawResponse as any).audioBase64;
       return {
         mimeType: `audio/${request.response_format || "mp3"}`,
@@ -112,6 +134,9 @@ export class OpenAIAudioAdapter implements ProviderAudioAdapter {
       };
     }
 
-    throw new MediaValidationError("OPENAI_SPEECH_MALFORMED", "Invalid speech response payload");
+    throw new MediaValidationError(
+      "OPENAI_SPEECH_MALFORMED",
+      "Invalid speech response payload",
+    );
   }
 }

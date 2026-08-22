@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  ReleaseOrchestrator,
-  SmokeValidator,
-} from "@growx/deployment";
+import { ReleaseOrchestrator, SmokeValidator } from "@growx/deployment";
 import { GrowXAI } from "@growx/ai";
 import { GrowXCLI } from "@growx/cli";
 import {
@@ -27,10 +24,22 @@ describe("Developer Platform & Production Deployment Architecture Lifecycle (Pha
         new Response(
           JSON.stringify({
             id: "chatcmpl_test123",
-            choices: [{ message: { role: "assistant", content: "Paris is the capital of France." }, finish_reason: "stop" }],
-            usage: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 },
+            choices: [
+              {
+                message: {
+                  role: "assistant",
+                  content: "Paris is the capital of France.",
+                },
+                finish_reason: "stop",
+              },
+            ],
+            usage: {
+              prompt_tokens: 10,
+              completion_tokens: 15,
+              total_tokens: 25,
+            },
           }),
-          { status: 200, headers: { "content-type": "application/json" } }
+          { status: 200, headers: { "content-type": "application/json" } },
         ),
     });
 
@@ -73,14 +82,19 @@ describe("Developer Platform & Production Deployment Architecture Lifecycle (Pha
   it("executes safe emergency deployment rollback with documented reason", () => {
     const orchestrator = new ReleaseOrchestrator();
     // Simulate active deployed release
-    orchestrator.initiateRelease({
-      version: "1.0.1",
-      gitSha: "prod_git_sha_def456",
-      environment: "production",
-    }).then((rel) => {
-      const rolledBack = orchestrator.rollbackRelease(rel.id, "High error rate detected in upstream canary");
-      expect(rolledBack.status).toBe("rolled_back");
-      expect(rolledBack.rollbackReason).toContain("High error rate");
-    });
+    orchestrator
+      .initiateRelease({
+        version: "1.0.1",
+        gitSha: "prod_git_sha_def456",
+        environment: "production",
+      })
+      .then((rel) => {
+        const rolledBack = orchestrator.rollbackRelease(
+          rel.id,
+          "High error rate detected in upstream canary",
+        );
+        expect(rolledBack.status).toBe("rolled_back");
+        expect(rolledBack.rollbackReason).toContain("High error rate");
+      });
   });
 });

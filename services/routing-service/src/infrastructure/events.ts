@@ -5,10 +5,22 @@ import type { IRoutingEvents } from "../application/events.js";
 import type { RoutingPolicy } from "../domain/types.js";
 
 export class InMemoryRoutingEvents implements IRoutingEvents {
-  public createdEvents: Array<{ policy: RoutingPolicy; actorId?: string | undefined }> = [];
-  public updatedEvents: Array<{ policy: RoutingPolicy; actorId?: string | undefined }> = [];
-  public disabledEvents: Array<{ policyId: string; actorId?: string | undefined }> = [];
-  public globalUpdatedEvents: Array<{ policy: RoutingPolicy; actorId?: string | undefined }> = [];
+  public createdEvents: Array<{
+    policy: RoutingPolicy;
+    actorId?: string | undefined;
+  }> = [];
+  public updatedEvents: Array<{
+    policy: RoutingPolicy;
+    actorId?: string | undefined;
+  }> = [];
+  public disabledEvents: Array<{
+    policyId: string;
+    actorId?: string | undefined;
+  }> = [];
+  public globalUpdatedEvents: Array<{
+    policy: RoutingPolicy;
+    actorId?: string | undefined;
+  }> = [];
   public securityEvents: Array<{
     type: string;
     data: Record<string, unknown>;
@@ -18,7 +30,7 @@ export class InMemoryRoutingEvents implements IRoutingEvents {
   async emitPolicyCreated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.createdEvents.push({ policy: { ...policy }, actorId });
   }
@@ -26,7 +38,7 @@ export class InMemoryRoutingEvents implements IRoutingEvents {
   async emitPolicyUpdated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.updatedEvents.push({ policy: { ...policy }, actorId });
   }
@@ -36,7 +48,7 @@ export class InMemoryRoutingEvents implements IRoutingEvents {
     organizationId?: string | null | undefined,
     workspaceId?: string | null | undefined,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.disabledEvents.push({ policyId, actorId });
   }
@@ -44,7 +56,7 @@ export class InMemoryRoutingEvents implements IRoutingEvents {
   async emitGlobalPolicyUpdated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.globalUpdatedEvents.push({ policy: { ...policy }, actorId });
   }
@@ -52,7 +64,7 @@ export class InMemoryRoutingEvents implements IRoutingEvents {
   async emitSecurityEvent(
     type: string,
     data: Record<string, unknown>,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     this.securityEvents.push({ type, data, requestId });
   }
@@ -72,7 +84,7 @@ export class DrizzleRoutingEvents implements IRoutingEvents {
   async emitPolicyCreated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     await this.db.insert(outbox).values({
       id: createPublicId("evt"),
@@ -92,7 +104,7 @@ export class DrizzleRoutingEvents implements IRoutingEvents {
   async emitPolicyUpdated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     await this.db.insert(outbox).values({
       id: createPublicId("evt"),
@@ -114,7 +126,7 @@ export class DrizzleRoutingEvents implements IRoutingEvents {
     organizationId?: string | null | undefined,
     workspaceId?: string | null | undefined,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     await this.db.insert(outbox).values({
       id: createPublicId("evt"),
@@ -129,7 +141,7 @@ export class DrizzleRoutingEvents implements IRoutingEvents {
   async emitGlobalPolicyUpdated(
     policy: RoutingPolicy,
     actorId?: string | undefined,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     await this.db.insert(outbox).values({
       id: createPublicId("evt"),
@@ -148,7 +160,7 @@ export class DrizzleRoutingEvents implements IRoutingEvents {
   async emitSecurityEvent(
     type: string,
     data: Record<string, unknown>,
-    requestId?: string | undefined
+    requestId?: string | undefined,
   ): Promise<void> {
     await this.db.insert(securityEvents).values({
       id: createPublicId("sec"),

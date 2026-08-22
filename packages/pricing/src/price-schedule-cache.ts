@@ -14,8 +14,14 @@ export interface PriceScheduleCacheOptions {
 }
 
 export class PriceScheduleCache {
-  private readonly providerCache: Map<string, { value: ProviderScheduleWithRates; expiresAt: number }> = new Map();
-  private readonly policyCache: Map<string, { value: CustomerPolicyWithRates; expiresAt: number }> = new Map();
+  private readonly providerCache: Map<
+    string,
+    { value: ProviderScheduleWithRates; expiresAt: number }
+  > = new Map();
+  private readonly policyCache: Map<
+    string,
+    { value: CustomerPolicyWithRates; expiresAt: number }
+  > = new Map();
   private readonly ttlMs: number;
   private readonly maxEntries: number;
 
@@ -27,7 +33,9 @@ export class PriceScheduleCache {
     this.maxEntries = options.maxEntries ?? 10_000;
   }
 
-  public getProviderSchedule(key: string): ProviderScheduleWithRates | undefined {
+  public getProviderSchedule(
+    key: string,
+  ): ProviderScheduleWithRates | undefined {
     const entry = this.providerCache.get(key);
     if (!entry) {
       this.missCount++;
@@ -44,7 +52,10 @@ export class PriceScheduleCache {
     return entry.value;
   }
 
-  public setProviderSchedule(key: string, schedule: ProviderScheduleWithRates): void {
+  public setProviderSchedule(
+    key: string,
+    schedule: ProviderScheduleWithRates,
+  ): void {
     if (this.providerCache.size >= this.maxEntries) {
       const oldestKey = this.providerCache.keys().next().value;
       if (oldestKey) this.providerCache.delete(oldestKey);
@@ -91,7 +102,9 @@ export class PriceScheduleCache {
       return;
     }
     for (const [k, v] of this.providerCache.entries()) {
-      if (v.value.schedule.providerId.toLowerCase() === providerId.toLowerCase()) {
+      if (
+        v.value.schedule.providerId.toLowerCase() === providerId.toLowerCase()
+      ) {
         this.providerCache.delete(k);
       }
     }

@@ -45,7 +45,9 @@ describe("Phase 20 — TaxService Application Service", () => {
     });
 
     expect(profile.organizationId).toBe("org_test_1");
-    expect(profile.taxIdentifiers[0]!.validationStatus).toBe("syntactically_valid");
+    expect(profile.taxIdentifiers[0]!.validationStatus).toBe(
+      "syntactically_valid",
+    );
 
     // Update profile
     const updated = await taxService.upsertBillingProfile("org_test_1", {

@@ -12,7 +12,7 @@ export interface SemanticEligibilityDecision {
 
 export function evaluateSemanticCacheEligibility(
   request: OpenAIChatCompletionRequest,
-  policy: SemanticCachePolicy
+  policy: SemanticCachePolicy,
 ): SemanticEligibilityDecision {
   if (!policy.enabled) {
     return { eligible: false, reason: "disabled" };
@@ -49,7 +49,7 @@ export function evaluateSemanticCacheEligibility(
   // 5. Multi-turn chat (conversations with multiple turns) excluded by conservative default
   const messages = Array.isArray(req.messages) ? req.messages : [];
   const nonSystemMessages = messages.filter(
-    (m: any) => m.role !== "system" && m.role !== "developer"
+    (m: any) => m.role !== "system" && m.role !== "developer",
   );
   if (nonSystemMessages.length > 2) {
     // More than 1 prompt-response turn -> conservative exclusion

@@ -1,5 +1,9 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { createApp, InMemoryRoutingRepository, InMemoryRoutingEvents } from "../src/index.js";
+import {
+  createApp,
+  InMemoryRoutingRepository,
+  InMemoryRoutingEvents,
+} from "../src/index.js";
 import { InMemoryPrivilegedAuthResolver } from "../src/transport/privileged-auth.js";
 import { DefaultCustomerAuthResolver } from "../src/transport/customer-auth.js";
 import type { Server } from "node:http";
@@ -86,19 +90,22 @@ describe("Routing Service HTTP Management Endpoints", () => {
         permissions: ["workspace.routing.manage"],
       });
 
-      const putRes = await fetch(`${baseUrl}/v1/workspaces/ws_1/routing-policy`, {
-        method: "PUT",
-        headers: {
-          Authorization: "Bearer cust-token-admin",
-          "Content-Type": "application/json",
+      const putRes = await fetch(
+        `${baseUrl}/v1/workspaces/ws_1/routing-policy`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: "Bearer cust-token-admin",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            strategy: "lowest_cost",
+            deniedProviders: ["provider_expensive"],
+            dataRegion: "india",
+            maxEstimatedProviderCost: 0.5,
+          }),
         },
-        body: JSON.stringify({
-          strategy: "lowest_cost",
-          deniedProviders: ["provider_expensive"],
-          dataRegion: "india",
-          maxEstimatedProviderCost: 0.50,
-        }),
-      });
+      );
 
       expect(putRes.status).toBe(201);
       const putBody = await putRes.json();
@@ -130,7 +137,9 @@ describe("Routing Service HTTP Management Endpoints", () => {
       });
       expect(res.status).toBe(403);
       expect(events.securityEvents.length).toBe(1);
-      expect(events.securityEvents[0]!.type).toBe("security.privileged.unauthorized_routing_access");
+      expect(events.securityEvents[0]!.type).toBe(
+        "security.privileged.unauthorized_routing_access",
+      );
     });
 
     it("updates global routing policy when holding ops.routing.manage", async () => {
@@ -155,7 +164,9 @@ describe("Routing Service HTTP Management Endpoints", () => {
       expect(patchRes.status).toBe(200);
       const patchBody = await patchRes.json();
       expect(patchBody.policy.strategy).toBe("balanced");
-      expect(patchBody.policy.deniedProviders).toContain("emergency_blocked_provider");
+      expect(patchBody.policy.deniedProviders).toContain(
+        "emergency_blocked_provider",
+      );
 
       expect(events.globalUpdatedEvents.length).toBe(1);
     });

@@ -10,10 +10,12 @@ export class RouteManagementService {
   constructor(
     private readonly snapshotService: RoutingStateSnapshotService,
     private readonly auditService?: any | undefined,
-    private readonly notificationService?: any | undefined
+    private readonly notificationService?: any | undefined,
   ) {}
 
-  public async getRouteControl(routeId: string): Promise<RouteTrafficControl | null> {
+  public async getRouteControl(
+    routeId: string,
+  ): Promise<RouteTrafficControl | null> {
     return this.snapshotService.getTrafficControl(routeId) ?? null;
   }
 
@@ -25,7 +27,7 @@ export class RouteManagementService {
     auth: MachineAuthContext,
     routeId: string,
     mode: RouteTrafficMode,
-    options?: { maxTrafficPercent?: number; reason?: string }
+    options?: { maxTrafficPercent?: number; reason?: string },
   ): Promise<RouteTrafficControl> {
     const existing = this.snapshotService.getTrafficControl(routeId);
     const now = new Date();
@@ -34,7 +36,8 @@ export class RouteManagementService {
       id: existing?.id ?? generateId("rtc"),
       routeId,
       mode,
-      maxTrafficPercent: options?.maxTrafficPercent ?? (mode === "canary" ? 10 : 100),
+      maxTrafficPercent:
+        options?.maxTrafficPercent ?? (mode === "canary" ? 10 : 100),
       drain: mode === "draining",
       disabled: mode === "disabled",
       ...(options?.reason ? { reason: options.reason } : {}),
@@ -51,15 +54,20 @@ export class RouteManagementService {
         mode === "disabled"
           ? "routing.kill_switch.used"
           : mode === "draining"
-          ? "routing.route.draining"
-          : "routing.traffic.changed";
+            ? "routing.route.draining"
+            : "routing.traffic.changed";
 
       await this.auditService.recordEvent?.({
         action,
         organizationId: auth.organizationId,
         workspaceId: auth.workspaceId,
         actorId: auth.apiKeyId,
-        metadata: { routeId, mode, percent: control.maxTrafficPercent, reason: options?.reason },
+        metadata: {
+          routeId,
+          mode,
+          percent: control.maxTrafficPercent,
+          reason: options?.reason,
+        },
       });
     }
 
@@ -74,19 +82,48 @@ export class RouteManagementService {
     return control;
   }
 
-  public async drainRoute(auth: MachineAuthContext, routeId: string, reason?: string): Promise<RouteTrafficControl> {
-    return this.setTrafficControl(auth, routeId, "draining", reason ? { reason } : undefined);
+  public async drainRoute(
+    auth: MachineAuthContext,
+    routeId: string,
+    reason?: string,
+  ): Promise<RouteTrafficControl> {
+    return this.setTrafficControl(
+      auth,
+      routeId,
+      "draining",
+      reason ? { reason } : undefined,
+    );
   }
 
-  public async disableRoute(auth: MachineAuthContext, routeId: string, reason?: string): Promise<RouteTrafficControl> {
-    return this.setTrafficControl(auth, routeId, "disabled", reason ? { reason } : undefined);
+  public async disableRoute(
+    auth: MachineAuthContext,
+    routeId: string,
+    reason?: string,
+  ): Promise<RouteTrafficControl> {
+    return this.setTrafficControl(
+      auth,
+      routeId,
+      "disabled",
+      reason ? { reason } : undefined,
+    );
   }
 
-  public async enableRoute(auth: MachineAuthContext, routeId: string): Promise<RouteTrafficControl> {
-    return this.setTrafficControl(auth, routeId, "active", { maxTrafficPercent: 100 });
+  public async enableRoute(
+    auth: MachineAuthContext,
+    routeId: string,
+  ): Promise<RouteTrafficControl> {
+    return this.setTrafficControl(auth, routeId, "active", {
+      maxTrafficPercent: 100,
+    });
   }
 
-  public async setCanaryTraffic(auth: MachineAuthContext, routeId: string, percent: number): Promise<RouteTrafficControl> {
-    return this.setTrafficControl(auth, routeId, "canary", { maxTrafficPercent: percent });
+  public async setCanaryTraffic(
+    auth: MachineAuthContext,
+    routeId: string,
+    percent: number,
+  ): Promise<RouteTrafficControl> {
+    return this.setTrafficControl(auth, routeId, "canary", {
+      maxTrafficPercent: percent,
+    });
   }
 }

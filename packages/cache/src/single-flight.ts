@@ -6,7 +6,11 @@ export interface InFlightResult<T> {
 export class SingleFlightGroup<T> {
   private inFlight = new Map<string, Promise<T>>();
 
-  public async run(key: string, leaseTtlMs: number, fn: () => Promise<T>): Promise<InFlightResult<T>> {
+  public async run(
+    key: string,
+    leaseTtlMs: number,
+    fn: () => Promise<T>,
+  ): Promise<InFlightResult<T>> {
     const existing = this.inFlight.get(key);
     if (existing) {
       const value = await existing;
@@ -26,7 +30,11 @@ export class SingleFlightGroup<T> {
     return { value, deduplicated: false };
   }
 
-  public async joinOrStart(key: string, leaseTtlMs: number, fn: () => Promise<T>): Promise<InFlightResult<T>> {
+  public async joinOrStart(
+    key: string,
+    leaseTtlMs: number,
+    fn: () => Promise<T>,
+  ): Promise<InFlightResult<T>> {
     return this.run(key, leaseTtlMs, fn);
   }
 

@@ -10,10 +10,15 @@ import {
   SemanticCacheCandidateValidator,
   DEFAULT_SEMANTIC_CACHE_POLICY,
 } from "../src/index.js";
-import type { OpenAIChatCompletionRequest, OpenAIChatCompletionResponse } from "@growx/contracts";
+import type {
+  OpenAIChatCompletionRequest,
+  OpenAIChatCompletionResponse,
+} from "@growx/contracts";
 
 describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
-  const embeddingProvider = new DeterministicEmbeddingProvider({ dimensions: 256 });
+  const embeddingProvider = new DeterministicEmbeddingProvider({
+    dimensions: 256,
+  });
 
   function createSemanticService(options?: any) {
     const vectorStore = new InMemorySemanticVectorStore();
@@ -61,7 +66,9 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       messages: [{ role: "user", content: "Get weather" }],
       tools: [{ type: "function", function: { name: "get_weather" } }],
     };
-    expect(evaluateSemanticCacheEligibility(toolReq, policy).eligible).toBe(false);
+    expect(evaluateSemanticCacheEligibility(toolReq, policy).eligible).toBe(
+      false,
+    );
 
     // High temperature exclusion without seed
     const highTempReq: OpenAIChatCompletionRequest = {
@@ -69,7 +76,9 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       messages: [{ role: "user", content: "Write a poem" }],
       temperature: 0.8,
     };
-    expect(evaluateSemanticCacheEligibility(highTempReq, policy).eligible).toBe(false);
+    expect(evaluateSemanticCacheEligibility(highTempReq, policy).eligible).toBe(
+      false,
+    );
 
     // High temperature with seed is allowed
     const highTempSeedReq: OpenAIChatCompletionRequest = {
@@ -78,14 +87,20 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       temperature: 0.8,
       seed: 42,
     };
-    expect(evaluateSemanticCacheEligibility(highTempSeedReq, policy).eligible).toBe(true);
+    expect(
+      evaluateSemanticCacheEligibility(highTempSeedReq, policy).eligible,
+    ).toBe(true);
 
     // Temporal / freshness keyword exclusion
     const freshReq: OpenAIChatCompletionRequest = {
       model: "openai/gpt-4o",
-      messages: [{ role: "user", content: "What is the latest price of Bitcoin today?" }],
+      messages: [
+        { role: "user", content: "What is the latest price of Bitcoin today?" },
+      ],
     };
-    expect(evaluateSemanticCacheEligibility(freshReq, policy).eligible).toBe(false);
+    expect(evaluateSemanticCacheEligibility(freshReq, policy).eligible).toBe(
+      false,
+    );
 
     // Multi-turn conversation conservative exclusion
     const multiTurnReq: OpenAIChatCompletionRequest = {
@@ -98,7 +113,9 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
         { role: "user", content: "Tell me a joke" },
       ],
     };
-    expect(evaluateSemanticCacheEligibility(multiTurnReq, policy).eligible).toBe(false);
+    expect(
+      evaluateSemanticCacheEligibility(multiTurnReq, policy).eligible,
+    ).toBe(false);
   });
 
   it("3. Successfully admits and produces a semantic hit for semantically equivalent prompts", async () => {
@@ -121,7 +138,10 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       choices: [
         {
           index: 0,
-          message: { role: "assistant", content: "Kubernetes automates container orchestration." },
+          message: {
+            role: "assistant",
+            content: "Kubernetes automates container orchestration.",
+          },
           finish_reason: "stop",
         },
       ],
@@ -149,7 +169,7 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
     });
     expect(exactLookup.status).toBe("HIT");
     expect(exactLookup.entry?.responsePayload.choices[0]?.message.content).toBe(
-      "Kubernetes automates container orchestration."
+      "Kubernetes automates container orchestration.",
     );
 
     // Rephrased prompt lookup -> HIT
@@ -187,7 +207,13 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       object: "chat.completion",
       created: 1700000000,
       model: "openai/gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Paris" }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: "Paris" },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     await service.admitAndStore({
@@ -236,7 +262,13 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       object: "chat.completion",
       created: 1700000000,
       model: "openai/gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Ahoy matey!" }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: "Ahoy matey!" },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     await service.admitAndStore({
@@ -332,7 +364,16 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       object: "chat.completion",
       created: 1700000000,
       model: "openai/gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Quantum computers use qubits." }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "Quantum computers use qubits.",
+          },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     await service.admitAndStore({
@@ -377,7 +418,16 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       object: "chat.completion",
       created: 1700000000,
       model: "openai/gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Hooks allow state in functional components." }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "Hooks allow state in functional components.",
+          },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     await service.admitAndStore({
@@ -463,7 +513,16 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
       object: "chat.completion",
       created: 1700000000,
       model: "openai/gpt-4o",
-      choices: [{ index: 0, message: { role: "assistant", content: "Redis is an in-memory data store." }, finish_reason: "stop" }],
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "Redis is an in-memory data store.",
+          },
+          finish_reason: "stop",
+        },
+      ],
     };
 
     // Store into both
@@ -508,7 +567,7 @@ describe("Phase 24 — Semantic Cache & Request Optimization Platform", () => {
     expect(semanticRes.status).toBe("HIT");
     expect(semanticRes.cacheType).toBe("semantic");
     expect(semanticRes.responsePayload?.choices[0]?.message.content).toBe(
-      "Redis is an in-memory data store."
+      "Redis is an in-memory data store.",
     );
   });
 });

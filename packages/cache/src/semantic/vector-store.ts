@@ -1,8 +1,5 @@
 import { cosineSimilarity } from "./embedding-provider.js";
-import type {
-  SemanticCacheEntry,
-  SemanticCandidateMatch,
-} from "./types.js";
+import type { SemanticCacheEntry, SemanticCandidateMatch } from "./types.js";
 
 export interface SemanticVectorQuery {
   organizationId: string;
@@ -39,7 +36,10 @@ export class InMemorySemanticVectorStore implements SemanticVectorStore {
     return this.entries.get(id);
   }
 
-  async update(id: string, updates: Partial<SemanticCacheEntry>): Promise<void> {
+  async update(
+    id: string,
+    updates: Partial<SemanticCacheEntry>,
+  ): Promise<void> {
     const existing = this.entries.get(id);
     if (existing) {
       this.entries.set(id, { ...existing, ...updates });
@@ -62,7 +62,10 @@ export class InMemorySemanticVectorStore implements SemanticVectorStore {
       }
 
       // 3. Optional namespace filter
-      if (params.namespaceHash && entry.namespaceHash !== params.namespaceHash) {
+      if (
+        params.namespaceHash &&
+        entry.namespaceHash !== params.namespaceHash
+      ) {
         continue;
       }
 
@@ -88,8 +91,13 @@ export class InMemorySemanticVectorStore implements SemanticVectorStore {
     let count = 0;
     for (const [id, entry] of this.entries.entries()) {
       if (entry.organizationId !== filter.organizationId) continue;
-      if (filter.workspaceId && entry.workspaceId !== filter.workspaceId) continue;
-      if (filter.canonicalModel && entry.canonicalModel !== filter.canonicalModel) continue;
+      if (filter.workspaceId && entry.workspaceId !== filter.workspaceId)
+        continue;
+      if (
+        filter.canonicalModel &&
+        entry.canonicalModel !== filter.canonicalModel
+      )
+        continue;
 
       if (entry.status === "active") {
         this.entries.set(id, { ...entry, status: "invalidated" });

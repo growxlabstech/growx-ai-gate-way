@@ -61,8 +61,12 @@ describe("Usage Metering & Authoritative Ledger", () => {
 
     const events = await repo.listUsageEventsForRequest("req_simple_1");
     expect(events.length).toBe(3); // input, output, total
-    expect(events.find((e) => e.usageType === "input_tokens")?.quantity).toBe(100n);
-    expect(events.find((e) => e.usageType === "output_tokens")?.quantity).toBe(50n);
+    expect(events.find((e) => e.usageType === "input_tokens")?.quantity).toBe(
+      100n,
+    );
+    expect(events.find((e) => e.usageType === "output_tokens")?.quantity).toBe(
+      50n,
+    );
   });
 
   it("handles streaming finalization with cached and reasoning tokens", async () => {
@@ -110,8 +114,12 @@ describe("Usage Metering & Authoritative Ledger", () => {
 
     const events = await repo.listUsageEventsForRequest("req_stream_1");
     expect(events.length).toBe(5); // input, output, total, cached, reasoning
-    expect(events.find((e) => e.usageType === "cached_input_tokens")?.quantity).toBe(300n);
-    expect(events.find((e) => e.usageType === "reasoning_tokens")?.quantity).toBe(150n);
+    expect(
+      events.find((e) => e.usageType === "cached_input_tokens")?.quantity,
+    ).toBe(300n);
+    expect(
+      events.find((e) => e.usageType === "reasoning_tokens")?.quantity,
+    ).toBe(150n);
   });
 
   it("records failed attempt + fallback attempt with separate provider consumptions and single logical usage", async () => {
@@ -224,7 +232,12 @@ describe("Usage Metering & Authoritative Ledger", () => {
     await service.recordAttemptCompleted({
       attemptId: attempt2.id,
       requestId: "req_retry_1",
-      usage: { inputTokens: 120, outputTokens: 80, totalTokens: 200, source: "provider_reported" },
+      usage: {
+        inputTokens: 120,
+        outputTokens: 80,
+        totalTokens: 200,
+        source: "provider_reported",
+      },
     });
 
     const finalized = await service.recordRequestCompleted({
@@ -287,7 +300,7 @@ describe("Usage Metering & Authoritative Ledger", () => {
     const normalized = normalizeProviderUsage(
       "custom-endpoint",
       {}, // Empty payload without usage
-      { prompt: "Hello world, what is the capital of France?", max_tokens: 64 }
+      { prompt: "Hello world, what is the capital of France?", max_tokens: 64 },
     );
 
     expect(normalized.source).toBe("estimated");
@@ -329,7 +342,12 @@ describe("Usage Metering & Authoritative Ledger", () => {
     await service.recordAttemptCompleted({
       attemptId: attempt.id,
       requestId: "req_reconc_1",
-      usage: { inputTokens: 1000, outputTokens: 500, totalTokens: 1500, source: "estimated" },
+      usage: {
+        inputTokens: 1000,
+        outputTokens: 500,
+        totalTokens: 1500,
+        source: "estimated",
+      },
     });
 
     await service.recordRequestCompleted({
@@ -361,10 +379,17 @@ describe("Usage Metering & Authoritative Ledger", () => {
     expect(aggList[0]?.outputTokens).toBe(520n);
 
     // Verify reconciliation records
-    const reconciliations = await repo.listReconciliationsForRequest("req_reconc_1");
+    const reconciliations =
+      await repo.listReconciliationsForRequest("req_reconc_1");
     expect(reconciliations.length).toBe(2);
-    expect(reconciliations.find((r) => r.usageType === "input_tokens")?.differenceQuantity).toBe(-50n);
-    expect(reconciliations.find((r) => r.usageType === "output_tokens")?.differenceQuantity).toBe(20n);
+    expect(
+      reconciliations.find((r) => r.usageType === "input_tokens")
+        ?.differenceQuantity,
+    ).toBe(-50n);
+    expect(
+      reconciliations.find((r) => r.usageType === "output_tokens")
+        ?.differenceQuantity,
+    ).toBe(20n);
   });
 
   it("guarantees idempotent ingestion when duplicate events are delivered 100 times", async () => {
@@ -388,7 +413,9 @@ describe("Usage Metering & Authoritative Ledger", () => {
       idempotencyKey: "dup_key_test_1",
     };
 
-    const promises = Array.from({ length: 100 }, () => repo.appendUsageEvent(sampleEvent));
+    const promises = Array.from({ length: 100 }, () =>
+      repo.appendUsageEvent(sampleEvent),
+    );
     const results = await Promise.all(promises);
 
     const appended = results.filter((r) => r === "appended").length;
@@ -397,7 +424,9 @@ describe("Usage Metering & Authoritative Ledger", () => {
     expect(appended).toBe(1);
     expect(duplicates).toBe(99);
 
-    const aggregates = await repo.queryAggregates({ organizationId: "org_dup" });
+    const aggregates = await repo.queryAggregates({
+      organizationId: "org_dup",
+    });
     expect(aggregates[0]?.inputTokens).toBe(500n);
   });
 
@@ -426,7 +455,9 @@ describe("Usage Metering & Authoritative Ledger", () => {
 
     await repo.appendUsageEvent(event);
 
-    const aggregates = await repo.queryAggregates({ organizationId: "org_big" });
+    const aggregates = await repo.queryAggregates({
+      organizationId: "org_big",
+    });
     expect(aggregates[0]?.inputTokens).toBe(largeQty);
   });
 
@@ -454,7 +485,9 @@ describe("Usage Metering & Authoritative Ledger", () => {
       });
     }
 
-    let aggregates = await repo.queryAggregates({ organizationId: "org_rebuild" });
+    let aggregates = await repo.queryAggregates({
+      organizationId: "org_rebuild",
+    });
     expect(aggregates[0]?.inputTokens).toBe(1000n);
 
     // Rebuild
@@ -531,7 +564,12 @@ describe("Usage Metering & Authoritative Ledger", () => {
     await service.recordAttemptCompleted({
       attemptId: attempt.id,
       requestId: "req_health_probe_1",
-      usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15, source: "provider_reported" },
+      usage: {
+        inputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        source: "provider_reported",
+      },
     });
 
     await service.recordRequestCompleted({

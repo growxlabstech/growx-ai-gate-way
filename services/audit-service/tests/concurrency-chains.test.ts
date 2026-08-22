@@ -19,7 +19,7 @@ describe("Phase 22 — Concurrent Audit Append & Zero-Gap Sequences", () => {
           resourceId: `key_${i}`,
           sourceService: "api-key-service",
           metadata: { index: i },
-        })
+        }),
       );
     }
 
@@ -27,13 +27,17 @@ describe("Phase 22 — Concurrent Audit Append & Zero-Gap Sequences", () => {
     expect(recordedEvents.length).toBe(100);
 
     // Verify sequences are 1..100 with zero duplicates or gaps
-    const sequences = recordedEvents.map((e) => e.sequence).sort((a, b) => a - b);
+    const sequences = recordedEvents
+      .map((e) => e.sequence)
+      .sort((a, b) => a - b);
     for (let i = 0; i < 100; i++) {
       expect(sequences[i]).toBe(i + 1);
     }
 
     // Verify cryptographic chain
-    const verifyResult = await auditService.verifyChain("org:org_concurrent_test");
+    const verifyResult = await auditService.verifyChain(
+      "org:org_concurrent_test",
+    );
     expect(verifyResult.valid).toBe(true);
   });
 });

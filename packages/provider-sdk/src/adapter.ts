@@ -9,11 +9,7 @@ import type {
 } from "@growx/contracts";
 
 export type ProviderHealthState =
-  | "healthy"
-  | "degraded"
-  | "unhealthy"
-  | "unknown"
-  | "maintenance";
+  "healthy" | "degraded" | "unhealthy" | "unknown" | "maintenance";
 
 export interface ProviderHealth {
   state: ProviderHealthState;
@@ -28,14 +24,17 @@ export interface ProviderAdapter {
   /**
    * Validates provider-level configuration parameters (e.g. baseUrl, apiVersion).
    */
-  validateConfiguration(config: { baseUrl: string; apiVersion?: string | null | undefined }): void;
+  validateConfiguration(config: {
+    baseUrl: string;
+    apiVersion?: string | null | undefined;
+  }): void;
 
   /**
    * Executes a non-streaming generation request and returns the normalized response.
    */
   execute(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): Promise<NormalizedGenerationResponse>;
 
   /**
@@ -43,7 +42,7 @@ export interface ProviderAdapter {
    */
   stream(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): AsyncIterable<NormalizedStreamEvent>;
 
   /**
@@ -69,7 +68,7 @@ export interface ProviderAdapter {
       baseUrl: string;
       credential?: string | undefined;
       cancellationSignal?: AbortSignal | undefined;
-    }
+    },
   ): Promise<ProviderHealth>;
 
   /**

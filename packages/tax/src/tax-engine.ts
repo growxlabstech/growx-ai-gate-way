@@ -39,7 +39,7 @@ export class TaxEngine {
   static calculate(
     lines: readonly TaxDraftLine[],
     context: TaxCalculationContext,
-    rules: readonly TaxRule[]
+    rules: readonly TaxRule[],
   ): TaxCalculation {
     const taxPointDate = context.taxPointDate ?? new Date();
     const taxVersion = context.taxVersion ?? 1;
@@ -135,14 +135,16 @@ export class TaxEngine {
       if (r.regime !== decision.taxRegime) return false;
       if (r.effectiveFrom > taxPointDate) return false;
       if (r.effectiveTo && r.effectiveTo < taxPointDate) return false;
-      if (r.supplyType && r.supplyType !== decision.supplyClassification) return false;
-      if (r.customerType && r.customerType !== decision.customerType) return false;
+      if (r.supplyType && r.supplyType !== decision.supplyClassification)
+        return false;
+      if (r.customerType && r.customerType !== decision.customerType)
+        return false;
       return true;
     });
 
     if (activeRules.length === 0) {
       throw new Error(
-        `Tax calculation failed: No active tax rule found for regime ${decision.taxRegime} (supply: ${decision.supplyClassification}, customer: ${decision.customerType}). Refusing to guess zero tax.`
+        `Tax calculation failed: No active tax rule found for regime ${decision.taxRegime} (supply: ${decision.supplyClassification}, customer: ${decision.customerType}). Refusing to guess zero tax.`,
       );
     }
 
@@ -157,7 +159,9 @@ export class TaxEngine {
         const sgstRule = activeRules.find((r) => r.taxType === "SGST");
 
         if (!cgstRule || !sgstRule) {
-          throw new Error("Missing CGST or SGST rule for India intra-state supply");
+          throw new Error(
+            "Missing CGST or SGST rule for India intra-state supply",
+          );
         }
 
         const cgstAmount = subtotal.mul(cgstRule.rate).round(2);
@@ -183,7 +187,7 @@ export class TaxEngine {
             ruleId: sgstRule.id,
             description: `State GST (${sgstRule.rate.mul(100).toString()}%)`,
             sacHsnCode: sgstRule.productTaxCode ?? "998313",
-          }
+          },
         );
 
         taxTotal = cgstAmount.add(sgstAmount);
@@ -221,7 +225,9 @@ export class TaxEngine {
           taxAmount,
           jurisdiction: mainRule.jurisdiction,
           ruleId: mainRule.id,
-          description: mainRule.description ?? `${mainRule.taxType} (${mainRule.rate.mul(100).toString()}%)`,
+          description:
+            mainRule.description ??
+            `${mainRule.taxType} (${mainRule.rate.mul(100).toString()}%)`,
         });
 
         taxTotal = taxAmount;

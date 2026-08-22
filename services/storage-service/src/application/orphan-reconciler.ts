@@ -17,7 +17,9 @@ export class OrphanReconciler {
 
     const missingObjects: string[] = [];
     for (const file of files.data) {
-      const head = await this.fileService.storageProvider.headObject(file.storageKey);
+      const head = await this.fileService.storageProvider.headObject(
+        file.storageKey,
+      );
       if (!head) {
         missingObjects.push(file.id);
       }

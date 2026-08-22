@@ -40,7 +40,7 @@ export class RouteCircuitBreaker {
     public readonly providerId: string,
     public readonly config: CircuitConfiguration = DEFAULT_CIRCUIT_CONFIG,
     public readonly region?: string | undefined,
-    public readonly providerModelId?: string | undefined
+    public readonly providerModelId?: string | undefined,
   ) {
     this.tracker = new SlidingWindowTracker(60_000, 5_000);
     this.openCooldownMs = config.openDurationMs;
@@ -62,7 +62,10 @@ export class RouteCircuitBreaker {
    */
   private getActiveOverride(now: Date): ManualCircuitOverride | null {
     if (!this.manualOverride) return null;
-    if (this.manualOverride.expiresAt && now.getTime() > this.manualOverride.expiresAt.getTime()) {
+    if (
+      this.manualOverride.expiresAt &&
+      now.getTime() > this.manualOverride.expiresAt.getTime()
+    ) {
       this.manualOverride = null;
       return null;
     }
@@ -72,14 +75,20 @@ export class RouteCircuitBreaker {
   /**
    * Computes the current effective circuit state (handling cooldown expiration).
    */
-  getCurrentCircuitState(now = new Date()): { state: CircuitState; transition?: CircuitStateTransition | undefined } {
+  getCurrentCircuitState(now = new Date()): {
+    state: CircuitState;
+    transition?: CircuitStateTransition | undefined;
+  } {
     const override = this.getActiveOverride(now);
     if (override) {
       return { state: override.state };
     }
 
     if (this.circuitState === "OPEN") {
-      if (this.openedAt && now.getTime() - this.openedAt.getTime() >= this.openCooldownMs) {
+      if (
+        this.openedAt &&
+        now.getTime() - this.openedAt.getTime() >= this.openCooldownMs
+      ) {
         const previousState = this.circuitState;
         this.circuitState = "HALF_OPEN";
         this.consecutiveSuccesses = 0;
@@ -169,11 +178,15 @@ export class RouteCircuitBreaker {
   /**
    * Requests an execution permit for a request attempt.
    */
-  acquirePermit(now = new Date()): { permit: ExecutionPermit; transition?: CircuitStateTransition | undefined } {
+  acquirePermit(now = new Date()): {
+    permit: ExecutionPermit;
+    transition?: CircuitStateTransition | undefined;
+  } {
     const nowMs = now.getTime();
     this.cleanExpiredPermits(nowMs);
 
-    const { state: currentCircuit, transition } = this.getCurrentCircuitState(now);
+    const { state: currentCircuit, transition } =
+      this.getCurrentCircuitState(now);
 
     if (currentCircuit === "FORCED_OPEN" || currentCircuit === "OPEN") {
       return {
@@ -233,7 +246,7 @@ export class RouteCircuitBreaker {
     signal: HealthOutcomeSignal,
     latencyMs?: number,
     permitId?: string,
-    now = new Date()
+    now = new Date(),
   ): { transition?: CircuitStateTransition | undefined } {
     const nowMs = now.getTime();
 
@@ -248,7 +261,9 @@ export class RouteCircuitBreaker {
 
     const isSuccess = signal === "success";
     const isQualifyingFailure =
-      signal === "error_5xx" || signal === "timeout" || signal === "network_error";
+      signal === "error_5xx" ||
+      signal === "timeout" ||
+      signal === "network_error";
 
     if (isSuccess) {
       this.lastSuccessAt = now;
@@ -268,8 +283,9 @@ export class RouteCircuitBreaker {
         // Reopen circuit with exponential cooldown backoff
         this.reopenCount++;
         this.openCooldownMs = Math.min(
-          this.config.openDurationMs * Math.pow(2, Math.min(this.reopenCount, 4)),
-          this.config.maxOpenDurationMs
+          this.config.openDurationMs *
+            Math.pow(2, Math.min(this.reopenCount, 4)),
+          this.config.maxOpenDurationMs,
         );
         const previousState = this.circuitState;
         this.circuitState = "OPEN";
@@ -287,7 +303,10 @@ export class RouteCircuitBreaker {
         };
       }
 
-      if (isSuccess && this.consecutiveSuccesses >= this.config.halfOpenRequiredSuccesses) {
+      if (
+        isSuccess &&
+        this.consecutiveSuccesses >= this.config.halfOpenRequiredSuccesses
+      ) {
         // Recover to CLOSED
         const previousState = this.circuitState;
         this.circuitState = "CLOSED";
@@ -381,15 +400,28 @@ export class RouteCircuitBreaker {
   /**
    * Records active health probe execution.
    */
-  recordProbe(healthy: boolean, latencyMs?: number, now = new Date()): { transition?: CircuitStateTransition | undefined } {
+  recordProbe(
+    healthy: boolean,
+    latencyMs?: number,
+    now = new Date(),
+  ): { transition?: CircuitStateTransition | undefined } {
     this.lastProbeAt = now;
-    return this.recordOutcome(healthy ? "success" : "error_5xx", latencyMs, undefined, now);
+    return this.recordOutcome(
+      healthy ? "success" : "error_5xx",
+      latencyMs,
+      undefined,
+      now,
+    );
   }
 
   /**
    * Privileged manual force open.
    */
-  forceOpen(reason: string, setBy: string, expiresAt?: Date | null): CircuitStateTransition {
+  forceOpen(
+    reason: string,
+    setBy: string,
+    expiresAt?: Date | null,
+  ): CircuitStateTransition {
     const previousState = this.circuitState;
     this.manualOverride = {
       state: "FORCED_OPEN",
@@ -410,7 +442,11 @@ export class RouteCircuitBreaker {
   /**
    * Privileged manual force close.
    */
-  forceClose(reason: string, setBy: string, expiresAt?: Date | null): CircuitStateTransition {
+  forceClose(
+    reason: string,
+    setBy: string,
+    expiresAt?: Date | null,
+  ): CircuitStateTransition {
     const previousState = this.circuitState;
     this.manualOverride = {
       state: "FORCED_CLOSED",

@@ -1,3 +1,30 @@
-export * from "./colors"; export * from "./typography"; export * from "./spacing"; export * from "./radius"; export * from "./border"; export * from "./shadow"; export * from "./motion"; export * from "./layout"; export * from "./zIndex";
-import { colorTokens } from "./colors"; import { typographyTokens } from "./typography"; import { spacingTokens } from "./spacing"; import { radiusTokens } from "./radius"; import { borderTokens } from "./border"; import { shadowTokens } from "./shadow"; import { motionTokens } from "./motion"; import { breakpointTokens, layoutTokens } from "./layout"; import { zIndexTokens } from "./zIndex";
-export const tokens = { color: colorTokens, typography: typographyTokens, spacing: spacingTokens, radius: radiusTokens, border: borderTokens, shadow: shadowTokens, motion: motionTokens, breakpoint: breakpointTokens, layout: layoutTokens, zIndex: zIndexTokens } as const;
+export * from "./colors";
+export * from "./typography";
+export * from "./spacing";
+export * from "./radius";
+export * from "./border";
+export * from "./shadow";
+export * from "./motion";
+export * from "./layout";
+export * from "./zIndex";
+import { colorTokens } from "./colors";
+import { typographyTokens } from "./typography";
+import { spacingTokens } from "./spacing";
+import { radiusTokens } from "./radius";
+import { borderTokens } from "./border";
+import { shadowTokens } from "./shadow";
+import { motionTokens } from "./motion";
+import { breakpointTokens, layoutTokens } from "./layout";
+import { zIndexTokens } from "./zIndex";
+export const tokens = {
+  color: colorTokens,
+  typography: typographyTokens,
+  spacing: spacingTokens,
+  radius: radiusTokens,
+  border: borderTokens,
+  shadow: shadowTokens,
+  motion: motionTokens,
+  breakpoint: breakpointTokens,
+  layout: layoutTokens,
+  zIndex: zIndexTokens,
+} as const;

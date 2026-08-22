@@ -32,16 +32,23 @@ export function stableBucket(key: string): number {
 export function evaluatePriorityStrategy(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
-  policy?: RoutingPolicy | undefined
+  policy?: RoutingPolicy | undefined,
 ): RankedCandidate[] {
   const costs = eligibleCandidates.map((c) =>
-    calculateEstimatedCost(c, request.estimatedInputTokens, request.estimatedOutputTokens)
+    calculateEstimatedCost(
+      c,
+      request.estimatedInputTokens,
+      request.estimatedOutputTokens,
+    ),
   );
   const definedCosts = costs.filter((c): c is number => c !== undefined);
-  const maxCost = definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
+  const maxCost =
+    definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
   const maxLatency = Math.max(
     1,
-    ...eligibleCandidates.map((c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50)
+    ...eligibleCandidates.map(
+      (c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50,
+    ),
   );
   const weights = normalizeWeights(policy?.weights);
 
@@ -53,7 +60,7 @@ export function evaluatePriorityStrategy(
       maxLatency,
       weights,
       "priority",
-      cost
+      cost,
     );
     return {
       candidate,
@@ -79,16 +86,23 @@ export function evaluateWeightedStrategy(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
   policy?: RoutingPolicy | undefined,
-  options?: StrategyEvaluationOptions | undefined
+  options?: StrategyEvaluationOptions | undefined,
 ): RankedCandidate[] {
   const costs = eligibleCandidates.map((c) =>
-    calculateEstimatedCost(c, request.estimatedInputTokens, request.estimatedOutputTokens)
+    calculateEstimatedCost(
+      c,
+      request.estimatedInputTokens,
+      request.estimatedOutputTokens,
+    ),
   );
   const definedCosts = costs.filter((c): c is number => c !== undefined);
-  const maxCost = definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
+  const maxCost =
+    definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
   const maxLatency = Math.max(
     1,
-    ...eligibleCandidates.map((c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50)
+    ...eligibleCandidates.map(
+      (c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50,
+    ),
   );
   const weights = normalizeWeights(policy?.weights);
 
@@ -100,7 +114,7 @@ export function evaluateWeightedStrategy(
 
   const totalWeight = effectiveCandidates.reduce(
     (sum, c) => sum + Math.max(0, c.weight || 1),
-    0
+    0,
   );
 
   const scored = effectiveCandidates.map((candidate, i) => {
@@ -111,7 +125,7 @@ export function evaluateWeightedStrategy(
       maxLatency,
       weights,
       "weighted",
-      cost
+      cost,
     );
     return {
       candidate,
@@ -137,7 +151,9 @@ export function evaluateWeightedStrategy(
   const randomVal =
     isSticky && stableKey
       ? stableBucket(stableKey)
-      : (options?.rng ? options.rng() : Math.random());
+      : options?.rng
+        ? options.rng()
+        : Math.random();
 
   let cursor = randomVal * totalWeight;
   let selectedIndex = effectiveCandidates.length - 1;
@@ -167,16 +183,23 @@ export function evaluateWeightedStrategy(
 export function evaluateLowestCostStrategy(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
-  policy?: RoutingPolicy | undefined
+  policy?: RoutingPolicy | undefined,
 ): RankedCandidate[] {
   const costs = eligibleCandidates.map((c) =>
-    calculateEstimatedCost(c, request.estimatedInputTokens, request.estimatedOutputTokens)
+    calculateEstimatedCost(
+      c,
+      request.estimatedInputTokens,
+      request.estimatedOutputTokens,
+    ),
   );
   const definedCosts = costs.filter((c): c is number => c !== undefined);
-  const maxCost = definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
+  const maxCost =
+    definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
   const maxLatency = Math.max(
     1,
-    ...eligibleCandidates.map((c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50)
+    ...eligibleCandidates.map(
+      (c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50,
+    ),
   );
   const weights = normalizeWeights(policy?.weights);
 
@@ -188,7 +211,7 @@ export function evaluateLowestCostStrategy(
       maxLatency,
       weights,
       "lowest_cost",
-      cost
+      cost,
     );
     return {
       candidate,
@@ -218,16 +241,23 @@ export function evaluateLowestCostStrategy(
 export function evaluateLowestLatencyStrategy(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
-  policy?: RoutingPolicy | undefined
+  policy?: RoutingPolicy | undefined,
 ): RankedCandidate[] {
   const costs = eligibleCandidates.map((c) =>
-    calculateEstimatedCost(c, request.estimatedInputTokens, request.estimatedOutputTokens)
+    calculateEstimatedCost(
+      c,
+      request.estimatedInputTokens,
+      request.estimatedOutputTokens,
+    ),
   );
   const definedCosts = costs.filter((c): c is number => c !== undefined);
-  const maxCost = definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
+  const maxCost =
+    definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
   const maxLatency = Math.max(
     1,
-    ...eligibleCandidates.map((c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50)
+    ...eligibleCandidates.map(
+      (c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50,
+    ),
   );
   const weights = normalizeWeights(policy?.weights);
 
@@ -239,7 +269,7 @@ export function evaluateLowestLatencyStrategy(
       maxLatency,
       weights,
       "lowest_latency",
-      cost
+      cost,
     );
     return {
       candidate,
@@ -268,16 +298,23 @@ export function evaluateLowestLatencyStrategy(
 export function evaluateBalancedStrategy(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
-  policy?: RoutingPolicy | undefined
+  policy?: RoutingPolicy | undefined,
 ): RankedCandidate[] {
   const costs = eligibleCandidates.map((c) =>
-    calculateEstimatedCost(c, request.estimatedInputTokens, request.estimatedOutputTokens)
+    calculateEstimatedCost(
+      c,
+      request.estimatedInputTokens,
+      request.estimatedOutputTokens,
+    ),
   );
   const definedCosts = costs.filter((c): c is number => c !== undefined);
-  const maxCost = definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
+  const maxCost =
+    definedCosts.length > 0 ? Math.max(0.0001, ...definedCosts) : 0.0001;
   const maxLatency = Math.max(
     1,
-    ...eligibleCandidates.map((c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50)
+    ...eligibleCandidates.map(
+      (c) => c.latencySignal?.p95LatencyMs ?? c.p95LatencyMs ?? 50,
+    ),
   );
   const weights = normalizeWeights(policy?.weights);
 
@@ -289,7 +326,7 @@ export function evaluateBalancedStrategy(
       maxLatency,
       weights,
       "balanced",
-      cost
+      cost,
     );
     return {
       candidate,
@@ -320,7 +357,7 @@ export function rankCandidates(
   eligibleCandidates: RouteCandidate[],
   request: RoutingRequest,
   policy?: RoutingPolicy | undefined,
-  options?: StrategyEvaluationOptions | undefined
+  options?: StrategyEvaluationOptions | undefined,
 ): RankedCandidate[] {
   if (eligibleCandidates.length === 0) {
     return [];
@@ -330,7 +367,12 @@ export function rankCandidates(
     case "priority":
       return evaluatePriorityStrategy(eligibleCandidates, request, policy);
     case "weighted":
-      return evaluateWeightedStrategy(eligibleCandidates, request, policy, options);
+      return evaluateWeightedStrategy(
+        eligibleCandidates,
+        request,
+        policy,
+        options,
+      );
     case "lowest_cost":
       return evaluateLowestCostStrategy(eligibleCandidates, request, policy);
     case "lowest_latency":

@@ -100,7 +100,8 @@ export class ReliabilityControlPlane {
     return {
       textInferenceReady: this.capabilities.textInference,
       fileInferenceReady: this.capabilities.fileInference,
-      batchReady: this.capabilities.batch && this.killSwitches.allowNewBatchSubmissions,
+      batchReady:
+        this.capabilities.batch && this.killSwitches.allowNewBatchSubmissions,
       billingReady: this.capabilities.billing,
       multimodalReady: this.capabilities.multimodal,
       providerOpsReady: this.capabilities.providerOps,

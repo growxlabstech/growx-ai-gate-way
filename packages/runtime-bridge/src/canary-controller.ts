@@ -1,7 +1,4 @@
-import type {
-  RuntimeTarget,
-  RuntimeRoutingPolicy,
-} from "@growx/contracts";
+import type { RuntimeTarget, RuntimeRoutingPolicy } from "@growx/contracts";
 import { CanaryRollbackError } from "./types.js";
 
 export class RuntimeCanaryController {
@@ -38,7 +35,10 @@ export class RuntimeCanaryController {
     organizationId: string;
     modelId?: string;
   }): { target: RuntimeTarget; isCanary: boolean } {
-    if (this.policy.status === "rolling_back" || this.policy.status === "disabled") {
+    if (
+      this.policy.status === "rolling_back" ||
+      this.policy.status === "disabled"
+    ) {
       return { target: this.policy.fallbackTarget, isCanary: false };
     }
 
@@ -85,7 +85,9 @@ export class RuntimeCanaryController {
       this.totalCount >= 20 &&
       this.errorCount / this.totalCount > this.policy.errorThresholdRatio
     ) {
-      this.triggerRollback(`Error rate ${Math.round((this.errorCount / this.totalCount) * 100)}% exceeded threshold`);
+      this.triggerRollback(
+        `Error rate ${Math.round((this.errorCount / this.totalCount) * 100)}% exceeded threshold`,
+      );
     }
   }
 

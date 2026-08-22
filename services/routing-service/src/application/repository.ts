@@ -1,7 +1,4 @@
-import type {
-  RoutingDecision,
-  RoutingPolicy,
-} from "../domain/types.js";
+import type { RoutingDecision, RoutingPolicy } from "../domain/types.js";
 
 export interface RoutingDecisionListFilter {
   organizationId?: string | undefined;
@@ -14,11 +11,13 @@ export interface IRoutingRepository {
   saveDecision(decision: RoutingDecision): Promise<void>;
   getDecisionByRequestId(requestId: string): Promise<RoutingDecision | null>;
   getDecision(id: string): Promise<RoutingDecision | null>;
-  listDecisions(filter?: RoutingDecisionListFilter | undefined): Promise<RoutingDecision[]>;
+  listDecisions(
+    filter?: RoutingDecisionListFilter | undefined,
+  ): Promise<RoutingDecision[]>;
 
   getPolicy(
     organizationId?: string | null | undefined,
-    workspaceId?: string | null | undefined
+    workspaceId?: string | null | undefined,
   ): Promise<RoutingPolicy | null>;
   getPolicyById(id: string): Promise<RoutingPolicy | null>;
   savePolicy(policy: RoutingPolicy): Promise<void>;

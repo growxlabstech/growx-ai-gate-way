@@ -51,9 +51,21 @@ describe("Router V2 - Objective Scorers", () => {
   });
 
   it("scores reliability from health, circuits, and telemetry", () => {
-    const sHealthy = ReliabilityScorer.score({ ...base, health: "healthy", circuit: "CLOSED" });
-    const sDegraded = ReliabilityScorer.score({ ...base, health: "degraded", circuit: "CLOSED" });
-    const sHalfOpen = ReliabilityScorer.score({ ...base, health: "healthy", circuit: "HALF_OPEN" });
+    const sHealthy = ReliabilityScorer.score({
+      ...base,
+      health: "healthy",
+      circuit: "CLOSED",
+    });
+    const sDegraded = ReliabilityScorer.score({
+      ...base,
+      health: "degraded",
+      circuit: "CLOSED",
+    });
+    const sHalfOpen = ReliabilityScorer.score({
+      ...base,
+      health: "healthy",
+      circuit: "HALF_OPEN",
+    });
 
     expect(sHealthy.score).toBe(100);
     expect(sDegraded.score).toBe(60);
@@ -61,9 +73,20 @@ describe("Router V2 - Objective Scorers", () => {
   });
 
   it("scores capacity headroom and state", () => {
-    const sAvail = CapacityScorer.score({ ...base, capacityState: "available", capacityUtilization: 0.1 });
-    const sBusy = CapacityScorer.score({ ...base, capacityState: "busy", capacityUtilization: 0.75 });
-    const sExhausted = CapacityScorer.score({ ...base, capacityState: "exhausted" });
+    const sAvail = CapacityScorer.score({
+      ...base,
+      capacityState: "available",
+      capacityUtilization: 0.1,
+    });
+    const sBusy = CapacityScorer.score({
+      ...base,
+      capacityState: "busy",
+      capacityUtilization: 0.75,
+    });
+    const sExhausted = CapacityScorer.score({
+      ...base,
+      capacityState: "exhausted",
+    });
 
     expect(sAvail.score).toBeGreaterThan(sBusy.score);
     expect(sExhausted.score).toBe(0);
@@ -75,8 +98,14 @@ describe("Router V2 - Objective Scorers", () => {
       regionRequirement: "ap-south-1",
     });
 
-    const sExact = LocalityScorer.score({ ...base, region: "ap-south-1" }, profileIndia);
-    const sOther = LocalityScorer.score({ ...base, region: "us-west-2" }, profileIndia);
+    const sExact = LocalityScorer.score(
+      { ...base, region: "ap-south-1" },
+      profileIndia,
+    );
+    const sOther = LocalityScorer.score(
+      { ...base, region: "us-west-2" },
+      profileIndia,
+    );
 
     expect(sExact.score).toBe(100);
     expect(sOther.score).toBe(60);

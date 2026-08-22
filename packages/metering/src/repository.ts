@@ -29,17 +29,28 @@ export interface IUsageLedgerRepository {
   listAttemptsForRequest(requestId: string): Promise<GatewayAttemptRecord[]>;
 
   appendUsageEvent(event: UsageEvent): Promise<"appended" | "duplicate">;
-  appendUsageEventsBatch(events: readonly UsageEvent[]): Promise<{ appended: number; duplicates: number }>;
+  appendUsageEventsBatch(
+    events: readonly UsageEvent[],
+  ): Promise<{ appended: number; duplicates: number }>;
   listUsageEventsForRequest(requestId: string): Promise<UsageEvent[]>;
-  queryUsageEvents(options: { organizationId: string; workspaceId?: string; limit?: number }): Promise<UsageEvent[]>;
+  queryUsageEvents(options: {
+    organizationId: string;
+    workspaceId?: string;
+    limit?: number;
+  }): Promise<UsageEvent[]>;
 
   saveAggregate(aggregate: UsageAggregate): Promise<void>;
   getAggregate(id: string): Promise<UsageAggregate | null>;
   queryAggregates(options: AggregateQueryOptions): Promise<UsageAggregate[]>;
-  rebuildAggregates(): Promise<{ processedEvents: number; aggregateCount: number }>;
+  rebuildAggregates(): Promise<{
+    processedEvents: number;
+    aggregateCount: number;
+  }>;
 
   saveReconciliation(record: UsageReconciliationRecord): Promise<void>;
-  listReconciliationsForRequest(requestId: string): Promise<UsageReconciliationRecord[]>;
+  listReconciliationsForRequest(
+    requestId: string,
+  ): Promise<UsageReconciliationRecord[]>;
 }
 
 export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
@@ -48,19 +59,26 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
   private readonly events = new Map<string, UsageEvent>();
   private readonly idempotencyIndex = new Set<string>();
   private readonly aggregates = new Map<string, UsageAggregate>();
-  private readonly reconciliations = new Map<string, UsageReconciliationRecord>();
+  private readonly reconciliations = new Map<
+    string,
+    UsageReconciliationRecord
+  >();
   private readonly projector = new UsageAggregateProjector();
 
   public async saveRequestRecord(record: GatewayRequestRecord): Promise<void> {
     this.requests.set(record.requestId, { ...record });
   }
 
-  public async getRequestRecord(requestId: string): Promise<GatewayRequestRecord | null> {
+  public async getRequestRecord(
+    requestId: string,
+  ): Promise<GatewayRequestRecord | null> {
     const rec = this.requests.get(requestId);
     return rec ? { ...rec } : null;
   }
 
-  public async updateRequestRecord(record: GatewayRequestRecord): Promise<void> {
+  public async updateRequestRecord(
+    record: GatewayRequestRecord,
+  ): Promise<void> {
     this.requests.set(record.requestId, { ...record, updatedAt: new Date() });
   }
 
@@ -68,19 +86,28 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
     this.attempts.set(record.id, { ...record });
   }
 
-  public async getAttemptRecord(attemptId: string): Promise<GatewayAttemptRecord | null> {
+  public async getAttemptRecord(
+    attemptId: string,
+  ): Promise<GatewayAttemptRecord | null> {
     const rec = this.attempts.get(attemptId);
     return rec ? { ...rec } : null;
   }
 
-  public async listAttemptsForRequest(requestId: string): Promise<GatewayAttemptRecord[]> {
+  public async listAttemptsForRequest(
+    requestId: string,
+  ): Promise<GatewayAttemptRecord[]> {
     return Array.from(this.attempts.values())
       .filter((a) => a.requestId === requestId)
       .sort((a, b) => a.attemptNumber - b.attemptNumber);
   }
 
-  public async appendUsageEvent(event: UsageEvent): Promise<"appended" | "duplicate"> {
-    if (this.idempotencyIndex.has(event.idempotencyKey) || this.events.has(event.id)) {
+  public async appendUsageEvent(
+    event: UsageEvent,
+  ): Promise<"appended" | "duplicate"> {
+    if (
+      this.idempotencyIndex.has(event.idempotencyKey) ||
+      this.events.has(event.id)
+    ) {
       return "duplicate";
     }
 
@@ -102,7 +129,7 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
   }
 
   public async appendUsageEventsBatch(
-    events: readonly UsageEvent[]
+    events: readonly UsageEvent[],
   ): Promise<{ appended: number; duplicates: number }> {
     let appended = 0;
     let duplicates = 0;
@@ -119,7 +146,9 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
     return { appended, duplicates };
   }
 
-  public async listUsageEventsForRequest(requestId: string): Promise<UsageEvent[]> {
+  public async listUsageEventsForRequest(
+    requestId: string,
+  ): Promise<UsageEvent[]> {
     return Array.from(this.events.values())
       .filter((e) => e.requestId === requestId)
       .sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime());
@@ -133,7 +162,8 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
     return Array.from(this.events.values())
       .filter((e) => {
         if (e.organizationId !== options.organizationId) return false;
-        if (options.workspaceId && e.workspaceId !== options.workspaceId) return false;
+        if (options.workspaceId && e.workspaceId !== options.workspaceId)
+          return false;
         return true;
       })
       .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
@@ -149,16 +179,25 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
     return agg ? { ...agg } : null;
   }
 
-  public async queryAggregates(options: AggregateQueryOptions): Promise<UsageAggregate[]> {
+  public async queryAggregates(
+    options: AggregateQueryOptions,
+  ): Promise<UsageAggregate[]> {
     return Array.from(this.aggregates.values())
       .filter((agg) => {
         if (agg.organizationId !== options.organizationId) return false;
-        if (options.workspaceId && agg.workspaceId !== options.workspaceId) return false;
+        if (options.workspaceId && agg.workspaceId !== options.workspaceId)
+          return false;
         if (options.apiKeyId && agg.apiKeyId !== options.apiKeyId) return false;
-        if (options.canonicalModelId && agg.canonicalModelId !== options.canonicalModelId) return false;
-        if (options.providerId && agg.providerId !== options.providerId) return false;
+        if (
+          options.canonicalModelId &&
+          agg.canonicalModelId !== options.canonicalModelId
+        )
+          return false;
+        if (options.providerId && agg.providerId !== options.providerId)
+          return false;
         if (options.bucket && agg.bucket !== options.bucket) return false;
-        if (options.startTime && agg.bucketStart < options.startTime) return false;
+        if (options.startTime && agg.bucketStart < options.startTime)
+          return false;
         if (options.endTime && agg.bucketEnd > options.endTime) return false;
         return true;
       })
@@ -166,7 +205,10 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
       .slice(0, options.limit ?? 100);
   }
 
-  public async rebuildAggregates(): Promise<{ processedEvents: number; aggregateCount: number }> {
+  public async rebuildAggregates(): Promise<{
+    processedEvents: number;
+    aggregateCount: number;
+  }> {
     this.aggregates.clear();
     const allEvents = Array.from(this.events.values());
     const builtMap = this.projector.rebuildAggregates(allEvents);
@@ -179,11 +221,17 @@ export class InMemoryUsageLedgerRepository implements IUsageLedgerRepository {
     };
   }
 
-  public async saveReconciliation(record: UsageReconciliationRecord): Promise<void> {
+  public async saveReconciliation(
+    record: UsageReconciliationRecord,
+  ): Promise<void> {
     this.reconciliations.set(record.id, { ...record });
   }
 
-  public async listReconciliationsForRequest(requestId: string): Promise<UsageReconciliationRecord[]> {
-    return Array.from(this.reconciliations.values()).filter((r) => r.requestId === requestId);
+  public async listReconciliationsForRequest(
+    requestId: string,
+  ): Promise<UsageReconciliationRecord[]> {
+    return Array.from(this.reconciliations.values()).filter(
+      (r) => r.requestId === requestId,
+    );
   }
 }

@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { createTestGatewayFixture, type TestGatewayFixture } from "../helpers/test-fixture.js";
+import {
+  createTestGatewayFixture,
+  type TestGatewayFixture,
+} from "../helpers/test-fixture.js";
 
 describe("Chat Completions End-to-End Integration Tests", () => {
   let fixture: TestGatewayFixture;
@@ -29,7 +32,7 @@ describe("Chat Completions End-to-End Integration Tests", () => {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -53,7 +56,9 @@ describe("Chat Completions End-to-End Integration Tests", () => {
     expect(body.model).toBe("openai/gpt-4o-mini");
     expect(body.choices).toHaveLength(1);
     expect(body.choices[0].message.role).toBe("assistant");
-    expect(body.choices[0].message.content).toBe("Hello from GrowX AI Gateway mock provider!");
+    expect(body.choices[0].message.content).toBe(
+      "Hello from GrowX AI Gateway mock provider!",
+    );
     expect(body.choices[0].finish_reason).toBe("stop");
     expect(body.usage.prompt_tokens).toBe(12);
     expect(body.usage.completion_tokens).toBe(8);
@@ -72,7 +77,9 @@ describe("Chat Completions End-to-End Integration Tests", () => {
     expect(persistedRequest?.latencyMs).toBeGreaterThan(0);
 
     // Verify usage snapshot persisted
-    const usage = Array.from(fixture.gatewayRepo.usages.values()).find((u) => u.requestId === reqId);
+    const usage = Array.from(fixture.gatewayRepo.usages.values()).find(
+      (u) => u.requestId === reqId,
+    );
     expect(usage).toBeDefined();
     expect(usage?.totalTokens).toBe(20);
     expect(usage?.cachedInputTokens).toBe(2);
@@ -89,7 +96,7 @@ describe("Chat Completions End-to-End Integration Tests", () => {
     const response = await fetch(`${baseUrl}/v1/models`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${rawKey}`,
+        Authorization: `Bearer ${rawKey}`,
       },
     });
 
@@ -97,6 +104,8 @@ describe("Chat Completions End-to-End Integration Tests", () => {
     const body = await response.json();
     expect(body.object).toBe("list");
     expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.some((m: any) => m.id === "openai/gpt-4o-mini")).toBe(true);
+    expect(body.data.some((m: any) => m.id === "openai/gpt-4o-mini")).toBe(
+      true,
+    );
   });
 });

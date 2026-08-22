@@ -24,28 +24,55 @@ export interface FileRepository {
   getFileByStorageKey(storageKey: string): Promise<FileObject | null>;
   updateFile(file: FileObject): Promise<FileObject>;
   deleteFile(organizationId: string, fileId: string): Promise<boolean>;
-  listFiles(filter: FileFilter): Promise<{ data: FileObject[]; nextCursor: string | null; hasMore: boolean }>;
+  listFiles(
+    filter: FileFilter,
+  ): Promise<{
+    data: FileObject[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }>;
 
   createUploadSession(session: FileUploadSession): Promise<FileUploadSession>;
-  getUploadSession(organizationId: string, sessionId: string): Promise<FileUploadSession | null>;
+  getUploadSession(
+    organizationId: string,
+    sessionId: string,
+  ): Promise<FileUploadSession | null>;
   updateUploadSession(session: FileUploadSession): Promise<FileUploadSession>;
 
-  createProviderReference(ref: ProviderFileReference): Promise<ProviderFileReference>;
-  getProviderReference(fileId: string, providerId: string, credentialId?: string | null): Promise<ProviderFileReference | null>;
+  createProviderReference(
+    ref: ProviderFileReference,
+  ): Promise<ProviderFileReference>;
+  getProviderReference(
+    fileId: string,
+    providerId: string,
+    credentialId?: string | null,
+  ): Promise<ProviderFileReference | null>;
   deleteProviderReferences(fileId: string): Promise<number>;
 
   createUsageReference(ref: FileUsageReference): Promise<FileUsageReference>;
   getUsageReferences(fileId: string): Promise<FileUsageReference[]>;
 
-  createStorageReservation(res: FileStorageReservation): Promise<FileStorageReservation>;
+  createStorageReservation(
+    res: FileStorageReservation,
+  ): Promise<FileStorageReservation>;
   deleteStorageReservation(fileId: string): Promise<boolean>;
-  getActiveReservations(organizationId: string): Promise<FileStorageReservation[]>;
+  getActiveReservations(
+    organizationId: string,
+  ): Promise<FileStorageReservation[]>;
 
-  getRetentionPolicy(organizationId: string | null, purpose: string): Promise<FileRetentionPolicy | null>;
+  getRetentionPolicy(
+    organizationId: string | null,
+    purpose: string,
+  ): Promise<FileRetentionPolicy | null>;
   setRetentionPolicy(policy: FileRetentionPolicy): Promise<FileRetentionPolicy>;
   getExpiredFiles(now: Date, limit: number): Promise<FileObject[]>;
-  getExpiredUploadSessions(now: Date, limit: number): Promise<FileUploadSession[]>;
-  getStorageUsage(organizationId: string): Promise<{ totalBytes: bigint; fileCount: number }>;
+  getExpiredUploadSessions(
+    now: Date,
+    limit: number,
+  ): Promise<FileUploadSession[]>;
+  getStorageUsage(
+    organizationId: string,
+  ): Promise<{ totalBytes: bigint; fileCount: number }>;
 }
 
 export class InMemoryFileRepository implements FileRepository {
@@ -61,7 +88,10 @@ export class InMemoryFileRepository implements FileRepository {
     return file;
   }
 
-  async getFile(organizationId: string, fileId: string): Promise<FileObject | null> {
+  async getFile(
+    organizationId: string,
+    fileId: string,
+  ): Promise<FileObject | null> {
     const file = this.files.get(fileId);
     if (!file) return null;
     if (file.organizationId !== organizationId) return null;
@@ -92,11 +122,18 @@ export class InMemoryFileRepository implements FileRepository {
     return true;
   }
 
-  async listFiles(filter: FileFilter): Promise<{ data: FileObject[]; nextCursor: string | null; hasMore: boolean }> {
+  async listFiles(
+    filter: FileFilter,
+  ): Promise<{
+    data: FileObject[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }> {
     const limit = filter.limit || 20;
     const all = Array.from(this.files.values()).filter((f) => {
       if (f.organizationId !== filter.organizationId) return false;
-      if (filter.workspaceId && f.workspaceId !== filter.workspaceId) return false;
+      if (filter.workspaceId && f.workspaceId !== filter.workspaceId)
+        return false;
       if (filter.purpose && f.purpose !== filter.purpose) return false;
       if (filter.status && f.status !== filter.status) return false;
       if (!filter.status && f.status === "deleted") return false;
@@ -104,9 +141,14 @@ export class InMemoryFileRepository implements FileRepository {
     });
 
     all.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    const startIndex = filter.cursor ? all.findIndex((f) => f.id === filter.cursor) + 1 : 0;
+    const startIndex = filter.cursor
+      ? all.findIndex((f) => f.id === filter.cursor) + 1
+      : 0;
     const slice = all.slice(startIndex, startIndex + limit);
-    const nextCursor = slice.length === limit && startIndex + limit < all.length ? slice[slice.length - 1]!.id : null;
+    const nextCursor =
+      slice.length === limit && startIndex + limit < all.length
+        ? slice[slice.length - 1]!.id
+        : null;
 
     return {
       data: slice.map((f) => ({ ...f })),
@@ -115,29 +157,42 @@ export class InMemoryFileRepository implements FileRepository {
     };
   }
 
-  async createUploadSession(session: FileUploadSession): Promise<FileUploadSession> {
+  async createUploadSession(
+    session: FileUploadSession,
+  ): Promise<FileUploadSession> {
     this.sessions.set(session.id, { ...session });
     return session;
   }
 
-  async getUploadSession(organizationId: string, sessionId: string): Promise<FileUploadSession | null> {
+  async getUploadSession(
+    organizationId: string,
+    sessionId: string,
+  ): Promise<FileUploadSession | null> {
     const s = this.sessions.get(sessionId);
     if (!s || s.organizationId !== organizationId) return null;
     return { ...s };
   }
 
-  async updateUploadSession(session: FileUploadSession): Promise<FileUploadSession> {
+  async updateUploadSession(
+    session: FileUploadSession,
+  ): Promise<FileUploadSession> {
     this.sessions.set(session.id, { ...session, updatedAt: new Date() });
     return { ...session };
   }
 
-  async createProviderReference(ref: ProviderFileReference): Promise<ProviderFileReference> {
+  async createProviderReference(
+    ref: ProviderFileReference,
+  ): Promise<ProviderFileReference> {
     const key = `${ref.fileId}_${ref.providerId}_${ref.providerCredentialId || "default"}`;
     this.providerRefs.set(key, { ...ref });
     return ref;
   }
 
-  async getProviderReference(fileId: string, providerId: string, credentialId?: string | null): Promise<ProviderFileReference | null> {
+  async getProviderReference(
+    fileId: string,
+    providerId: string,
+    credentialId?: string | null,
+  ): Promise<ProviderFileReference | null> {
     const key = `${fileId}_${providerId}_${credentialId || "default"}`;
     const ref = this.providerRefs.get(key);
     return ref ? { ...ref } : null;
@@ -154,7 +209,9 @@ export class InMemoryFileRepository implements FileRepository {
     return count;
   }
 
-  async createUsageReference(ref: FileUsageReference): Promise<FileUsageReference> {
+  async createUsageReference(
+    ref: FileUsageReference,
+  ): Promise<FileUsageReference> {
     const list = this.usageRefs.get(ref.fileId) || [];
     list.push({ ...ref });
     this.usageRefs.set(ref.fileId, list);
@@ -165,7 +222,9 @@ export class InMemoryFileRepository implements FileRepository {
     return this.usageRefs.get(fileId) || [];
   }
 
-  async createStorageReservation(res: FileStorageReservation): Promise<FileStorageReservation> {
+  async createStorageReservation(
+    res: FileStorageReservation,
+  ): Promise<FileStorageReservation> {
     this.reservations.set(res.fileId, { ...res });
     return res;
   }
@@ -174,19 +233,26 @@ export class InMemoryFileRepository implements FileRepository {
     return this.reservations.delete(fileId);
   }
 
-  async getActiveReservations(organizationId: string): Promise<FileStorageReservation[]> {
+  async getActiveReservations(
+    organizationId: string,
+  ): Promise<FileStorageReservation[]> {
     const now = new Date();
     return Array.from(this.reservations.values()).filter(
-      (r) => r.organizationId === organizationId && r.expiresAt > now
+      (r) => r.organizationId === organizationId && r.expiresAt > now,
     );
   }
 
-  async getRetentionPolicy(organizationId: string | null, purpose: string): Promise<FileRetentionPolicy | null> {
+  async getRetentionPolicy(
+    organizationId: string | null,
+    purpose: string,
+  ): Promise<FileRetentionPolicy | null> {
     const key = `${organizationId || "global"}_${purpose}`;
     return this.retentionPolicies.get(key) || null;
   }
 
-  async setRetentionPolicy(policy: FileRetentionPolicy): Promise<FileRetentionPolicy> {
+  async setRetentionPolicy(
+    policy: FileRetentionPolicy,
+  ): Promise<FileRetentionPolicy> {
     const key = `${policy.organizationId || "global"}_${policy.purpose}`;
     this.retentionPolicies.set(key, { ...policy });
     return policy;
@@ -195,7 +261,12 @@ export class InMemoryFileRepository implements FileRepository {
   async getExpiredFiles(now: Date, limit: number): Promise<FileObject[]> {
     const expired: FileObject[] = [];
     for (const f of this.files.values()) {
-      if (f.status !== "deleted" && f.status !== "expired" && f.expiresAt && f.expiresAt <= now) {
+      if (
+        f.status !== "deleted" &&
+        f.status !== "expired" &&
+        f.expiresAt &&
+        f.expiresAt <= now
+      ) {
         expired.push({ ...f });
         if (expired.length >= limit) break;
       }
@@ -203,7 +274,10 @@ export class InMemoryFileRepository implements FileRepository {
     return expired;
   }
 
-  async getExpiredUploadSessions(now: Date, limit: number): Promise<FileUploadSession[]> {
+  async getExpiredUploadSessions(
+    now: Date,
+    limit: number,
+  ): Promise<FileUploadSession[]> {
     const expired: FileUploadSession[] = [];
     for (const s of this.sessions.values()) {
       if (s.status === "pending" && s.expiresAt <= now) {
@@ -214,7 +288,9 @@ export class InMemoryFileRepository implements FileRepository {
     return expired;
   }
 
-  async getStorageUsage(organizationId: string): Promise<{ totalBytes: bigint; fileCount: number }> {
+  async getStorageUsage(
+    organizationId: string,
+  ): Promise<{ totalBytes: bigint; fileCount: number }> {
     let total = 0n;
     let count = 0;
     for (const f of this.files.values()) {

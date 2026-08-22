@@ -6,7 +6,9 @@ function matchPattern(pattern: string, target: string): boolean {
     return true;
   }
   // Convert glob pattern to regular expression (e.g. openai/* -> ^openai\/.*$)
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*");
   const regex = new RegExp(`^${escaped}$`, "i");
   return regex.test(target);
 }
@@ -14,7 +16,7 @@ function matchPattern(pattern: string, target: string): boolean {
 export function isCanonicalModelAllowedByKey(
   machineContext: Pick<MachineAuthContext, "modelRules">,
   canonicalModelId: string,
-  category?: ModelCategory
+  category?: ModelCategory,
 ): { allowed: boolean; reason?: string } {
   const rules = machineContext.modelRules;
   if (!rules || rules.length === 0) {

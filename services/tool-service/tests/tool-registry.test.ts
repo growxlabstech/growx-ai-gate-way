@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ToolRegistryService, InMemoryToolRepository } from "../src/application/tool-registry.js";
+import {
+  ToolRegistryService,
+  InMemoryToolRepository,
+} from "../src/application/tool-registry.js";
 
 describe("ToolRegistryService", () => {
   let service: ToolRegistryService;
@@ -44,7 +47,7 @@ describe("ToolRegistryService", () => {
         name: "Dup2",
         inputSchema: { type: "object" },
         createdBy: "user_1",
-      })
+      }),
     ).rejects.toThrow(/already exists/);
   });
 
@@ -58,7 +61,10 @@ describe("ToolRegistryService", () => {
     });
 
     const v2 = await service.createVersion(entry.tool.id, {
-      inputSchema: { type: "object", properties: { q: { type: "string" }, limit: { type: "number" } } },
+      inputSchema: {
+        type: "object",
+        properties: { q: { type: "string" }, limit: { type: "number" } },
+      },
       createdBy: "user_1",
     });
 

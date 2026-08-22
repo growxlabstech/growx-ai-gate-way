@@ -13,10 +13,7 @@ import type {
   ProviderUsage,
 } from "@growx/contracts";
 import { GrowXProviderError } from "@growx/contracts";
-import type {
-  ProviderAdapter,
-  ProviderHealth,
-} from "@growx/provider-sdk";
+import type { ProviderAdapter, ProviderHealth } from "@growx/provider-sdk";
 
 export interface MockProviderOptions {
   text?: string | undefined;
@@ -30,12 +27,15 @@ export class MockAIProvider implements ProviderAdapter {
 
   constructor(
     private readonly options: MockProviderOptions = {},
-    providerId = "mock"
+    providerId = "mock",
   ) {
     this.providerId = providerId;
   }
 
-  validateConfiguration(_config: { baseUrl: string; apiVersion?: string | null | undefined }): void {
+  validateConfiguration(_config: {
+    baseUrl: string;
+    apiVersion?: string | null | undefined;
+  }): void {
     // No-op for mock
   }
 
@@ -59,14 +59,24 @@ export class MockAIProvider implements ProviderAdapter {
   normalizeError(error: unknown): GrowXProviderError {
     if (error instanceof GrowXProviderError) return error;
     if (error instanceof DOMException && error.name === "AbortError") {
-      return new GrowXProviderError("request_cancelled", "Cancelled", false, 499);
+      return new GrowXProviderError(
+        "request_cancelled",
+        "Cancelled",
+        false,
+        499,
+      );
     }
-    return new GrowXProviderError("provider_server_error", "Mock failure", true, 503);
+    return new GrowXProviderError(
+      "provider_server_error",
+      "Mock failure",
+      true,
+      503,
+    );
   }
 
   async execute(
     request: NormalizedGenerationRequest,
-    context: ProviderExecutionContext
+    context: ProviderExecutionContext,
   ): Promise<NormalizedGenerationResponse> {
     await this.pause(context.cancellationSignal);
 
@@ -75,16 +85,21 @@ export class MockAIProvider implements ProviderAdapter {
         this.options.failure === "rate_limit"
           ? "provider_rate_limit"
           : this.options.failure === "timeout"
-          ? "provider_timeout"
-          : "provider_server_error",
+            ? "provider_timeout"
+            : "provider_server_error",
         "Injected mock failure",
         true,
-        this.options.failure === "rate_limit" ? 429 : 503
+        this.options.failure === "rate_limit" ? 429 : 503,
       );
     }
 
     if (this.options.malformed) {
-      throw new GrowXProviderError("provider_server_error", "Malformed response", true, 502);
+      throw new GrowXProviderError(
+        "provider_server_error",
+        "Malformed response",
+        true,
+        502,
+      );
     }
 
     const startedAt = new Date();
@@ -119,7 +134,7 @@ export class MockAIProvider implements ProviderAdapter {
       credential?: string | undefined;
       signal?: AbortSignal | undefined;
       requestTimeoutMs?: number | undefined;
-    }
+    },
   ): Promise<GrowXModelResponse> {
     await this.pause(context.signal);
 
@@ -128,16 +143,21 @@ export class MockAIProvider implements ProviderAdapter {
         this.options.failure === "rate_limit"
           ? "provider_rate_limit"
           : this.options.failure === "timeout"
-          ? "provider_timeout"
-          : "provider_server_error",
+            ? "provider_timeout"
+            : "provider_server_error",
         "Injected failure",
         true,
-        503
+        503,
       );
     }
 
     if (this.options.malformed) {
-      throw new GrowXProviderError("provider_server_error", "Malformed response", true, 502);
+      throw new GrowXProviderError(
+        "provider_server_error",
+        "Malformed response",
+        true,
+        502,
+      );
     }
 
     const now = new Date().toISOString();
@@ -161,10 +181,7 @@ export class MockAIProvider implements ProviderAdapter {
     };
   }
 
-  async *stream(
-    request: any,
-    context: any
-  ): AsyncIterable<any> {
+  async *stream(request: any, context: any): AsyncIterable<any> {
     // Support both NormalizedGenerationRequest and legacy GrowXModelRequest
     if (request.canonicalModelId) {
       const result = await this.execute(request, context);
@@ -243,7 +260,10 @@ export class MockAIProvider implements ProviderAdapter {
     }
   }
 
-  async embed(request: GrowXEmbeddingRequest, _context?: any): Promise<GrowXEmbeddingResponse> {
+  async embed(
+    request: GrowXEmbeddingRequest,
+    _context?: any,
+  ): Promise<GrowXEmbeddingResponse> {
     return {
       id: `resp_${request.requestId}`,
       model: request.model,
@@ -276,7 +296,7 @@ export class MockAIProvider implements ProviderAdapter {
             clearTimeout(timer);
             reject(new DOMException("Aborted", "AbortError"));
           },
-          { once: true }
+          { once: true },
         );
       }
     });

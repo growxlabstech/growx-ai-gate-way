@@ -23,19 +23,23 @@ export class SchemaComplexityError extends Error {
 
 export function validateSchemaComplexity(
   schema: unknown,
-  limits: SchemaComplexityLimits = DEFAULT_COMPLEXITY_LIMITS
+  limits: SchemaComplexityLimits = DEFAULT_COMPLEXITY_LIMITS,
 ): void {
   const jsonString = JSON.stringify(schema);
   const bytes = Buffer.byteLength(jsonString, "utf8");
   if (bytes > limits.maxSchemaBytes) {
-    throw new SchemaComplexityError(`Schema size of ${bytes} bytes exceeds maximum allowed limit of ${limits.maxSchemaBytes} bytes`);
+    throw new SchemaComplexityError(
+      `Schema size of ${bytes} bytes exceeds maximum allowed limit of ${limits.maxSchemaBytes} bytes`,
+    );
   }
 
   let totalProperties = 0;
 
   function traverse(node: unknown, depth: number) {
     if (depth > limits.maxDepth) {
-      throw new SchemaComplexityError(`Schema nesting depth ${depth} exceeds maximum limit of ${limits.maxDepth}`);
+      throw new SchemaComplexityError(
+        `Schema nesting depth ${depth} exceeds maximum limit of ${limits.maxDepth}`,
+      );
     }
 
     if (!node || typeof node !== "object") return;
@@ -51,7 +55,9 @@ export function validateSchemaComplexity(
 
     if (obj.enum && Array.isArray(obj.enum)) {
       if (obj.enum.length > limits.maxEnumValues) {
-        throw new SchemaComplexityError(`Schema enum value count ${obj.enum.length} exceeds limit of ${limits.maxEnumValues}`);
+        throw new SchemaComplexityError(
+          `Schema enum value count ${obj.enum.length} exceeds limit of ${limits.maxEnumValues}`,
+        );
       }
     }
 
@@ -59,7 +65,9 @@ export function validateSchemaComplexity(
       const propKeys = Object.keys(obj.properties as object);
       totalProperties += propKeys.length;
       if (totalProperties > limits.maxProperties) {
-        throw new SchemaComplexityError(`Total properties count ${totalProperties} exceeds limit of ${limits.maxProperties}`);
+        throw new SchemaComplexityError(
+          `Total properties count ${totalProperties} exceeds limit of ${limits.maxProperties}`,
+        );
       }
 
       for (const key of propKeys) {

@@ -29,7 +29,13 @@ describe("Analytics Projection Worker", () => {
       completedAt: new Date(now.getTime() + 50),
       durationMs: 50,
       logicalUsage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
-      providerConsumption: { inputTokens: 10, outputTokens: 5, totalTokens: 15, attemptCount: 1, failedAttemptCount: 0 },
+      providerConsumption: {
+        inputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        attemptCount: 1,
+        failedAttemptCount: 0,
+      },
       attemptCount: 1,
       retryCount: 0,
       fallbackCount: 0,
@@ -42,7 +48,9 @@ describe("Analytics Projection Worker", () => {
     const res1 = await worker.runOnce();
     expect(res1.processedCount).toBe(1);
 
-    const checkpoint = await repository.getCheckpoint("analytics_main_projector");
+    const checkpoint = await repository.getCheckpoint(
+      "analytics_main_projector",
+    );
     expect(checkpoint).toBeDefined();
     expect(checkpoint?.processedEventsCount).toBe(1n);
 

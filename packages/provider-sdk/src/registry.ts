@@ -32,7 +32,7 @@ export class AdapterRegistry {
         "provider_invalid_request",
         `No provider adapter registered for '${providerIdOrAdapterType}'`,
         false,
-        400
+        400,
       );
     }
     return adapter;

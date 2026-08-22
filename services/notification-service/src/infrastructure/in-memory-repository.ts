@@ -25,12 +25,17 @@ const PRIORITY_WEIGHTS: Record<NotificationPriority, number> = {
 export class InMemoryNotificationRepository implements INotificationRepository {
   public readonly intents: Map<string, NotificationIntent> = new Map();
   public readonly deliveries: Map<string, NotificationDelivery> = new Map();
-  public readonly attempts: Map<string, NotificationDeliveryAttempt[]> = new Map();
-  public readonly inAppNotifications: Map<string, InAppNotification> = new Map();
-  public readonly suppressions: Map<string, NotificationSuppression> = new Map();
+  public readonly attempts: Map<string, NotificationDeliveryAttempt[]> =
+    new Map();
+  public readonly inAppNotifications: Map<string, InAppNotification> =
+    new Map();
+  public readonly suppressions: Map<string, NotificationSuppression> =
+    new Map();
   public readonly preferences: Map<string, NotificationPreference> = new Map();
-  public readonly orgSettings: Map<string, OrganizationNotificationSettings> = new Map();
-  public readonly escalations: Map<string, NotificationEscalationState> = new Map();
+  public readonly orgSettings: Map<string, OrganizationNotificationSettings> =
+    new Map();
+  public readonly escalations: Map<string, NotificationEscalationState> =
+    new Map();
 
   // ─── Intents ────────────────────────────────────────────────
   async createIntent(intent: NotificationIntent): Promise<NotificationIntent> {
@@ -44,7 +49,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   async findIntentBySource(
     sourceEventId: string,
-    type: string
+    type: string,
   ): Promise<NotificationIntent | undefined> {
     for (const intent of this.intents.values()) {
       if (intent.sourceEventId === sourceEventId && intent.type === type) {
@@ -61,7 +66,9 @@ export class InMemoryNotificationRepository implements INotificationRepository {
   }): Promise<NotificationIntent[]> {
     let results = Array.from(this.intents.values());
     if (params.organizationId) {
-      results = results.filter((i) => i.organizationId === params.organizationId);
+      results = results.filter(
+        (i) => i.organizationId === params.organizationId,
+      );
     }
     if (params.type) {
       results = results.filter((i) => i.type === params.type);
@@ -75,7 +82,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   // ─── Deliveries & Queue ─────────────────────────────────────
   async createDeliveries(
-    deliveries: readonly NotificationDelivery[]
+    deliveries: readonly NotificationDelivery[],
   ): Promise<NotificationDelivery[]> {
     for (const d of deliveries) {
       this.deliveries.set(d.id, d);
@@ -87,13 +94,17 @@ export class InMemoryNotificationRepository implements INotificationRepository {
     return this.deliveries.get(id);
   }
 
-  async listDeliveries(params: ListDeliveriesParams): Promise<NotificationDelivery[]> {
+  async listDeliveries(
+    params: ListDeliveriesParams,
+  ): Promise<NotificationDelivery[]> {
     let results = Array.from(this.deliveries.values());
     if (params.intentId) {
       results = results.filter((d) => d.intentId === params.intentId);
     }
     if (params.recipientSnapshot) {
-      results = results.filter((d) => d.recipientSnapshot === params.recipientSnapshot);
+      results = results.filter(
+        (d) => d.recipientSnapshot === params.recipientSnapshot,
+      );
     }
     if (params.status) {
       results = results.filter((d) => d.status === params.status);
@@ -114,7 +125,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
   async claimPendingDeliveries(
     batchSize: number,
     leaseDurationMs: number,
-    workerId: string
+    workerId: string,
   ): Promise<NotificationDelivery[]> {
     const now = new Date();
     const eligible: NotificationDelivery[] = [];
@@ -160,7 +171,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   async updateDelivery(
     id: string,
-    updates: Partial<NotificationDelivery>
+    updates: Partial<NotificationDelivery>,
   ): Promise<NotificationDelivery> {
     const existing = this.deliveries.get(id);
     if (!existing) throw new Error(`Delivery not found: ${id}`);
@@ -171,7 +182,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   // ─── Delivery Attempts ──────────────────────────────────────
   async createAttempt(
-    attempt: NotificationDeliveryAttempt
+    attempt: NotificationDeliveryAttempt,
   ): Promise<NotificationDeliveryAttempt> {
     const list = this.attempts.get(attempt.deliveryId) ?? [];
     list.push(attempt);
@@ -179,28 +190,32 @@ export class InMemoryNotificationRepository implements INotificationRepository {
     return attempt;
   }
 
-  async listAttempts(deliveryId: string): Promise<NotificationDeliveryAttempt[]> {
+  async listAttempts(
+    deliveryId: string,
+  ): Promise<NotificationDeliveryAttempt[]> {
     return this.attempts.get(deliveryId) ?? [];
   }
 
   // ─── In-App Notifications ───────────────────────────────────
   async createInAppNotification(
-    notification: InAppNotification
+    notification: InAppNotification,
   ): Promise<InAppNotification> {
     this.inAppNotifications.set(notification.id, notification);
     return notification;
   }
 
-  async getInAppNotification(id: string): Promise<InAppNotification | undefined> {
+  async getInAppNotification(
+    id: string,
+  ): Promise<InAppNotification | undefined> {
     return this.inAppNotifications.get(id);
   }
 
   async listInAppNotifications(
     userId: string,
-    params?: ListInAppParams
+    params?: ListInAppParams,
   ): Promise<InAppNotification[]> {
     let results = Array.from(this.inAppNotifications.values()).filter(
-      (n) => n.userId === userId
+      (n) => n.userId === userId,
     );
 
     if (params?.unreadOnly) {
@@ -218,7 +233,7 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   async markInAppRead(
     userId: string,
-    id: string
+    id: string,
   ): Promise<InAppNotification | undefined> {
     const n = this.inAppNotifications.get(id);
     if (!n || n.userId !== userId) return undefined;
@@ -240,31 +255,36 @@ export class InMemoryNotificationRepository implements INotificationRepository {
   }
 
   // ─── Suppressions ───────────────────────────────────────────
-  async getSuppression(destination: string): Promise<NotificationSuppression | undefined> {
+  async getSuppression(
+    destination: string,
+  ): Promise<NotificationSuppression | undefined> {
     return this.suppressions.get(destination.toLowerCase().trim());
   }
 
   async createSuppression(
-    suppression: NotificationSuppression
+    suppression: NotificationSuppression,
   ): Promise<NotificationSuppression> {
-    this.suppressions.set(suppression.destination.toLowerCase().trim(), suppression);
+    this.suppressions.set(
+      suppression.destination.toLowerCase().trim(),
+      suppression,
+    );
     return suppression;
   }
 
   // ─── Preferences & Settings ─────────────────────────────────
   async getPreferences(
     userId: string,
-    organizationId?: string | undefined
+    organizationId?: string | undefined,
   ): Promise<NotificationPreference[]> {
     return Array.from(this.preferences.values()).filter(
       (p) =>
         p.userId === userId &&
-        (organizationId ? p.organizationId === organizationId : true)
+        (organizationId ? p.organizationId === organizationId : true),
     );
   }
 
   async updatePreference(
-    preference: NotificationPreference
+    preference: NotificationPreference,
   ): Promise<NotificationPreference> {
     const key = `${preference.userId}:${preference.organizationId ?? "none"}:${
       preference.category
@@ -274,13 +294,13 @@ export class InMemoryNotificationRepository implements INotificationRepository {
   }
 
   async getOrganizationSettings(
-    organizationId: string
+    organizationId: string,
   ): Promise<OrganizationNotificationSettings | undefined> {
     return this.orgSettings.get(organizationId);
   }
 
   async updateOrganizationSettings(
-    settings: OrganizationNotificationSettings
+    settings: OrganizationNotificationSettings,
   ): Promise<OrganizationNotificationSettings> {
     this.orgSettings.set(settings.organizationId, settings);
     return settings;
@@ -288,21 +308,23 @@ export class InMemoryNotificationRepository implements INotificationRepository {
 
   // ─── Escalations ────────────────────────────────────────────
   async createEscalation(
-    escalation: NotificationEscalationState
+    escalation: NotificationEscalationState,
   ): Promise<NotificationEscalationState> {
     this.escalations.set(escalation.id, escalation);
     return escalation;
   }
 
-  async getPendingEscalations(now: Date): Promise<NotificationEscalationState[]> {
+  async getPendingEscalations(
+    now: Date,
+  ): Promise<NotificationEscalationState[]> {
     return Array.from(this.escalations.values()).filter(
-      (e) => e.status === "pending" && e.nextEscalationAt <= now
+      (e) => e.status === "pending" && e.nextEscalationAt <= now,
     );
   }
 
   async updateEscalation(
     id: string,
-    updates: Partial<NotificationEscalationState>
+    updates: Partial<NotificationEscalationState>,
   ): Promise<NotificationEscalationState> {
     const existing = this.escalations.get(id);
     if (!existing) throw new Error(`Escalation not found: ${id}`);

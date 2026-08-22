@@ -42,7 +42,7 @@ export class GrowXError extends Error {
     public readonly status: number,
     public readonly code: string,
     public readonly requestId: string | null,
-    public readonly retryable: boolean
+    public readonly retryable: boolean,
   ) {
     super(message);
     this.name = "GrowXError";
@@ -68,8 +68,17 @@ function errorClass(status: number, code: string): typeof GrowXError {
   return GrowXError;
 }
 
-function safeRetry(method: string, status: number, attempt: number, maximum: number): boolean {
-  return method === "GET" && attempt < maximum && (status === 408 || status === 409 || status === 429 || status >= 500);
+function safeRetry(
+  method: string,
+  status: number,
+  attempt: number,
+  maximum: number,
+): boolean {
+  return (
+    method === "GET" &&
+    attempt < maximum &&
+    (status === 408 || status === 409 || status === 429 || status >= 500)
+  );
 }
 
 export class GrowXAI {
@@ -80,7 +89,9 @@ export class GrowXAI {
 
   readonly responses: {
     create: (params: ResponseCreateParams) => Promise<GrowXResponse>;
-    stream: (params: ResponseCreateParams) => Promise<AsyncIterable<Record<string, unknown>>>;
+    stream: (
+      params: ResponseCreateParams,
+    ) => Promise<AsyncIterable<Record<string, unknown>>>;
   };
 
   readonly chat: {
@@ -90,7 +101,9 @@ export class GrowXAI {
   };
 
   readonly models: {
-    list: () => Promise<{ data: Array<{ id: string; capabilities?: string[]; owned_by?: string }> }>;
+    list: () => Promise<{
+      data: Array<{ id: string; capabilities?: string[]; owned_by?: string }>;
+    }>;
   };
 
   readonly embeddings: {
@@ -103,7 +116,10 @@ export class GrowXAI {
 
   constructor(private readonly options: GrowXAIOptions) {
     if (!options.apiKey) throw new Error("apiKey is required");
-    this.baseURL = (options.baseURL ?? "https://api.growxlabs.tech").replace(/\/+$/, "");
+    this.baseURL = (options.baseURL ?? "https://api.growxlabs.tech").replace(
+      /\/+$/,
+      "",
+    );
     this.fetcher = options.fetch ?? fetch;
     this.timeoutMs = options.timeoutMs ?? 60_000;
     this.maxRetries = options.maxRetries ?? 2;
@@ -138,7 +154,11 @@ export class GrowXAI {
     };
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       const init: RequestInit = {
         method,
@@ -153,7 +173,8 @@ export class GrowXAI {
 
       const response = await this.fetcher(`${this.baseURL}${path}`, init);
       if (response.ok) return (await response.json()) as T;
-      if (safeRetry(method, response.status, attempt, this.maxRetries)) continue;
+      if (safeRetry(method, response.status, attempt, this.maxRetries))
+        continue;
 
       const payload = ((await response.json().catch(() => ({}))) ?? {}) as {
         error?: { code?: string; message?: string; requestId?: string };
@@ -165,12 +186,14 @@ export class GrowXAI {
         response.status,
         code,
         payload.error?.requestId ?? response.headers.get("x-request-id"),
-        response.status === 429 || response.status >= 500
+        response.status === 429 || response.status >= 500,
       );
     }
   }
 
-  private async stream(params: ResponseCreateParams): Promise<AsyncIterable<Record<string, unknown>>> {
+  private async stream(
+    params: ResponseCreateParams,
+  ): Promise<AsyncIterable<Record<string, unknown>>> {
     const response = await this.fetcher(`${this.baseURL}/v1/responses`, {
       method: "POST",
       headers: {
@@ -184,7 +207,13 @@ export class GrowXAI {
     });
 
     if (!response.ok || !response.body) {
-      throw new GrowXError("Streaming request failed", response.status, "stream_error", response.headers.get("x-request-id"), false);
+      throw new GrowXError(
+        "Streaming request failed",
+        response.status,
+        "stream_error",
+        response.headers.get("x-request-id"),
+        false,
+      );
     }
 
     const decoder = new TextDecoder();
@@ -201,8 +230,12 @@ export class GrowXAI {
             const frames = pending.split("\n\n");
             pending = frames.pop() ?? "";
             for (const frame of frames) {
-              const data = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6);
-              if (data && data !== "[DONE]") yield JSON.parse(data) as Record<string, unknown>;
+              const data = frame
+                .split("\n")
+                .find((line) => line.startsWith("data: "))
+                ?.slice(6);
+              if (data && data !== "[DONE]")
+                yield JSON.parse(data) as Record<string, unknown>;
             }
           }
         } finally {
@@ -212,7 +245,9 @@ export class GrowXAI {
     };
   }
 
-  private async streamChat(params: ChatCompletionCreateParams): Promise<AsyncIterable<Record<string, unknown>>> {
+  private async streamChat(
+    params: ChatCompletionCreateParams,
+  ): Promise<AsyncIterable<Record<string, unknown>>> {
     const words = ["Hello", " from", " GrowX", " AI!"];
     const chunkId = "chatcmpl_" + Math.random().toString(36).substring(2, 9);
     return {
@@ -220,7 +255,13 @@ export class GrowXAI {
         for (let i = 0; i < words.length; i++) {
           yield {
             id: chunkId,
-            choices: [{ delta: { content: words[i] }, index: 0, finish_reason: i === words.length - 1 ? "stop" : null }],
+            choices: [
+              {
+                delta: { content: words[i] },
+                index: 0,
+                finish_reason: i === words.length - 1 ? "stop" : null,
+              },
+            ],
           };
         }
       },

@@ -7,12 +7,17 @@ export class LatencyScorer {
    */
   public static score(
     candidate: RouteCandidate,
-    isStreaming: boolean = false
-  ): { score: number; details: { p95Ms: number; p50Ms: number; isCold: boolean } } {
+    isStreaming: boolean = false,
+  ): {
+    score: number;
+    details: { p95Ms: number; p50Ms: number; isCold: boolean };
+  } {
     const latSignal = candidate.latencySignal;
     const p95 = latSignal?.p95LatencyMs ?? candidate.p95LatencyMs ?? 1500;
     const p50 = latSignal?.p50LatencyMs ?? Math.round(p95 * 0.6);
-    const isCold = candidate.p95LatencyMs === undefined && (!latSignal || latSignal.source === "default");
+    const isCold =
+      candidate.p95LatencyMs === undefined &&
+      (!latSignal || latSignal.source === "default");
 
     // For cold routes with no prior telemetry, assign a conservative neutral baseline
     if (isCold) {

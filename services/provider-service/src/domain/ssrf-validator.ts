@@ -13,7 +13,7 @@ const BLOCKED_IP_PATTERNS = [
 
 export function validateProviderBaseUrl(
   urlStr: string,
-  isProduction = process.env.NODE_ENV === "production"
+  isProduction = process.env.NODE_ENV === "production",
 ): URL {
   let parsed: URL;
   try {
@@ -23,7 +23,7 @@ export function validateProviderBaseUrl(
       "provider_invalid_request",
       `Invalid provider base URL: '${urlStr}'`,
       false,
-      400
+      400,
     );
   }
 
@@ -33,7 +33,7 @@ export function validateProviderBaseUrl(
       "provider_invalid_request",
       `Provider base URL must use HTTPS in production. Received: '${parsed.protocol}'`,
       false,
-      400
+      400,
     );
   }
 
@@ -42,7 +42,7 @@ export function validateProviderBaseUrl(
       "provider_invalid_request",
       `Unsupported protocol '${parsed.protocol}' for provider base URL`,
       false,
-      400
+      400,
     );
   }
 
@@ -55,7 +55,7 @@ export function validateProviderBaseUrl(
         "provider_invalid_request",
         `Localhost provider base URLs are forbidden in production: '${hostname}'`,
         false,
-        400
+        400,
       );
     }
 
@@ -65,7 +65,7 @@ export function validateProviderBaseUrl(
           "provider_invalid_request",
           `Provider base URL resolves to restricted private address space: '${hostname}'`,
           false,
-          400
+          400,
         );
       }
     }

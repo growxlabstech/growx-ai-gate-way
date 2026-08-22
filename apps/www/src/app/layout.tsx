@@ -4,7 +4,10 @@ import "@growx/ui/tokens.css";
 import "./styles.css";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--gx-font-manrope" });
-const jetBrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--gx-font-jetbrains-mono" });
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--gx-font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
   title: "GrowX AI — One Gateway for Production AI",
@@ -18,7 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${manrope.variable} ${jetBrainsMono.variable}`}>
       <body>{children}</body>

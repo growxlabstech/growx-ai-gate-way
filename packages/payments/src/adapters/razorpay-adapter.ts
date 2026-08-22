@@ -17,7 +17,11 @@ import type {
   RetrievePaymentResult,
   RetrieveSubscriptionResult,
 } from "../adapter.js";
-import type { PaymentStatus, NormalizedPaymentEvent, PaymentFailureCategory } from "../types.js";
+import type {
+  PaymentStatus,
+  NormalizedPaymentEvent,
+  PaymentFailureCategory,
+} from "../types.js";
 import { toMinorUnits, fromMinorUnits } from "../types.js";
 
 export interface RazorpayAdapterOptions {
@@ -35,7 +39,8 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
   constructor(options?: RazorpayAdapterOptions) {
     this.keyId = options?.keyId ?? process.env.RAZORPAY_KEY_ID;
     this.keySecret = options?.keySecret ?? process.env.RAZORPAY_KEY_SECRET;
-    this.webhookSecret = options?.webhookSecret ?? process.env.RAZORPAY_WEBHOOK_SECRET;
+    this.webhookSecret =
+      options?.webhookSecret ?? process.env.RAZORPAY_WEBHOOK_SECRET;
   }
 
   hasCredentials(): boolean {
@@ -46,7 +51,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     return `Basic ${Buffer.from(`${this.keyId}:${this.keySecret}`).toString("base64")}`;
   }
 
-  async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult> {
+  async createCustomer(
+    input: CreateCustomerInput,
+  ): Promise<CreateCustomerResult> {
     if (!this.hasCredentials()) {
       return {
         providerCustomerId: `cust_sim_${input.organizationId.slice(0, 12)}`,
@@ -68,14 +75,18 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Razorpay createCustomer failed (${res.status}): ${JSON.stringify(err)}`);
+      throw new Error(
+        `Razorpay createCustomer failed (${res.status}): ${JSON.stringify(err)}`,
+      );
     }
 
     const data = await res.json();
     return { providerCustomerId: data.id };
   }
 
-  async createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionResult> {
+  async createCheckoutSession(
+    input: CreateCheckoutSessionInput,
+  ): Promise<CreateCheckoutSessionResult> {
     if (!this.hasCredentials()) {
       const orderId = `order_sim_${input.idempotencyKey}`;
       return {
@@ -104,7 +115,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Razorpay createOrder failed (${res.status}): ${JSON.stringify(err)}`);
+      throw new Error(
+        `Razorpay createOrder failed (${res.status}): ${JSON.stringify(err)}`,
+      );
     }
 
     const data = await res.json();
@@ -114,7 +127,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createPaymentIntent(input: CreatePaymentIntentInput): Promise<CreatePaymentIntentResult> {
+  async createPaymentIntent(
+    input: CreatePaymentIntentInput,
+  ): Promise<CreatePaymentIntentResult> {
     if (!this.hasCredentials()) {
       const payId = `pay_sim_${input.idempotencyKey}`;
       return {
@@ -145,7 +160,8 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
         providerPaymentId: `pay_failed_${Date.now()}`,
         status: "failed",
         failureCategory: "provider_error",
-        failureMessage: data.error?.description ?? "Razorpay order creation failed",
+        failureMessage:
+          data.error?.description ?? "Razorpay order creation failed",
       };
     }
 
@@ -155,7 +171,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
+  async createSubscription(
+    input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult> {
     if (!this.hasCredentials()) {
       return {
         providerSubscriptionId: `sub_rzp_sim_${input.idempotencyKey}`,
@@ -184,7 +202,10 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async cancelSubscription(providerSubscriptionId: string, atPeriodEnd?: boolean): Promise<CancelSubscriptionResult> {
+  async cancelSubscription(
+    providerSubscriptionId: string,
+    atPeriodEnd?: boolean,
+  ): Promise<CancelSubscriptionResult> {
     if (!this.hasCredentials()) {
       return {
         providerSubscriptionId,
@@ -192,14 +213,17 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       };
     }
 
-    const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${providerSubscriptionId}/cancel`, {
-      method: "POST",
-      headers: {
-        Authorization: this.getAuthHeader(),
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `https://api.razorpay.com/v1/subscriptions/${providerSubscriptionId}/cancel`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: this.getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cancel_at_cycle_end: atPeriodEnd ? 1 : 0 }),
       },
-      body: JSON.stringify({ cancel_at_cycle_end: atPeriodEnd ? 1 : 0 }),
-    });
+    );
 
     const data = await res.json();
     return {
@@ -217,17 +241,20 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     }
 
     const minorAmount = toMinorUnits(input.amount, input.currency);
-    const res = await fetch(`https://api.razorpay.com/v1/payments/${input.providerPaymentId}/refund`, {
-      method: "POST",
-      headers: {
-        Authorization: this.getAuthHeader(),
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `https://api.razorpay.com/v1/payments/${input.providerPaymentId}/refund`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: this.getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: Number(minorAmount),
+          notes: { reason: input.reason ?? "customer_requested" },
+        }),
       },
-      body: JSON.stringify({
-        amount: Number(minorAmount),
-        notes: { reason: input.reason ?? "customer_requested" },
-      }),
-    });
+    );
 
     const data = await res.json();
     if (!res.ok) {
@@ -246,7 +273,7 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
   async verifyWebhook(
     payload: Uint8Array,
     signature: string,
-    _headers?: Record<string, string>
+    _headers?: Record<string, string>,
   ): Promise<VerifyWebhookResult> {
     const secret = this.webhookSecret ?? "rzp_test_webhook_secret";
 
@@ -258,7 +285,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     try {
       const computedBuf = Buffer.from(expectedHex, "hex");
       const suppliedBuf = Buffer.from(signature, "hex");
-      verified = computedBuf.length === suppliedBuf.length && timingSafeEqual(computedBuf, suppliedBuf);
+      verified =
+        computedBuf.length === suppliedBuf.length &&
+        timingSafeEqual(computedBuf, suppliedBuf);
     } catch {
       verified = false;
     }
@@ -296,7 +325,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     }
   }
 
-  async retrievePayment(providerPaymentId: string): Promise<RetrievePaymentResult> {
+  async retrievePayment(
+    providerPaymentId: string,
+  ): Promise<RetrievePaymentResult> {
     if (!this.hasCredentials()) {
       return {
         providerPaymentId,
@@ -306,9 +337,12 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       };
     }
 
-    const res = await fetch(`https://api.razorpay.com/v1/payments/${providerPaymentId}`, {
-      headers: { Authorization: this.getAuthHeader() },
-    });
+    const res = await fetch(
+      `https://api.razorpay.com/v1/payments/${providerPaymentId}`,
+      {
+        headers: { Authorization: this.getAuthHeader() },
+      },
+    );
 
     const data = await res.json();
     if (!res.ok) {
@@ -324,7 +358,12 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
 
     const currency = (data.currency ?? "INR").toUpperCase();
     const amount = fromMinorUnits(data.amount ?? 0, currency);
-    const status: PaymentStatus = data.status === "captured" ? "succeeded" : data.status === "failed" ? "failed" : "pending";
+    const status: PaymentStatus =
+      data.status === "captured"
+        ? "succeeded"
+        : data.status === "failed"
+          ? "failed"
+          : "pending";
 
     return {
       providerPaymentId: data.id,
@@ -334,7 +373,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     };
   }
 
-  async retrieveSubscription(providerSubscriptionId: string): Promise<RetrieveSubscriptionResult> {
+  async retrieveSubscription(
+    providerSubscriptionId: string,
+  ): Promise<RetrieveSubscriptionResult> {
     if (!this.hasCredentials()) {
       return {
         providerSubscriptionId,
@@ -342,9 +383,12 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       };
     }
 
-    const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${providerSubscriptionId}`, {
-      headers: { Authorization: this.getAuthHeader() },
-    });
+    const res = await fetch(
+      `https://api.razorpay.com/v1/subscriptions/${providerSubscriptionId}`,
+      {
+        headers: { Authorization: this.getAuthHeader() },
+      },
+    );
 
     const data = await res.json();
     return {
@@ -364,10 +408,12 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     let amount: Decimal | undefined;
     let currency: string | undefined;
 
-    const currencyStr = (paymentEntity.currency ?? orderEntity.currency ?? refundEntity.currency);
+    const currencyStr =
+      paymentEntity.currency ?? orderEntity.currency ?? refundEntity.currency;
     if (currencyStr) {
       currency = String(currencyStr).toUpperCase();
-      const amountMinor = paymentEntity.amount ?? orderEntity.amount ?? refundEntity.amount;
+      const amountMinor =
+        paymentEntity.amount ?? orderEntity.amount ?? refundEntity.amount;
       if (amountMinor != null) {
         amount = fromMinorUnits(amountMinor, currency);
       }
@@ -405,7 +451,9 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       status,
       failureCategory,
       failureMessage: paymentEntity.error_description,
-      occurredAt: json.created_at ? new Date(json.created_at * 1000) : new Date(),
+      occurredAt: json.created_at
+        ? new Date(json.created_at * 1000)
+        : new Date(),
       metadata: paymentEntity.notes ?? orderEntity.notes ?? {},
     };
   }

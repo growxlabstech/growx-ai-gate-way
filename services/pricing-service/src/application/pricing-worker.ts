@@ -53,7 +53,9 @@ export class PricingWorker {
   /**
    * Processes a single usage.recorded.v1 event asynchronously.
    */
-  public async handleUsageRecorded(event: UsageRecordedEventPayload): Promise<void> {
+  public async handleUsageRecorded(
+    event: UsageRecordedEventPayload,
+  ): Promise<void> {
     const params: PriceRequestParams = {
       requestId: event.requestId,
       organizationId: event.organizationId,

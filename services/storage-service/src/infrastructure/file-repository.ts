@@ -24,9 +24,7 @@ export interface FileRepository {
   getFileByStorageKey(storageKey: string): Promise<FileObject | null>;
   updateFile(file: FileObject): Promise<FileObject>;
   deleteFile(organizationId: string, fileId: string): Promise<boolean>;
-  listFiles(
-    filter: FileFilter,
-  ): Promise<{
+  listFiles(filter: FileFilter): Promise<{
     data: FileObject[];
     nextCursor: string | null;
     hasMore: boolean;
@@ -122,9 +120,7 @@ export class InMemoryFileRepository implements FileRepository {
     return true;
   }
 
-  async listFiles(
-    filter: FileFilter,
-  ): Promise<{
+  async listFiles(filter: FileFilter): Promise<{
     data: FileObject[];
     nextCursor: string | null;
     hasMore: boolean;

@@ -104,9 +104,7 @@ export class CreditService {
   /**
    * Grants credits to an organization's wallet.
    */
-  async grantCredits(
-    params: GrantCreditsParams,
-  ): Promise<{
+  async grantCredits(params: GrantCreditsParams): Promise<{
     lot: CreditLot;
     ledgerEntry: WalletLedgerEntry;
     balance: WalletBalance;

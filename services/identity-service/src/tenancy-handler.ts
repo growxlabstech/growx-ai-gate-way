@@ -175,72 +175,62 @@ export async function createFirstWorkspace(
   const environmentId = generateId("env");
   try {
     await db.transaction(async (tx) => {
-      await tx
-        .insert(schema.workspaces)
-        .values({
-          id: workspaceId,
-          organizationId,
-          name: input.name,
-          slug: input.slug,
-          description: input.description,
-          region: input.region,
-          status: "active",
-          createdBy: userId,
-        });
-      await tx
-        .insert(schema.workspaceMembers)
-        .values({
-          id: generateId("wmem"),
-          organizationId,
-          workspaceId,
-          userId,
-          status: "active",
-        });
-      await tx
-        .insert(schema.environments)
-        .values({
-          id: environmentId,
-          organizationId,
-          workspaceId,
-          name: "Development",
-          slug: "development",
-          type: "development",
-          status: "active",
-        });
+      await tx.insert(schema.workspaces).values({
+        id: workspaceId,
+        organizationId,
+        name: input.name,
+        slug: input.slug,
+        description: input.description,
+        region: input.region,
+        status: "active",
+        createdBy: userId,
+      });
+      await tx.insert(schema.workspaceMembers).values({
+        id: generateId("wmem"),
+        organizationId,
+        workspaceId,
+        userId,
+        status: "active",
+      });
+      await tx.insert(schema.environments).values({
+        id: environmentId,
+        organizationId,
+        workspaceId,
+        name: "Development",
+        slug: "development",
+        type: "development",
+        status: "active",
+      });
       await tx
         .update(schema.workspaces)
         .set({ defaultEnvironmentId: environmentId })
         .where(eq(schema.workspaces.id, workspaceId));
-      await tx
-        .insert(schema.auditEvents)
-        .values({
-          id: generateId("aud"),
+      await tx.insert(schema.auditEvents).values({
+        id: generateId("aud"),
+        organizationId,
+        workspaceId,
+        actorType: "user",
+        actorId: userId,
+        action: "workspace.created",
+        resourceType: "workspace",
+        resourceId: workspaceId,
+        requestId,
+        traceId: generateId("trace"),
+        metadata: {},
+      });
+      await tx.insert(schema.outbox).values({
+        id: generateId("evt"),
+        topic: "workspace.created",
+        organizationId,
+        workspaceId,
+        payload: {
+          type: "workspace.created",
           organizationId,
           workspaceId,
-          actorType: "user",
-          actorId: userId,
-          action: "workspace.created",
-          resourceType: "workspace",
-          resourceId: workspaceId,
-          requestId,
-          traceId: generateId("trace"),
-          metadata: {},
-        });
-      await tx
-        .insert(schema.outbox)
-        .values({
-          id: generateId("evt"),
-          topic: "workspace.created",
-          organizationId,
-          workspaceId,
-          payload: {
-            type: "workspace.created",
-            organizationId,
-            workspaceId,
-            actor: { type: "user", id: userId },
-            metadata: { requestId },
-          },
-        });
+          actor: { type: "user", id: userId },
+          metadata: { requestId },
+        },
+      });
     });
     const organization = await db
       .select({ organizationSlug: schema.organizations.slug })
@@ -345,16 +335,14 @@ export async function acceptOrganizationInvitation(
         .set({ status: "active", joinedAt: new Date() })
         .where(eq(schema.organizationMembers.id, memberId));
     else
-      await tx
-        .insert(schema.organizationMembers)
-        .values({
-          id: memberId,
-          organizationId: invitation.organizationId,
-          userId: user.id,
-          status: "active",
-          joinedAt: new Date(),
-          invitedBy: invitation.invitedBy,
-        });
+      await tx.insert(schema.organizationMembers).values({
+        id: memberId,
+        organizationId: invitation.organizationId,
+        userId: user.id,
+        status: "active",
+        joinedAt: new Date(),
+        invitedBy: invitation.invitedBy,
+      });
     await tx
       .insert(schema.memberRoles)
       .values({
@@ -396,37 +384,33 @@ export async function acceptOrganizationInvitation(
         })
         .onConflictDoNothing();
 
-    await tx
-      .insert(schema.auditEvents)
-      .values({
-        id: generateId("aud"),
+    await tx.insert(schema.auditEvents).values({
+      id: generateId("aud"),
+      organizationId: invitation.organizationId,
+      workspaceId: workspace?.workspaceId,
+      actorType: "user",
+      actorId: user.id,
+      action: "organization.invitation.accepted",
+      resourceType: "organization_invitation",
+      resourceId: invitation.id,
+      requestId,
+      traceId: generateId("trace"),
+      metadata: {},
+    });
+    await tx.insert(schema.outbox).values({
+      id: generateId("evt"),
+      topic: "organization.member.joined",
+      organizationId: invitation.organizationId,
+      workspaceId: workspace?.workspaceId,
+      payload: {
+        type: "organization.member.joined",
         organizationId: invitation.organizationId,
-        workspaceId: workspace?.workspaceId,
-        actorType: "user",
-        actorId: user.id,
-        action: "organization.invitation.accepted",
-        resourceType: "organization_invitation",
-        resourceId: invitation.id,
-        requestId,
-        traceId: generateId("trace"),
-        metadata: {},
-      });
-    await tx
-      .insert(schema.outbox)
-      .values({
-        id: generateId("evt"),
-        topic: "organization.member.joined",
-        organizationId: invitation.organizationId,
-        workspaceId: workspace?.workspaceId,
-        payload: {
-          type: "organization.member.joined",
-          organizationId: invitation.organizationId,
-          workspaceId: workspace?.workspaceId ?? null,
-          actor: { type: "user", id: user.id },
-          data: { invitationId: invitation.id },
-          metadata: { requestId },
-        },
-      });
+        workspaceId: workspace?.workspaceId ?? null,
+        actor: { type: "user", id: user.id },
+        data: { invitationId: invitation.id },
+        metadata: { requestId },
+      },
+    });
     return {
       organizationId: invitation.organizationId,
       organizationSlug: workspace?.organizationSlug ?? "",

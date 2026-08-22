@@ -39,66 +39,56 @@ export class DatabaseOrganizationTransactionRunner implements TransactionRunner 
         },
         createOwnerMembership: async (organizationId, userId) => {
           const memberId = generateId("omem");
-          await tx
-            .insert(schema.organizationMembers)
-            .values({
-              id: memberId,
-              organizationId,
-              userId,
-              status: "active",
-              joinedAt: new Date(),
-            });
+          await tx.insert(schema.organizationMembers).values({
+            id: memberId,
+            organizationId,
+            userId,
+            status: "active",
+            joinedAt: new Date(),
+          });
           return memberId;
         },
         assignOwnerRole: async (organizationId, memberId, userId) => {
           const roleId = generateId("role");
-          await tx
-            .insert(schema.roles)
-            .values({
-              id: roleId,
-              organizationId,
-              key: "organization_owner",
-              name: "Organization Owner",
-              builtIn: true,
-            });
+          await tx.insert(schema.roles).values({
+            id: roleId,
+            organizationId,
+            key: "organization_owner",
+            name: "Organization Owner",
+            builtIn: true,
+          });
           await tx
             .insert(schema.memberRoles)
             .values({ organizationId, memberId, roleId, assignedBy: userId });
         },
         createDefaultWorkspace: async (organizationId, userId, name, slug) => {
-          await tx
-            .insert(schema.workspaces)
-            .values({
-              id: this.ids.workspaceId,
-              organizationId,
-              name,
-              slug,
-              status: "active",
-              createdBy: userId,
-            });
-          await tx
-            .insert(schema.workspaceMembers)
-            .values({
-              id: generateId("wmem"),
-              organizationId,
-              workspaceId: this.ids.workspaceId,
-              userId,
-              status: "active",
-            });
+          await tx.insert(schema.workspaces).values({
+            id: this.ids.workspaceId,
+            organizationId,
+            name,
+            slug,
+            status: "active",
+            createdBy: userId,
+          });
+          await tx.insert(schema.workspaceMembers).values({
+            id: generateId("wmem"),
+            organizationId,
+            workspaceId: this.ids.workspaceId,
+            userId,
+            status: "active",
+          });
           return this.ids.workspaceId;
         },
         createDevelopmentEnvironment: async (organizationId, workspaceId) => {
-          await tx
-            .insert(schema.environments)
-            .values({
-              id: this.ids.environmentId,
-              organizationId,
-              workspaceId,
-              name: "Development",
-              slug: "development",
-              type: "development",
-              status: "active",
-            });
+          await tx.insert(schema.environments).values({
+            id: this.ids.environmentId,
+            organizationId,
+            workspaceId,
+            name: "Development",
+            slug: "development",
+            type: "development",
+            status: "active",
+          });
           return this.ids.environmentId;
         },
         setDefaultEnvironment: async (
@@ -117,31 +107,27 @@ export class DatabaseOrganizationTransactionRunner implements TransactionRunner 
           requestId,
           traceId,
         }) => {
-          await tx
-            .insert(schema.auditEvents)
-            .values({
-              id: generateId("aud"),
-              organizationId,
-              actorType: "user",
-              actorId,
-              action: "organization.created",
-              resourceType: "organization",
-              resourceId: organizationId,
-              requestId,
-              traceId,
-              metadata: {},
-            });
+          await tx.insert(schema.auditEvents).values({
+            id: generateId("aud"),
+            organizationId,
+            actorType: "user",
+            actorId,
+            action: "organization.created",
+            resourceType: "organization",
+            resourceId: organizationId,
+            requestId,
+            traceId,
+            metadata: {},
+          });
         },
         appendOutboxEvent: async (event: EventEnvelope) => {
-          await tx
-            .insert(schema.outbox)
-            .values({
-              id: event.id,
-              topic: event.type,
-              organizationId: event.organizationId,
-              workspaceId: event.workspaceId,
-              payload: event,
-            });
+          await tx.insert(schema.outbox).values({
+            id: event.id,
+            topic: event.type,
+            organizationId: event.organizationId,
+            workspaceId: event.workspaceId,
+            payload: event,
+          });
         },
       };
       return operation(transaction);
